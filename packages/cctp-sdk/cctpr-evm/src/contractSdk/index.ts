@@ -3,12 +3,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { Layout } from "binary-layout";
 import { serialize, deserialize } from "binary-layout";
 import type { RoArray, Simplify, TupleWithLength } from "@stable-io/map-utils";
 import { range } from "@stable-io/map-utils";
 import type { TODO } from "@stable-io/utils";
-import { keccak256, encoding } from "@stable-io/utils";
+import { keccak256, encoding, assertDistinct } from "@stable-io/utils";
 import type {
   DomainsOf,
   GasTokenOf,
@@ -18,6 +19,7 @@ import type {
   Domain,
   DomainId,
   Network,
+  Percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import {
   domains,
@@ -52,19 +54,22 @@ import {
   evmAddressItem,
 } from "@stable-io/cctp-sdk-evm";
 import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
+import {
+  avaxRouterContractAddress,
+  contractAddressOf,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
+  Corridor,
   GovernanceCommand,
   QuoteRelay,
   Transfer,
-  CorridorVariant,
   UserQuoteVariant,
-  GaslessQuoteVariant,
   OffChainQuote,
   ExtraChainIds,
   FeeAdjustment,
   FeeAdjustmentsSlot,
   FeeAdjustmentType,
+  CorridorVariant,
 } from "./layouts/index.js";
 import {
   quoteRelayArrayLayout,
@@ -78,11 +83,15 @@ import {
   feeAdjustmentsSlotItem,
   feeAdjustmentTypes,
   constructorLayout,
+  corridors,
 } from "./layouts/index.js";
 import { extraDomains } from "./layouts/common.js";
+import { Rational } from "@stable-io/amount";
 
 //external consumers shouldn't really need these but exporting them just in case
 export * as layouts from "./layouts/index.js";
+
+export type SupportedEvmDomain<N extends Network> = SupportedDomain<N> & DomainsOf<"Evm">;
 
 //sign this with the offChainQuoter to produce a valid off-chain quote for a transfer
 export const offChainQuoteData = <N extends Network>(network: N) =>
@@ -110,7 +119,7 @@ export const parseGovernanceTxCalldata = <N extends Network>(network: N) =>
 // //extra structs are sorted alphabetically according to EIP-712 spec
 // const witnessTypeString = [
 //   "PermitWitnessTransferFrom(",
-//     "TokenPermissions permitted,",
+//     "TokenPermissions permitted,",corridor
 //     "address spender,",
 //     "uint256 nonce,",
 //     "uint256 deadline,",
@@ -135,49 +144,68 @@ export const parseGovernanceTxCalldata = <N extends Network>(network: N) =>
 // ].join("");
 // const witnessTypeHash = keccak256(witnessTypeString);
 
-type RelayFieldName<T, U> = T extends { type: "offChain" } ? { relayFee: U } : { maxRelayFee: U };
-type WithUsdcAndMaybeGasToken<T, S extends DomainsOf<"Evm">, WGT extends boolean> =
-  T extends any
-  ? (T & RelayFieldName<T, Usdc> & { takeFeesFromInput: boolean } |
-    (WGT extends true
-    ? T & RelayFieldName<T, GasTokenOf<S, DomainsOf<"Evm">>>
-    : never))
-  : never;
+type QtOnChain = { readonly type: "onChain" };
+type QtOffChain = { readonly type: "offChain" };
 
-type OnChainFields = {
-  type: "onChain";
-};
+type ExtraFields<QT> =
+  QT extends QtOnChain
+  ? unknown
+  : Readonly<{
+    expirationTime: Date;
+    quoterSignature: Uint8Array;
+  }>;
 
-type OffChainFields = {
-  type: "offChain";
-  expirationTime: Date;
-  quoterSignature: Uint8Array;
-};
-
-type GenericQuote<S extends DomainsOf<"Evm">, G extends boolean> =
-  Simplify<Readonly<WithUsdcAndMaybeGasToken<OnChainFields | OffChainFields, S, G>>>;
-
-export type Quote<S extends DomainsOf<"Evm">> = GenericQuote<S, true>;
-export type GaslessQuote = GenericQuote<DomainsOf<"Evm">, false>;
-export type GaslessQuoteMessage = Simplify<
-  Exclude<GaslessQuote, { type: "offChain" }> |
-  Omit<Extract<GaslessQuote, { type: "offChain" }>, "expirationTime" | "quoterSignature">
+type RelayFieldName<T, U> = Readonly<T extends QtOnChain ? { maxRelayFee: U } : { relayFee: U }>;
+type QuoteTypeImpl<
+  WEF extends boolean, //with extra fields
+  GT = never,
+> = Simplify<
+  QtOnChain | QtOffChain extends infer QT
+  ? QT extends any
+    ? (QT & (WEF extends true ? ExtraFields<QT> : unknown)) extends infer Q
+      ? Q & RelayFieldName<Q, Usdc | GT>
+      : never
+    : never
+  : never
 >;
 
-export const quoteIsInUsdc = <S extends DomainsOf<"Evm">>(quote: Quote<S>): quote is GaslessQuote =>
-  (quote.type === "onChain" && quote.maxRelayFee.kind.name === "Usdc") ||
-  (quote.type === "offChain" && quote.relayFee.kind.name === "Usdc");
+export type Quote<SD extends DomainsOf<"Evm">> =
+                            QuoteTypeImpl<true, GasTokenOf<SD, DomainsOf<"Evm">>>;
+export type UsdcQuote     = QuoteTypeImpl<true>;
+export type UsdcQuoteBase = QuoteTypeImpl<false>;
+type ErasedQuoteBase      = QuoteTypeImpl<false, GasTokenOf<DomainsOf<"Evm">>>;
 
-export class CctpRBase<N extends Network, S extends DomainsOf<"Evm">> {
-  public readonly client: EvmClient<N, S>;
+export function quoteIsInUsdc(quote: ErasedQuoteBase): quote is UsdcQuote {
+  return (
+    (quote.type === "onChain" && quote.maxRelayFee.kind.name === "Usdc") ||
+    (quote.type === "offChain" && quote.relayFee.kind.name === "Usdc")
+  );
+}
+
+export type CorridorParams<
+  N extends Network,
+  SD extends SupportedEvmDomain<N>,
+  DD extends SupportedDomain<N>,
+> = Simplify<Readonly<
+  { type: "v1" } | (//eventually, we'll have to check if v1 is supported
+  SD extends Exclude<v2.SupportedDomain<N>, "Avalanche">
+  ? (DD extends v2.SupportedDomain<N> ? "v2Direct" : "avaxHop") extends
+      infer T extends "v2Direct" | "avaxHop"
+    ? { type: T; fastFeeRate: Percentage }
+    : never
+  : never)
+>>;
+
+type ErasedCorridorParams =
+  CorridorParams<Network, SupportedEvmDomain<Network>, SupportedDomain<Network>>;
+
+export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
+  public readonly client: EvmClient<N, SD>;
   public readonly address: EvmAddress;
 
-  constructor(
-    client: EvmClient<N, S>,
-    address: EvmAddress,
-  ) {
+  constructor(client: EvmClient<N, SD>) {
     this.client = client;
-    this.address = address;
+    this.address = new EvmAddress((contractAddressOf as TODO)(this.client.network, this.client.domain));
   }
 
   protected execTx(value: EvmGasToken, commandData: CallData): ContractTx {
@@ -188,12 +216,12 @@ export class CctpRBase<N extends Network, S extends DomainsOf<"Evm">> {
     };
   }
 }
-export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRBase<N, S> {
+export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends CctpRBase<N, SD> {
   //On-chain quotes should always allow for a safety margin of at least a few percent to make sure a
   //  submitted transfer tx does not fail if fees in the oracle get updated while the tx is pending.
   async quoteOnChainRelay(
     queries: RoArray<QuoteRelay<N>>,
-  ): Promise<RoArray<Usdc | GasTokenOf<S>>> {
+  ): Promise<RoArray<Usdc | GasTokenOf<SD>>> {
     if (queries.length === 0)
       return [];
 
@@ -222,33 +250,63 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
         ? usdc
         : gasTokenOf(this.client.domain)
       )(v, "atomic"),
-    ) as RoArray<Usdc | GasTokenOf<S>>;
+    ) as RoArray<Usdc | GasTokenOf<SD>>;
   }
 
-  transferWithRelay<D extends SupportedDomain<N>>(
-    destination: D,
+  checkCostAndCalcRequiredAllowance(
+    inputAmount: Usdc,
+    quote: Quote<SD>,
+    corridor: ErasedCorridorParams,
+    takeFeesFromInput: boolean,
+    gaslessFee?: Usdc,
+  ): Usdc {
+    const relayCostUsdc = quoteIsInUsdc(quote)
+      ? (quote.type === "onChain" ? quote.maxRelayFee : quote.relayFee)
+      : usdc(0);
+
+    let totalFees = usdc(0);
+    if (quoteIsInUsdc(quote))
+      totalFees = totalFees.add(relayCostUsdc);
+    if (gaslessFee)
+      totalFees = totalFees.add(gaslessFee);
+
+    if (takeFeesFromInput && totalFees.ge(inputAmount))
+        throw new Error("Costs exceed input amount");
+
+    const burnAmount =
+      this.calcBurnAmount(inputAmount, corridor, quote, takeFeesFromInput, gaslessFee);
+
+    let requiredAllowance = burnAmount;
+    if (gaslessFee)
+      requiredAllowance = requiredAllowance.add(gaslessFee);
+    if (quoteIsInUsdc(quote) && !takeFeesFromInput)
+      requiredAllowance = requiredAllowance.add(relayCostUsdc);
+
+    return requiredAllowance;
+  }
+
+  transferWithRelay<DD extends SupportedDomain<N>>(
+    destination: DD,
     inputAmount: Usdc,
     mintRecipient: UniversalAddress,
-    gasDropoff: GasTokenOf<D, SupportedDomain<N>>,
-    corridor: CorridorVariant,
-    quote: Quote<S>,
+    gasDropoff: GasTokenOf<DD, SupportedDomain<N>>,
+    corridor: CorridorParams<N, SD, DD>,
+    quote: Quote<SD>,
+    takeFeesFromInput: boolean, //meaningless, if relay fee is paid in gas and corridor is v1
     permit?: Permit,
   ): ContractTx {
-    CctpR.checkCorridorDestinationCoherence(destination, corridor);
+    this.checkCorridorDestinationCoherence(destination, corridor.type);
 
     const value = evmGasToken(
-      quote.type === "onChain" && quote.maxRelayFee.kind.name !== "Usdc"
-      ? quote.maxRelayFee.toUnit("atomic")
-      : quote.type === "offChain" && quote.relayFee.kind.name !== "Usdc"
-      ? quote.relayFee.toUnit("atomic")
+      quoteIsInUsdc(quote)
+      ? (quote.type === "onChain" ? quote.maxRelayFee : quote.relayFee).toUnit("human")
       : 0n,
-      "atomic",
     );
 
-    const userQuote = (
+    const quoteVariant = (
       quote.type === "onChain" && quoteIsInUsdc(quote)
       ? { type: "onChainUsdc",
-          takeRelayFeeFromInput: quote.takeFeesFromInput,
+          takeRelayFeeFromInput: takeFeesFromInput,
           maxRelayFeeUsdc: quote.maxRelayFee,
         }
       : quote.type === "onChain"
@@ -257,54 +315,51 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
           expirationTime: quote.expirationTime,
           quoterSignature: quote.quoterSignature,
           feePaymentVariant:
-            quote.relayFee.kind.name === "Usdc"
+            quoteIsInUsdc(quote)
             ? { payIn: "usdc", relayFeeUsdc: quote.relayFee }
-            : { payIn: "gasToken", relayFeeGasToken: evmGasToken(quote.relayFee.toUnit("atomic")) },
+            : { payIn: "gasToken", relayFeeGasToken: value },
         }
     ) as UserQuoteVariant;
 
+    const burnAmount = this.calcBurnAmount(inputAmount, corridor, quote, takeFeesFromInput);
+
     const transfer = {
       ...(permit ? { approvalType: "Permit", permit } : { approvalType: "Preapproval" }),
-      inputAmountUsdc:
-        quote.type === "offChain" && quoteIsInUsdc(quote) && !quote.takeFeesFromInput
-        ? inputAmount.add(quote.relayFee)
-        : inputAmount,
+      inputAmountUsdc: burnAmount,
       destinationDomain: destination as unknown as Transfer<N>["destinationDomain"], //TODO brrr
       mintRecipient,
       gasDropoff: genericGasToken(gasDropoff.toUnit("human")),
-      corridorVariant: corridor,
-      quoteVariant: userQuote,
+      corridorVariant: CctpR.toCorridorVariant(corridor, burnAmount),
+      quoteVariant,
     } as const satisfies Transfer<N>;
 
     return this.execTx(value, serialize(transferLayout(this.client.network), transfer) as CallData);
   }
 
-  static composeGaslessTransferMessage<
-    N extends Network,
-    S extends SupportedDomain<N>,
-    D extends SupportedDomain<N>,
+  public composeGaslessTransferMessage<
+    DD extends SupportedDomain<N>,
   >(
-    network: N,
-    source: S,
-    destination: D,
+    destination: DD,
     cctprAddress: EvmAddress,
     inputAmount: Usdc,
     mintRecipient: UniversalAddress,
-    gasDropoff: GasTokenOf<D, SupportedDomain<N>>,
-    corridor: CorridorVariant,
-    quote: GaslessQuoteMessage,
+    gasDropoff: GasTokenOf<DD, SupportedDomain<N>>,
+    corridor: CorridorParams<N, SD, DD>,
+    quote: UsdcQuoteBase,
     nonce: Uint8Array, //TODO better type
     deadline: Date,
     gaslessFee: Usdc,
+    takeFeesFromInput: boolean,
   ): Permit2TypedData {
-    this.checkCorridorDestinationCoherence(destination, corridor);
+    this.checkCorridorDestinationCoherence(destination, corridor.type);
     if (nonce.length !== wordSize)
       throw new Error(`Nonce must be ${wordSize} bytes`);
 
-    const maxRelayFee = quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee;
-    const amount = quote.takeFeesFromInput
-      ? inputAmount
-      : inputAmount.add(maxRelayFee).add(gaslessFee);
+    const [network, domain] = [this.client.network, this.client.domain];
+    const baseAmount = this.calcBurnAmount(inputAmount, corridor, quote, takeFeesFromInput);
+    const maxFastFee = corridor.type === "v1" ? usdc(0) : CctpR.calcFastFee(baseAmount, corridor);
+    const quoteFee = quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee;
+    const amount = baseAmount.add(gaslessFee).add(quoteFee);
 
     return {
       types: {
@@ -339,19 +394,19 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
       primaryType: "PermitWitnessTransferFrom",
       domain: {
         name: "Permit2",
-        chainId: chainIdOf(network, source as TODO),
+        chainId: chainIdOf(network, domain as TODO),
         verifyingContract: permit2Address,
       },
       message: {
         permitted: {
-          token: usdcContracts.contractAddressOf[network][source],
+          token: usdcContracts.contractAddressOf[network][domain],
           amount: amount.toUnit("atomic"),
         },
         spender: cctprAddress.unwrap(),
         nonce: BigInt(encoding.hex.encode(nonce)),
         deadline: dateToUnixTimestamp(deadline),
         parameters: {
-          baseAmount: inputAmount.toUnit("atomic"),
+          baseAmount: baseAmount.toUnit("atomic"),
           destinationDomain: domainIdOf(destination),
           mintRecipient: mintRecipient.toString(),
           microGasDropoff: gasDropoff.toUnit("human").mul(1000).floor(),
@@ -361,28 +416,30 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
             : corridor.type === "v2Direct"
             ? "CCTPv2"
             : "CCTPv2->Avalanche->CCTPv1",
-          maxFastFee: corridor.type === "v1" ? 0n : corridor.maxFastFeeUsdc.toUnit("atomic"),
+          maxFastFee: maxFastFee.toUnit("atomic"),
           gaslessFee: gaslessFee.toUnit("atomic"),
-          maxRelayFee: maxRelayFee.toUnit("atomic"),
+          maxRelayFee: quoteFee.toUnit("atomic"),
           quoteSource: quote.type === "offChain" ? "OffChain" : "OnChain",
         },
       },
     } as const;
   }
 
-  transferGasless<D extends SupportedDomain<N>>(
-    destination: D,
+  transferGasless<DD extends SupportedDomain<N>>(
+    destination: DD,
     inputAmount: Usdc,
     mintRecipient: UniversalAddress,
-    gasDropoff: GasTokenOf<D, SupportedDomain<N>>,
-    corridor: CorridorVariant,
-    quote: GaslessQuote,
+    gasDropoff: GasTokenOf<DD, SupportedDomain<N>>,
+    corridor: CorridorParams<N, SD, DD>,
+    quote: UsdcQuote,
     nonce: Uint8Array, //TODO better type
     deadline: Date,
     gaslessFee: Usdc,
     takeFeesFromInput: boolean,
     permit2Signature: Uint8Array, //TODO better type
   ): ContractTx {
+    const burnAmount = this.calcBurnAmount(inputAmount, corridor, quote, takeFeesFromInput);
+
     const transfer = {
       approvalType: "Gasless",
       permit2Data: {
@@ -393,14 +450,11 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
         signature: permit2Signature,
       },
       gaslessFeeUsdc: gaslessFee,
-      inputAmountUsdc:
-        takeFeesFromInput && quote.type === "offChain"
-        ? inputAmount.add(quote.relayFee).add(gaslessFee)
-        : inputAmount,
+      inputAmountUsdc: burnAmount,
       destinationDomain: destination as unknown as Transfer<N>["destinationDomain"], //TODO brrr
       mintRecipient,
       gasDropoff: genericGasToken(gasDropoff.toUnit("human")),
-      corridorVariant: corridor,
+      corridorVariant: CctpR.toCorridorVariant(corridor, burnAmount),
       quoteVariant: (
         quote.type === "offChain"
         ? { type: "offChain",
@@ -410,19 +464,84 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
           }
         : { type: "onChainUsdc",
             maxRelayFeeUsdc: quote.maxRelayFee,
-            takeRelayFeeFromInput: quote.takeFeesFromInput,
+            takeRelayFeeFromInput: takeFeesFromInput,
           }
       ),
     } as const satisfies Transfer<N>;
+
     return this.execTx(
       evmGasToken(0),
       serialize(transferLayout(this.client.network), transfer) as CallData,
     );
   }
 
-  static checkCorridorDestinationCoherence(destination: Domain, corridor: CorridorVariant) {
-    if (corridor.type === "avaxHop" && destination === "Avalanche")
-      throw new Error("Avalanche can't be destination of AvaxHop transfers");
+  private checkCorridorDestinationCoherence(destination: Domain, corridorType: Corridor) {
+    assertDistinct(this.client.domain as SupportedDomain<N>, destination);
+    const isSupportedV2Domain = v2.isSupportedDomain(this.client.network);
+
+    if (corridorType === "avaxHop") {
+      if (([this.client.domain, destination] as string[]).includes("Avalanche"))
+        throw new Error("Can't use avaxHop corridor with Avalanche being source or destination");
+
+      if (!isSupportedV2Domain(this.client.domain))
+        throw new Error("Can't use avaxHop corridor with non-v2 source domain");
+
+      if (isSupportedV2Domain(destination))
+        throw new Error("Don't use avaxHop corridor when destination is also a v2 domain");
+    }
+
+    if (corridorType === "v2Direct" && (
+        !isSupportedV2Domain(this.client.domain) || !isSupportedV2Domain(destination)
+    ))
+      throw new Error("Can't use v2 corridor for non-v2 domains");
+  }
+
+  private static toCorridorVariant(
+    corridor: ErasedCorridorParams,
+    burnAmount: Usdc,
+  ): CorridorVariant {
+    return corridor.type === "v1"
+      ? corridor
+      : { type: corridor.type, maxFastFeeUsdc: CctpR.calcFastFee(burnAmount, corridor) };
+  }
+
+  private calcBurnAmount(
+    inputAmount: Usdc,
+    corridor: ErasedCorridorParams,
+    quote: ErasedQuoteBase,
+    takeFeesFromInput: boolean,
+    gaslessFee?: Usdc,
+  ): Usdc {
+    //example for takeFeesFromInput = false:
+    //say desired output on the target chain is 99 µUSDC and the fastFeeRate is 2 %
+    //-> need to burn 101.020408163 µUSDC -> ceil to 102 µUSDC
+    //this in turn gives a fast fee of:
+    //-> 102 µUSDC * 0.02 = 2.04 µUSDC -> ceil to 3 µUSDC => (102 - 3 = 99)
+
+    let burnAmount = inputAmount;
+    if (takeFeesFromInput) {
+      if (gaslessFee)
+        burnAmount = burnAmount.sub(gaslessFee);
+
+      //we don't sub the maxRelayFee, because the actual fee might be lower and so we have to assume
+      //  the most extreme case, where the actual fee is 0 and hence the burnAmount is maximized
+      if (quoteIsInUsdc(quote) && quote.type === "offChain")
+        burnAmount = burnAmount.sub(quote.relayFee);
+    }
+    else if (corridor.type !== "v1")
+      burnAmount = burnAmount.div(Rational.from(1).sub(corridor.fastFeeRate.toUnit("scalar")));
+
+    return burnAmount;
+  }
+
+  private static calcFastFee(burnAmount: Usdc, corridor: ErasedCorridorParams): Usdc {
+    return (corridor.type === "v1")
+      ? usdc(0)
+      : CctpR.ceilToMicroUsdc(burnAmount.mul(corridor.fastFeeRate.toUnit("scalar")));
+  }
+
+  private static ceilToMicroUsdc(amount: Usdc): Usdc {
+    return usdc(amount.toUnit("µUSDC").ceil(), "µUSDC");
   }
 }
 
@@ -552,7 +671,7 @@ export class CctpRGovernance<
   }
 
   private static readonly mappings =
-    ["extraChainIds", "v1", "v2Direct", "avaxHop", "gasDropoff"] as const;
+    ["extraChainIds", ...corridors, "gasDropoff"] as const;
 
   static readonly roles =
     ["feeRecipient", "offChainQuoter", "owner", "pendingOwner", "feeAdjuster"] as const;

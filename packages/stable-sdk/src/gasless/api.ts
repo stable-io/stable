@@ -6,8 +6,8 @@
 import { Url, BaseObject, encoding } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
-import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken } from "@stable-io/cctp-sdk-definitions";
-import { dateToUnixTimestamp, EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
+import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { deserializeBigints } from "@stable-io/utils";
 
 export const apiUrl = {
@@ -74,7 +74,7 @@ export type GetQuoteParams = {
   gasDropoff: GenericGasToken;
   permit2PermitRequired: boolean;
   maxRelayFee: Usdc;
-  maxFastFee: Usdc;
+  fastFeeRate: Percentage;
   takeFeesFromInput: boolean;
 };
 
@@ -129,8 +129,8 @@ function serializeQuoteRequest(params: GetQuoteParams): Record<string, string> {
     gasDropoff: params.gasDropoff.toUnit("human").toString(),
     takeFeesFromInput: params.takeFeesFromInput.toString(),
     maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
-    maxFastFee: params.corridor === "v2Direct"
-      ? params.maxRelayFee.toUnit("human").toFixed(6).toString()
+    fastFeeRate: params.corridor === "v2Direct"
+      ? params.fastFeeRate.toUnit("human").toString()
       : "0"
   };
 }
@@ -147,7 +147,7 @@ function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): 
     corridor: responseQuoteParams.corridor as layouts.CorridorVariant["type"],
     takeFeesFromInput: responseQuoteParams.takeFeesFromInput as boolean,
     maxRelayFee: usdc(responseQuoteParams.maxRelayFee as string),
-    maxFastFee: usdc(responseQuoteParams.maxFastFee as string ?? 0),
+    fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string ?? "0"),
   }
 }
 

@@ -46,7 +46,7 @@ export async function buildGaslessRoute<
     usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
   );
 
-  const { corridorFees, maxRelayFee, maxFastFeeUsdc } = getCorridorFees(corridor.cost, intent);
+  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(corridor.cost, intent);
 
   const transferParams: GetQuoteParams = {
     sourceChain: intent.sourceChain,
@@ -57,7 +57,7 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     gasDropoff: intent.gasDropoffDesired as TODO,
     permit2PermitRequired,
-    maxFastFee: maxFastFeeUsdc,
+    fastFeeRate: fastFeeRate,
     maxRelayFee: maxRelayFee as Usdc,
     takeFeesFromInput: true,
   };

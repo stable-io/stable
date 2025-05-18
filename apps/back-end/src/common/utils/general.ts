@@ -8,6 +8,7 @@ export function createAmountRegexPattern(decimals: number): string {
 export const AMOUNT_PATTERNS = {
   USDC: createAmountRegexPattern(6),
   EVM_GAS_TOKEN: createAmountRegexPattern(18),
+  PERCENTAGE: createAmountRegexPattern(2),
 } as const;
 
 export const ADDRESS_PATTERNS = {

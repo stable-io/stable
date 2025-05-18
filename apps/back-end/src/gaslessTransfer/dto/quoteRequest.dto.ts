@@ -6,6 +6,7 @@ import {
   Validate,
   IsBoolean,
 } from "class-validator";
+import { Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -20,6 +21,7 @@ import {
   IsEvmGasTokenAmount,
   IsEvmAddress,
   IsBooleanString,
+  IsPercentage,
 } from "../../common/validators";
 
 const domains = domainsOf("Evm").filter((domain) => domain !== "Codex");
@@ -141,19 +143,19 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
   maxRelayFee!: Usdc;
 
   /**
-   * Max price in usdc the user is willing to pay for Circle's fast-transfer service
-   * @example "1.5"
+   * The rate charged by circle for a fast transfer
+   * @example "0.001" -- 1bps
    */
   @ApiProperty({
     type: String,
-    format: "amount",
-    pattern: AMOUNT_PATTERNS.USDC,
+    format: "percentage",
+    pattern: AMOUNT_PATTERNS.PERCENTAGE,
   })
-  @IsUsdcAmount({ min: usdc(0) })
-  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
+  @IsPercentage()
+  @Transform(({ value }: { value: Percentage }) => value.toUnit("human").toString(), {
     toPlainOnly: true,
   })
-  maxFastFee!: Usdc;
+  fastFeeRate!: Percentage;
 
   /**
    * Whether the fees will be taken from the input or added

@@ -7,8 +7,9 @@ import type {
 } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
-import { CctpR, GaslessQuote } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { CorridorParams, layouts, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { CctpR, GaslessQuoteVariant } from "@stable-io/cctp-sdk-cctpr-evm";
+import { Percentage } from "@stable-io/cctp-sdk-definitions";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import {
   ContractTx,
@@ -23,7 +24,7 @@ import type { Permit2Nonce } from "../common/utils";
 import { fetchNextPermit2Nonce, serializeSignature } from "../common/utils";
 
 type CorridorVariant = layouts.CorridorVariant;
-export type OnchainGaslessQuote = GaslessQuote & { type: "onChain" };
+export type OnchainGaslessQuote = GaslessQuoteVariant & { type: "onChainUsdc" };
 
 @Injectable()
 export class CctpRService {
@@ -43,25 +44,22 @@ export class CctpRService {
     quoteRequest: QuoteRequestDto,
     gaslessFee: Usdc,
   ): Promise<Permit2TypedData> {
-    return CctpR.composeGaslessTransferMessage(
-      this.configService.network,
-      quoteRequest.sourceDomain,
+    const cctpr = this.contractInterface(quoteRequest.sourceDomain);
+    return cctpr.composeGaslessTransferMessage(
       quoteRequest.targetDomain,
       this.contractAddress(quoteRequest.sourceDomain),
       quoteRequest.amount,
       quoteRequest.recipient.toUniversalAddress(),
       quoteRequest.gasDropoff as TODO,
-      this.getCorridorParams(quoteRequest.corridor, quoteRequest.maxFastFee),
-      this.getQuoteParams(
-        quoteRequest.maxRelayFee,
-        quoteRequest.takeFeesFromInput,
-      ),
+      this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
+      { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
       encoding.bignum.toBytes(
         await this.getNextNonce(quoteRequest),
         32 as Size,
       ),
       this.getDeadline(),
       gaslessFee,
+      quoteRequest.takeFeesFromInput,
     );
   }
 
@@ -78,11 +76,8 @@ export class CctpRService {
       quoteRequest.amount,
       quoteRequest.recipient.toUniversalAddress(),
       quoteRequest.gasDropoff as TODO,
-      this.getCorridorParams(quoteRequest.corridor, quoteRequest.maxFastFee),
-      this.getQuoteParams(
-        quoteRequest.maxRelayFee,
-        quoteRequest.takeFeesFromInput,
-      ),
+      this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
+      { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
       encoding.bignum.toBytes(permit2TypedData.message.nonce, 32 as Size),
       // deadline is expressed in unix timestamp (Seconds).
       new Date(Number(permit2TypedData.message.deadline.toString()) * 1000),
@@ -95,12 +90,11 @@ export class CctpRService {
   private contractInterface<D extends keyof EvmDomains>(
     domain: D,
   ): CctpR<Network, D> {
-    const cctprAddress = this.contractAddress(domain);
     const client = ViemEvmClient.fromNetworkAndDomain(
       this.configService.network,
       domain,
     );
-    return new CctpR(client, cctprAddress);
+    return new CctpR(client);
   }
 
   private getDeadline(): Date {
@@ -128,21 +122,10 @@ export class CctpRService {
 
   getCorridorParams(
     corridor: CorridorVariant["type"],
-    maxFastFee: Usdc,
-  ): CorridorVariant {
+    fastFeeRate: Percentage,
+  ): CorridorParams<Network, SupportedEvmDomain<Network>, SupportedEvmDomain<Network>> {
     return corridor === "v1"
       ? { type: corridor }
-      : { type: corridor, maxFastFeeUsdc: maxFastFee };
-  }
-
-  getQuoteParams(
-    maxRelayFee: Usdc,
-    takeFeesFromInput: boolean,
-  ): OnchainGaslessQuote {
-    return {
-      type: "onChain",
-      maxRelayFee: maxRelayFee,
-      takeFeesFromInput: takeFeesFromInput,
-    };
+      : { type: corridor, fastFeeRate: fastFeeRate };
   }
 }

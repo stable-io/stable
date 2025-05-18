@@ -34,7 +34,7 @@ export const Percentage = {
   name: "Percentage",
   human: "%",
   units: [
-    unit("whole", 1),
+    unit("scalar", 1),
     unit("%", oom(-2)),
     unit("bp", oom(-4)),
   ],

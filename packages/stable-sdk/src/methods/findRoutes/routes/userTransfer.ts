@@ -7,6 +7,7 @@ import { init as initDefinitions,
   EvmDomains,
   GasTokenOf,
   Usdc,
+  percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
@@ -40,15 +41,16 @@ export async function buildUserTransferRoute<
   intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
 ): Promise<Route<S, D>> {
-  const { corridorFees, maxRelayFee, maxFastFeeUsdc } = getCorridorFees(
+  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
     corridor.cost,
     intent,
   );
 
+  const takeFeesFromInput = true;
+
   const quote = intent.paymentToken === "usdc"
   ? {
       maxRelayFee: maxRelayFee as Usdc,
-      takeFeesFromInput: true,
     }
   : { maxRelayFee: maxRelayFee as GasTokenOf<S, keyof EvmDomains> };
 
@@ -75,6 +77,10 @@ export async function buildUserTransferRoute<
     buildTransferStep(corridor.corridor, intent.sourceChain),
   ];
 
+  const corridorParams = corridor.corridor === "v1"
+    ? { type: corridor.corridor }
+    : { type: corridor.corridor, fastFeeRate };
+
   return {
     intent,
     fees: corridorFees,
@@ -96,10 +102,9 @@ export async function buildUserTransferRoute<
       intent.amount,
       { type: "onChain", ...quote },
       intent.gasDropoffDesired as TODO,
-      {
-        usePermit: true,
-        corridor: { type: corridor.corridor, maxFastFeeUsdc },
-      } as TODO,
+      corridorParams as TODO,
+      takeFeesFromInput,
+      intent.usePermit,
     ),
   };
 }
