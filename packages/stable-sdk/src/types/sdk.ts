@@ -10,6 +10,7 @@ import { Intent } from "./intent.js";
 import { Route, RouteSearchOptions, RoutesResult } from "./route.js";
 import { EvmPlatformSigner } from "./signer.js";
 import { Url } from "@stable-io/utils";
+import { Redeem } from "./redeem.js";
 
 export interface SDKOptions<N extends Network> {
   network: N;
@@ -41,4 +42,11 @@ export abstract class SDK<N extends Network> {
   ): ReturnType<typeof createWalletClient>;
 
   public abstract getRpcUrl(domain: keyof EvmDomains): Url;
+
+  public abstract findRedeem(
+    sourceChain: keyof EvmDomains,
+    transactionHash: TxHash,
+    destFromBlock: bigint,
+    avaxFromBlock?: bigint,
+  ): Promise<Redeem>;
 }

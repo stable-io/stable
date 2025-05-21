@@ -12,12 +12,24 @@ export const apiUrl = {
 } as const satisfies Record<Network, string>;
 
 export type ApiVersion = Brand<number, "ApiVersion">;
+
 export const apiEndpoint = <N extends Network>(network: N) => (
   version: ApiVersion,
   ...params: readonly string[]
 ): Url => `${apiUrl[network]}/v${version}/${params.join("/")}` as Url;
 
+export const apiEndpointWithQuery = <N extends Network>(network: N) => (
+  version: ApiVersion,
+  query: Readonly<Record<string, string>>,
+  ...params: readonly string[]
+): Url => {
+  const pairs = Object.entries(query).map(([key, value]) => `${key}=${value}`);
+  const endpoint = apiEndpoint(network)(version, ...params);
+  return `${endpoint}?${pairs.join("&")}` as Url;
+};
+
 export const init = <N extends Network>(network: N) => ({
   apiUrl: apiUrl[network],
   apiEndpoint: apiEndpoint(network),
+  apiEndpointWithQuery: apiEndpointWithQuery(network),
 } as const);

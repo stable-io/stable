@@ -4,8 +4,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { SuppressExpansion } from "@stable-io/utils";
-import { deepReadonly, column, constMap } from "@stable-io/map-utils";
-import type { ExpandedDomain, SimplifyDomain } from "./domains.js";
+import { deepReadonly, column, constMap, RoArray } from "@stable-io/map-utils";
+import type { Domain, ExpandedDomain, SimplifyDomain } from "./domains.js";
 
 export const platformDomainEntries = [[
   "Evm", [
@@ -46,6 +46,10 @@ export const platformOf = constMap(platformDomainEntries, [1, 0]);
 export type PlatformOf<D extends ExpandedDomain> = ReturnType<typeof platformOf<D>>;
 
 export interface EvmDomains extends SuppressExpansion<ExpandedDomainsOf<"Evm">> {}
+
+export const isEvmDomain = (domain: Domain): domain is DomainsOf<"Evm"> =>
+  (domainsOf("Evm") as RoArray<Domain>).includes(domain);
+
 declare module "../../registry.js" {
   export interface DomainAliases {
     EvmDomains: [ExpandedDomainsOf<"Evm">, EvmDomains];
