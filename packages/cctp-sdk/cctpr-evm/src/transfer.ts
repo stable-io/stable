@@ -14,7 +14,7 @@ import type {
   v2,
 } from "@stable-io/cctp-sdk-definitions";
 import {
-  genericGasToken,
+  gasTokenKindOf,
   init as initDefinitions,
   usdc,
   Usdc,
@@ -22,6 +22,7 @@ import {
 import type { ContractTx, Eip2612Data, EvmClient, Permit } from "@stable-io/cctp-sdk-evm";
 import { EvmAddress, init as initEvm } from "@stable-io/cctp-sdk-evm";
 import type { TODO } from "@stable-io/utils";
+import { Amount } from "@stable-io/amount";
 import type { Quote as ContractQuote } from "./contractSdk/index.js";
 import { CctpR, layouts, quoteIsInUsdc } from "./contractSdk/index.js";
 import { SupportedEvmDomain } from "./common.js";
@@ -105,7 +106,13 @@ export const transfer = <N extends Network>(network: N) => {
         throw new Error("Can't use v2 corridor for non-v2 domains");
     }
 
-    //TODO: check that gasDropoff is below allowed max
+    const gasDropoffLimit = Amount.ofKind(gasTokenKindOf(destinationDomain))(
+      cctpr.gasDropoffLimitOf[destinationDomain],
+    );
+
+    if (gasDropoff.gt(gasDropoffLimit as TODO))
+      throw new Error("Gas Drop Off Limit Exceeded");
+
     const usdcAddr = new EvmAddress(usdcContracts.contractAddressOf[sourceDomain]);
     const cctprAddress = new EvmAddress((cctpr.contractAddressOf as TODO)(sourceDomain));
 

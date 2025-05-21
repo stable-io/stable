@@ -78,9 +78,41 @@ export const relayOverheadOf = {
   },
 } as const satisfies Record<Network, Record<string, number>>;
 
+export const gasDropoffLimitOf = {
+  Mainnet: {
+    Ethereum:  0.001509,
+    Avalanche: 0.00151,
+    Optimism:  0.00151,
+    Arbitrum:  0.00151,
+    Base:      0.00151,
+    // Solana:    30,
+    Polygon:   0.00151,
+    // Sui:       30,
+    // Aptos:     30,
+    Unichain:  0.00151,
+    Linea:     0.00151,
+    Sonic: 0.00151,
+  },
+  Testnet: {
+    Ethereum:  0.01509,
+    Avalanche: 0.00151,
+    Optimism:  0.00151,
+    Arbitrum:  0.00151,
+    Base:      0.00151,
+    // Solana:    30,
+    Polygon:   0.00151,
+    // Sui:       30,
+    // Aptos:     30,
+    Unichain:  0.00151,
+    Linea:     0.00151,
+    Sonic: 0.00151,
+  },
+} as const satisfies Record<Network, Record<SupportedDomain<Network>, number>>;
+
 export const init = <N extends Network>(network: N) => ({
   contractAddressOf: contractAddressOf.subMap(network),
   supportedDomains: supportedDomains(network),
   avaxRouterContractAddress: avaxRouterContractAddress[network],
   relayOverheadOf: relayOverheadOf[network],
+  gasDropoffLimitOf: gasDropoffLimitOf[network],
 } as const);
