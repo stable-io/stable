@@ -56,9 +56,7 @@ export const $executeRoute =
           maxPriorityFeePerGas: fromGwei(15),
         });
 
-        console.log("  -- Sent tx", tx);
         await client.client.waitForTransactionReceipt({ hash: tx });
-        console.log("  -- Confirmed tx", tx);
         txHashes.push(tx);
         lastResult = undefined;
       } else if (isEip2612Data(txOrSig)) {

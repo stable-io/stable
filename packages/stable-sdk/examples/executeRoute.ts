@@ -86,7 +86,7 @@ for (const route of selectedRoutes) {
   );
   console.info(`https://sepolia.etherscan.io/tx/${txHashes.at(-1)}`);
 
-  console.log(getTestnetScannerAddressUrl(
+  console.info(getTestnetScannerAddressUrl(
     route.intent.targetChain,
     route.intent.recipient,
   ));
