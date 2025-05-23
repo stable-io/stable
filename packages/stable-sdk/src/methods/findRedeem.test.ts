@@ -8,7 +8,7 @@ import { $findRedeem } from "./findRedeem.js";
 import { Domain } from "@stable-io/cctp-sdk-definitions";
 import { viemChainOf } from "@stable-io/cctp-sdk-viem";
 
-describe("$getRedeemStatus", () => {
+describe("$findRedeem", () => {
   let findRedeem: ReturnType<typeof $findRedeem>;
 
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe("$getRedeemStatus", () => {
     });
   });
 
-  it("Should be able to get the redeem status of a v1 transfer", async () => {
+  it("Should be able to find the redeem of a v1 transfer", async () => {
     const v1result = await findRedeem(
       "Optimism",
       "0x5f883178dafb93717888186e14f744ee9690c109b75bae0580f413f5c352faf6",
@@ -33,7 +33,7 @@ describe("$getRedeemStatus", () => {
     });
   }, 100000);
 
-  it("Should be able to get the redeem status of a v2 transfer", async () => {
+  it("Should be able to find the redeem of a v2 transfer", async () => {
     const v2result = await findRedeem(
       "Ethereum",
       "0x4ffcbe5f6d5d7fec99b5301356802a473e558333f10e79db87df8bc5640f0e3e",
@@ -45,7 +45,7 @@ describe("$getRedeemStatus", () => {
     });
   }, 100000);
 
-  it("should be able to get the redeem status of an avaxHop transfer", async () => {
+  it("should be able to find the redeem of an avaxHop transfer", async () => {
     const avaxHopResult = await findRedeem(
       "Ethereum",
       "0x27a1ea24e83be2f5d83654d7d31f1af18dfebedc1702dc37fb99137d0aec1b19",
