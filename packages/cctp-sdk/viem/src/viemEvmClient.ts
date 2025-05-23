@@ -6,7 +6,7 @@
 import type {
   Domain, Network, DomainsOf, GasTokenOf, GasTokenCtrOf,
 } from "@stable-io/cctp-sdk-definitions";
-import { domainOfChainId, domainsOf, gasTokenOf, usdc } from "@stable-io/cctp-sdk-definitions";
+import { domainOfChainId, domainsOf, gasTokenOf, isEvmDomain, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { RoArray } from "@stable-io/map-utils";
 import type { TODO, Url } from "@stable-io/utils";
 import { encoding } from "@stable-io/utils";
@@ -75,9 +75,6 @@ type ViemChainOf<N extends Network, D extends DomainsOf<"Evm">> = typeof viemCha
 type ViemPublicClientOf<N extends Network, D extends DomainsOf<"Evm">> = ReturnType<
   typeof createPublicClient<ReturnType<typeof http>, ViemChainOf<N, D>>
 >;
-
-const isEvmDomain = (domain: Domain): domain is DomainsOf<"Evm"> =>
-  (domainsOf("Evm") as RoArray<Domain>).includes(domain);
 
 export class ViemEvmClient<N extends Network, D extends DomainsOf<"Evm">> implements
   EvmClient<N, D> {
