@@ -5,6 +5,9 @@ import { createWalletClient, http } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import type { Chain } from "viem/chains";
 
+export const dynamicEnvironmentId =
+  process.env["NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID"]!;
+
 const mnemonic = process.env["NEXT_PUBLIC_MNEMONIC"]!;
 export const account: HDAccount = mnemonicToAccount(mnemonic);
 
