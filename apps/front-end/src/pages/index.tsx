@@ -50,6 +50,20 @@ const Home = () => {
   //   setAmount(maxAmount);
   // };
 
+  const handleSelectSourceChain = (chain: AvailableChains): void => {
+    setSourceChain(chain);
+    if (targetChain === chain) {
+      setTargetChain(sourceChain);
+    }
+  };
+
+  const handleSelectTargetChain = (chain: AvailableChains): void => {
+    setTargetChain(chain);
+    if (sourceChain === chain) {
+      setSourceChain(targetChain);
+    }
+  };
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newAmount = Number.parseFloat(e.target.value) || 0;
     setAmount(newAmount);
@@ -137,7 +151,7 @@ const Home = () => {
                     title="From"
                     chains={availableChains}
                     selectedChain={sourceChain}
-                    onSelect={setSourceChain}
+                    onSelect={handleSelectSourceChain}
                   />
                 </div>
                 <div className="right">
@@ -203,7 +217,7 @@ const Home = () => {
                     title="To"
                     chains={availableChains}
                     selectedChain={targetChain}
-                    onSelect={setTargetChain}
+                    onSelect={handleSelectTargetChain}
                   />
                 </div>
                 <div className="right">
