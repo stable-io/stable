@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Permit } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
+import { ViemEvmClient, viemChainOf } from "@stable-io/cctp-sdk-viem";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { isContractTx, Route, SDK, TxHash, isEip2612Data } from "../types/index.js";
@@ -21,14 +21,16 @@ export const $executeRoute =
     getRpcUrl,
   }: ExecuteRouteDeps<N>): SDK<N>["executeRoute"] =>
   async (route: Route) => {
-    const signer = getSigner(route.intent.sourceChain);
+    const signer = await getSigner(route.intent.sourceChain);
     const network = getNetwork();
-    const rpcUrl = getRpcUrl(route.intent.sourceChain);
+    const { sourceChain } = route.intent;
+    const rpcUrl = getRpcUrl(sourceChain);
     const client = ViemEvmClient.fromNetworkAndDomain(
       network,
-      route.intent.sourceChain,
+      sourceChain,
       rpcUrl,
     );
+    const viemChainId = viemChainOf[network][sourceChain].id;
 
     const txHashes = [] as string[];
     let lastResult: Permit | TxHash | undefined;
@@ -40,6 +42,7 @@ export const $executeRoute =
         const txValue = txOrSig.value
           ? BigInt(txOrSig.value.toUnit("atomic").toString())
           : undefined;
+        await signer.switchChain({ id: viemChainId });
         const tx = await signer.sendTransaction({
           from: txOrSig.from?.unwrap(),
           value: txValue,
@@ -60,6 +63,7 @@ export const $executeRoute =
         txHashes.push(tx);
         lastResult = undefined;
       } else if (isEip2612Data(txOrSig)) {
+        await signer.switchChain({ id: viemChainId });
         const signature = await signer.signTypedData({
           account: signer.account!,
           ...txOrSig,

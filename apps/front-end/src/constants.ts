@@ -5,9 +5,9 @@ export const availableChains = [
   "Arbitrum",
   "Optimism",
   "Base",
-  "Polygon",
-  "Unichain",
-  "Avalanche",
+  // "Polygon",
+  // "Unichain",
+  // "Avalanche",
 ] as const satisfies readonly EvmChains[];
 
 export type AvailableChains = (typeof availableChains)[number];
@@ -17,9 +17,9 @@ export const chainLogos = {
   Arbitrum: "/imgs/arb-logo.svg",
   Optimism: "/imgs/op-logo.svg",
   Base: "/imgs/tmp/base-logo.png",
-  Polygon: "/imgs/tmp/pol-logo.png",
-  Unichain: "/imgs/uni-logo.png",
-  Avalanche: "/imgs/tmp/ava-logo.png",
+  // Polygon: "/imgs/tmp/pol-logo.png",
+  // Unichain: "/imgs/uni-logo.png",
+  // Avalanche: "/imgs/tmp/ava-logo.png",
 } as const satisfies Record<AvailableChains, string>;
 
 export type GasDropoffLevel = "zero" | "low" | "avg" | "high";

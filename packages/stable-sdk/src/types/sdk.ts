@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { createWalletClient } from "viem";
+import type { WalletClient } from "viem";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Address, Amount, Chain, Network, TxHash } from "./general.js";
 import { Intent } from "./intent.js";
@@ -37,9 +37,7 @@ export abstract class SDK<N extends Network> {
   ): Promise<Record<keyof EvmDomains, Amount>>;
 
   public abstract setSigner(signer: SDKOptions<N>["signer"]): void;
-  public abstract getSigner(
-    chain: keyof EvmDomains
-  ): ReturnType<typeof createWalletClient>;
+  public abstract getSigner(chain: keyof EvmDomains): Promise<WalletClient>;
 
   public abstract getRpcUrl(domain: keyof EvmDomains): Url;
 

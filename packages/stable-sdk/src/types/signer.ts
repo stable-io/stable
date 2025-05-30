@@ -4,12 +4,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Url } from "@stable-io/utils";
-import type { createWalletClient } from "viem";
+import type { WalletClient } from "viem";
 import { Chain } from "viem/chains";
 
 export interface EvmPlatformSigner extends BasePlatformSigner {
   platform: "Evm";
-  getWalletClient(viemChain: Chain, url: Url): ReturnType<typeof createWalletClient>;
+  getWalletClient(viemChain: Chain, url: Url): Promise<WalletClient>;
 }
 
 export type SupportedPlatform = "Evm" | "Solana";
