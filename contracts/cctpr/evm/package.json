@@ -1,0 +1,8 @@
+{
+    "name": "cctp-xr",
+    "scripts": {
+      "clean": "make clean",
+      "build": "make && npm run build-types",
+      "build-types": "typechain --node16-modules --target=ethers-v6 --out-dir=../../deployment/evm/cctpr/ethers-contracts \"./out/*.sol/!(*.dbg).json\" --show-stack-traces"
+    }
+}

@@ -1,0 +1,21 @@
+[profile.default]
+solc_version = "0.8.28"
+optimizer = true
+via_ir = true
+src = "src"
+test = "test"
+evm_version = "paris"
+out = "out"
+libs = ["lib"]
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "permit2/=lib/permit2/src/",
+  "IERC20/=lib/wormhole-solidity-sdk/src/interfaces/token",
+  "wormhole-sdk/=lib/wormhole-solidity-sdk/src/",
+  "price-oracle/=../../price-oracle/evm/src/",
+  "cctp-xr/=src/"
+]
+allow_paths = ["../../price-oracle"]
+
+[fmt]
+line_length = 100

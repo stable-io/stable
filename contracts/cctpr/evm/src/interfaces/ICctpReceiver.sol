@@ -1,0 +1,14 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+pragma solidity ^0.8.28;
+
+//applies to both MessageTransmitter and MessageTransmitterV2
+interface ICctpReceiver {
+  function receiveMessage(
+    bytes calldata message,
+    bytes calldata signature
+  ) external returns (bool success);
+}
