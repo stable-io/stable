@@ -1,4 +1,4 @@
-import { dynamicEnvironmentId } from "@/context";
+import { env } from "@/env";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
@@ -45,7 +45,7 @@ const queryClient = new QueryClient({
 });
 
 const settings: ComponentProps<typeof DynamicContextProvider>["settings"] = {
-  environmentId: dynamicEnvironmentId,
+  environmentId: env.dynamicEnvironmentId,
   walletConnectors: [EthereumWalletConnectors],
 };
 
