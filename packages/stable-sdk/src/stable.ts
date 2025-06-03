@@ -28,10 +28,16 @@ export class StableSDK<N extends Network> extends SDK<N> {
   /**
    * @returns The viem wallet client of the user
    */
-  public getSigner(domain: keyof EvmDomains): ReturnType<SDK<N>["getSigner"]> {
+  public async getSigner(domain: keyof EvmDomains): ReturnType<SDK<N>["getSigner"]> {
     const viemChain = viemChainOf[this.options.network][domain];
     const rpcUrl = this.getRpcUrl(domain);
-    return this.options.signer.getWalletClient(viemChain, rpcUrl);
+    const signer = await this.options.signer.getWalletClient(viemChain, rpcUrl);
+
+    if (await signer.getChainId() !== viemChain.id) {
+      await signer.switchChain(viemChain);
+    }
+    
+    return signer;
   }
 
   /**

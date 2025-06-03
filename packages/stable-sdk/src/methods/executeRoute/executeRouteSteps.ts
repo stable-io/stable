@@ -20,7 +20,6 @@ const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("ato
 export async function executeRouteSteps<N extends Network, D extends keyof EvmDomains>(
   network: N, route: Route, signer: ViemWalletClient, client: ViemEvmClient<N, D>,
 ): Promise<TxHash[]> {
-  const viemChainId = viemChainOf[network][route.intent.sourceChain].id;
   const txHashes = [] as string[];
   let permit: Permit | undefined = undefined;
   while (true) {
@@ -31,12 +30,6 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
     if (stepType !== "sign-permit" && isContractTx(txOrSig)) {
       const txParameters = buildEvmTxParameters(txOrSig, signer.chain!, signer.account!);
-      // @note: This method is defined on some wallets but not all
-      try {
-        await signer.switchChain({ id: viemChainId });
-      } catch (error) {
-        console.error("Failed to switch chain:", error);
-      }
       const tx = await signer.sendTransaction(txParameters);
 
       route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
@@ -55,7 +48,7 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
       });
 
       permit = {
-        signature: Buffer.from(encoding.stripPrefix("0x", signature), "hex"),
+        signature: encoding.hex.decode(signature),
         // It's possible to override the following values by changing them
         // before signing the message.
         // We need to pass them back to the cctp-sdk so that it can know
