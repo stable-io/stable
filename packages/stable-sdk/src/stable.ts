@@ -36,7 +36,7 @@ export class StableSDK<N extends Network> extends SDK<N> {
     if (await signer.getChainId() !== viemChain.id) {
       await signer.switchChain(viemChain);
     }
-    
+
     return signer;
   }
 
