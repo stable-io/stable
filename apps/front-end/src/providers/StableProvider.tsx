@@ -9,6 +9,7 @@ import {
   type PropsWithChildren,
   type JSX,
 } from "react";
+import { WalletClient } from "viem";
 
 interface StableContextValue {
   address?: string;
@@ -30,8 +31,15 @@ export const StableProvider = ({
       primaryWallet && isEthereumWallet(primaryWallet)
         ? {
             platform: "Evm" as const,
-            getWalletClient: (chain) =>
-              primaryWallet.getWalletClient(chain.id.toString(10)),
+            getWalletClient: async (chain): Promise<WalletClient> => {
+              const walletClient = await primaryWallet.getWalletClient(
+                chain.id.toString(10),
+              );
+              if ((await walletClient.getChainId()) !== chain.id) {
+                await walletClient.switchChain(chain);
+              }
+              return walletClient;
+            },
           }
         : undefined,
     [primaryWallet],

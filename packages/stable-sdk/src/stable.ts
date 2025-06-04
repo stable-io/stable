@@ -31,13 +31,7 @@ export class StableSDK<N extends Network> extends SDK<N> {
   public async getSigner(domain: keyof EvmDomains): ReturnType<SDK<N>["getSigner"]> {
     const viemChain = viemChainOf[this.options.network][domain];
     const rpcUrl = this.getRpcUrl(domain);
-    const signer = await this.options.signer.getWalletClient(viemChain, rpcUrl);
-
-    if (await signer.getChainId() !== viemChain.id) {
-      await signer.switchChain(viemChain);
-    }
-
-    return signer;
+    return this.options.signer.getWalletClient(viemChain, rpcUrl);
   }
 
   /**
