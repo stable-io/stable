@@ -46,6 +46,7 @@ const queryClient = new QueryClient({
 });
 
 const settings: ComponentProps<typeof DynamicContextProvider>["settings"] = {
+  initialAuthenticationMode: "connect-only",
   apiBaseUrl: env.dynamicApiBaseUrl,
   environmentId: env.dynamicEnvironmentId,
   walletConnectors: [EthereumWalletConnectors],
