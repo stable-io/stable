@@ -18,7 +18,6 @@ import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Text, TODO } from "@stable-io/utils";
 import { assertDistinct, assertEqual } from "@stable-io/utils";
 import type { RoArray } from "@stable-io/map-utils";
-import { Amount } from "@stable-io/amount";
 
 import type { QuoteRelay, Corridor } from "./contractSdk/layouts/index.js";
 import { CctpR as CctpRContract } from "./contractSdk/index.js";

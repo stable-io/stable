@@ -9,7 +9,7 @@ import {IERC20}          from "wormhole-sdk/interfaces/token/IERC20.sol";
 import {ITokenMessenger} from "wormhole-sdk/interfaces/cctp/ITokenMessenger.sol";
 import {BytesParsing}    from "wormhole-sdk/libraries/BytesParsing.sol";
 
-import {ICctpReceiver} from "cctp-xr/interfaces/ICctpReceiver.sol";
+import {ICctpReceiver} from "cctpr/interfaces/ICctpReceiver.sol";
 
 contract AvaxRouter {
   using BytesParsing for bytes;

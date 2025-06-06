@@ -1,0 +1,54 @@
+{
+  "description": "This file contains the chains against which all the scripts should run.",
+  "chains": [
+    {
+      "domain": "Ethereum",
+      "description": "Ethereum",
+      "evmNetworkId": 1,
+      "chainId": 2,
+      "rpc": ""
+    },
+    {
+      "domain": "Polygon",
+      "description": "Polygon",
+      "evmNetworkId": 137,
+      "chainId": 5,
+      "rpc": ""
+    },
+    {
+      "domain": "Avalanche",
+      "description": "Avalanche",
+      "evmNetworkId": 43114,
+      "chainId": 6,
+      "rpc": "https://api.avax.network/ext/bc/C/rpc"
+    },
+    {
+      "domain": "Arbitrum",
+      "description": "Arbitrum",
+      "evmNetworkId": 42161,
+      "chainId": 23,
+      "rpc": ""
+    },
+    {
+      "domain": "Optimism",
+      "description": "Optimism",
+      "evmNetworkId": 10,
+      "chainId": 24,
+      "rpc": ""
+    },
+    {
+      "domain": "Base",
+      "description": "Base",
+      "evmNetworkId": 8453,
+      "chainId": 30,
+      "rpc": "https://mainnet.base.org"
+    },
+    {
+      "domain": "Unichain",
+      "description": "Unichain",
+      "evmNetworkId": 130,
+      "chainId": 44,
+      "rpc": "https://unichain-rpc.publicnode.com"
+    }
+  ]
+}

@@ -241,8 +241,12 @@ type UnwrapValuesIfAllAreSingletons<M extends MappingEntries, D extends Depth[nu
       ? [IM[K][0], UnwrapValuesIfAllAreSingletons<IM[K][1], Depth[D]>]
       : never
     }] extends infer U extends MappingEntries
-    ? U
-    : void
+    ? U extends MappingEntries<infer T>
+      ? void extends T
+        ? void
+        : U
+      : never
+    : never
   : never;
 
 type MaybeUnwrapValuesIfAllAreSingletons<M extends MappingEntries, D extends Depth[number]> =
@@ -387,20 +391,14 @@ const isRecursiveTuple = (arr: RoArray) =>
   arr.length === 2 && !Array.isArray(arr[0]) && Array.isArray(arr[1]);
 
 export const cartesianRightRecursive =
-  <const T extends RoTuple>(arr: T): CartesianRightRecursive<T> => (
-    arr.length === 0
-      ? []
-      : Array.isArray(arr[0])
-        ? (arr as MappingEntries).flatMap(([key, val]: readonly [MappableKey, unknown]) =>
-          Array.isArray(val)
-            ? (isRecursiveTuple(val) ? cartesianRightRecursive(val as unknown as RoTuple) : val)
-              .map(ele => [key, ele].flat())
-            : [[key, val]],
-        )
-        : isRecursiveTuple(arr)
-          ? cartesianRightRecursive(arr[1] as RoTuple).map((ele: any) => [arr[0], ele])
-          : arr
-  ) as CartesianRightRecursive<T>;
+  <const M extends MappingEntries>(me: M): CartesianRightRecursive<M> => (
+    me.flatMap(([key, val]: MappingEntry) => (
+      Array.isArray(val)
+      ? (val.length > 0 && isRecursiveTuple(val[0]))
+        ? cartesianRightRecursive(val as unknown as MappingEntries).map(ele => [key, ele].flat())
+        : val.map(ele => [key, ele].flat())
+      : [[key, val]]
+  ))) as CartesianRightRecursive<M>;
 
 const toMapping = <
   const M extends MappingEntries,

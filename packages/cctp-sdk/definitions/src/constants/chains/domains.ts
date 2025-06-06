@@ -20,7 +20,9 @@ export const domains = [
   "Aptos",
   "Unichain",
   "Linea",
+  "Codex",
   "Sonic",
+  "Worldchain",
 ] as const;
 
 export type ExpandedDomain = typeof domains[number];

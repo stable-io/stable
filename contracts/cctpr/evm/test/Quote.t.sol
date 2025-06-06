@@ -24,7 +24,7 @@ import {
   SOLANA_STORAGE_BYTES,
   SOLANA_SIGNATURE_COUNT,
   AVAX_HOP_GAS_COST
-} from "cctp-xr/assets/CctpRQuote.sol";
+} from "cctpr/assets/CctpRQuote.sol";
 
 contract Quote is CctpRTestBase {
   int constant FEE_ADJUSTMENT_ABSOLUTE_MULTIPLIER = 1e16;
