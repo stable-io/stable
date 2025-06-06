@@ -9,7 +9,7 @@ import {
   type PropsWithChildren,
   type JSX,
 } from "react";
-import { WalletClient } from "viem";
+import type { WalletClient } from "viem";
 
 interface StableContextValue {
   address?: string;
