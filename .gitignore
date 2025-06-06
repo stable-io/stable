@@ -34,6 +34,8 @@ yarn-error.log*
 build/
 dist/
 out/
+build-contracts/
+cache/
 
 # Testing
 coverage/

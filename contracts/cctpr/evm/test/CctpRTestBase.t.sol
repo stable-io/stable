@@ -37,11 +37,11 @@ import "price-oracle/assets/types/SolanaFeeParams.sol";
 import "price-oracle/assets/types/SuiFeeParams.sol";
 import "price-oracle/PriceOracle.sol";
 
-import "cctp-xr/assets/CctpRIds.sol";
-import {Route, ADJUSTMENTS_PER_SLOT, CHAIN_IDS_PER_SLOT} from "cctp-xr/assets/CctpRBase.sol";
-import {CctpR} from "cctp-xr/CctpR.sol";
-import {AvaxRouter} from "cctp-xr/AvaxRouter.sol";
-import {CctpGasDropoff} from "cctp-xr/CctpGasDropoff.sol";
+import "cctpr/assets/CctpRIds.sol";
+import {Route, ADJUSTMENTS_PER_SLOT, CHAIN_IDS_PER_SLOT} from "cctpr/assets/CctpRBase.sol";
+import {CctpR} from "cctpr/CctpR.sol";
+import {AvaxRouter} from "cctpr/AvaxRouter.sol";
+import {CctpGasDropoff} from "cctpr/CctpGasDropoff.sol";
 import {IMessageTransmitterV2} from "./CctpOverrideV2.sol";
 
 //testing transfers from ethereum to base

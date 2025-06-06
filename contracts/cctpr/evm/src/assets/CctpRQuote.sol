@@ -26,7 +26,7 @@ import "price-oracle/assets/types/ParamLibs.sol";
 import "price-oracle/assets/types/EvmFeeParams.sol";
 import "price-oracle/assets/types/SolanaFeeParams.sol";
 import "price-oracle/assets/types/SuiFeeParams.sol";
-import {CctpRBase, Route} from "cctp-xr/assets/CctpRBase.sol";
+import {CctpRBase, Route} from "cctpr/assets/CctpRBase.sol";
 
 //constants are declared outside so they can be used in tests
 

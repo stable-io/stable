@@ -10,10 +10,10 @@ import {PermitParsing}     from "wormhole-sdk/libraries/PermitParsing.sol";
 import {RawDispatcher}     from "wormhole-sdk/RawDispatcher.sol";
 import {eagerAnd, eagerOr} from "wormhole-sdk/Utils.sol";
 
-import {CctpRBase, Route}       from "cctp-xr/assets/CctpRBase.sol";
-import {CctpROwner}             from "cctp-xr/assets/CctpROwner.sol";
-import {CctpRUser, Permit2Data} from "cctp-xr/assets/CctpRUser.sol";
-import {CctpRQuote}             from "cctp-xr/assets/CctpRQuote.sol";
+import {CctpRBase, Route}       from "cctpr/assets/CctpRBase.sol";
+import {CctpROwner}             from "cctpr/assets/CctpROwner.sol";
+import {CctpRUser, Permit2Data} from "cctpr/assets/CctpRUser.sol";
+import {CctpRQuote}             from "cctpr/assets/CctpRQuote.sol";
 import {
   TRANSFER_WITH_RELAY_WITH_PERMIT_ID,
   TRANSFER_WITH_RELAY_ID,
@@ -29,7 +29,7 @@ import {
   OWNER_SET_CHAIN_ID_FOR_DOMAIN_ID,
   QUERY_RELAY_IN_USDC_ID,
   QUERY_RELAY_IN_GAS_TOKEN_ID
-} from "cctp-xr/assets/CctpRIds.sol";
+} from "cctpr/assets/CctpRIds.sol";
 
 uint constant PERMIT2_SPENDER_SIZE   = 20;
 uint constant PERMIT2_AMOUNT_SIZE    =  8;

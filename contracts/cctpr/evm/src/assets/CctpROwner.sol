@@ -7,7 +7,7 @@ pragma solidity ^0.8.28;
 
 import {BytesParsing} from "wormhole-sdk/libraries/BytesParsing.sol";
 
-import {CctpRBase, Route} from "cctp-xr/assets/CctpRBase.sol";
+import {CctpRBase, Route} from "cctpr/assets/CctpRBase.sol";
 import {eagerOr, tokenOrNativeTransfer} from "wormhole-sdk/Utils.sol";
 
 uint8 constant MAX_ROUTE_VARIANT_PLUS_ONE = uint8(Route.AvaxHop) + 1;

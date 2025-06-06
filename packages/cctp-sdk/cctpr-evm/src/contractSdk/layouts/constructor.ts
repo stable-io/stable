@@ -7,8 +7,9 @@ import type { Layout, Item } from "binary-layout";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { uint256Item } from "@stable-io/cctp-sdk-definitions";
 import { evmAddressItem, paddedSlotItem, abiEncodedBytesItem } from "@stable-io/cctp-sdk-evm";
-import { domainChainIdPairLayout, feeAdjustmentTypes } from "./common.js";
+import { feeAdjustmentTypes } from "./common.js";
 import { feeAdjustmentsSlotItem } from "./feeAdjustments.js";
+import { chainIdsSlotItem } from "./extraChainIds.js";
 
 const isMainnetItem = <N extends Network>(network: N) => ({
   ...uint256Item, custom: network === "Mainnet" ? 1n : 0n, omit: true,
@@ -17,6 +18,19 @@ const isMainnetItem = <N extends Network>(network: N) => ({
 const feeAdjustmentChunksPerTypeLayout = {
   binary: "array", length: feeAdjustmentTypes.length, layout: feeAdjustmentsSlotItem,
 } as const satisfies Layout;
+
+export const chainDataLayout = [
+  { name: "extraChains",
+    binary: "array",
+    lengthSize: 1,
+    layout: chainIdsSlotItem,
+  },
+  { name: "feeAdjustments",
+    binary: "array",
+    lengthSize: 1,
+    layout: feeAdjustmentChunksPerTypeLayout,
+  },
+] as const satisfies Layout;
 
 export const constructorLayout = <N extends Network>(network: N) => {
   const abiEncodedParams = [
@@ -38,17 +52,7 @@ export const constructorLayout = <N extends Network>(network: N) => {
     { name: "chainData",
       ...abiEncodedBytesItem({
         position: abiEncodedParams.length,
-        layout: [
-          { name: "extraChains",
-            binary: "array",
-            lengthSize: 1,
-            layout: domainChainIdPairLayout(network),
-          },
-          { name: "feeAdjustments",
-            binary: "array",
-            layout: feeAdjustmentChunksPerTypeLayout,
-          },
-        ],
+        layout: chainDataLayout,
       }),
     },
   ] as const;

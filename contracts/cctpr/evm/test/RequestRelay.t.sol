@@ -22,15 +22,15 @@ import {BytesParsing}         from "wormhole-sdk/libraries/BytesParsing.sol";
 import {PermitParsing}        from "wormhole-sdk/libraries/PermitParsing.sol";
 import {toUniversalAddress}   from "wormhole-sdk/Utils.sol";
 
-import "cctp-xr/assets/CctpRIds.sol";
-import {WITNESS_TYPE_STRING} from "cctp-xr/assets/CctpRUser.sol";
+import "cctpr/assets/CctpRIds.sol";
+import {WITNESS_TYPE_STRING} from "cctpr/assets/CctpRUser.sol";
 import {
   QUOTE_OFF_CHAIN,
   QUOTE_ON_CHAIN_USDC,
   QUOTE_ON_CHAIN_GAS
-} from "cctp-xr/CctpR.sol";
-import {CctpGasDropoff} from "cctp-xr/CctpGasDropoff.sol";
-import {AvaxRouter} from "cctp-xr/AvaxRouter.sol";
+} from "cctpr/CctpR.sol";
+import {CctpGasDropoff} from "cctpr/CctpGasDropoff.sol";
+import {AvaxRouter} from "cctpr/AvaxRouter.sol";
 import "./CctpMessagesV2.sol";
 import "./CctpOverrideV2.sol";
 
