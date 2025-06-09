@@ -53,6 +53,14 @@ export interface Route {
 
   steps: RouteExecutionStep[];
 
+  // TODO:
+  // ideally this generator should return typed steps so that they are easy to handle.
+  // Since we are re-using the result of cctpr-evm we are limited by the fact that it
+  // returns directly what needs to be signed or signed-and-sent.
+  // But for example now that we are adding gasless we'll need to also return a type
+  // for a relay request that is sent to our api instead of signed or sent to a node.
+  // See `executeRouteSteps` where we need to do duck-typing to understand what kind
+  // of step we'll be executing.
   workflow: AsyncGenerator<ContractTx | Eip2612Data, ContractTx, Permit | undefined>;
 
   /**
