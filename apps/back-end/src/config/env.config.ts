@@ -1,10 +1,17 @@
+
 import { plainToInstance } from "class-transformer";
-import { IsNotEmpty, IsPort, validateSync } from "class-validator";
+import { IsEnum, IsIn, IsNotEmpty, IsPort, validateSync } from "class-validator";
+
+export type Network = "Mainnet" | "Testnet";
 
 export class EnvironmentVariables {
   @IsPort()
   @IsNotEmpty()
   public PORT!: number;
+
+  @IsNotEmpty()
+  @IsIn(["Mainnet", "Testnet"])
+  public NETWORK!: Network;
 }
 
 export const validate = (
