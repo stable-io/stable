@@ -1,3 +1,3 @@
-export class ApiResponse<T> {
+export class ApiResponseDto<T> {
   public data!: T;
 }
