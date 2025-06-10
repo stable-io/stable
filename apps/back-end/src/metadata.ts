@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default async () => {
     const t = {
-        ["./gasless-transfer/gasless-transfer.controller"]: await import("./gasless-transfer/gasless-transfer.controller")
+        ["./gaslessTransfer/gaslessTransfer.controller"]: await import("./gaslessTransfer/gaslessTransfer.controller")
     };
-    return { "@nestjs/swagger": { "models": [], "controllers": [[import("./metrics/metrics.controller"), { "MetricsController": { "getMetrics": { type: String } } }], [import("./gasless-transfer/gasless-transfer.controller"), { "GaslessTransferController": { "getStatus": { type: String }, "quoteGaslessTransfer": { type: t["./gasless-transfer/gasless-transfer.controller"].QuoteResponseData }, "initiateGaslessTransfer": { type: t["./gasless-transfer/gasless-transfer.controller"].RelayResponseData } } }]] } };
+    return { "@nestjs/swagger": { "models": [], "controllers": [[import("./metrics/metrics.controller"), { "MetricsController": { "getMetrics": { type: String } } }], [import("./gaslessTransfer/gaslessTransfer.controller"), { "GaslessTransferController": { "getStatus": { type: String }, "quoteGaslessTransfer": { type: t["./gaslessTransfer/gaslessTransfer.controller"].QuoteResponseData }, "initiateGaslessTransfer": { type: t["./gaslessTransfer/gaslessTransfer.controller"].RelayResponseData } } }]] } };
 };

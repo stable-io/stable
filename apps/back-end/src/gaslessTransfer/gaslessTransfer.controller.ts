@@ -1,10 +1,10 @@
 import { Controller, Get, Post } from "@nestjs/common";
 import { ApiResponse as SwaggerApiResponse } from "@nestjs/swagger";
 
-import { GaslessTransferService } from "./gasless-transfer.service.js";
+import { GaslessTransferService } from "./gaslessTransfer.service.js";
 import { ApiResponse } from "../common/types.js";
 
-import { Quote, RelayTx } from "./gasless-transfer.types.js";
+import { Quote, RelayTx } from "./gaslessTransfer.types.js";
 
 export class QuoteResponseData extends ApiResponse<Quote> {
   declare public data: Quote;
@@ -32,11 +32,11 @@ export class GaslessTransferController {
     description: "Quote for a gasless transfer. TODO",
   })
   public async quoteGaslessTransfer(): Promise<QuoteResponseData> {
-    return { data: this.gaslessTransferService.quoteGaslessTransfer() };
+    return { data: await this.gaslessTransferService.quoteGaslessTransfer() };
   }
 
   @Post("/relay")
   public async initiateGaslessTransfer(): Promise<RelayResponseData> {
-    return { data: this.gaslessTransferService.initiateGaslessTransfer() };
+    return { data: await this.gaslessTransferService.initiateGaslessTransfer() };
   }
 }

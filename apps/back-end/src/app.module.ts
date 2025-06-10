@@ -3,7 +3,7 @@ import { ConfigModule as NestConfigModule } from "@nestjs/config";
 import { LoggingMiddleware } from "./common/middleware/logging.middleware";
 import { ConfigModule } from "./config/config.module";
 import { MetricsModule } from "./metrics/metrics.module";
-import { GaslessTransferModule } from "./gasless-transfer/gasless-transfer.module";
+import { GaslessTransferModule } from "./gaslessTransfer/gaslessTransfer.module";
 
 @Module({
   imports: [

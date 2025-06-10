@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
-import { GaslessTransferService } from "./gasless-transfer.service";
-import { GaslessTransferController } from "./gasless-transfer.controller";
+import { GaslessTransferService } from "./gaslessTransfer.service";
+import { GaslessTransferController } from "./gaslessTransfer.controller";
 import { MetricsModule } from "../metrics/metrics.module";
 import { ConfigModule } from "../config/config.module";
 
