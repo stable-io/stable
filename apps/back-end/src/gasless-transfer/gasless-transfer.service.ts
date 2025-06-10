@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { Quote, RelayTx } from './gasless-transfer.types.js';
+import { Injectable } from "@nestjs/common";
+import { Quote, RelayTx } from "./gasless-transfer.types.js";
 
 @Injectable()
 export class GaslessTransferService {
   getStatus(): string {
-    return 'Gasless Transfer Service is running';
+    return "Gasless Transfer Service is running";
   }
 
   public quoteGaslessTransfer(): Promise<Quote> {
@@ -22,4 +22,4 @@ export class GaslessTransferService {
     // 4. respond.
     return Promise.resolve({});
   }
-} 
+}
