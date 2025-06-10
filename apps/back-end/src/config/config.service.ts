@@ -11,4 +11,8 @@ export class ConfigService {
   public constructor(
     private readonly env: NestConfigService<EnvironmentVariables, true>,
   ) {}
+
+  public get network(): EnvironmentVariables["NETWORK"] {
+    return this.env.getOrThrow("NETWORK");
+  }
 }

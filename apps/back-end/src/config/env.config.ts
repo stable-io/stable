@@ -1,8 +1,6 @@
-
+import type { Network } from "@stable-io/sdk";
 import { plainToInstance } from "class-transformer";
-import { IsEnum, IsIn, IsNotEmpty, IsPort, validateSync } from "class-validator";
-
-export type Network = "Mainnet" | "Testnet";
+import { IsIn, IsNotEmpty, IsPort, validateSync } from "class-validator";
 
 export class EnvironmentVariables {
   @IsPort()
