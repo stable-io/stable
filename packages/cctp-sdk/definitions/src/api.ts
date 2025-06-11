@@ -3,6 +3,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+/**
+ * @todo: this utility is abstract enough to move to common packages.
+ *        it's not really related in anything to cctp itself.
+ */
+
 import type { BaseObject, Url } from "@stable-io/utils";
 import type { Duration } from "./constants/index.js";
 import { duration } from "./constants/index.js";

@@ -10,9 +10,11 @@ import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import {
   init as initCctprEvm,
   type SupportedEvmDomain,
+
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import {
   GasTokenOf,
+  EvmDomains,
 } from "@stable-io/cctp-sdk-definitions";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
@@ -63,10 +65,11 @@ export const $findRoutes =
 
     for (const corridor of corridors) {
       const userTransferRoute = buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor);
-      // const gaslessRoutes = intent.paymentToken === "usdc" ? [] : [buildGaslessRoute()];
+      const gaslessRoutes = intent.paymentToken === "usdc"
+        ? [buildGaslessRoute(viemEvmClient, intent, corridor)]: [];
 
       const corridorRoutes = await Promise.all([
-        // ...gaslessRoutes,
+        ...gaslessRoutes,
         userTransferRoute,
       ]);
 
@@ -88,7 +91,7 @@ async function getCorridors<
 > (
   viemEvmClient: ViemEvmClient<N,S>,
   cctprEvm: ReturnType<typeof initCctprEvm<N>>,
-  intent: Intent,
+  intent: Intent<keyof EvmDomains, keyof EvmDomains>,
 ) {
   const { stats: corridorStats, fastBurnAllowance } = await cctprEvm.getCorridors(
     viemEvmClient,
@@ -102,7 +105,7 @@ async function getCorridors<
   });
 }
 
-function parseIntent (userIntent: UserIntent): Intent {
+function parseIntent (userIntent: UserIntent): Intent<keyof EvmDomains, keyof EvmDomains> {
   return {
     sourceChain: userIntent.sourceChain,
     targetChain: userIntent.targetChain,

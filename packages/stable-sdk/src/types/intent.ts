@@ -7,6 +7,7 @@ import { EvmDomains, GasTokenOf, GenericGasToken, Usdc } from "@stable-io/cctp-s
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Address, Amount } from "./general.js";
 import { PaymentTokenOptions } from "./sdk.js";
+import { Network } from "./general.js";
 
 export type UserIntent = {
   sourceChain: keyof EvmDomains;
@@ -21,14 +22,17 @@ export type UserIntent = {
   relayFeeMaxChangeMargin?: number; // | percentage?; TODO
 }
 
-export type Intent = {
-  sourceChain: keyof EvmDomains;
-  targetChain: keyof EvmDomains;
+export type Intent<
+  S extends keyof EvmDomains,
+  D extends keyof EvmDomains,
+> = {
+  sourceChain: S;
+  targetChain: D;
   amount: Usdc;
   sender: EvmAddress; // eventually universal address
   recipient: EvmAddress; // eventually universal address
   usePermit: boolean;
-  gasDropoffDesired: GenericGasToken; // TODO: type parameters S and D for source and target and GasTokenOf<D>
+  gasDropoffDesired: GasTokenOf<D>;
   paymentToken: PaymentTokenOptions;
   relayFeeMaxChangeMargin: number;
 }

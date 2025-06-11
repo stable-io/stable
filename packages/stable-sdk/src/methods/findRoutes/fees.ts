@@ -25,9 +25,13 @@ import {
 import type { Fee, Network, Intent } from "../../types/index.js";
 import { RouteExecutionStep } from "./steps.js";
 
-export function getCorridorFees<N extends Network, S extends keyof EvmDomains>(
+export function getCorridorFees<
+  N extends Network,
+  S extends keyof EvmDomains,
+  D extends keyof EvmDomains,
+>(
   corridorCost: CorridorStats<N, S, Corridor>["cost"],
-  intent: Intent,
+  intent: Intent<S, D>,
 ): { corridorFees: Fee[]; maxRelayFee: Fee; maxFastFeeUsdc?: Usdc } {
   const corridorFees = [] as Fee[];
 

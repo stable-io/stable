@@ -2,6 +2,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { init as initDefinitions } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm } from "@stable-io/cctp-sdk-evm";
@@ -36,11 +37,12 @@ const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
 
 export async function buildUserTransferRoute<
   N extends Network,
-  S extends SupportedEvmDomain<N>
+  S extends SupportedEvmDomain<N>,
+  D extends SupportedEvmDomain<N>,
 > (
   evmClient: ViemEvmClient<N,S>,
   cctprEvm: ReturnType<typeof initCctprEvm<N>>,
-  intent: Intent,
+  intent: Intent<S,D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
 ): Promise<Route> {
   const { corridorFees, maxRelayFee, maxFastFeeUsdc } = getCorridorFees(
