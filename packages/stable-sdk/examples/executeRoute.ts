@@ -30,15 +30,17 @@ const sdk = new StableSDK({
 
 const intent = {
   sourceChain: "Ethereum" as const,
-  targetChain: "Arbitrum" as const,
+  targetChain: "Optimism" as const,
   amount: "0.01",
   sender,
   recipient,
   // To receive gas tokens on the target. Increases the cost of the transfer.
   // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
+
+  // paymentToken: "usdc",
 };
 
-const routes = await sdk.findRoutes(intent, { paymentToken: "usdc" });
+const routes = await sdk.findRoutes(intent);
 
 const selectedRoutes = [routes.fastest];
 
@@ -51,7 +53,7 @@ for (const route of selectedRoutes) {
 
   route.progress.on("step-completed", (e) => {
     console.info(`Step completed: ${e.name}.`);
-    // console.info(`Data: ${stringify(e.data)}\n`);
+    console.info(`Data: ${stringify(e.data)}\n`);
   });
 
   route.transactionListener.on("*", (e) => {
@@ -85,9 +87,9 @@ function logRouteInfo(route: Route) {
     route.requiresMessageSignature ? "Permit" : "Approval",
   );
   console.info("Signatures required", route.steps.length);
-  console.info(
-    `Total Cost: $${route.estimatedTotalCost.toUnit("human").toString()}`,
-  );
+  // console.info(
+  //   `Source TX cost + Relay Cost: $${route.estimatedTotalCost.toUnit("human").toString()}`,
+  // );
   console.info(`Estimated Duration: ${route.estimatedDuration}s`);
 
   console.info("Fees to pay:");

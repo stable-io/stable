@@ -4,18 +4,11 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Amount, Conversion } from "@stable-io/amount";
-import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   Corridor,
   CorridorStats,
-  SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import {
-  init as initCctprEvm,
-} from "@stable-io/cctp-sdk-cctpr-evm";
-import {
-  init as initDefinitions,
   EvmDomains,
   GasTokenKindOf,
   GasTokenNameOf,
@@ -28,61 +21,33 @@ import {
   gasTokenNameOf,
   gasTokenOf,
 } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, init as initEvm } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { TODO } from "@stable-io/utils";
 
-import { TransferProgressEmitter } from "../../progressEmitter.js";
-import { TransactionEmitter } from "../../transactionEmitter.js";
-import { transferWithGaslessRelaying } from "../../gasless/transfer.js";
-
-import type {
-  Fee,
-  SDK,
-  Route,
-  RouteExecutionStep,
-  Network,
-  Intent,
-} from "../../types/index.js";
-
-/**
- * @todo: this probably makes more sense in BPS?
- */
-const RELAY_FEE_MAX_CHANGE_MARGIN = 1.02;
+import type { Fee, Network, Intent } from "../../types/index.js";
+import { RouteExecutionStep } from "./steps.js";
 
 export function getCorridorFees<N extends Network, S extends keyof EvmDomains>(
   corridorCost: CorridorStats<N, S, Corridor>["cost"],
-  intendedAmount: Usdc,
-  payInUsdc: boolean,
-  relayFeeMaxChangeMargin?: number,
+  intent: Intent,
 ): { corridorFees: Fee[]; maxRelayFee: Fee; maxFastFeeUsdc?: Usdc } {
   const corridorFees = [] as Fee[];
 
-  const relayFee: Fee = payInUsdc
+  const relayFee: Fee = intent.paymentToken === "usdc"
     ? corridorCost.relay[0]
     : corridorCost.relay[1] as GasTokenOf<keyof EvmDomains>;
 
-  const maxChangeMargin = relayFeeMaxChangeMargin ?? RELAY_FEE_MAX_CHANGE_MARGIN;
-  const maxRelayFee = relayFee.mul(maxChangeMargin);
+  const maxRelayFee = relayFee.mul(intent.relayFeeMaxChangeMargin);
 
   corridorFees.push(maxRelayFee);
   let maxFastFeeUsdc: Usdc | undefined = undefined;
 
   if (corridorCost.fast !== undefined) {
-    /**
-     * If the corridor has the "fast" option, then we assume it
-     * will be used.
-     * Hence we add the fast cost to the fees.
-     * See comment above `findRoutes` method for more info.
-     */
     const percentage = corridorCost.fast.toUnit("whole");
-    maxFastFeeUsdc = usdc(intendedAmount.mul(percentage).toUnit("µUSDC").ceil(), "µUSDC");
+    maxFastFeeUsdc = usdc(intent.amount.mul(percentage).toUnit("µUSDC").ceil(), "µUSDC");
     corridorFees.push(maxFastFeeUsdc);
   }
 
   return { corridorFees, maxRelayFee, maxFastFeeUsdc };
 }
-
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function calculateTotalCost(

@@ -2,10 +2,14 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type {
-  SupportedEvmDomain,
+import { Amount } from "@stable-io/amount";
+import { gasTokenKindOf, isUsdc, type Usdc } from "@stable-io/cctp-sdk-definitions";
+import { usdc } from "@stable-io/cctp-sdk-definitions";
+import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { EvmAddress } from "@stable-io/cctp-sdk-evm";
+import {
+  init as initCctprEvm,
+  type SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import {
   GasTokenOf,
@@ -13,35 +17,31 @@ import {
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
 
-import { getCorridorFees } from "./fees.js";
-
-import { buildGaslessRelayerRoute } from "./routes/gasless.js";
+import { buildGaslessRoute, buildUserTransferRoute } from "./routes/index.js";
 
 import type {
   SDK,
   Route,
   Network,
   Intent,
+  UserIntent,
 } from "../../types/index.js";
-
-/**
- * @todo: no need to use bigint for gas units
- */
-const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
-/**
- * @todo: this probably makes more sense in BPS?
- */
-const RELAY_FEE_MAX_CHANGE_MARGIN = 1.02;
 
 export type FindRoutesDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
+const RELAY_FEE_MAX_CHANGE_MARGIN = 1.02;
+
 export const $findRoutes =
   <N extends Network>({
+    /**
+     * @todo: DI is wrong here. What we need to inject is evm client and cctpr instances
+     *        which are created in this function.
+     */
     getNetwork,
     getRpcUrl,
   }: FindRoutesDeps<N>): SDK<N>["findRoutes"] =>
-  async (intent, routeSearchOptions) => {
-    const payInUsdc = (routeSearchOptions.paymentToken ?? "usdc") === "usdc";
+  async (userIntent) => {
+    const intent = parseIntent(userIntent);
 
     const network = getNetwork();
     const rpcUrl = getRpcUrl(intent.sourceChain);
@@ -51,48 +51,34 @@ export const $findRoutes =
       intent.sourceChain,
       rpcUrl,
     );
+    const cctprEvm = initCctprEvm(network);
 
-    const gasDropoff = parseGasDropoff(intent) as GasTokenOf<SupportedDomain<N>>;
-    
-
-
-    const corridorStats  = await getCorridors(
+    const corridors  = await getCorridors(
       viemEvmClient,
+      cctprEvm,
       intent,
-      gasDropoff as TODO
     );
 
     const routes: Route[] = [];
 
-    for (const corridor of corridorStats) {
-      const { corridorFees, maxRelayFee, maxFastFeeUsdc } = getCorridorFees(
-        corridor.cost,
-        usdc(intent.amount),
-        payInUsdc,
-        routeSearchOptions.relayFeeMaxChangeMargin,
-      );
-
-      const estimatedDuration = corridor.transferTime.toUnit("sec").toNumber();
-
-      const gaslessRoutes = payInUsdc ? [] : [await buildGaslessRelayerRoute()];
-      const permitRoute = await buildPermitRoute();
-      const approvalRoute = await buildApprovalRoute();
+    for (const corridor of corridors) {
+      const userTransferRoute = buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor);
+      // const gaslessRoutes = intent.paymentToken === "usdc" ? [] : [buildGaslessRoute()];
 
       const corridorRoutes = await Promise.all([
-        ...gaslessRoutes,
-        permitRoute,
-        approvalRoute,
+        // ...gaslessRoutes,
+        userTransferRoute,
       ]);
 
       routes.push(...corridorRoutes);
     }
 
-    const { fastest, cheapest } = getBestRoutes(routes);
+    const { fastest, cheapest } = findBestRoutes(routes);
 
     return {
       all: routes,
-      fastest: fastest,
-      cheapest: cheapest,
+      fastest,
+      cheapest,
     };
   };
 
@@ -101,28 +87,55 @@ async function getCorridors<
   S extends SupportedEvmDomain<N>
 > (
   viemEvmClient: ViemEvmClient<N,S>,
+  cctprEvm: ReturnType<typeof initCctprEvm<N>>,
   intent: Intent,
-  gasDropoff: TODO,
 ) {
-  const cctprEvm = initCctprEvm(viemEvmClient.network);
-
-  const { stats: corridorStats, fastBurnAllowance } =
-    await cctprEvm.getCorridors(viemEvmClient, intent.targetChain, gasDropoff);
+  const { stats: corridorStats, fastBurnAllowance } = await cctprEvm.getCorridors(
+    viemEvmClient,
+    intent.targetChain,
+    intent.gasDropoffDesired as TODO,
+  );
 
   return corridorStats.filter((c) => {
     if (!c.cost.fast) return true;
-    return usdc(intent.amount).ge(fastBurnAllowance)
+    return intent.amount.lt(fastBurnAllowance)
   });
 }
 
-function parseGasDropoff(intent: Intent): TODO {
+function parseIntent (userIntent: UserIntent): Intent {
+  return {
+    sourceChain: userIntent.sourceChain,
+    targetChain: userIntent.targetChain,
+    sender: toEvmAddress(userIntent.sender),
+    recipient: toEvmAddress(userIntent.recipient),
+    amount: parseAmount(userIntent.amount),
+    usePermit: userIntent.usePermit ?? true,
+    gasDropoffDesired: parseGasDropoff(userIntent),
+    paymentToken: userIntent.paymentToken ?? "usdc",
+    relayFeeMaxChangeMargin: userIntent.relayFeeMaxChangeMargin ?? RELAY_FEE_MAX_CHANGE_MARGIN,
+  }
+}
+
+function parseAmount(userAmount: string | Usdc): Usdc {
+  if (userAmount instanceof Amount && isUsdc(userAmount)) return userAmount;
+  if (typeof userAmount === "string") return usdc(userAmount);
+  throw new Error(`Unexpected value for amount: ${typeof userAmount}`);
+}
+
+function toEvmAddress(address: string | EvmAddress): EvmAddress {
+  if (address instanceof EvmAddress) return address;
+  if (typeof address === "string") return new EvmAddress(address);
+  throw new Error(`Unexpected value for evm address: ${typeof address}`);
+}
+
+function parseGasDropoff(intent: UserIntent): TODO {
   return Amount.ofKind(gasTokenKindOf(intent.targetChain))(
     intent.gasDropoffDesired ?? 0,
     "atomic",
   );
 }
 
-function getBestRoutes(routes: Route[]) {
+function findBestRoutes(routes: Route[]) {
   let fastest: Route | undefined;
   let cheapest: Route | undefined;
 
@@ -135,5 +148,5 @@ function getBestRoutes(routes: Route[]) {
     }
   }
 
-  return { fastest, cheapest };
+  return { fastest: fastest!, cheapest: cheapest! };
 }

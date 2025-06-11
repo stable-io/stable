@@ -38,7 +38,7 @@ export const $checkHasEnoughFunds =
       (acc, fee) => isUsdc(fee)
         ? { ...acc, usdc: acc.usdc.add(fee) }
         : { ...acc, gasToken: acc.gasToken.add(fee as TODO) },
-      { gasToken: requiredGasFromSteps, usdc: usdc(amount) },
+      { gasToken: requiredGasFromSteps, usdc: amount },
     );
 
     const [gasTokenBalance, usdcBalance] = await Promise.all([

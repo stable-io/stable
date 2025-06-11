@@ -11,7 +11,8 @@ import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
-import { isContractTx, Route, getStepType, isEip2612Data, ViemWalletClient, TxHash, Hex } from "../../types/index.js";
+import { Route, ViemWalletClient, TxHash, Hex } from "../../types/index.js";
+import { isContractTx, getStepType, isEip2612Data } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData, parsePermitEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 

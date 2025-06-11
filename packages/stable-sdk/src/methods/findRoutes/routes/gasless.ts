@@ -5,7 +5,7 @@
 
 import type { Route } from "../../../types/index.js";
 
-export async function buildGaslessRelayerRoute(): Promise<Route> {
+export async function buildGaslessRoute(): Promise<Route> {
   throw new Error("NotImplemented");
   // const routeWithGaslessRelaying: Route = {
   //   ...sharedRouteData,

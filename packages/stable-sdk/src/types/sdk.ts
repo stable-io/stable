@@ -6,7 +6,7 @@
 import type { WalletClient as ViemWalletClient } from "viem";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Address, Amount, Chain, Network, TxHash } from "./general.js";
-import { Intent } from "./intent.js";
+import { UserIntent } from "./intent.js";
 import { Route } from "./route.js";
 import { EvmPlatformSigner } from "./signer.js";
 import { Url } from "@stable-io/utils";
@@ -27,8 +27,7 @@ export abstract class SDK<N extends Network> {
   public abstract getNetwork(): N;
 
   public abstract findRoutes(
-    intent: Intent,
-    routeSearchOptions: RouteSearchOptions,
+    intent: UserIntent,
   ): Promise<RoutesResult>;
 
   public abstract checkHasEnoughFunds(route: Route): Promise<boolean>;
@@ -60,19 +59,3 @@ export interface RoutesResult {
 
 export type PaymentTokenOptions = "usdc" | "native";
 
-export interface RouteSearchOptions {
-  // A single property "paymentToken" will select
-  // the token used to pay for all fees.
-  // (relayer, gas, gas-dropoff...)
-
-  // defaults to usdc.
-  paymentToken?: PaymentTokenOptions;
-
-  // How much change in the relay fee is tolerated between the moment the
-  // relay is quoted until the relay is executed.
-  relayFeeMaxChangeMargin?: number;
-
-  // Ideas...
-  // allowSigningMessages?: boolean;
-  // allowSwitchingChains: boolean;
-}
