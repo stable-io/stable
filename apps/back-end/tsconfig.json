@@ -4,8 +4,8 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "isolatedModules": true,
-    "module": "CommonJS",
-    "moduleResolution": "Node10",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "outDir": "./dist",
     "rootDir": "./src"
   }
