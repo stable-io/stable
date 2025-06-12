@@ -7,6 +7,7 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Injectable } from "@nestjs/common";
+<<<<<<< HEAD
 import type { PlainDto } from "../common/types";
 import type { Permit2TypedData } from "../common/utils";
 import { composePermit2Msg, instanceToPlain } from "../common/utils";
@@ -18,13 +19,35 @@ export interface JwtPayload extends Record<string, unknown> {
   readonly permit2TypedData: Permit2TypedData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
 }
+=======
+import { TxLandingClient } from "@xlabs/tx-landing-client";
+import { EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { CctpR, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
+import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { initiateGaslessTransfer } from "./initiateGaslessTransfer.js";
+
+import { QuoteDto, QuoteRequestDto } from "./dto/index.js";
+>>>>>>> 97ba020 (initiate transfer draft)
+
+export type Network = "Mainnet" | "Testnet";
 
 @Injectable()
 export class GaslessTransferService {
+<<<<<<< HEAD
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {}
+=======
+  public network!: Network;
+  private txLandingApiKey!: string;
+
+  construtor(network: Network, txLandingApiKey: string) {
+    this.network = network;
+    this.txLandingApiKey = txLandingApiKey;
+  };
+>>>>>>> 97ba020 (initiate transfer draft)
 
   getStatus(): string {
     return "Gasless Transfer Service is running";
@@ -67,6 +90,7 @@ export class GaslessTransferService {
     return { jwt };
   }
 
+<<<<<<< HEAD
   public initiateGaslessTransfer(): Promise<object> {
     // @todo: verify quote signature and throw if invalid
     // @todo: call tx-landing-service and request the tx to be landed. set nonce+sender as
@@ -74,6 +98,30 @@ export class GaslessTransferService {
     // @todo: poll tx-landing-service for transaction confirmation
     // @todo: respond.
     return Promise.resolve({});
+=======
+  public initiateGaslessTransfer = initiateGaslessTransfer({
+    getCctprEvm: this.getCctprEvm.bind(this),
+    getTxLandingClient: () => this.txLandingClient(),
+  });
+
+  private txLandingClient(): TxLandingClient {
+    const txLandingBaseUrls = {
+      Mainnet: "",
+      Testnet: "http://localhost:50051",
+    };
+
+    const url = txLandingBaseUrls[this.network];
+    return new TxLandingClient(url, this.txLandingApiKey, {
+      timeout: 60, // seconds
+    });
+  }
+
+  private getCctprEvm(sourceChain: keyof EvmDomains): CctpR<Network, SupportedEvmDomain<Network>> {
+    const client = ViemEvmClient.fromNetworkAndDomain(this.network, sourceChain);
+    const cctprAddress = "0xTODO";
+
+    return new CctpR(client, new EvmAddress(cctprAddress));
+>>>>>>> 97ba020 (initiate transfer draft)
   }
 
   private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
