@@ -34,8 +34,6 @@ export const $executeRoute =
     );
 
     /**
-     * @todo: we could get and return signatures along with the transactions and
-     *        we'd be providing all infromation the integrator may possibly need.
      * @todo: review return value of executeRouteSteps. Having only the tx hashes
      *        makes it hard/unreliable to know which is the transfer transaction.
      *        For the time being we can get our way by getting the last tx, but

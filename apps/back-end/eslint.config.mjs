@@ -25,6 +25,7 @@ const overridesConfig = {
   name: "back-end:overrides",
   rules: {
     "unicorn/prefer-top-level-await": "off",
+    "@typescript-eslint/no-extraneous-class": "off",
   },
 };
 
