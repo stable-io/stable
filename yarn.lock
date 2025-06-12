@@ -4691,6 +4691,7 @@ __metadata:
     "@nestjs/platform-express": "npm:^11.1.3"
     "@nestjs/schematics": "npm:^11.0.5"
     "@nestjs/swagger": "npm:^11.2.0"
+    "@stable-io/cctp-sdk-cctpr-evm": "workspace:^"
     "@stable-io/cctp-sdk-definitions": "workspace:^"
     "@swc/cli": "npm:^0.7.7"
     "@swc/core": "npm:^1.11.31"
