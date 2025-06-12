@@ -8,13 +8,7 @@ export class GaslessTransferService {
   }
 
   public quoteGaslessTransfer(request: QuoteRequestDto): Promise<QuoteDto> {
-    // TODO: Convert request.amount from number to Amount<Usdc> for internal processing
-    // const usdcAmount = Amount.fromAtomic(...);
-
-    // TODO: Convert request.gasDropoffDesired from number to Amount<GenericGasToken>
-    // for internal processing
-    // const gasDropoffAmount = Amount.fromAtomic(...);
-
+    // @todo:
     // 1. quote transfer based on input parameters
     // 2. sign the quote
     // 3. respond
