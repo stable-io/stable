@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "emitDecoratorMetadata": true,
+    "exactOptionalPropertyTypes": false,
     "experimentalDecorators": true,
     "isolatedModules": true,
     "module": "preserve",
