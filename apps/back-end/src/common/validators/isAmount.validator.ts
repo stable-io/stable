@@ -6,6 +6,7 @@ import {
   registerDecorator,
   ValidationOptions,
 } from "class-validator";
+import { createAmountRegexPattern } from "../utils";
 
 interface AmountOptions<T extends Amount<Kind>> {
   min?: T;
@@ -24,7 +25,7 @@ export class IsAmountConstraint<T extends Amount<Kind>>
 
     if (typeof value !== "string") return false;
 
-    const regex = new RegExp(`^\\d+(?:\\.\\d{1,${options.decimals}})?$`);
+    const regex = new RegExp(createAmountRegexPattern(options.decimals));
     if (!regex.test(value)) return false;
 
     try {
