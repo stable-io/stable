@@ -1,0 +1,140 @@
+---
+description:
+globs: apps/back-end/src/*.ts
+alwaysApply: false
+---
+# DTO Property Validation Rule
+
+Rule for enforcing validation decorators on all DTO properties in NestJS applications.
+
+<rule>
+name: dto_property_validation
+description: Ensure all DTO properties have appropriate class-validator decorators
+filters:
+  # Match DTO files
+  - type: filename
+    pattern: "\\.dto\\.(ts|js)$"
+  # Match class properties in DTO files
+  - type: content
+    pattern: "class \\w+Dto"
+
+actions:
+  - type: reject
+    conditions:
+      - pattern: "^\\s*(?!\\s*(?:/\\*\\*|//|@))\\w+[?]?:\\s*\\w+"
+        message: "All DTO properties must have validation decorators (@IsString, @IsNumber, @IsOptional, etc.)"
+
+  - type: suggest
+    message: |
+      **All DTO properties must have validation decorators:**
+
+      ### ✅ Properly Validated DTOs
+      ```typescript
+      export class QuoteRequestDto {
+        /**
+         * The source blockchain for the transfer
+         * @example "ethereum"
+         */
+        @IsString()
+        @IsNotEmpty()
+        sourceChain: string;
+
+        /**
+         * The target blockchain for the transfer
+         * @example "arbitrum"
+         */
+        @IsString()
+        @IsNotEmpty()
+        targetChain: string;
+
+        /**
+         * Transfer amount in USDC (6 decimal places)
+         * @example 1000000
+         */
+        @IsNumber()
+        @Min(1)
+        amount: number;
+
+        /**
+         * Sender's Ethereum address
+         * @example "0x742d35Cc6634C0532925a3b8D404d4bC2f28e9FF"
+         */
+        @IsEthereumAddress()
+        sender: string;
+
+        /**
+         * Whether a permit message is included
+         * @example true
+         */
+        @IsBoolean()
+        @IsOptional()
+        includesPermitMessage?: boolean;
+      }
+      ```
+
+      ### ❌ Missing Validation
+      ```typescript
+      // Bad: No validation decorators
+      export class QuoteRequestDto {
+        sourceChain: string;        // Vulnerable to invalid data
+        targetChain: string;        // No type checking at runtime
+        amount: number;             // Could be negative or invalid
+        sender: string;             // Could be malformed address
+      }
+      ```
+
+      ### Common Validation Decorators
+      - `@IsString()` - String validation
+      - `@IsNumber()` - Number validation
+      - `@IsBoolean()` - Boolean validation
+      - `@IsEthereumAddress()` - Ethereum address validation
+      - `@IsOptional()` - Optional property
+      - `@IsNotEmpty()` - Non-empty validation
+      - `@Min()` / `@Max()` - Number range validation
+      - `@IsEnum()` - Enum validation
+      - `@IsArray()` - Array validation
+      - `@ValidateNested()` - Nested object validation
+
+      ### JSDoc Integration
+      - Use JSDoc comments for property descriptions
+      - Include `@example` tags for Swagger documentation
+      - Comment introspection will automatically generate API docs
+
+examples:
+  - input: |
+      export class UserDto {
+        name: string;
+        age: number;
+        email: string;
+      }
+    output: |
+      export class UserDto {
+        /**
+         * User's full name
+         * @example "John Doe"
+         */
+        @IsString()
+        @IsNotEmpty()
+        name: string;
+
+        /**
+         * User's age in years
+         * @example 25
+         */
+        @IsNumber()
+        @Min(0)
+        @Max(150)
+        age: number;
+
+        /**
+         * User's email address
+         * @example "john@example.com"
+         */
+        @IsEmail()
+        email: string;
+      }
+
+metadata:
+  priority: high
+  version: 1.0
+</rule>
