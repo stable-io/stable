@@ -3,7 +3,7 @@ import type {
   Usdc,
   EvmGasToken,
 } from "@stable-io/cctp-sdk-definitions";
-import { domains, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
+import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
 import {
@@ -21,6 +21,8 @@ import {
 } from "../../common/validators";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
+
+const domains = domainsOf("Evm");
 
 export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
   /**
