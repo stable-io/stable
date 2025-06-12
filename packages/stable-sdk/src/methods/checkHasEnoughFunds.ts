@@ -4,12 +4,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { Network } from "@stable-io/cctp-sdk-definitions";
-import { gasTokenOf, isUsdc, Usdc, usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
+import { gasTokenOf, isUsdc, Usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, getTokenBalance } from "@stable-io/cctp-sdk-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { TODO, Url } from "@stable-io/utils";
+import { TODO } from "@stable-io/utils";
 import { SDK } from "../types/index.js";
-import { Route } from "../types/route.js";
+import { SupportedRoute } from "../types/route.js";
 
 export type CheckHasEnoughFundsDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
@@ -17,7 +17,7 @@ export const $checkHasEnoughFunds =
   <N extends "Mainnet" | "Testnet">(
     { getNetwork, getRpcUrl }: CheckHasEnoughFundsDeps<N>,
   ): SDK<N>["checkHasEnoughFunds"] =>
-  async (route: Route) => {
+  async (route: SupportedRoute<N>) => {
     const { intent: { sourceChain, sender, amount }, fees } = route;
     const network = getNetwork();
     const rpcUrl = getRpcUrl(sourceChain);

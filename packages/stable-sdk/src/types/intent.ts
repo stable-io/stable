@@ -5,22 +5,21 @@
 
 import { EvmDomains, GasTokenOf, GenericGasToken, Usdc } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { Address, Amount } from "./general.js";
+import { Address, Amount, Network } from "./general.js";
 import { PaymentTokenOptions } from "./sdk.js";
-import { Network } from "./general.js";
 
 export type UserIntent = {
   sourceChain: keyof EvmDomains;
   targetChain: keyof EvmDomains;
-  amount: string | Amount;
+  amount: string;
   sender: string; // | EvmAddress; TODO
   recipient: string; // | EvmAddress; TODO
 
   usePermit?: boolean;
   gasDropoffDesired?: bigint; // | GasTokenOf<N>; TODO
-  paymentToken?: PaymentTokenOptions
+  paymentToken?: PaymentTokenOptions;
   relayFeeMaxChangeMargin?: number; // | percentage?; TODO
-}
+};
 
 export type Intent<
   S extends keyof EvmDomains,
@@ -35,4 +34,4 @@ export type Intent<
   gasDropoffDesired: GasTokenOf<D>;
   paymentToken: PaymentTokenOptions;
   relayFeeMaxChangeMargin: number;
-}
+};

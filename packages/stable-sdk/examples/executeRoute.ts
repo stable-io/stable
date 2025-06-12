@@ -37,7 +37,7 @@ const intent = {
   // To receive gas tokens on the target. Increases the cost of the transfer.
   // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
 
-  // paymentToken: "usdc",
+  paymentToken: "usdc" as const,
 };
 
 const routes = await sdk.findRoutes(intent);

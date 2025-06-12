@@ -7,11 +7,12 @@ import type { WalletClient as ViemWalletClient } from "viem";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Address, Amount, Chain, Network, TxHash } from "./general.js";
 import { UserIntent } from "./intent.js";
-import { Route } from "./route.js";
+import { Route, SupportedRoute } from "./route.js";
 import { EvmPlatformSigner } from "./signer.js";
 import { Url } from "@stable-io/utils";
 import { Redeem } from "./redeem.js";
 import { CctpAttestation } from "../methods/executeRoute/findTransferAttestation.js";
+import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
 export type { WalletClient as ViemWalletClient } from "viem";
 
@@ -28,11 +29,11 @@ export abstract class SDK<N extends Network> {
 
   public abstract findRoutes(
     intent: UserIntent,
-  ): Promise<RoutesResult>;
+  ): Promise<RoutesResult<N, SupportedEvmDomain<N>, SupportedEvmDomain<N>>>;
 
-  public abstract checkHasEnoughFunds(route: Route): Promise<boolean>;
+  public abstract checkHasEnoughFunds(route: SupportedRoute<N>): Promise<boolean>;
 
-  public abstract executeRoute(route: Route): Promise<{
+  public abstract executeRoute(route: SupportedRoute<N>): Promise<{
     transactions: TxHash[];
     attestations: CctpAttestation[];
     redeems: Redeem[];
@@ -51,11 +52,14 @@ export abstract class SDK<N extends Network> {
   public abstract getRpcUrl(domain: keyof EvmDomains): Url;
 }
 
-export interface RoutesResult {
-  all: Route[];
-  fastest: Route;
-  cheapest: Route;
+export interface RoutesResult <
+  N extends Network,
+  S extends SupportedEvmDomain<N>,
+  D extends SupportedEvmDomain<N>,
+> {
+  all: Route<S, D>[];
+  fastest: Route<S, D>;
+  cheapest: Route<S, D>;
 }
 
 export type PaymentTokenOptions = "usdc" | "native";
-

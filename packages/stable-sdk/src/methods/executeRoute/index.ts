@@ -5,8 +5,9 @@
 
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
+import type { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { Route, SDK } from "../../types/index.js";
+import { Route, SDK, SupportedRoute } from "../../types/index.js";
 
 import { executeRouteSteps } from "./executeRouteSteps.js";
 import { CctpAttestation, findTransferAttestation } from "./findTransferAttestation.js";
@@ -21,7 +22,7 @@ export const $executeRoute =
     getNetwork,
     getRpcUrl,
   }: ExecuteRouteDeps<N>): SDK<N>["executeRoute"] =>
-  async (route: Route) => {
+  async (route: SupportedRoute<N>) => {
     const { sourceChain } = route.intent;
     const signer = await getSigner(sourceChain);
     const network = getNetwork();

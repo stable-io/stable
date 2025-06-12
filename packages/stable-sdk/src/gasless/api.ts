@@ -5,9 +5,8 @@
 
 import { Url } from "@stable-io/utils";
 import { Network } from "../types/index.js";
-import { layouts, GaslessQuoteMessage } from '@stable-io/cctp-sdk-cctpr-evm';
+import { layouts, GaslessQuoteMessage } from "@stable-io/cctp-sdk-cctpr-evm";
 import { fetchApiResponse, EvmDomains } from "@stable-io/cctp-sdk-definitions";
-
 
 export const apiUrl = {
   Mainnet: "", // TODO
@@ -15,7 +14,7 @@ export const apiUrl = {
 } as const satisfies Record<Network, string>;
 
 export const apiEndpoint = <N extends Network>(network: N) => (
-  path: string
+  path: string,
 ): Url => `${apiUrl[network]}/gasless/${path}` as Url;
 
 export const apiEndpointWithQuery = <N extends Network>(network: N) => (
@@ -30,20 +29,20 @@ export const apiEndpointWithQuery = <N extends Network>(network: N) => (
 export type OnchainGaslessQuote = GaslessQuoteMessage & { type: "onChain" };
 
 export type GaslessTransferQuoteParams = {
-  destination: keyof EvmDomains,
-  inputAmount: string, // an stringified usdc value
-  mintRecipient: string, // an stringified evm address
-  gasDropoff: string, // a stringified bigint
-  corridor: layouts.CorridorVariant,
-  quote: OnchainGaslessQuote,
-}
+  destination: keyof EvmDomains;
+  inputAmount: string; // an stringified usdc value
+  mintRecipient: string; // an stringified evm address
+  gasDropoff: string; // a stringified bigint
+  corridor: layouts.CorridorVariant;
+  quote: OnchainGaslessQuote;
+};
 
 export type GetTransferQuoteResponse = {};
-export function getTransferQuote (
+export function getTransferQuote(
   network: Network,
   transferParams: GaslessTransferQuoteParams,
   requiresAllowancePermit: boolean,
-): GetTransferQuoteResponse {
+): Promise<GetTransferQuoteResponse> {
   const flat = {
     destination: transferParams.destination,
     inputAmount: transferParams.inputAmount,
@@ -51,7 +50,7 @@ export function getTransferQuote (
     gasDropoff: transferParams.gasDropoff,
     corridor: JSON.stringify(transferParams.corridor),
     quote: JSON.stringify(transferParams.quote),
-  }
+  };
 
   const endpoint = apiEndpointWithQuery(network)("quote", flat);
 
@@ -59,7 +58,7 @@ export function getTransferQuote (
 }
 
 export type PostTransferRequestResponse = {};
-export function postTransferRequest (): PostTransferRequestResponse {
+export function postTransferRequest(): PostTransferRequestResponse {
   // const endpoint = apiEndpoint(network)
   // return fetchApiResponse()
   throw new Error("NotImplemented");

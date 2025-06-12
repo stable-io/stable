@@ -30,14 +30,14 @@ export function getCorridorFees<
   S extends keyof EvmDomains,
   D extends keyof EvmDomains,
 >(
-  corridorCost: CorridorStats<N, S, Corridor>["cost"],
+  corridorCost: CorridorStats<N, keyof EvmDomains, Corridor>["cost"],
   intent: Intent<S, D>,
 ): { corridorFees: Fee[]; maxRelayFee: Fee; maxFastFeeUsdc?: Usdc } {
   const corridorFees = [] as Fee[];
 
   const relayFee: Fee = intent.paymentToken === "usdc"
     ? corridorCost.relay[0]
-    : corridorCost.relay[1] as GasTokenOf<keyof EvmDomains>;
+    : corridorCost.relay[1];
 
   const maxRelayFee = relayFee.mul(intent.relayFeeMaxChangeMargin);
 

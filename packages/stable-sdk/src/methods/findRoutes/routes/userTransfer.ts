@@ -3,35 +3,32 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { init as initDefinitions } from "@stable-io/cctp-sdk-definitions";
+import { init as initDefinitions,
+  EvmDomains,
+  GasTokenOf,
+  Usdc,
+} from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { init as initEvm } from "@stable-io/cctp-sdk-evm";
-import { EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   Corridor,
   CorridorStats,
   SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
-import {
-  EvmDomains,
-  GasTokenOf,
-  Usdc,
-} from "@stable-io/cctp-sdk-definitions";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
 
 import { TransferProgressEmitter } from "../../../progressEmitter.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
-import { buildTransferStep } from "../steps.js";
+import { buildTransferStep, PreApproveStep, SignPermitStep } from "../steps.js";
 import type {
   Network,
   Intent,
 } from "../../../types/index.js";
 import { Route } from "../../../types/index.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
-import { init as initCctprEvm } from '@stable-io/cctp-sdk-cctpr-evm';
-import { PreApproveStep, SignPermitStep } from '../steps.js';
+import { init as initCctprEvm } from "@stable-io/cctp-sdk-cctpr-evm";
 
 const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
 
@@ -39,12 +36,12 @@ export async function buildUserTransferRoute<
   N extends Network,
   S extends SupportedEvmDomain<N>,
   D extends SupportedEvmDomain<N>,
-> (
-  evmClient: ViemEvmClient<N,S>,
+>(
+  evmClient: ViemEvmClient<N, S>,
   cctprEvm: ReturnType<typeof initCctprEvm<N>>,
-  intent: Intent<S,D>,
+  intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
-): Promise<Route> {
+): Promise<Route<S, D>> {
   const { corridorFees, maxRelayFee, maxFastFeeUsdc } = getCorridorFees(
     corridor.cost,
     intent,
@@ -57,8 +54,7 @@ export async function buildUserTransferRoute<
     }
   : { maxRelayFee: maxRelayFee as GasTokenOf<S, keyof EvmDomains> };
 
-
-  const usdcFees = corridorFees.filter((fee) => fee.kind.name === "Usdc") as Usdc[];
+  const usdcFees = corridorFees.filter(fee => fee.kind.name === "Usdc") as Usdc[];
   const totalUsdcValue = usdcFees.reduce((acc, fee) => acc.add(fee), intent.amount);
 
   const allowanceRequired = await cctprRequiresAllowance(
@@ -70,11 +66,11 @@ export async function buildUserTransferRoute<
 
   const tokenAllowanceSteps = allowanceRequired
     ? [
-        intent.usePermit === true
-          ? signPermitStep(intent.sourceChain) 
-          : preApprovalStep(intent.sourceChain)
+        intent.usePermit
+          ? signPermitStep(intent.sourceChain)
+          : preApprovalStep(intent.sourceChain),
       ]
-    : []
+    : [];
 
   const routeSteps = [
     ...tokenAllowanceSteps,
@@ -112,9 +108,9 @@ export async function buildUserTransferRoute<
 
 async function cctprRequiresAllowance<
   N extends Network,
-  S extends SupportedEvmDomain<N>
-> (
-  evmClient: ViemEvmClient<N,S>,
+  S extends SupportedEvmDomain<N>,
+>(
+  evmClient: ViemEvmClient<N, S>,
   sourceChain: keyof EvmDomains,
   sender: EvmAddress,
   totalUsdcValue: Usdc,
@@ -153,7 +149,7 @@ function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
     type: "sign-permit",
     chain: sourceChain,
     gasCostEstimation: 0n,
-  }
+  };
 }
 
 function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
@@ -162,5 +158,5 @@ function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
     chain: sourceChain,
     type: "pre-approve",
     gasCostEstimation: EVM_APPROVAL_TX_GAS_COST_APROXIMATE,
-  }
+  };
 }

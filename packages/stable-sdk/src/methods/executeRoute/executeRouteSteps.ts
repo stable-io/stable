@@ -11,7 +11,7 @@ import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
-import { Route, ViemWalletClient, TxHash, Hex } from "../../types/index.js";
+import { Route, ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
 import { isContractTx, getStepType, isEip2612Data } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData, parsePermitEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
@@ -19,7 +19,7 @@ import { TxSentEventData } from "../../transactionEmitter.js";
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
 
 export async function executeRouteSteps<N extends Network, D extends keyof EvmDomains>(
-  network: N, route: Route, signer: ViemWalletClient, client: ViemEvmClient<N, D>,
+  network: N, route: SupportedRoute<N>, signer: ViemWalletClient, client: ViemEvmClient<N, D>,
 ): Promise<TxHash[]> {
   const txHashes = [] as string[];
   let permit: Permit | undefined = undefined;

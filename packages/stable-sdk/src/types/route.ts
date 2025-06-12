@@ -9,19 +9,22 @@ import {
   EvmDomains,
   GasTokenOf,
   Duration,
+  Network,
 } from "@stable-io/cctp-sdk-definitions";
 import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
-import { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
+import { Corridor, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Intent } from "./intent.js";
 import { TransferProgressEventEmitter } from "../progressEmitter.js";
 import { TransactionEventEmitter } from "../transactionEmitter.js";
 
 import { RouteExecutionStep } from "../methods/findRoutes/steps.js";
 
-
 export type Fee = Usdc | GasTokenOf<keyof EvmDomains>;
 
-export interface Route {
+export interface Route<
+  S extends keyof EvmDomains,
+  D extends keyof EvmDomains,
+> {
   corridor: Corridor;
 
   estimatedDuration: Duration;
@@ -40,7 +43,7 @@ export interface Route {
   // Type details to be defined by implementer
   // rates: Rates[];
 
-  intent: Intent;
+  intent: Intent<S, D>;
 
   // When using permit, the transactions require a an Eip2612
   // signature to be built, so they can not be built eagerly.
@@ -69,3 +72,7 @@ export interface Route {
   transactionListener: TransactionEventEmitter;
   progress: TransferProgressEventEmitter;
 }
+
+export type SupportedRoute<
+  N extends Network,
+> = Route<SupportedEvmDomain<N>, SupportedEvmDomain<N>>;

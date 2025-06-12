@@ -4,7 +4,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import { Amount } from "@stable-io/amount";
 import { gasTokenKindOf, isUsdc, type Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdc } from "@stable-io/cctp-sdk-definitions";
+import { usdc,
+  GasTokenOf,
+  EvmDomains,
+} from "@stable-io/cctp-sdk-definitions";
 import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import {
@@ -12,10 +15,6 @@ import {
   type SupportedEvmDomain,
 
 } from "@stable-io/cctp-sdk-cctpr-evm";
-import {
-  GasTokenOf,
-  EvmDomains,
-} from "@stable-io/cctp-sdk-definitions";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
 
@@ -27,14 +26,16 @@ import type {
   Network,
   Intent,
   UserIntent,
+  SupportedRoute,
 } from "../../types/index.js";
 
 export type FindRoutesDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
 const RELAY_FEE_MAX_CHANGE_MARGIN = 1.02;
 
-export const $findRoutes =
-  <N extends Network>({
+export const $findRoutes = <
+  N extends Network,
+>({
     /**
      * @todo: DI is wrong here. What we need to inject is evm client and cctpr instances
      *        which are created in this function.
@@ -61,12 +62,13 @@ export const $findRoutes =
       intent,
     );
 
-    const routes: Route[] = [];
+    const routes: SupportedRoute<N>[] = [];
 
     for (const corridor of corridors) {
       const userTransferRoute = buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor);
       const gaslessRoutes = intent.paymentToken === "usdc"
-        ? [buildGaslessRoute(viemEvmClient, intent, corridor)]: [];
+        ? [buildGaslessRoute(viemEvmClient, intent, corridor)]
+: [];
 
       const corridorRoutes = await Promise.all([
         ...gaslessRoutes,
@@ -87,9 +89,9 @@ export const $findRoutes =
 
 async function getCorridors<
   N extends Network,
-  S extends SupportedEvmDomain<N>
-> (
-  viemEvmClient: ViemEvmClient<N,S>,
+  S extends SupportedEvmDomain<N>,
+>(
+  viemEvmClient: ViemEvmClient<N, S>,
   cctprEvm: ReturnType<typeof initCctprEvm<N>>,
   intent: Intent<keyof EvmDomains, keyof EvmDomains>,
 ) {
@@ -101,11 +103,11 @@ async function getCorridors<
 
   return corridorStats.filter((c) => {
     if (!c.cost.fast) return true;
-    return intent.amount.lt(fastBurnAllowance)
+    return intent.amount.lt(fastBurnAllowance);
   });
 }
 
-function parseIntent (userIntent: UserIntent): Intent<keyof EvmDomains, keyof EvmDomains> {
+function parseIntent(userIntent: UserIntent): Intent<keyof EvmDomains, keyof EvmDomains> {
   return {
     sourceChain: userIntent.sourceChain,
     targetChain: userIntent.targetChain,
@@ -116,7 +118,7 @@ function parseIntent (userIntent: UserIntent): Intent<keyof EvmDomains, keyof Ev
     gasDropoffDesired: parseGasDropoff(userIntent),
     paymentToken: userIntent.paymentToken ?? "usdc",
     relayFeeMaxChangeMargin: userIntent.relayFeeMaxChangeMargin ?? RELAY_FEE_MAX_CHANGE_MARGIN,
-  }
+  };
 }
 
 function parseAmount(userAmount: string | Usdc): Usdc {
@@ -138,9 +140,12 @@ function parseGasDropoff(intent: UserIntent): TODO {
   );
 }
 
-function findBestRoutes(routes: Route[]) {
-  let fastest: Route | undefined;
-  let cheapest: Route | undefined;
+function findBestRoutes<
+  S extends keyof EvmDomains,
+  D extends keyof EvmDomains,
+>(routes: Route<S, D>[]) {
+  let fastest: Route<S, D> | undefined;
+  let cheapest: Route<S, D> | undefined;
 
   for (const route of routes) {
     if (!fastest || route.estimatedDuration < fastest.estimatedDuration) {

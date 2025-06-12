@@ -1,4 +1,1 @@
-
-export async function* transferWithGaslessRelaying(): AsyncGenerator<any, any, any> {
-  
-}
+export async function* transferWithGaslessRelaying(): AsyncGenerator<any, any, any> {}
