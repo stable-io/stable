@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { QuoteDto } from "./dto/index.js";
+import { QuoteDto, QuoteRequestDto } from "./dto/index.js";
 
 @Injectable()
 export class GaslessTransferService {
@@ -7,12 +7,17 @@ export class GaslessTransferService {
     return "Gasless Transfer Service is running";
   }
 
-  public quoteGaslessTransfer(): Promise<QuoteDto> {
-    // 1. check if permit2 contract is already permitted to spend the user allowance.
-    //    Create a permit message for the user to sign otherwise.
-    // 2. quote transfer based on input parameters
-    // 3. sign the quote
-    // 4. respond
+  public quoteGaslessTransfer(request: QuoteRequestDto): Promise<QuoteDto> {
+    // TODO: Convert request.amount from number to Amount<Usdc> for internal processing
+    // const usdcAmount = Amount.fromAtomic(...);
+
+    // TODO: Convert request.gasDropoffDesired from number to Amount<GenericGasToken>
+    // for internal processing
+    // const gasDropoffAmount = Amount.fromAtomic(...);
+
+    // 1. quote transfer based on input parameters
+    // 2. sign the quote
+    // 3. respond
     return Promise.resolve({ foo: "bar" });
   }
 

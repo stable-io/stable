@@ -1,6 +1,10 @@
-import { Controller, Get, Post } from "@nestjs/common";
+import { Controller, Get, Post, Query } from "@nestjs/common";
 import { ApiResponse as SwaggerApiResponse } from "@nestjs/swagger";
-import { QuoteResponseDto, RelayResponseDto } from "./dto/index.js";
+import {
+  QuoteRequestDto,
+  QuoteResponseDto,
+  RelayResponseDto,
+} from "./dto/index.js";
 import { GaslessTransferService } from "./gaslessTransfer.service.js";
 
 @Controller("gasless-transfer")
@@ -9,23 +13,44 @@ export class GaslessTransferController {
     private readonly gaslessTransferService: GaslessTransferService,
   ) {}
 
+  /**
+   * Get the current status of the gasless transfer service
+   */
   @Get("/status")
+  @SwaggerApiResponse({
+    status: 200,
+    description: "Service status information",
+    type: String,
+  })
   public getStatus(): string {
     return this.gaslessTransferService.getStatus();
   }
 
+  /**
+   * Generate a quote for a gasless transfer
+   */
   @Get("/quote")
   @SwaggerApiResponse({
     status: 200,
     type: QuoteResponseDto,
-    description: "Quote for a gasless transfer. TODO",
+    description: "Quote for gasless transfer with fee estimates and timing",
   })
-  public async quoteGaslessTransfer(): Promise<QuoteResponseDto> {
-    return { data: await this.gaslessTransferService.quoteGaslessTransfer() };
+  @SwaggerApiResponse({
+    status: 400,
+    description: "Invalid request parameters",
+  })
+  public async quoteGaslessTransfer(
+    @Query() request: QuoteRequestDto,
+  ): Promise<QuoteResponseDto> {
+    return {
+      data: await this.gaslessTransferService.quoteGaslessTransfer(request),
+    };
   }
 
   @Post("/relay")
   public async initiateGaslessTransfer(): Promise<RelayResponseDto> {
-    return { data: await this.gaslessTransferService.initiateGaslessTransfer() };
+    return {
+      data: await this.gaslessTransferService.initiateGaslessTransfer(),
+    };
   }
 }
