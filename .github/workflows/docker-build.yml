@@ -1,0 +1,95 @@
+name: Docker Build Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        description: 'Application name'
+        required: true
+        type: string
+      app_version:
+        description: 'Application version'
+        required: true
+        type: string
+      ecr_repository:
+        description: 'ECR repository name'
+        required: true
+        type: string
+      git_ref:
+        description: 'Git reference (branch/SHA)'
+        required: true
+        type: string
+      path_dockerfile:
+        description: 'Path to Dockerfile'
+        required: true
+        type: string
+      path_workspace:
+        description: 'Path to workspace'
+        required: false
+        type: string
+        default: '.'
+      push_tag_without_sha:
+        description: 'Push tag without SHA'
+        required: false
+        type: boolean
+        default: false
+      dkr_extra_params:
+        description: 'Extra Docker build parameters'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      AWS_REGION:
+        required: false
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.git_ref }}
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Build Docker image
+        run: |
+          REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY=${{ inputs.ecr_repository }}
+          IMAGE_TAG=${{ inputs.app_version }}
+          
+          echo "Building Docker image..."
+          docker build ${{ inputs.dkr_extra_params }} \
+            -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+            -f ${{ inputs.path_dockerfile }} \
+            ${{ inputs.path_workspace }}
+          
+          echo "Pushing Docker image..."
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          
+          if [ "${{ inputs.push_tag_without_sha }}" = "true" ]; then
+            docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
+            docker push $REGISTRY/$REPOSITORY:latest
+          fi
+          
+          echo "image=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT 

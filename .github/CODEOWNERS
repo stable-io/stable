@@ -1,0 +1,6 @@
+# Global owners for workflow files
+.github/workflows/ @stable-io/core-team
+
+# Protect sensitive files
+*.yml @stable-io/core-team
+*.yaml @stable-io/core-team 
