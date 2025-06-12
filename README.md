@@ -1,4 +1,5 @@
-### Stable
+# Stable
+
 ## Project Overview
 Currently there's three sub-projects in this monorepo:
 - cctpr (`contracts/cctpr`): An on-chain relaying protocol built on top of cctpv1, v2 and avax hop
@@ -7,15 +8,24 @@ Currently there's three sub-projects in this monorepo:
 Se more info the README file for each workspace.
 
 ## Getting Started:
-1. Install dependencies and build project:
-```
+
+1. Set up your environment by following the instructions in each app/package. In particular:
+
+  - [Front end application](./apps/front-end/README.md)
+  - [Back end application](./apps/back-end/README.md)
+  - [Stable SDK](./packages/stable-sdk/README.md)
+
+2. Install dependencies and build project:
+
+```shell
 corepack enable # enable yarn. Only required first time.
 yarn install --immutable # install dependencies
 yarn build # builds every package
 ```
-2. Run examples:
+
+3. Run examples:
+
 ```shell
-# requires `packages/stable-sdk/.env` file to have an `EVM_PRIVATE_KEY` variable
 yarn workspace @stable-io/sdk tsx examples/executeRoute.ts
 ```
 
