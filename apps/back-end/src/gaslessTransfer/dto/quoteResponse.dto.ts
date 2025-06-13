@@ -1,8 +1,8 @@
 import { ValidateNested } from "class-validator";
-import { ApiResponseDto } from "../../common/types.js";
+import type { ApiResponseDto } from "../../common/types.js";
 import { QuoteDto } from "./quote.dto.js";
 
-export class QuoteResponseDto extends ApiResponseDto<QuoteDto> {
+export class QuoteResponseDto implements ApiResponseDto<QuoteDto> {
   @ValidateNested()
-  declare public data: QuoteDto;
+  public data!: QuoteDto;
 }

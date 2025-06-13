@@ -1,3 +1,3 @@
-export class ApiResponseDto<T> {
-  public data!: T;
+export interface ApiResponseDto<T> {
+  readonly data: T;
 }
