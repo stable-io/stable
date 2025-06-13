@@ -1,6 +1,15 @@
 import type { Network } from "@stable-io/sdk";
 import { plainToInstance } from "class-transformer";
-import { IsIn, IsNotEmpty, IsPort, IsOptional, IsNumber, Min, validateSync, IsStrongPassword } from "class-validator";
+import {
+  IsIn,
+  IsNotEmpty,
+  IsPort,
+  IsOptional,
+  IsNumber,
+  Min,
+  validateSync,
+  IsStrongPassword,
+} from "class-validator";
 
 export class EnvironmentVariables {
   @IsPort()
