@@ -9,8 +9,12 @@ import type { Route, Network, Intent } from "../../../types/index.js";
 import { SupportedEvmDomain, Corridor, CorridorStats, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
-import { getCorridorFees } from "../fees.js";
+import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
 import { GaslessTransferQuoteParams, getTransferQuote } from "../../../gasless/api.js";
+import { transferWithGaslessRelay } from "src/gasless/transfer.js";
+import { calculateTotalCost, getCorridorFees } from '../fees.js';
+import { TransactionEmitter } from "../../../transactionEmitter.js";
+import { TransferProgressEmitter } from "../../../progressEmitter.js";
 
 /**
  * We set the allowance for permit2 contract to the max value that fits uint256.
@@ -46,14 +50,40 @@ export async function buildGaslessRoute<
     permitSignatureRequired,
   );
 
-  // assemble transfer parameters
-  // get quote from gasless api
-  // assemble steps
-  // create workflow async generator
-  // calculate total cost
-  // return route
+  const tokenAllowanceSteps = permitSignatureRequired
+    ? [signPermitStep(intent.sourceChain)]
+    : [];
 
-  throw new Error("Not fully implemented yet");
+  const { corridorFees } = getCorridorFees(corridor.cost, intent);
+  
+  // TODO: add the gasless fee to corridorFees
+  const totalFees = corridorFees;
+
+  const routeSteps: RouteExecutionStep[] = [
+    ...tokenAllowanceSteps,
+    gaslessTransferStep(intent.sourceChain),
+  ];
+
+  return {
+    intent,
+    fees: totalFees,
+    estimatedDuration: corridor.transferTime,
+    corridor: corridor.corridor,
+    requiresMessageSignature: true,
+    steps: routeSteps,
+    estimatedTotalCost: await calculateTotalCost(routeSteps, corridorFees),
+    transactionListener: new TransactionEmitter(),
+    progress: new TransferProgressEmitter(),
+    workflow: transferWithGaslessRelay(
+      evmClient,
+      permitSignatureRequired,
+      evmClient.network,
+      intent,
+      quote.transferNonce // todo: get the transfer nonce from the quote.
+                          // perhaps signaturedeadline and deadline are
+                          // part of the quote.
+    ),
+  }
 }
 
 async function permit2RequiresAllowance<
