@@ -1,6 +1,15 @@
 import type { Network } from "@stable-io/sdk";
 import { plainToInstance } from "class-transformer";
-import { IsIn, IsNotEmpty, IsPort, validateSync } from "class-validator";
+import {
+  IsIn,
+  IsNotEmpty,
+  IsPort,
+  IsOptional,
+  IsNumber,
+  Min,
+  validateSync,
+  IsStrongPassword,
+} from "class-validator";
 
 export class EnvironmentVariables {
   @IsPort()
@@ -10,6 +19,20 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   @IsIn(["Mainnet", "Testnet"])
   public NETWORK!: Network;
+
+  @IsStrongPassword({
+    minLength: 32,
+    minLowercase: 1,
+    minUppercase: 1,
+    minNumbers: 1,
+    minSymbols: 1,
+  })
+  public JWT_SECRET!: string;
+
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  public JWT_EXPIRES_IN_SECONDS: number = 3600; // @todo: Pick a good default
 }
 
 export const validate = (
