@@ -19,7 +19,7 @@ import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 import {
   IsNotSameAsConstraint,
   IsUsdcAmount,
-  IsEvmGasAmount,
+  IsEvmGasTokenAmount,
   IsEvmAddress,
 } from "../../common/validators";
 
@@ -98,7 +98,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
   @ValidateIf(({ targetDomain }: { targetDomain?: any }) =>
     domains.includes(targetDomain),
   )
-  @IsEvmGasAmount({ min: evmGasToken(0) })
+  @IsEvmGasTokenAmount({ min: evmGasToken(0) })
   gasDropoff!: EvmGasToken;
 
   /**
