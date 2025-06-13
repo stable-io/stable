@@ -3,13 +3,13 @@ import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import type { ValidationOptions } from "class-validator";
 import { IsAmount } from "./isAmount.validator";
 
-interface EvmGasAmountOptions {
+interface EvmGasTokenAmountOptions {
   min?: EvmGasToken;
   max?: EvmGasToken;
 }
 
-export function IsEvmGasAmount(
-  options: EvmGasAmountOptions = {},
+export function IsEvmGasTokenAmount(
+  options: EvmGasTokenAmountOptions = {},
   validationOptions?: ValidationOptions,
 ) {
   return IsAmount(

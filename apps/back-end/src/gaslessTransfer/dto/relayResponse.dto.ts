@@ -1,7 +1,7 @@
 import { ValidateNested } from "class-validator";
-import { ApiResponseDto } from "../../common/types.js";
+import type { ApiResponseDto } from "../../common/types.js";
 
-export class RelayResponseDto extends ApiResponseDto<object> {
+export class RelayResponseDto implements ApiResponseDto<object> {
   @ValidateNested()
-  declare public data: object;
+  public data!: object;
 }

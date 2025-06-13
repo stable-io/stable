@@ -1,3 +1,12 @@
+import { ApiProperty } from "@nestjs/swagger";
+
 export class QuoteDto {
-  public foo!: string;
+  /**
+   * Server-signed JWT containing the permit2 permit data for the user to sign
+   * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+   */
+  @ApiProperty({
+    format: "jwt",
+  })
+  permit2PermitJwt!: string;
 }

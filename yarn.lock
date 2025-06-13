@@ -4693,6 +4693,7 @@ __metadata:
     "@nestjs/swagger": "npm:^11.2.0"
     "@stable-io/cctp-sdk-cctpr-evm": "workspace:^"
     "@stable-io/cctp-sdk-definitions": "workspace:^"
+    "@stable-io/cctp-sdk-evm": "workspace:^"
     "@swc/cli": "npm:^0.7.7"
     "@swc/core": "npm:^1.11.31"
     "@types/express": "npm:^5.0.2"

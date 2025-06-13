@@ -24,6 +24,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@stable-io/cctp-sdk-cctpr-evm": "workspace:^",
     "@stable-io/cctp-sdk-definitions": "workspace:^",
+    "@stable-io/cctp-sdk-evm": "workspace:^",
     "axios": "^1.9.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
