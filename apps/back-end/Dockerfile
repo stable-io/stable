@@ -5,15 +5,22 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy workspace root files
-COPY package.json yarn.lock .yarnrc.yml ./
+COPY package.json yarn.lock .yarnrc.yml tsconfig.base.json ./
 COPY .yarn/ ./.yarn/
 
 # Copy workspace packages and apps
 COPY packages/ ./packages/
-COPY apps/back-end/ ./apps/back-end/
+COPY apps/ ./apps/
 
 # Install all workspace dependencies from root
 RUN yarn install --immutable
+
+# Build packages:
+RUN yarn build:common
+RUN yarn build:cctp-sdk
+
+# Build app
+RUN yarn build:back-end
 
 # Production stage
 FROM node:20-alpine AS production
