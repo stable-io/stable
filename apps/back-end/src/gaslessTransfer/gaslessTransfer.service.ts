@@ -12,7 +12,7 @@ export class GaslessTransferService {
     // 1. quote transfer based on input parameters
     // 2. sign the quote
     // 3. respond
-    return Promise.resolve({ foo: "bar" });
+    return Promise.resolve({ permit2PermitJwt: "foo" });
   }
 
   public initiateGaslessTransfer(): Promise<object> {
