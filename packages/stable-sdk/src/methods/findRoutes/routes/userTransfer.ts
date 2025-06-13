@@ -21,7 +21,7 @@ import { TODO } from "@stable-io/utils";
 
 import { TransferProgressEmitter } from "../../../progressEmitter.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
-import { buildTransferStep, PreApproveStep, SignPermitStep } from "../steps.js";
+import { buildTransferStep, preApprovalStep, signPermitStep } from "../steps.js";
 import type {
   Network,
   Intent,
@@ -29,8 +29,6 @@ import type {
 import { Route } from "../../../types/index.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 import { init as initCctprEvm } from "@stable-io/cctp-sdk-cctpr-evm";
-
-const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
 
 export async function buildUserTransferRoute<
   N extends Network,
@@ -143,20 +141,3 @@ async function cctprRequiresAllowance<
   return totalUsdcValue.gt(allowance);
 }
 
-function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
-  return {
-    platform: "Evm",
-    type: "sign-permit",
-    chain: sourceChain,
-    gasCostEstimation: 0n,
-  };
-}
-
-function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
-  return {
-    platform: "Evm",
-    chain: sourceChain,
-    type: "pre-approve",
-    gasCostEstimation: EVM_APPROVAL_TX_GAS_COST_APROXIMATE,
-  };
-}
