@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 import type {
   Domain,
   Usdc,
@@ -6,21 +7,21 @@ import type {
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
+import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import {
   IsBoolean,
   IsOptional,
   IsIn,
-  IsEthereumAddress,
   ValidateIf,
   Validate,
 } from "class-validator";
+import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 import {
   IsNotSameAsConstraint,
   IsUsdcAmount,
   IsEvmGasAmount,
+  IsEvmAddress,
 } from "../../common/validators";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 
 const domains = domainsOf("Evm");
 
@@ -64,8 +65,8 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     format: "address",
     pattern: ADDRESS_PATTERNS.EVM,
   })
-  @IsEthereumAddress()
-  sender!: string;
+  @IsEvmAddress()
+  sender!: EvmAddress;
 
   /**
    * Recipient's Ethereum address on the target chain
@@ -76,8 +77,8 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     format: "address",
     pattern: ADDRESS_PATTERNS.EVM,
   })
-  @IsEthereumAddress()
-  recipient!: string;
+  @IsEvmAddress()
+  recipient!: EvmAddress;
 
   @ApiProperty({ enum: corridors })
   @IsIn(corridors)
@@ -105,7 +106,6 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
    * (checked and constructed on client side)
    * @example true
    */
-  @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
   permit2PermitRequired?: boolean;
