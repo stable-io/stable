@@ -11,13 +11,15 @@ export * from "./registry.js";
 
 export type { CorridorStats } from "./getCorridors.js";
 
-/**
- * @todo: this import looks weird.
- */
+export { CctpR } from "./contractSdk/index.js";
+
+export * from "./contractSdk/index.js";
+
 export type { Corridor } from "./contractSdk/layouts/common.js";
 export type { SupportedEvmDomain } from "./common.js";
 
 export { execSelector, parseTransferTxCalldata } from "./contractSdk/index.js";
+export { corridors } from "./contractSdk/layouts/common.js";
 export { routerHookDataLayout } from "./contractSdk/layouts/routerHookData.js";
 
 /**

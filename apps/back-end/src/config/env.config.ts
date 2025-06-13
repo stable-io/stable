@@ -1,10 +1,15 @@
+import type { Network } from "@stable-io/sdk";
 import { plainToInstance } from "class-transformer";
-import { IsNotEmpty, IsPort, validateSync } from "class-validator";
+import { IsIn, IsNotEmpty, IsPort, validateSync } from "class-validator";
 
 export class EnvironmentVariables {
   @IsPort()
   @IsNotEmpty()
   public PORT!: number;
+
+  @IsNotEmpty()
+  @IsIn(["Mainnet", "Testnet"])
+  public NETWORK!: Network;
 }
 
 export const validate = (
