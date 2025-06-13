@@ -1,9 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import type {
-  Domain,
-  Usdc,
-  EvmGasToken,
-} from "@stable-io/cctp-sdk-definitions";
+import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -15,6 +11,7 @@ import {
   ValidateIf,
   Validate,
 } from "class-validator";
+import type { Domain } from "../../common/types";
 import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 import {
   IsNotSameAsConstraint,
