@@ -6,7 +6,7 @@
 import type {
   Domain, Network, DomainsOf, GasTokenOf, GasTokenCtrOf,
 } from "@stable-io/cctp-sdk-definitions";
-import { domainOfChainId, domainsOf, gasTokenOf, isEvmDomain, usdc } from "@stable-io/cctp-sdk-definitions";
+import { domainOfChainId, gasTokenOf, isEvmDomain } from "@stable-io/cctp-sdk-definitions";
 import type { RoArray } from "@stable-io/map-utils";
 import type { TODO, Url } from "@stable-io/utils";
 import { encoding } from "@stable-io/utils";
@@ -24,48 +24,58 @@ import type { AccessList as ViemAccessList } from "viem";
 import { createPublicClient, http, parseAbiItem } from "viem";
 import {
   type Chain as ViemChain,
-  mainnet         as ethereumMainnet,
-  sepolia         as ethereumTestnet,
-  avalanche       as avalancheMainnet,
-  avalancheFuji   as avalancheTestnet,
-  optimism        as optimismMainnet,
-  optimismSepolia as optimismTestnet,
-  arbitrum        as arbitrumMainnet,
-  arbitrumSepolia as arbitrumTestnet,
-  base            as baseMainnet,
-  baseSepolia     as baseTestnet,
-  polygon         as polygonMainnet,
-  polygonAmoy     as polygonTestnet,
-  unichain        as unichainMainnet,
-  unichainSepolia as unichainTestnet,
-  linea           as lineaMainnet,
-  lineaSepolia    as lineaTestnet,
-  sonic           as sonicMainnet,
-  sonicTestnet    as sonicTestnet,
+  mainnet           as ethereumMainnet,
+  sepolia           as ethereumTestnet,
+  avalanche         as avalancheMainnet,
+  avalancheFuji     as avalancheTestnet,
+  optimism          as optimismMainnet,
+  optimismSepolia   as optimismTestnet,
+  arbitrum          as arbitrumMainnet,
+  arbitrumSepolia   as arbitrumTestnet,
+  base              as baseMainnet,
+  baseSepolia       as baseTestnet,
+  polygon           as polygonMainnet,
+  polygonAmoy       as polygonTestnet,
+  unichain          as unichainMainnet,
+  unichainSepolia   as unichainTestnet,
+  linea             as lineaMainnet,
+  lineaSepolia      as lineaTestnet,
+  sonic             as sonicMainnet,
+  sonicTestnet      as sonicTestnet,
+  worldchain        as worldchainMainnet,
+  worldchainSepolia as worldchainTestnet,
 } from "viem/chains";
+
+// TODO: Wait for viem to support the codex blockchain
+const codexMainnet = {} as ViemChain;
+const codexTestnet = {} as ViemChain;
 
 export const viemChainOf = {
   Mainnet: {
-    Ethereum:  ethereumMainnet,
-    Avalanche: avalancheMainnet,
-    Optimism:  optimismMainnet,
-    Arbitrum:  arbitrumMainnet,
-    Base:      baseMainnet,
-    Polygon:   polygonMainnet,
-    Unichain:  unichainMainnet,
-    Linea:     lineaMainnet,
-    Sonic:     sonicMainnet,
+    Ethereum:   ethereumMainnet,
+    Avalanche:  avalancheMainnet,
+    Optimism:   optimismMainnet,
+    Arbitrum:   arbitrumMainnet,
+    Base:       baseMainnet,
+    Polygon:    polygonMainnet,
+    Unichain:   unichainMainnet,
+    Linea:      lineaMainnet,
+    Codex:      codexMainnet,
+    Sonic:      sonicMainnet,
+    Worldchain: worldchainMainnet,
   },
   Testnet: {
-    Ethereum:  ethereumTestnet,
-    Avalanche: avalancheTestnet,
-    Optimism:  optimismTestnet,
-    Arbitrum:  arbitrumTestnet,
-    Base:      baseTestnet,
-    Polygon:   polygonTestnet,
-    Unichain:  unichainTestnet,
-    Linea:     lineaTestnet,
-    Sonic:     sonicTestnet,
+    Ethereum:   ethereumTestnet,
+    Avalanche:  avalancheTestnet,
+    Optimism:   optimismTestnet,
+    Arbitrum:   arbitrumTestnet,
+    Base:       baseTestnet,
+    Polygon:    polygonTestnet,
+    Unichain:   unichainTestnet,
+    Linea:      lineaTestnet,
+    Codex:      codexTestnet,
+    Sonic:      sonicTestnet,
+    Worldchain: worldchainTestnet,
   },
 } as const satisfies Record<Network, Record<DomainsOf<"Evm">, ViemChain>>;
 
@@ -144,15 +154,15 @@ export class ViemEvmClient<N extends Network, D extends DomainsOf<"Evm">> implem
     // return this.client.ethCall({ ...partialTx, to: partialTx.to.unwrap() });
   }
 
-  async estimateGas(tx: BaseTx): Promise<GasTokenOf<D, DomainsOf<"Evm">>> {
+  async estimateGas(tx: BaseTx): Promise<bigint> {
     const txArgs = {
       account: tx.from?.unwrap(),
-      to: tx.to.unwrap(),
+      to: tx.to?.unwrap(),
       data: tx.data ? encoding.hex.encode(tx.data, true) : undefined,
       value: tx.value?.toUnit("atomic"),
       accessList: this.toViemAccessList(tx.accessList),
     } as const;
-    return this.gasToken(await this.client.estimateGas(txArgs as TODO));
+    return this.client.estimateGas(txArgs as TODO);
   }
 
   private gasToken(amount: bigint): GasTokenOf<D> {

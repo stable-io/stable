@@ -13,9 +13,9 @@ import {IERC20Permit}          from "wormhole-sdk/interfaces/token/IERC20Permit.
 import {SafeERC20}             from "wormhole-sdk/libraries/SafeERC20.sol";
 import {toUniversalAddress}    from "wormhole-sdk/Utils.sol";
 
-import {ITokenMessengerV2} from "cctp-xr/interfaces/ITokenMessengerV2.sol";
-import {Route}             from "cctp-xr/assets/CctpRBase.sol";
-import {CctpRQuote}       from "cctp-xr/assets/CctpRQuote.sol";
+import {ITokenMessengerV2} from "cctpr/interfaces/ITokenMessengerV2.sol";
+import {Route}             from "cctpr/assets/CctpRBase.sol";
+import {CctpRQuote}       from "cctpr/assets/CctpRQuote.sol";
 
 //see https://github.com/circlefin/evm-cctp-contracts/blob/63ab1f0ac06ce0793c0bbfbb8d09816bc211386d/src/v2/FinalityThresholds.sol#L27
 uint32 constant TOKEN_MESSENGER_V2_MIN_FINALITY_THRESHOLD = 500;

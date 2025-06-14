@@ -31,6 +31,8 @@
     "apps/*",
     "packages/cctp-sdk/*",
     "packages/common/*",
-    "packages/stable-sdk"
+    "packages/stable-sdk",
+    "deployment/evm/*",
+    "deployment/solana/*"
   ]
 }

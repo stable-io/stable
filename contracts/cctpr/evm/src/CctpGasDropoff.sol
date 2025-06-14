@@ -6,7 +6,7 @@
 pragma solidity ^0.8.28;
 
 import {BytesParsing} from "wormhole-sdk/libraries/BytesParsing.sol";
-import {ICctpReceiver} from "cctp-xr/interfaces/ICctpReceiver.sol";
+import {ICctpReceiver} from "cctpr/interfaces/ICctpReceiver.sol";
 
 contract CctpGasDropoff {
   using BytesParsing for bytes;

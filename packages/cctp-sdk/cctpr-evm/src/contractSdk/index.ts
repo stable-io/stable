@@ -31,6 +31,7 @@ import {
   v2,
   chainIdOf,
   domainIdOf,
+  wormholeChainIdOf,
 } from "@stable-io/cctp-sdk-definitions";
 import type {
   EvmClient,
@@ -59,7 +60,6 @@ import type {
   UserQuoteVariant,
   GaslessQuoteVariant,
   OffChainQuote,
-  DomainChainIdPair,
   ExtraChainIds,
   FeeAdjustment,
   FeeAdjustmentsSlot,
@@ -78,6 +78,7 @@ import {
   feeAdjustmentTypes,
   constructorLayout,
 } from "./layouts/index.js";
+import { extraDomains } from "./layouts/common.js";
 
 //external consumers shouldn't really need these but exporting them just in case
 export * as layouts from "./layouts/index.js";
@@ -421,6 +422,40 @@ export class CctpRGovernance<
   N extends Network,
   S extends DomainsOf<"Evm">,
 > extends CctpRBase<N, S> {
+  static adjustmentSlots = Math.ceil(domains.length / feeAdjustmentsPerSlot);
+
+  static feeAdjustmentsAtIndex(
+    feeAdjustments: Partial<FeeAdjustments>,
+    mappingIndex: number,
+  ) {
+    const atCost = CctpRGovernance.relayAtCostFeeAdjustment;
+    return range(feeAdjustmentsPerSlot).map((subIndex) => {
+      const maybeDomain = domainOf.get(mappingIndex * feeAdjustmentsPerSlot + subIndex);
+      return maybeDomain ? feeAdjustments[maybeDomain] ?? atCost : atCost;
+    });
+  }
+
+  static feeAdjustmentsArray(
+    feeAdjustments: Record<FeeAdjustmentType, Partial<FeeAdjustments>>,
+  ) {
+    return range(CctpRGovernance.adjustmentSlots).map(mappingIndex =>
+      feeAdjustmentTypes.map(feeType => CctpRGovernance.feeAdjustmentsAtIndex(
+        feeAdjustments[feeType], mappingIndex,
+      )) as TupleWithLength<FeeAdjustmentsSlot, 4>,
+    );
+  }
+
+  static extraChainsArray<N extends Network>(network: N) {
+    return range(Math.ceil(extraDomains.length / chainIdsPerSlot))
+    .map(slotIndex =>
+      range(chainIdsPerSlot).map((subIndex) => {
+        const maybeDomain = domainOf.get((slotIndex + 1) * chainIdsPerSlot + subIndex);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        return maybeDomain ? wormholeChainIdOf(network, maybeDomain as TODO) ?? 0 : 0;
+      }),
+    );
+  }
+
   static constructorCalldata<N extends Network>(
     network: N,
     domain: DomainsOf<"Evm">,
@@ -429,42 +464,80 @@ export class CctpRGovernance<
     feeRecipient: EvmAddress,
     offChainQuoter: EvmAddress,
     priceOracle: EvmAddress,
-    extraChains: ExtraChainIds<N>,
-    feeAdjustments: Record<FeeAdjustmentType, FeeAdjustments>,
-  ) {
+    feeAdjustments: Record<FeeAdjustmentType, Partial<FeeAdjustments>>,
+  ): Uint8Array {
     const definedOrZero = (maybeAddress?: string) =>
       maybeAddress ? new EvmAddress(maybeAddress) : EvmAddress.zeroAddress;
 
-    const zeroFeeAdjustment = { absoluteUsdc: usdc(0), relativePercent: 0 } as const;
-
-    const arrayFeeAdjustments = range(Math.ceil(domains.length / feeAdjustmentsPerSlot))
-      .map(mappingIndex =>
-        feeAdjustmentTypes.map(feeType =>
-          range(feeAdjustmentsPerSlot).map((subIndex) => {
-            const maybeDomain = domainOf.get(mappingIndex + subIndex);
-            return maybeDomain ? feeAdjustments[feeType][maybeDomain] : zeroFeeAdjustment;
-          }),
-        ) as TupleWithLength<FeeAdjustmentsSlot, 4>,
-      );
-
-    const tokenMessengerOf = <const T>(mapping: T) =>
-      (mapping as Record<Network, any>)[network][domain]?.TokenMessenger;
+    const arrayFeeAdjustments = CctpRGovernance.feeAdjustmentsArray(feeAdjustments);
+    const arrayExtraChains = CctpRGovernance.extraChainsArray(network);
+    const tokenMessengerV1 = v1.contractAddressOf(
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      network as Network,
+      domain as v1.SupportedDomain<Network>,
+      "tokenMessenger",
+    );
+    const tokenMessengerV2 = v2.contractAddressOf(
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      network as Network,
+      domain as v2.SupportedDomain<Network>,
+      "tokenMessenger",
+    );
     return serialize(constructorLayout(network), {
       owner,
       feeAdjuster,
       feeRecipient,
       offChainQuoter,
       usdc: new EvmAddress(usdcContracts.contractAddressOf[network][domain]),
-      tokenMessengerV1: definedOrZero(tokenMessengerOf(v1.contractAddressOf)),
-      tokenMessengerV2: definedOrZero(tokenMessengerOf(v2.contractAddressOf)),
+      tokenMessengerV1: definedOrZero(tokenMessengerV1),
+      tokenMessengerV2: definedOrZero(tokenMessengerV2),
       avaxRouter: definedOrZero(avaxRouterContractAddress[network]),
       priceOracle,
       permit2: new EvmAddress(permit2Address),
       chainData: {
-        extraChains: Object.entries(extraChains).map(([domain, chainId]) =>
-          ({ domain, chainId })) as RoArray<DomainChainIdPair<N>>,
+        extraChains: arrayExtraChains,
         feeAdjustments: arrayFeeAdjustments,
       },
+    });
+  }
+
+  static avaxRouterConstructorCalldata(
+    network: Network,
+  ): Uint8Array {
+    const tokenMessengerV1 = v1.contractAddressOf(network, "Avalanche", "tokenMessenger");
+    const messageTransmitterV2 = v2.contractAddressOf(network, "Avalanche", "messageTransmitter");
+    const usdc = usdcContracts.contractAddressOf[network]["Avalanche"];
+    return serialize([
+      { name: "messageTransmitterV2", ...paddedSlotItem(evmAddressItem) },
+      { name: "tokenMessengerV1",     ...paddedSlotItem(evmAddressItem) },
+      { name: "usdc",                 ...paddedSlotItem(evmAddressItem) },
+    ], {
+      messageTransmitterV2: new EvmAddress(messageTransmitterV2),
+      tokenMessengerV1: new EvmAddress(tokenMessengerV1),
+      usdc: new EvmAddress(usdc),
+    });
+  }
+
+  static gasDropoffConstructorCalldata(
+    network: Network,
+    domain: DomainsOf<"Evm">,
+  ): Uint8Array {
+    const messageTransmitterV1 = v1.contractAddressOf(
+      network,
+      domain as v1.SupportedDomain<Network>,
+      "messageTransmitter",
+    );
+    const messageTransmitterV2 = v2.contractAddressOf(
+      network,
+      domain as v2.SupportedDomain<Network>,
+      "messageTransmitter",
+    );
+    return serialize([
+      { name: "messageTransmitterV1", ...paddedSlotItem(evmAddressItem) },
+      { name: "messageTransmitterV2", ...paddedSlotItem(evmAddressItem) },
+    ], {
+      messageTransmitterV1: new EvmAddress(messageTransmitterV1),
+      messageTransmitterV2: new EvmAddress(messageTransmitterV2),
     });
   }
 

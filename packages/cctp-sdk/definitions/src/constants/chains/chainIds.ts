@@ -10,41 +10,86 @@ import type { Domain } from "./domains.js";
 
 const domainChainIdEntries = [[
   "Mainnet", [
-    ["Ethereum",  1n],
-    ["Avalanche", 43114n],
-    ["Optimism",  10n],
-    ["Arbitrum",  42161n],
-    ["Noble",     "noble-1"],
-    ["Solana",    "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d"],
-    ["Base",      8453n],
-    ["Polygon",   137n],
-    ["Sui",       "35834a8a"],
-    ["Aptos",     1n],
-    ["Unichain",  130n],
-    ["Linea",     59144n],
-    ["Sonic",     146n],
+    ["Ethereum",   1n],
+    ["Avalanche",  43114n],
+    ["Optimism",   10n],
+    ["Arbitrum",   42161n],
+    ["Noble",      "noble-1"],
+    ["Solana",     "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d"],
+    ["Base",       8453n],
+    ["Polygon",    137n],
+    ["Sui",        "35834a8a"],
+    ["Aptos",      1n],
+    ["Unichain",   130n],
+    ["Linea",      59144n],
+    ["Sonic",      146n],
+    ["Worldchain", 480n],
   ]], [
   "Testnet", [
-    ["Ethereum",  11155111n],
-    ["Avalanche", 43113n],
-    ["Optimism",  11155420n],
-    ["Arbitrum",  421613n],
-    ["Noble",     "grand-1"],
-    ["Solana",    "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG"],
-    ["Base",      84531n],
-    ["Polygon",   80002n],
-    ["Sui",       "4c78adac"],
-    ["Aptos",     2n],
-    ["Unichain",  1301n],
-    ["Linea",     59141n],
-    ["Sonic",     57054n],
+    ["Ethereum",   11155111n],
+    ["Avalanche",  43113n],
+    ["Optimism",   11155420n],
+    ["Arbitrum",   421613n],
+    ["Noble",      "grand-1"],
+    ["Solana",     "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG"],
+    ["Base",       84531n],
+    ["Polygon",    80002n],
+    ["Sui",        "4c78adac"],
+    ["Aptos",      2n],
+    ["Unichain",   1301n],
+    ["Linea",      59141n],
+    ["Sonic",      57054n],
+    ["Worldchain", 4801n],
   ]],
 ] as const satisfies MapLevels<[Network, Domain, bigint | string]>;
+
+const domainWormholeChainIdEntries = [[
+  "Mainnet", [
+    ["Ethereum",   2],
+    ["Avalanche",  6],
+    ["Optimism",   24],
+    ["Arbitrum",   23],
+    ["Noble",      4009],
+    ["Solana",     1],
+    ["Base",       30],
+    ["Polygon",    5],
+    ["Sui",        21],
+    ["Aptos",      22],
+    ["Unichain",   44],
+    ["Linea",      38],
+    // TODO: Add Codex when it is available
+    ["Sonic",      52],
+    ["Worldchain", 45],
+  ]], [
+  "Testnet", [
+    ["Ethereum",   10002],
+    ["Avalanche",  6],
+    ["Optimism",   10005],
+    ["Arbitrum",   10003],
+    ["Noble",      4009],
+    ["Solana",     1],
+    ["Base",       10004],
+    ["Polygon",    10007],
+    ["Sui",        21],
+    ["Aptos",      22],
+    ["Unichain",   44],
+    ["Linea",      38],
+    // TODO: Add Codex when it is available
+    ["Sonic",      52],
+    ["Worldchain", 45],
+  ]],
+] as const satisfies MapLevels<[Network, Domain, number]>;
 
 export const chainIdOf = constMap(domainChainIdEntries);
 export const domainOfChainId = constMap(domainChainIdEntries, [[0, 2], 1]);
 
+export const wormholeChainIdOf = constMap(domainWormholeChainIdEntries);
+export const domainOfWormholeChainId = constMap(domainWormholeChainIdEntries, [[0, 2], 1]);
+export type WormholeChainId = ReturnType<typeof wormholeChainIdOf>;
+
 export const init = <N extends Network>(network: N) => ({
   chainIdOf: chainIdOf.subMap(network),
   domainOfChainId: domainOfChainId.subMap(network),
+  wormholeChainIdOf: wormholeChainIdOf.subMap(network),
+  domainOfWormholeChainId: domainOfWormholeChainId.subMap(network),
 } as const);

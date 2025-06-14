@@ -47,7 +47,7 @@ export const bakedInDomains = [
   "Solana", "Polygon", "Sui", "Aptos", "Unichain", "Linea",
 ] as const;
 export const extraDomains = <N extends Network>(network: N) =>
-  ["Sonic"] as const; //TODO implement filter method to instead filter out baked in domains
+  ["Codex", "Sonic", "Worldchain"] as const; //TODO implement filter method to instead filter out baked in domains
 export type ExtraDomain<N extends Network> = ReturnType<typeof extraDomains<N>>[number];
 
 export type ExtraChainIds<N extends Network> = Partial<Record<ExtraDomain<N>, number>>;
