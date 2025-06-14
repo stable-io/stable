@@ -501,6 +501,46 @@ export class CctpRGovernance<
     });
   }
 
+  static avaxRouterConstructorCalldata(
+    network: Network,
+  ): Uint8Array {
+    const tokenMessengerV1 = v1.contractAddressOf(network, "Avalanche", "tokenMessenger");
+    const messageTransmitterV2 = v2.contractAddressOf(network, "Avalanche", "messageTransmitter");
+    const usdc = usdcContracts.contractAddressOf[network]["Avalanche"];
+    return serialize([
+      { name: "messageTransmitterV2", ...paddedSlotItem(evmAddressItem) },
+      { name: "tokenMessengerV1",     ...paddedSlotItem(evmAddressItem) },
+      { name: "usdc",                 ...paddedSlotItem(evmAddressItem) },
+    ], {
+      messageTransmitterV2: new EvmAddress(messageTransmitterV2),
+      tokenMessengerV1: new EvmAddress(tokenMessengerV1),
+      usdc: new EvmAddress(usdc),
+    });
+  }
+
+  static gasDropoffConstructorCalldata(
+    network: Network,
+    domain: DomainsOf<"Evm">,
+  ): Uint8Array {
+    const messageTransmitterV1 = v1.contractAddressOf(
+      network,
+      domain as v1.SupportedDomain<Network>,
+      "messageTransmitter",
+    );
+    const messageTransmitterV2 = v2.contractAddressOf(
+      network,
+      domain as v2.SupportedDomain<Network>,
+      "messageTransmitter",
+    );
+    return serialize([
+      { name: "messageTransmitterV1", ...paddedSlotItem(evmAddressItem) },
+      { name: "messageTransmitterV2", ...paddedSlotItem(evmAddressItem) },
+    ], {
+      messageTransmitterV1: new EvmAddress(messageTransmitterV1),
+      messageTransmitterV2: new EvmAddress(messageTransmitterV2),
+    });
+  }
+
   private static readonly mappings =
     ["extraChainIds", "v1", "v2Direct", "avaxHop", "gasDropoff"] as const;
 

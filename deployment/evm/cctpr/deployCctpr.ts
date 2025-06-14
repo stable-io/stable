@@ -35,13 +35,13 @@ async function run() {
     [cctprName]: [] as SerializedDeployment[],
   };
   // Deploy CCTPR to all operating chains where it is missing
-  const tasks = await Promise.all(operatingChains.filter(chain =>
+  const cctprTasks = await Promise.all(operatingChains.filter(chain =>
     (loadCctpRAddress(chain.chainId) === undefined),
   ).map((chain) => {
     const config = getChainConfig<CctpRChainConfig>(processName, chain.chainId);
     return deployCctpR(chain, config);
   }));
-  for (const task of tasks) {
+  for (const task of cctprTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
       console.info(`Deployment of CCTPR failed in chain ${task.chainId}. Error: ${error}`);
@@ -56,22 +56,21 @@ async function run() {
     saveDeployments(cctprDeployments, processName);
   }
 
-  /* TODO: Implement GasDropoff deployments
   const cctpGasDropoffDeployments = {
     [cctpGasDropoffName]: [] as SerializedDeployment[],
   };
 
   // Deploy CCTPR gas dropoff to all operating chains where it is missing
-  tasks = await Promise.all(operatingChains.filter((chain) =>
-    (loadCctpGasDropoffAddress(chain.chainId) === undefined)
+  const dropoffTasks = await Promise.all(operatingChains.filter(chain =>
+    (loadCctpGasDropoffAddress(chain.chainId) === undefined),
   ).map((chain) => {
     return deployGasDropoff(chain);
   }));
-  for (const task of tasks) {
+  for (const task of dropoffTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
       console.info(`Deployment of CCTPR Gas Dropoff failed in chain ${task.chainId}.`);
-      console.info(`Error: ${error}`)
+      console.info(`Error: ${error}`);
       // There's no need to cancel the rest of the deployment here since this is a leaf deployment.
       failed = true;
     } else {
@@ -82,7 +81,6 @@ async function run() {
   if (cctpGasDropoffDeployments[cctpGasDropoffName].length > 0) {
     saveDeployments(cctpGasDropoffDeployments, processName);
   }
-  */
 
   if (failed) {
     throw new Error(`Some deployments failed, check logs above.`);

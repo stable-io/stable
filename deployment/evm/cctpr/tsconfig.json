@@ -4,5 +4,5 @@
   "compilerOptions": {
     "rootDir": "."
   },
-  "include": ["deploy.ts", "setFees.ts", "src/**/*"]
+  "include": ["deployCctpr.ts", "deployAvaxRouter.ts", "setFees.ts", "src/**/*"]
 }

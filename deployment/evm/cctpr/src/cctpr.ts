@@ -7,6 +7,7 @@ import {
   buildOverridesWithGas,
   ChainInfo,
   Deployment,
+  getChain,
   getDeployData,
   getNetwork,
   getViemClient,
@@ -29,7 +30,7 @@ import {
   WormholeChainId,
   wormholeChainIdOf,
 } from "@stable-io/cctp-sdk-definitions";
-import { encoding, TODO } from "@stable-io/utils";
+import { encoding } from "@stable-io/utils";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 export type AdjustmentField = {
@@ -168,5 +169,68 @@ export function loadAvaxRouterAddress() {
   return loadAddress(avaxRouterName, wormholeChainIdOf("Testnet", "Avalanche"));
 }
 
-export function deployAvaxRouter(chain: ChainInfo): TODO {}
-export function deployGasDropoff(chain: ChainInfo): TODO {}
+export async function deployAvaxRouter(): Promise<Deployment> {
+  const network = getNetwork();
+  const chainId = wormholeChainIdOf(network, "Avalanche");
+  const chain = getChain(chainId);
+  const viemSigner = getViemSigner(network, chain);
+  const viemClient = getViemClient(network, chain);
+
+  const callData = CctpRGovernance.avaxRouterConstructorCalldata(network);
+
+  const data = getDeployData(avaxRouterName, callData);
+  const from = new EvmAddress(viemSigner.account.address);
+  try {
+    const overrides = await buildOverridesWithGas(
+      viemClient,
+      { from, data: encoding.hex.decode(data) as CallData },
+      chain,
+    );
+
+    const hash = await viemSigner.sendTransaction({
+      ...overrides,
+      data,
+    });
+
+    const receipt = await viemClient.client.waitForTransactionReceipt({ hash });
+    const address = receipt.contractAddress;
+    if (!address) {
+      throw new Error("Contract address was undefined");
+    }
+    return { address, chainId };
+  } catch (error) {
+    return { chainId, error };
+  }
+}
+
+export async function deployGasDropoff(chain: ChainInfo): Promise<Deployment> {
+  const network = getNetwork();
+  const viemSigner = getViemSigner(network, chain);
+  const viemClient = getViemClient(network, chain);
+
+  const callData = CctpRGovernance.gasDropoffConstructorCalldata(network, chain.domain);
+
+  const data = getDeployData(cctpGasDropoffName, callData);
+  const from = new EvmAddress(viemSigner.account.address);
+  try {
+    const overrides = await buildOverridesWithGas(
+      viemClient,
+      { from, data: encoding.hex.decode(data) as CallData },
+      chain,
+    );
+
+    const hash = await viemSigner.sendTransaction({
+      ...overrides,
+      data,
+    });
+
+    const receipt = await viemClient.client.waitForTransactionReceipt({ hash });
+    const address = receipt.contractAddress;
+    if (!address) {
+      throw new Error("Contract address was undefined");
+    }
+    return { address, chainId: chain.chainId };
+  } catch (error) {
+    return { chainId: chain.chainId, error };
+  }
+}
