@@ -1,13 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import type {
-  Domain,
-  Usdc,
-  EvmGasToken,
-} from "@stable-io/cctp-sdk-definitions";
+import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { Transform } from "class-transformer";
 import {
   IsBoolean,
   IsOptional,
@@ -15,6 +12,7 @@ import {
   ValidateIf,
   Validate,
 } from "class-validator";
+import type { Domain } from "../../common/types";
 import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 import {
   IsNotSameAsConstraint,
@@ -54,6 +52,9 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: AMOUNT_PATTERNS.USDC,
   })
   @IsUsdcAmount({ min: usdc(0.000001) })
+  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
+    toPlainOnly: true,
+  })
   amount!: Usdc;
 
   /**
@@ -66,6 +67,9 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: ADDRESS_PATTERNS.EVM,
   })
   @IsEvmAddress()
+  @Transform(({ value }: { value: EvmAddress }) => value.toString(), {
+    toPlainOnly: true,
+  })
   sender!: EvmAddress;
 
   /**
@@ -78,6 +82,9 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: ADDRESS_PATTERNS.EVM,
   })
   @IsEvmAddress()
+  @Transform(({ value }: { value: EvmAddress }) => value.toString(), {
+    toPlainOnly: true,
+  })
   recipient!: EvmAddress;
 
   @ApiProperty({ enum: corridors })
@@ -99,6 +106,9 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     domains.includes(targetDomain),
   )
   @IsEvmGasTokenAmount({ min: evmGasToken(0) })
+  @Transform(({ value }: { value: EvmGasToken }) => value.toUnit("human").toFixed(18), {
+    toPlainOnly: true,
+  })
   gasDropoff!: EvmGasToken;
 
   /**
