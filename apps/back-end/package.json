@@ -24,6 +24,7 @@
     "@nestjs/platform-express": "^11.1.3",
     "@nestjs/swagger": "^11.2.0",
     "@stable-io/amount": "workspace:^",
+    "@stable-io/cctp-sdk-cctpr-definitions": "workspace:^",
     "@stable-io/cctp-sdk-cctpr-evm": "workspace:^",
     "@stable-io/cctp-sdk-definitions": "workspace:^",
     "@stable-io/cctp-sdk-evm": "workspace:^",
