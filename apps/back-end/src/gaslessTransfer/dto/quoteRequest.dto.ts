@@ -106,9 +106,12 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     domains.includes(targetDomain),
   )
   @IsEvmGasTokenAmount({ min: evmGasToken(0) })
-  @Transform(({ value }: { value: EvmGasToken }) => value.toUnit("human").toFixed(18), {
-    toPlainOnly: true,
-  })
+  @Transform(
+    ({ value }: { value: EvmGasToken }) => value.toUnit("human").toFixed(18),
+    {
+      toPlainOnly: true,
+    },
+  )
   gasDropoff!: EvmGasToken;
 
   /**

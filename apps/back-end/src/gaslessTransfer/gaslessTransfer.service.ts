@@ -1,3 +1,5 @@
+import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { instanceToPlain } from "class-transformer";
@@ -46,14 +48,23 @@ export class GaslessTransferService {
   public async quoteGaslessTransfer(
     request: QuoteRequestDto,
   ): Promise<QuoteDto> {
+    const usdcAddress =
+      usdcContracts.contractAddressOf[this.configService.network][
+        request.sourceDomain
+      ];
+    const relayerContractAddress = cctprContractAddressOf(
+      this.configService.network,
+      request.sourceDomain,
+    );
+    if (!relayerContractAddress) {
+      throw new Error(
+        `Relayer contract address not found for source domain: ${request.sourceDomain}`,
+      );
+    }
     // @todo: use actual values
-    const usdcAddress = "0xA0b86a33E6441B8fA2CA8DC22B8c5c9AB5D4e88B";
-    const relayerContractAddress = "0x742d35Cc6634C0532925a3b8D404d4bC2f28e9FF";
-    const quotedAmount = "1000000";
-    const nonce = "0";
-    const deadline = Math.floor(
-      Date.now() / 1000 + this.configService.jwtExpiresInSeconds,
-    ).toString();
+    const quotedAmount = this.calculateQuotedAmount(request);
+    const nonce = this.getNonce();
+    const deadline = this.getDeadline();
 
     const jwtPayload: JwtPayload = {
       permit2PermitPayload: {
@@ -71,7 +82,7 @@ export class GaslessTransferService {
         },
         owner: request.sender.toString(),
       },
-             quoteRequest: instanceToPlain(request) as PlainDto<QuoteRequestDto>,
+      quoteRequest: instanceToPlain(request) as PlainDto<QuoteRequestDto>,
     };
 
     const permit2PermitJwt = await this.jwtService.signAsync(jwtPayload);
@@ -86,5 +97,19 @@ export class GaslessTransferService {
     // 3. poll tx-landing-service for transaction confirmation
     // 4. respond.
     return Promise.resolve({});
+  }
+
+  private calculateQuotedAmount(request: QuoteRequestDto): string {
+    return "1000000";
+  }
+
+  private getDeadline(): string {
+    return Math.floor(
+      Date.now() / 1000 + this.configService.jwtExpiresInSeconds,
+    ).toString();
+  }
+
+  private getNonce(): string {
+    return "0";
   }
 }
