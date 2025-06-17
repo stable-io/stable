@@ -3,7 +3,7 @@ import globals from "globals";
 
 const ignoreConfig = {
   name: "back-end:ignore",
-  ignores: ["dist/", "src/metadata.ts"],
+  ignores: ["dist/", "src/metadata.ts", "examples/"],
 };
 
 const nestConfig = {
