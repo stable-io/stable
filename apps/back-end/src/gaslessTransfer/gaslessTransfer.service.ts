@@ -1,5 +1,6 @@
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { usdcContracts } from "@stable-io/cctp-sdk-definitions";
+import type { Usdc } from "@stable-io/cctp-sdk-definitions";
+import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { instanceToPlain } from "class-transformer";
@@ -61,8 +62,10 @@ export class GaslessTransferService {
         `Relayer contract address not found for source domain: ${request.sourceDomain}`,
       );
     }
-    // @todo: use actual values
-    const quotedAmount = this.calculateQuotedAmount(request);
+
+    const quotedAmount = this.calculateQuotedAmount(request)
+      .toUnit("human")
+      .toFixed(6);
     const nonce = this.getNonce();
     const deadline = this.getDeadline();
 
@@ -99,8 +102,26 @@ export class GaslessTransferService {
     return Promise.resolve({});
   }
 
-  private calculateQuotedAmount(request: QuoteRequestDto): string {
-    return "1000000";
+  private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
+    // @todo: Get these dynamically
+    const costs = {
+      v1: usdc(1_000_000),
+      v2: usdc(2_000_000),
+    } as const;
+    const corridorCost = ((): Usdc => {
+      switch (request.corridor) {
+        case "v1":
+          return costs.v1;
+        case "v2Direct":
+          return costs.v2;
+        case "avaxHop":
+          return costs.v2.add(costs.v1);
+        default:
+          throw new Error(`Invalid corridor: ${request.corridor}`);
+      }
+    })();
+    const permitCost = usdc(request.permit2PermitRequired ? 300_000 : 0);
+    return request.amount.add(corridorCost).add(permitCost);
   }
 
   private getDeadline(): string {
@@ -110,6 +131,9 @@ export class GaslessTransferService {
   }
 
   private getNonce(): string {
+    // @todo: Add a stable offset
+    // @todo: Query permit2 contract to find a free nonce
+    // @todo: Cache latest nonce per user?
     return "0";
   }
 }
