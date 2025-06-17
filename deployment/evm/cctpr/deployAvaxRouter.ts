@@ -4,6 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import {
+  avaxRouterName,
   cctprName,
   deployAvaxRouter,
 } from "./src/cctpr.js";
@@ -20,16 +21,17 @@ init();
 
 async function run() {
   console.info(`Start ${processName}!`);
-  const cctprDeployments = {
-    [cctprName]: [] as SerializedDeployment[],
+  const avaxRouterDeployments = {
+    [avaxRouterName]: [] as SerializedDeployment[],
   };
   const deployment = await deployAvaxRouter();
   if ("error" in deployment) {
     const error = (deployment.error as any)?.stack || deployment.error;
     throw new Error(`Deployment of Avax Router failed. Error: ${error}`);
   }
+  avaxRouterDeployments[avaxRouterName].push(deployment);
   console.info(`Avax Router deployed at ${deployment.address}`);
-  saveDeployments(cctprDeployments, processName);
+  saveDeployments(avaxRouterDeployments, processName);
 }
 
 // --------------------------------------------------------------------------------

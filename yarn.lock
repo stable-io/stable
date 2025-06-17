@@ -4810,10 +4810,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@stable-io/cctpr-deploy@workspace:deployment/evm/cctpr":
+"@stable-io/cctpr-evm-deployment@workspace:deployment/evm/cctpr":
   version: 0.0.0-use.local
-  resolution: "@stable-io/cctpr-deploy@workspace:deployment/evm/cctpr"
+  resolution: "@stable-io/cctpr-evm-deployment@workspace:deployment/evm/cctpr"
   dependencies:
+    "@stable-io/cctp-sdk-cctpr-evm": "workspace:^"
+    "@stable-io/cctp-sdk-definitions": "workspace:^"
+    "@stable-io/utils": "workspace:^"
     eslint: "npm:^9.22.0"
     eslint-config: "workspace:^"
     tsx: "npm:^4.19.3"

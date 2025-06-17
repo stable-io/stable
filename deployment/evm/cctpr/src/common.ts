@@ -6,7 +6,7 @@
 import { eth, EvmDomains, Network, WormholeChainId } from "@stable-io/cctp-sdk-definitions";
 import { viemChainOf, ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { BaseTx } from "@stable-io/cctp-sdk-evm";
-import { Url } from "@stable-io/utils";
+import { Url, encoding } from "@stable-io/utils";
 import { inspect } from "node:util";
 import {
   Account,
@@ -191,7 +191,7 @@ export function readBytecode(contractName: string): Hex {
 
 export function getDeployData(contractName: string, callData: Uint8Array): Hex {
   const bytecode = readBytecode(contractName);
-  return concat([bytecode, ("0x" + Buffer.from(callData).toString("hex")) as Hex]);
+  return concat([bytecode, encoding.hex.encode(callData, true)]);
 }
 
 export function getOperationDescriptor(): OperationDescriptor {

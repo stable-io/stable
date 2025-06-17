@@ -44,6 +44,18 @@ export const contractEntries = [[
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
+    "Optimism", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Polygon", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Unichain", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
     "Base", [
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
