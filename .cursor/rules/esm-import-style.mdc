@@ -1,3 +1,8 @@
+---
+description:
+globs: *.tsx,*.ts
+alwaysApply: false
+---
 <rule>
 name: esm_import_style_enforcement
 description: Enforce the use of ESM style imports by requiring .js extensions in TypeScript import statements
