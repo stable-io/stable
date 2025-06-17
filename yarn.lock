@@ -5647,6 +5647,7 @@ __metadata:
     "@stable-io/cctp-sdk-definitions": "workspace:^"
     "@stable-io/cctp-sdk-evm": "workspace:^"
     "@stable-io/cctp-sdk-viem": "workspace:^"
+    "@stable-io/tx-landing-client": "git+ssh://git@github.com:stable-io/transaction-landing#0c2933ef852d4663ba580aeabeeff594e03d81d0"
     "@stable-io/utils": "workspace:^"
     "@swc/cli": "npm:^0.7.7"
     "@swc/core": "npm:^1.11.31"
@@ -5845,6 +5846,13 @@ __metadata:
     viem: "npm:^2.27.0"
   languageName: unknown
   linkType: soft
+
+"@stable-io/tx-landing-client@git+ssh://git@github.com:stable-io/transaction-landing#0c2933ef852d4663ba580aeabeeff594e03d81d0":
+  version: 0.0.0
+  resolution: "@stable-io/tx-landing-client@git+ssh://git@github.com:stable-io/transaction-landing#commit=0c2933ef852d4663ba580aeabeeff594e03d81d0"
+  checksum: 10c0/e9f8d2c34717b2f1bb1ef1b71cfc0e427e982e1a25564818577babb02499742565ed18233a22ab71a2d0eaafc36e3a8ca30a7f84a5345cfa63fca61786665937
+  languageName: node
+  linkType: hard
 
 "@stable-io/utils@workspace:^, @stable-io/utils@workspace:packages/common/utils":
   version: 0.0.0-use.local
