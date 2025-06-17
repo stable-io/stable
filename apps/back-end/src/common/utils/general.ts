@@ -1,5 +1,5 @@
 import { instanceToPlain as ctInstanceToPlain } from "class-transformer";
-import type { PlainDto } from "./types";
+import type { PlainDto } from "../types";
 
 export function createAmountRegexPattern(decimals: number): string {
   return `^\\d+(?:\\.\\d{1,${decimals}})?$`;
