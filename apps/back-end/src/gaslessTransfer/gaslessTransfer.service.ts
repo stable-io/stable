@@ -1,37 +1,21 @@
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
+import {
+  usdc,
+  usdcContracts,
+  chainIdOf,
+} from "@stable-io/cctp-sdk-definitions";
+import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Injectable } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import type { PlainDto } from "../common/types";
-import { instanceToPlain } from "../common/utils";
+import type { Permit2TypedData } from "../common/utils";
+import { composePermit2Msg, instanceToPlain } from "../common/utils";
+import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { QuoteDto, QuoteRequestDto } from "./dto";
 
-export interface TokenPermissions {
-  readonly token: string;
-  readonly amount: string;
-}
-
-export interface Permit {
-  readonly permitted: TokenPermissions;
-  readonly nonce: string;
-  readonly deadline: string;
-}
-
-export interface TransferDetails {
-  readonly to: string;
-  readonly requestedAmount: string;
-}
-
-export interface Permit2PermitPayload {
-  readonly permit: Permit;
-  readonly transferDetails: TransferDetails;
-  readonly owner: string;
-}
-
-export interface JwtPayload {
-  readonly permit2PermitPayload: Permit2PermitPayload;
+export interface JwtPayload extends Record<string, unknown> {
+  readonly permit2TypedData: Permit2TypedData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
 }
 
@@ -49,10 +33,11 @@ export class GaslessTransferService {
   public async quoteGaslessTransfer(
     request: QuoteRequestDto,
   ): Promise<QuoteDto> {
-    const usdcAddress =
+    const usdcAddress = new EvmAddress(
       usdcContracts.contractAddressOf[this.configService.network][
         request.sourceDomain
-      ];
+      ],
+    );
     const relayerContractAddress = cctprContractAddressOf(
       this.configService.network,
       request.sourceDomain,
@@ -63,28 +48,18 @@ export class GaslessTransferService {
       );
     }
 
-    const quotedAmount = this.calculateQuotedAmount(request)
-      .toUnit("human")
-      .toFixed(6);
+    const quotedAmount = this.calculateQuotedAmount(request);
     const nonce = this.getNonce();
     const deadline = this.getDeadline();
 
     const jwtPayload: JwtPayload = {
-      permit2PermitPayload: {
-        permit: {
-          permitted: {
-            token: usdcAddress,
-            amount: quotedAmount,
-          },
-          nonce,
-          deadline,
-        },
-        transferDetails: {
-          to: relayerContractAddress,
-          requestedAmount: quotedAmount,
-        },
-        owner: request.sender.toString(),
-      },
+      permit2TypedData: composePermit2Msg(
+        chainIdOf(this.configService.network, request.sourceDomain),
+        usdcAddress,
+        quotedAmount,
+        nonce,
+        deadline,
+      ),
       quoteRequest: instanceToPlain(request),
     };
 
@@ -94,11 +69,11 @@ export class GaslessTransferService {
   }
 
   public initiateGaslessTransfer(): Promise<object> {
-    // 1. verify quote signature and throw if invalid
-    // 2. call tx-landing-service and request the tx to be landed. set nonce+sender as the
-    //    transaction tracking id.
-    // 3. poll tx-landing-service for transaction confirmation
-    // 4. respond.
+    // @todo: verify quote signature and throw if invalid
+    // @todo: call tx-landing-service and request the tx to be landed. set nonce+sender as
+    //    the transaction tracking id.
+    // @todo: poll tx-landing-service for transaction confirmation
+    // @todo: respond.
     return Promise.resolve({});
   }
 
@@ -124,16 +99,14 @@ export class GaslessTransferService {
     return request.amount.add(corridorCost).add(permitCost);
   }
 
-  private getDeadline(): string {
-    return Math.floor(
-      Date.now() / 1000 + this.configService.jwtExpiresInSeconds,
-    ).toString();
+  private getDeadline(): Date {
+    return new Date(Date.now() + this.configService.jwtExpiresInSeconds * 1000);
   }
 
-  private getNonce(): string {
+  private getNonce(): bigint {
     // @todo: Add a stable offset
     // @todo: Query permit2 contract to find a free nonce
     // @todo: Cache latest nonce per user?
-    return "0";
+    return 0n;
   }
 }
