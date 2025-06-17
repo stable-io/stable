@@ -3,8 +3,8 @@ import type { Usdc } from "@stable-io/cctp-sdk-definitions";
 import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { instanceToPlain } from "class-transformer";
 import type { PlainDto } from "../common/types";
+import { instanceToPlain } from "../common/utils";
 import { ConfigService } from "../config/config.service";
 import { QuoteDto, QuoteRequestDto } from "./dto";
 
@@ -85,7 +85,7 @@ export class GaslessTransferService {
         },
         owner: request.sender.toString(),
       },
-      quoteRequest: instanceToPlain(request) as PlainDto<QuoteRequestDto>,
+      quoteRequest: instanceToPlain(request),
     };
 
     const permit2PermitJwt = await this.jwtService.signAsync(jwtPayload);
