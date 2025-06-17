@@ -1,5 +1,5 @@
 ---
-description:
+description: Enforce the use of ESM style imports by requiring .js extensions in TypeScript import statements
 globs: *.tsx,*.ts
 alwaysApply: false
 ---
