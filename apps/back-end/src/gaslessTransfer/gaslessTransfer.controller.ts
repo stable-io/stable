@@ -1,11 +1,7 @@
 import { Controller, Get, Post, Query } from "@nestjs/common";
 import { ApiResponse as SwaggerApiResponse } from "@nestjs/swagger";
-import {
-  QuoteRequestDto,
-  QuoteResponseDto,
-  RelayResponseDto,
-} from "./dto/index.js";
-import { GaslessTransferService } from "./gaslessTransfer.service.js";
+import { QuoteRequestDto, QuoteResponseDto, RelayResponseDto } from "./dto";
+import { GaslessTransferService } from "./gaslessTransfer.service";
 
 @Controller("gasless-transfer")
 export class GaslessTransferController {

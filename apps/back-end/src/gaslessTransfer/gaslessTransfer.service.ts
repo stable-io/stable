@@ -4,9 +4,9 @@ import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import { Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { instanceToPlain } from "class-transformer";
-import type { PlainDto } from "../common/types.js";
+import type { PlainDto } from "../common/types";
 import { ConfigService } from "../config/config.service";
-import { QuoteDto, QuoteRequestDto } from "./dto/index.js";
+import { QuoteDto, QuoteRequestDto } from "./dto";
 
 export interface TokenPermissions {
   readonly token: string;
