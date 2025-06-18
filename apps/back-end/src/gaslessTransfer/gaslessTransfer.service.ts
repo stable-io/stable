@@ -63,9 +63,8 @@ export class GaslessTransferService {
       quoteRequest: instanceToPlain(request),
     };
 
-    const permit2PermitJwt = await this.jwtService.signAsync(jwtPayload);
-
-    return { permit2PermitJwt };
+    const jwt = await this.jwtService.signAsync(jwtPayload);
+    return { jwt };
   }
 
   public initiateGaslessTransfer(): Promise<object> {
