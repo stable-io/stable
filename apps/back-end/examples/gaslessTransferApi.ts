@@ -103,6 +103,7 @@ const createQuoteParameters = () => {
     recipient: "0x0000000000000000000000000000000000000001",
     corridor: "v2Direct",
     gasDropoff: "0.010000000000000000",
+    permit2PermitRequired: "true",
   });
 
   console.info("Quote parameters:", Object.fromEntries(quoteParams));

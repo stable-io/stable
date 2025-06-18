@@ -121,5 +121,10 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
    */
   @IsBoolean()
   @IsOptional()
+  @Transform(
+    ({ value }: { value: string }) =>
+      value === "true" || (value === "false" ? false : undefined),
+    { toClassOnly: true },
+  )
   permit2PermitRequired?: boolean;
 }
