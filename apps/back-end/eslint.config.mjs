@@ -3,7 +3,7 @@ import globals from "globals";
 
 const ignoreConfig = {
   name: "back-end:ignore",
-  ignores: ["dist/", "src/metadata.ts", "examples/"],
+  ignores: ["dist/", "src/metadata.ts"],
 };
 
 const nestConfig = {
@@ -15,7 +15,7 @@ const nestConfig = {
     sourceType: "commonjs",
     parserOptions: {
       projectService: {
-        allowDefaultProject: ["*.mjs"],
+        allowDefaultProject: ["*.mjs", "examples/*.ts"],
       },
     },
   },
