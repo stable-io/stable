@@ -1,6 +1,6 @@
-import { prepareJwtPayload, parseJwtPayload } from "../src/common/utils";
+import { serializeBigints, deserializeBigints } from "@stable-io/utils";
 
-// Example of BigInt serialization for JWT payloads
+// Example of BigInt serialization for JSON payloads
 const originalData = {
   userBalance: 1000000000000000000n,
   nonce: 42n,
@@ -17,12 +17,12 @@ console.info("Original types:", {
   nonce: typeof originalData.nonce,
 });
 
-// Prepare for JWT (what gets signed)
-const jwtSafePayload = prepareJwtPayload(originalData);
-console.info("JWT-safe payload:", jwtSafePayload);
+// Serialize for JSON (what gets stored/transmitted)
+const jsonSafePayload = serializeBigints(originalData);
+console.info("JSON-safe payload:", jsonSafePayload);
 
-// Parse back from JWT (restore BigInt types)
-const parsedBack = parseJwtPayload<typeof originalData>(jwtSafePayload);
+// Deserialize back from JSON (restore BigInt types)
+const parsedBack = deserializeBigints<typeof originalData>(jsonSafePayload);
 console.info("Parsed back:", parsedBack);
 console.info("Restored types:", {
   userBalance: typeof parsedBack.userBalance,
