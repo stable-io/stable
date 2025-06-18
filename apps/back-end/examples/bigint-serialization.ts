@@ -1,7 +1,4 @@
-import {
-  prepareJwtPayload,
-  parseJwtPayload,
-} from "../src/common/utils";
+import { prepareJwtPayload, parseJwtPayload } from "../src/common/utils";
 
 // Example of BigInt serialization for JWT payloads
 const originalData = {

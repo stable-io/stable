@@ -51,7 +51,7 @@ export const composePermit2Msg = (
       name: "Permit2",
       version: "1",
       chainId,
-      verifyingContract: PERMIT2_ADDRESS as `0x${string}`,
+      verifyingContract: PERMIT2_ADDRESS,
     },
     message: {
       permitted: {

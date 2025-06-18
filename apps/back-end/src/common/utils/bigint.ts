@@ -16,7 +16,10 @@ const isSerializedBigint = (value: unknown): value is SerializedBigint =>
  */
 export const bigintReplacer = (key: string, value: unknown): unknown =>
   typeof value === "bigint"
-    ? ({ $type: "bigint", value: value.toString() } satisfies SerializedBigint)
+    ? ({
+        $type: "bigint",
+        value: value.toString(10),
+      } satisfies SerializedBigint)
     : value;
 
 /**
