@@ -59,7 +59,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
 
   /**
    * Sender's Ethereum address
-   * @example "0x742d35Cc6634C0532925a3b8D404d4bC2f28e9FF"
+   * @example "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
    */
   @ApiProperty({
     type: String,
@@ -74,7 +74,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
 
   /**
    * Recipient's Ethereum address on the target chain
-   * @example "0x1234567890123456789012345678901234567890"
+   * @example "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
    */
   @ApiProperty({
     type: String,
