@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactElement } from "react";
 
 export const Footer = (): ReactElement => (
@@ -6,36 +7,36 @@ export const Footer = (): ReactElement => (
     <div className="left">
       <ul className="footer-links">
         <li>
-          <a href="/bridge">Bridge USDC</a>
+          <Link href="/bridge">Bridge USDC</Link>
         </li>
         <li>
-          <a href="https://docs.stable.io/">Docs</a>
+          <Link href="https://docs.stable.io/">Docs</Link>
         </li>
         <li>
-          <a href="https://github.com/stable-io/stable" target="_blank">
+          <Link href="https://github.com/stable-io/stable" target="_blank">
             Github
-          </a>
+          </Link>
         </li>
       </ul>
       <ul className="footer-links">
         <li>
-          <a href="https://blog.stable.io">Why Stable</a>
+          <Link href="https://blog.stable.io">Why Stable</Link>
         </li>
         <li>
-          <a href="https://blog.stable.io">Blog</a>
+          <Link href="https://blog.stable.io">Blog</Link>
         </li>
         <li>
-          <a href="https://x.com/stable_io" target="_blank">
+          <Link href="https://x.com/stable_io" target="_blank">
             Twitter
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="mailto:hello@stable.io">Reach out</a>
+          <Link href="mailto:hello@stable.io">Reach out</Link>
         </li>
       </ul>
     </div>
     <div className="right">
-      <a href="/">
+      <Link href="/">
         <Image
           alt="stable-logo"
           src="/imgs/logo-bw.png"
@@ -44,7 +45,7 @@ export const Footer = (): ReactElement => (
           height={40}
           unoptimized
         />
-      </a>
+      </Link>
       <ul className="footer-socialmedia">
         <li>
           <a href="https://x.com/stable_io" target="_blank">

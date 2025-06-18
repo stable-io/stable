@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactElement } from "react";
 
 import { LandingLayout } from "@/components";
@@ -19,22 +20,22 @@ const Home: NextPageWithLayout = (): ReactElement => (
           Blazing <span style={{ color: "#48C6DA" }}>FAST!</span>
         </h1>
         <h2>
-          Powered by Circle, Stable's SDK enables instant USDC transfers across
-          networks.
+          Powered by Circle, Stable&apos;s SDK enables instant USDC transfers
+          across networks.
         </h2>
-        <a href="/bridge" className="bridge-link">
+        <Link href="/bridge" className="bridge-link">
           <button className="main-cta">Bridge Now</button>
-        </a>
-        <a
+        </Link>
+        <Link
           href="https://docs.stable.io"
           className="docs-link"
           style={{ marginLeft: "20px" }}
         >
           <button className="text-cta">Start building →</button>
-        </a>
+        </Link>
       </div>
       <div className="right transfer-widget-placeholder-container">
-        <a href="/bridge">
+        <Link href="/bridge">
           <div className="widget-placeholder">
             <Image
               unoptimized
@@ -45,7 +46,7 @@ const Home: NextPageWithLayout = (): ReactElement => (
             />
             <div className="placeholder-overlay"></div>
           </div>
-        </a>
+        </Link>
       </div>
     </div>
     <div className="offerings">
@@ -145,9 +146,9 @@ const Home: NextPageWithLayout = (): ReactElement => (
             </div>
           </li>
         </ul>
-        <a href="https://docs.stable.io/">
+        <Link href="https://docs.stable.io/">
           <button className="main-cta">Start building →</button>
-        </a>
+        </Link>
       </div>
     </div>
   </>
