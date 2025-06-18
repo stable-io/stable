@@ -1,0 +1,27 @@
+{
+  "name": "@stable-io/cctpr-evm-deployment",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CCTPR Deployment scripts",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "clean": "make -C ../../../contracts/cctpr/evm/ clean",
+    "build-contracts": "make -C ../../../contracts/cctpr/evm/ && mkdir -p build-contracts && cp -r ../../../contracts/cctpr/evm/out/* ./build-contracts",
+    "build": "tsc"
+  },
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "eslint": "^9.22.0",
+    "eslint-config": "workspace:^",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "viem": "^2.23.12"
+  },
+  "dependencies": {
+    "@stable-io/cctp-sdk-cctpr-evm": "workspace:^",
+    "@stable-io/cctp-sdk-definitions": "workspace:^",
+    "@stable-io/utils": "workspace:^"
+  }
+}

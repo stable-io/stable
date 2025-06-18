@@ -8,7 +8,7 @@ pragma solidity ^0.8.28;
 
 import "forge-std/Test.sol";
 
-import "cctp-xr/assets/CctpRBase.sol";
+import "cctpr/assets/CctpRBase.sol";
 
 import {
   CHAIN_ID_ETHEREUM,

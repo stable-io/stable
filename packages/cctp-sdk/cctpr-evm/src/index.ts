@@ -14,11 +14,19 @@ export type { CorridorStats } from "./getCorridors.js";
 /**
  * @todo: this import looks weird.
  */
-export type { Corridor } from "./contractSdk/layouts/common.js";
+export type { Corridor, GovernanceCommand, FeeAdjustment, FeeAdjustmentType } from "./contractSdk/layouts/index.js";
 export type { SupportedEvmDomain } from "./common.js";
 
-export { execSelector, parseTransferTxCalldata } from "./contractSdk/index.js";
+export {
+  execSelector,
+  parseTransferTxCalldata,
+  CctpRBase,
+  CctpR,
+  CctpRGovernance,
+} from "./contractSdk/index.js";
+export type { FeeAdjustments } from "./contractSdk/index.js";
 export { routerHookDataLayout } from "./contractSdk/layouts/routerHookData.js";
+export { chainDataLayout } from "./contractSdk/layouts/constructor.js";
 
 /**
  * We need to specify this due to ts(7056):

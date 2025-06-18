@@ -22,6 +22,18 @@ export const contractEntries = [[
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
+    "Optimism", [
+      ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
+      ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
+    ]], [
+    "Polygon", [
+      ["messageTransmitter", ""],
+      ["tokenMessenger",     ""],
+    ]], [
+    "Unichain", [
+      ["messageTransmitter", ""],
+      ["tokenMessenger",     ""],
+    ]], [
     "Base", [
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
@@ -41,6 +53,18 @@ export const contractEntries = [[
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
     "Arbitrum", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Optimism", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Polygon", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Unichain", [
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
@@ -78,13 +102,19 @@ export const attestationTimeEstimates = {
     Arbitrum:   8,
     Base:       8,
     Linea:      8,
+    Optimism:   8,
+    Unichain:   8,
+    Polygon:    8,
   },
   Testnet: {
-    Ethereum:  8,
-    Avalanche: 8,
-    Arbitrum:  8,
-    Base:      8,
-    Linea:     8,
+    Ethereum:   8,
+    Avalanche:  8,
+    Arbitrum:   8,
+    Base:       8,
+    Linea:      8,
+    Optimism:   8,
+    Unichain:   8,
+    Polygon:    8,
   },
 } as const satisfies Record<Network, Record<string, number>>;
 

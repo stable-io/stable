@@ -6,7 +6,6 @@
 import type { DomainsOf, EvmGasToken, GasTokenOf, Network, Usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Brand, BrandedSubArray } from "@stable-io/utils";
 import { EvmAddress } from "./address.js";
-import { Amount, KindWithAtomic } from "@stable-io/amount";
 
 export type CallData = Brand<BrandedSubArray<CallData>, "CallData">;
 export type ReturnData = Brand<BrandedSubArray<ReturnData>, "ReturnData">;
@@ -18,7 +17,7 @@ export type AccessList = {
 }[];
 
 export interface BaseTx {
-  to: EvmAddress;
+  to?: EvmAddress;
   from?: EvmAddress;
   value?: EvmGasToken;
   data?: CallData;
@@ -26,11 +25,13 @@ export interface BaseTx {
 }
 
 export interface ReadCall extends BaseTx {
+  to: EvmAddress;
   value?: EvmGasToken;
   data: CallData;
 }
 
 export interface ContractTx extends BaseTx {
+  to: EvmAddress;
   value?: EvmGasToken;
   data: CallData;
 }
@@ -40,6 +41,7 @@ export interface ValueTx extends BaseTx {
 }
 
 export interface ContractValueTx extends BaseTx {
+  to: EvmAddress;
   value: EvmGasToken;
   data: CallData;
 }
@@ -50,7 +52,7 @@ export interface EvmClient<
 > {
   readonly network: N;
   readonly domain: D;
-  readonly estimateGas: (tx: BaseTx) => Promise<GasTokenOf<D, DomainsOf<"Evm">>>;
+  readonly estimateGas: (tx: BaseTx) => Promise<bigint>;
   readonly ethCall: (tx: ContractTx) => Promise<Uint8Array>;
   readonly getStorageAt: (contract: EvmAddress, slot: bigint) => Promise<Uint8Array>;
   readonly getBalance: (address: EvmAddress) => Promise<GasTokenOf<D, DomainsOf<"Evm">>>;

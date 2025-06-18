@@ -192,19 +192,21 @@ type KindAmountOf<N extends NamedKind> = ReturnType<typeof kindAmountOf<N>>;
 //  of the Eth kind, which makes the already unwieldy type even more bothersome.
 //Taking the intermediate step through the name allows collapsing the type to one instance per kind.
 export const gasTokenNameEntries = [
-  ["Ethereum",  "Eth"  ],
-  ["Avalanche", "Avax" ],
-  ["Optimism",  "Eth"  ],
-  ["Arbitrum",  "Eth"  ],
-  ["Noble",     "Usdc" ],
-  ["Solana",    "Sol"  ],
-  ["Base",      "Eth"  ],
-  ["Polygon",   "Pol"  ],
-  ["Sui",       "Sui"  ],
-  ["Aptos",     "Apt"  ],
-  ["Unichain",  "Eth"  ],
-  ["Linea",     "Eth"  ],
-  ["Sonic",     "Sonic"],
+  ["Ethereum",   "Eth"  ],
+  ["Avalanche",  "Avax" ],
+  ["Optimism",   "Eth"  ],
+  ["Arbitrum",   "Eth"  ],
+  ["Noble",      "Usdc" ],
+  ["Solana",     "Sol"  ],
+  ["Base",       "Eth"  ],
+  ["Polygon",    "Pol"  ],
+  ["Sui",        "Sui"  ],
+  ["Aptos",      "Apt"  ],
+  ["Unichain",   "Eth"  ],
+  ["Linea",      "Eth"  ],
+  ["Codex",      "Eth"  ],
+  ["Sonic",      "Sonic"],
+  ["Worldchain", "Eth"  ],
 ] as const satisfies MapLevel<Domain, NamedKind>;
 export const gasTokenNameOf = constMap(gasTokenNameEntries);
 export type GasTokenNameOf<D extends Domain> = ReturnType<typeof gasTokenNameOf<D>>;

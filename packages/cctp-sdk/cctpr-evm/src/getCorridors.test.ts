@@ -67,7 +67,8 @@ describe("getCorridors", () => {
     expect(result.fastBurnAllowance.toUnit("USDC").toNumber()).toBe(allowance);
   });
 
-  it("returns v1 corridor for when source domain is not v2-supported", async () => {
+  // Currently v2 supports the same chains than v1 on testnet (and soon mainnet)
+  it.skip("returns v1 corridor for when source domain is not v2-supported", async () => {
     (mockClient as any).domain = "Polygon";
     const result = await getCorridors()(mockClient, "Ethereum");
     expect(new Set(result.stats.map(s => s.corridor))).toEqual(new Set(["v1"]));
@@ -89,7 +90,8 @@ describe("getCorridors", () => {
     expect(new Set(result.stats.map(s => s.corridor))).toEqual(new Set(["v1"]));
   });
 
-  it("returns v1 and avaxHop corridors when source domain is v2-supported and destination is not", async () => {
+  // Currently there's no chains where v2 is supported and v1 is not
+  it.skip("returns v1 and avaxHop corridors when source domain is v2-supported and destination is not", async () => {
     const nonV2Destination = "Polygon";
     const result = await getCorridors()(mockClient, nonV2Destination);
     expect(new Set(result.stats.map(s => s.corridor))).toEqual(new Set(["v1", "avaxHop"]));
@@ -113,14 +115,15 @@ describe("getCorridors", () => {
         expectedGasCost: 0.000099077550168882,
         hasFastCost: true,
       },
-      {
-        corridor: "avaxHop",
-        sourceDomain: "Ethereum" as const,
-        destinationDomain: "Polygon" as const,
-        expectedUsdcCost: 0.308127,
-        expectedGasCost: 0.000099077550168882,
-        hasFastCost: true,
-      },
+      // Currently no route uses avax hop
+      // {
+      //   corridor: "avaxHop",
+      //   sourceDomain: "Ethereum" as const,
+      //   destinationDomain: "Polygon" as const,
+      //   expectedUsdcCost: 0.308127,
+      //   expectedGasCost: 0.000099077550168882,
+      //   hasFastCost: true,
+      // },
     ])("calculates correct costs for $corridor", async ({ sourceDomain, destinationDomain, corridor, expectedUsdcCost, expectedGasCost, hasFastCost }) => {
       (mockClient as any).domain = sourceDomain;
       const result = await getCorridors()(mockClient, destinationDomain);
@@ -151,12 +154,13 @@ describe("getCorridors", () => {
         destinationDomain: "Avalanche" as const,
         expectedTime: 8 + 6, // TODO: Update with actual expected time
       },
-      {
-        corridor: "avaxHop",
-        sourceDomain: "Ethereum" as const,
-        destinationDomain: "Polygon" as const,
-        expectedTime: 8 + 6 + 20 + 6, // TODO: Update with actual expected time
-      },
+      // Currently no chains combination uses avax hop on testnet (and soon mainnet)
+      // {
+      //   corridor: "avaxHop",
+      //   sourceDomain: "Ethereum" as const,
+      //   destinationDomain: "Polygon" as const,
+      //   expectedTime: 8 + 6 + 20 + 6, // TODO: Update with actual expected time
+      // },
     ])(
       "calculates correct transfer time for $corridor",
       async ({ sourceDomain, destinationDomain, corridor, expectedTime }) => {
@@ -182,12 +186,13 @@ describe("getCorridors", () => {
         destinationDomain: "Avalanche" as const,
         hasFastCost: true,
       },
-      {
-        corridor: "avaxHop",
-        sourceDomain: "Ethereum" as const,
-        destinationDomain: "Polygon" as const,
-        hasFastCost: true,
-      },
+      // Currently no chains combination uses avax hop on testnet (and soon mainnet)
+      // {
+      //   corridor: "avaxHop",
+      //   sourceDomain: "Ethereum" as const,
+      //   destinationDomain: "Polygon" as const,
+      //   hasFastCost: true,
+      // },
     ])("has correct cost structure for $corridor", async ({ sourceDomain, destinationDomain, corridor, hasFastCost }) => {
       (mockClient as any).domain = sourceDomain;
       const result = await getCorridors()(mockClient, destinationDomain);
