@@ -1,4 +1,5 @@
 import eslintConfig from "eslint-config";
+import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 
 const ignoreConfig = {
@@ -28,6 +29,12 @@ const overridesConfig = {
   },
 };
 
-const flatConfig = [ignoreConfig, ...eslintConfig, nestConfig, overridesConfig];
+const flatConfig = [
+  ignoreConfig,
+  ...eslintConfig,
+  nestConfig,
+  overridesConfig,
+  prettierConfig,
+];
 
 export default flatConfig;
