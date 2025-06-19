@@ -28,7 +28,7 @@ export { chainDataLayout } from "./contractSdk/layouts/constructor.js";
  * > The inferred type of this node exceeds the maximum length the compiler will serialize.
  * > An explicit type annotation is needed.
  */
-interface CctprEvmModule<N extends Network> {
+export interface CctprEvmModule<N extends Network> {
   getCorridors: ReturnType<typeof getCorridors<N>>;
   transfer: ReturnType<typeof transfer<N>>;
 }

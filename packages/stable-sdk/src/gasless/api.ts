@@ -57,7 +57,9 @@ export function getTransferQuote(
   return fetchApiResponse(endpoint);
 }
 
-export type PostTransferRequestResponse = object;
+export type PostTransferRequestResponse = {
+  txHash: string;
+};
 export function postTransferRequest(): PostTransferRequestResponse {
   // const endpoint = apiEndpoint(network)
   // return fetchApiResponse()

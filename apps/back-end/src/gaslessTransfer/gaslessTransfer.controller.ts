@@ -2,6 +2,7 @@ import { Controller, Get, Post, Query } from "@nestjs/common";
 import { ApiResponse as SwaggerApiResponse } from "@nestjs/swagger";
 import { QuoteRequestDto, QuoteResponseDto, RelayResponseDto } from "./dto";
 import { GaslessTransferService } from "./gaslessTransfer.service";
+import { TODO } from "@stable-io/utils";
 
 @Controller("gasless-transfer")
 export class GaslessTransferController {
@@ -46,7 +47,7 @@ export class GaslessTransferController {
   @Post("/relay")
   public async initiateGaslessTransfer(): Promise<RelayResponseDto> {
     return {
-      data: await this.gaslessTransferService.initiateGaslessTransfer(),
+      data: await this.gaslessTransferService.initiateGaslessTransfer({} as TODO),
     };
   }
 }

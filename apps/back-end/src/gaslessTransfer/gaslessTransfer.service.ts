@@ -7,23 +7,32 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Injectable } from "@nestjs/common";
+import { encoding } from "@stable-io/utils";
+
 import type { PlainDto } from "../common/types";
 import type { Permit2TypedData } from "../common/utils";
 import { composePermit2Msg, instanceToPlain } from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
+import { TxLandingService } from "../tx-landing/tx-landing.service";
+import { CctpRService } from "../cctpr/cctpr.service";
 import { QuoteDto, QuoteRequestDto } from "./dto";
+import type { InitiateTransferParams, RelayTx } from "./initiateGaslessTransfer.js";
 
 export interface JwtPayload extends Record<string, unknown> {
   readonly permit2TypedData: Permit2TypedData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
 }
 
+export type Network = "Mainnet" | "Testnet";
+
 @Injectable()
 export class GaslessTransferService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly txLandingService: TxLandingService,
+    private readonly cctpRService: CctpRService,
   ) {}
 
   getStatus(): string {
@@ -67,13 +76,41 @@ export class GaslessTransferService {
     return { jwt };
   }
 
-  public initiateGaslessTransfer(): Promise<object> {
-    // @todo: verify quote signature and throw if invalid
-    // @todo: call tx-landing-service and request the tx to be landed. set nonce+sender as
-    //    the transaction tracking id.
-    // @todo: poll tx-landing-service for transaction confirmation
-    // @todo: respond.
-    return Promise.resolve({});
+  public async initiateGaslessTransfer(transferParams: InitiateTransferParams): Promise<RelayTx> {
+    const cctprEvm = this.cctpRService.getCctprEvm(transferParams.sourceChain);
+    const client = this.txLandingService.getClient();
+
+    const txDetails = cctprEvm.transferGasless(
+      transferParams.targetChain,
+      transferParams.inputAmount,
+      transferParams.mintRecipient,
+      transferParams.gasDropoff,
+      transferParams.corridor,
+      transferParams.quote,
+      transferParams.nonce,
+      transferParams.deadline,
+      transferParams.gaslessFee,
+      transferParams.takeFeesFromInput,
+      transferParams.permit2Signature,
+    );
+
+    const cctprAddress = "0xTODO";
+
+    const { txHashes } = await client.signAndLandTransaction({
+      chain: transferParams.targetChain,
+      txRequests: [{
+        to: cctprAddress,
+        value: txDetails.value?.toUnit("atomic") ?? 0n,
+        data: encoding.hex.encode(txDetails.data, true),
+      }],
+    });
+
+    // fire some metric?
+
+    // 4. respond.
+    // return txHashes[0];
+
+    throw new Error("Not Fully Implemented");
   }
 
   private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
