@@ -1,3 +1,4 @@
+import type { Duration } from "@stable-io/cctp-sdk-definitions";
 import Image from "next/image";
 import type { ReactElement } from "react";
 
@@ -6,17 +7,17 @@ import { RouteMetaItem } from "./RouteMetaItem";
 import { SectionDivider, SplitLayout } from "@/components";
 
 interface RouteInformationProps {
-  route?: { corridor: string; estimatedDuration: number } | undefined;
-  estimatedDuration: string;
+  route?: { corridor: string; estimatedDuration: Duration } | undefined;
 }
 
 export const RouteInformation = ({
   route,
-  estimatedDuration,
 }: RouteInformationProps): ReactElement | undefined => {
   if (!route) {
     return undefined;
   }
+
+  const { corridor, estimatedDuration } = route;
 
   const leftContent = (
     <>
@@ -29,7 +30,7 @@ export const RouteInformation = ({
         width={18}
       />
       <span>
-        Route: <strong>{route.corridor}</strong>
+        Route: <strong>{corridor}</strong>
       </span>
       <span className="badge badge-green">Best Route</span>
     </>
@@ -41,7 +42,7 @@ export const RouteInformation = ({
       <RouteMetaItem
         iconSrc="/imgs/time.svg"
         altText="Duration"
-        value={`~${estimatedDuration} seconds`}
+        value={`~${estimatedDuration.toString()} seconds`}
       />
     </>
   );

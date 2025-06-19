@@ -40,8 +40,6 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     gasDropoffLevel,
   });
 
-  const estimatedDuration = route?.estimatedDuration.toString(10) ?? "??";
-
   const resetTransferState = useCallback(() => {
     setTransferTxHash(undefined);
     setRedeemTxHash(undefined);
@@ -156,7 +154,6 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
           walletAddress={address}
           balance={balance}
           route={route}
-          estimatedDuration={estimatedDuration}
           isInProgress={isInProgress}
           onTransfer={handleTransfer}
         />
