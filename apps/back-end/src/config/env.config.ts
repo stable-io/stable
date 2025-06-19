@@ -1,4 +1,5 @@
-import type { Network } from "@stable-io/sdk";
+import type { Network } from "@stable-io/cctp-sdk-definitions";
+import { networks } from "@stable-io/cctp-sdk-definitions";
 import { plainToInstance } from "class-transformer";
 import {
   IsIn,
@@ -17,8 +18,8 @@ export class EnvironmentVariables {
   public PORT: string = "3001";
 
   @IsNotEmpty()
-  @IsIn(["Mainnet", "Testnet"])
-  public NETWORK: Network = "Mainnet";
+  @IsIn(networks)
+  public NETWORK: Network = networks[0];
 
   @IsStrongPassword({
     minLength: 32,
