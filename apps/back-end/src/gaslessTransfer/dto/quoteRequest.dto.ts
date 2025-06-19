@@ -1,29 +1,22 @@
 import { ApiProperty } from "@nestjs/swagger";
-import type {
-  Domain,
-  Usdc,
-  EvmGasToken,
-} from "@stable-io/cctp-sdk-definitions";
+import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import {
-  IsBoolean,
-  IsOptional,
-  IsIn,
-  ValidateIf,
-  Validate,
-} from "class-validator";
+import { Transform } from "class-transformer";
+import { IsOptional, IsIn, ValidateIf, Validate } from "class-validator";
+import type { Domain } from "../../common/types";
 import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 import {
   IsNotSameAsConstraint,
   IsUsdcAmount,
   IsEvmGasTokenAmount,
   IsEvmAddress,
+  IsBooleanString,
 } from "../../common/validators";
 
-const domains = domainsOf("Evm");
+const domains = domainsOf("Evm").filter((domain) => domain !== "Codex");
 
 export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
   /**
@@ -54,11 +47,14 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: AMOUNT_PATTERNS.USDC,
   })
   @IsUsdcAmount({ min: usdc(0.000001) })
+  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
+    toPlainOnly: true,
+  })
   amount!: Usdc;
 
   /**
    * Sender's Ethereum address
-   * @example "0x742d35Cc6634C0532925a3b8D404d4bC2f28e9FF"
+   * @example "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
    */
   @ApiProperty({
     type: String,
@@ -66,11 +62,14 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: ADDRESS_PATTERNS.EVM,
   })
   @IsEvmAddress()
+  @Transform(({ value }: { value: EvmAddress }) => value.toString(), {
+    toPlainOnly: true,
+  })
   sender!: EvmAddress;
 
   /**
    * Recipient's Ethereum address on the target chain
-   * @example "0x1234567890123456789012345678901234567890"
+   * @example "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
    */
   @ApiProperty({
     type: String,
@@ -78,6 +77,9 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: ADDRESS_PATTERNS.EVM,
   })
   @IsEvmAddress()
+  @Transform(({ value }: { value: EvmAddress }) => value.toString(), {
+    toPlainOnly: true,
+  })
   recipient!: EvmAddress;
 
   @ApiProperty({ enum: corridors })
@@ -99,6 +101,12 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     domains.includes(targetDomain),
   )
   @IsEvmGasTokenAmount({ min: evmGasToken(0) })
+  @Transform(
+    ({ value }: { value: EvmGasToken }) => value.toUnit("human").toFixed(18),
+    {
+      toPlainOnly: true,
+    },
+  )
   gasDropoff!: EvmGasToken;
 
   /**
@@ -106,7 +114,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
    * (checked and constructed on client side)
    * @example true
    */
-  @IsBoolean()
+  @IsBooleanString()
   @IsOptional()
   permit2PermitRequired?: boolean;
 }

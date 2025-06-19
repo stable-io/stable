@@ -26,7 +26,9 @@ export const useRoutes = ({
   gasDropoffLevel,
 }: UseRoutesProps): UseRoutesReturn => {
   const { stable, address } = useStableContext();
-  const [route, setRoute] = useState<Route<AvailableChains, AvailableChains> | undefined>();
+  const [route, setRoute] = useState<
+    Route<AvailableChains, AvailableChains> | undefined
+  >();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -42,16 +44,14 @@ export const useRoutes = ({
     setError(undefined);
 
     try {
-      const result = await stable.findRoutes(
-        {
-          sourceChain,
-          targetChain,
-          amount: amount.toString(10),
-          sender: address,
-          recipient: address,
-          gasDropoffDesired,
-        },
-      );
+      const result = await stable.findRoutes({
+        sourceChain,
+        targetChain,
+        amount: amount.toString(10),
+        sender: address,
+        recipient: address,
+        gasDropoffDesired,
+      });
       const route = result.fastest;
       // @todo: Parameterize findRoutes?
       setRoute(route as Route<AvailableChains, AvailableChains>);

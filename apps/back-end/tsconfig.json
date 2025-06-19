@@ -9,5 +9,6 @@
     "moduleResolution": "bundler",
     "outDir": "./dist",
     "rootDir": "./src"
-  }
+  },
+  "exclude": ["examples/**/*"]
 }

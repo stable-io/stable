@@ -8,5 +8,5 @@ export class QuoteDto {
   @ApiProperty({
     format: "jwt",
   })
-  permit2PermitJwt!: string;
+  jwt!: string;
 }
