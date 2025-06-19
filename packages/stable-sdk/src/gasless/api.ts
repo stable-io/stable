@@ -37,7 +37,7 @@ export type GaslessTransferQuoteParams = {
   quote: OnchainGaslessQuote;
 };
 
-export type GetTransferQuoteResponse = {};
+export type GetTransferQuoteResponse = object;
 export function getTransferQuote(
   network: Network,
   transferParams: GaslessTransferQuoteParams,
@@ -57,7 +57,7 @@ export function getTransferQuote(
   return fetchApiResponse(endpoint);
 }
 
-export type PostTransferRequestResponse = {};
+export type PostTransferRequestResponse = object;
 export function postTransferRequest(): PostTransferRequestResponse {
   // const endpoint = apiEndpoint(network)
   // return fetchApiResponse()
