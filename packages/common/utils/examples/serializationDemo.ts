@@ -4,6 +4,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import {
+  bigintReplacer,
+  bigintReviver,
   serializeBigints,
   deserializeBigints,
   stringifyWithBigints,
@@ -38,7 +40,7 @@ console.info("chainId type:", typeof walletData.metadata.chainId);
 console.info("\n=== Method 1: Object Serialization ===");
 const serializedObj = serializeBigints(walletData);
 console.info("Serialized object (JSON-safe):");
-console.info(JSON.stringify(serializedObj, null, 2));
+console.info(JSON.stringify(serializedObj, undefined, 2));
 
 const deserializedObj = deserializeBigints<typeof walletData>(serializedObj);
 console.info("\nDeserialized object:");
@@ -58,8 +60,6 @@ console.info("Values match:", parsedFromString.balance === walletData.balance);
 
 // Method 3: Custom usage with JSON.stringify/parse
 console.info("\n=== Method 3: Custom JSON Usage ===");
-import { bigintReplacer, bigintReviver } from "../src/serialization.js";
-
 const customJson = JSON.stringify(walletData, bigintReplacer, 2);
 console.info("Custom JSON with replacer:");
 console.info(customJson);
