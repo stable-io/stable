@@ -5,12 +5,7 @@ import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Transform } from "class-transformer";
-import {
-  IsOptional,
-  IsIn,
-  ValidateIf,
-  Validate,
-} from "class-validator";
+import { IsOptional, IsIn, ValidateIf, Validate } from "class-validator";
 import type { Domain } from "../../common/types";
 import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 import {
@@ -21,7 +16,7 @@ import {
   IsBooleanString,
 } from "../../common/validators";
 
-const domains = domainsOf("Evm").filter(domain => domain !== "Codex");
+const domains = domainsOf("Evm").filter((domain) => domain !== "Codex");
 
 export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
   /**
