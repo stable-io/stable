@@ -13,12 +13,12 @@ import {
 
 export class EnvironmentVariables {
   @IsPort()
-  @IsNotEmpty()
-  public PORT!: number;
+  @IsOptional()
+  public PORT: string = "3001";
 
   @IsNotEmpty()
   @IsIn(["Mainnet", "Testnet"])
-  public NETWORK!: Network;
+  public NETWORK: Network = "Mainnet";
 
   @IsStrongPassword({
     minLength: 32,

@@ -7,7 +7,7 @@ import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/httpException.filter";
 import metadata from "./metadata";
 
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 3001;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
