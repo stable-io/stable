@@ -7,19 +7,18 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Injectable } from "@nestjs/common";
-import { TxLandingClient } from "@xlabs/tx-landing-client";
-import { CctpR, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { encoding } from "@stable-io/utils";
 
 import type { PlainDto } from "../common/types";
 import type { Permit2TypedData } from "../common/utils";
 import { composePermit2Msg, instanceToPlain } from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
+import { TxLandingService } from "../tx-landing/tx-landing.service";
+import { CctpRService } from "../cctpr/cctpr.service";
 import { QuoteDto, QuoteRequestDto } from "./dto";
+import type { InitiateTransferParams, RelayTx } from "./initiateGaslessTransfer.js";
 
-import { initiateGaslessTransfer } from "./initiateGaslessTransfer.js";
 export interface JwtPayload extends Record<string, unknown> {
   readonly permit2TypedData: Permit2TypedData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
@@ -32,8 +31,8 @@ export class GaslessTransferService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    private readonly network: Network,
-    private readonly txLandingApiKey: string,
+    private readonly txLandingService: TxLandingService,
+    private readonly cctpRService: CctpRService,
   ) {}
 
   getStatus(): string {
@@ -77,28 +76,41 @@ export class GaslessTransferService {
     return { jwt };
   }
 
-  public initiateGaslessTransfer = initiateGaslessTransfer({
-    getCctprEvm: this.getCctprEvm.bind(this),
-    getTxLandingClient: () => this.txLandingClient(),
-  });
+  public async initiateGaslessTransfer(transferParams: InitiateTransferParams): Promise<RelayTx> {
+    const cctprEvm = this.cctpRService.getCctprEvm(transferParams.sourceChain);
+    const client = this.txLandingService.getClient();
 
-  private txLandingClient(): TxLandingClient {
-    const txLandingBaseUrls = {
-      Mainnet: "",
-      Testnet: "http://localhost:50051",
-    };
+    const txDetails = cctprEvm.transferGasless(
+      transferParams.targetChain,
+      transferParams.inputAmount,
+      transferParams.mintRecipient,
+      transferParams.gasDropoff,
+      transferParams.corridor,
+      transferParams.quote,
+      transferParams.nonce,
+      transferParams.deadline,
+      transferParams.gaslessFee,
+      transferParams.takeFeesFromInput,
+      transferParams.permit2Signature,
+    );
 
-    const url = txLandingBaseUrls[this.network];
-    return new TxLandingClient(url, this.txLandingApiKey, {
-      timeout: 60, // seconds
-    });
-  }
-
-  private getCctprEvm(sourceChain: keyof EvmDomains): CctpR<Network, SupportedEvmDomain<Network>> {
-    const client = ViemEvmClient.fromNetworkAndDomain(this.network, sourceChain);
     const cctprAddress = "0xTODO";
 
-    return new CctpR(client, new EvmAddress(cctprAddress));
+    const { txHashes } = await client.signAndLandTransaction({
+      chain: transferParams.targetChain,
+      txRequests: [{
+        to: cctprAddress,
+        value: txDetails.value?.toUnit("atomic") ?? 0n,
+        data: encoding.hex.encode(txDetails.data, true),
+      }],
+    });
+
+    // fire some metric?
+
+    // 4. respond.
+    // return txHashes[0];
+
+    throw new Error("Not Fully Implemented");
   }
 
   private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
