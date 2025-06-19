@@ -15,7 +15,7 @@ export const WalletChip = ({
   walletIcon = "/imgs/metamask-logo.svg",
   walletName = "MetaMask",
 }: WalletChipProps): ReactElement => {
-  const displayAddress = address ? truncateAddress(address) : "???";
+  const displayAddress = address ? truncateAddress(address) : "";
   return (
     <DynamicConnectButton>
       <div className="wallet-chip">
@@ -28,7 +28,7 @@ export const WalletChip = ({
           width={16}
         />
         <span className="address">{displayAddress}</span>
-        <span className="edit-btn">Edit</span>
+        <span className="edit-btn">{address ? "Edit" : "Connect"}</span>
       </div>
     </DynamicConnectButton>
   );

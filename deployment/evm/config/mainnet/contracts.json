@@ -1,0 +1,90 @@
+{
+  "description": "This file contains the addresses for the contracts on each chain.",
+  "PriceOracle": [
+    {
+      "chainId": 1,
+      "address": "xpo8sHWHkfS6NpVsYwE2t5pTvvdTHSdWUdxh2RtsT1H",
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0xD1a97035fddAacF9Bac5927DafA4128f1528Ad05",
+      "chainId": 2,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0xD1a97035fddAacF9Bac5927DafA4128f1528Ad05",
+      "chainId": 4,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
+      "chainId": 5,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
+      "chainId": 6,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
+      "chainId": 23,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
+      "chainId": 24,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0xD1a97035fddAacF9Bac5927DafA4128f1528Ad05",
+      "chainId": 30,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 40
+    }
+  ],
+  "PriceOracleImplementation": [
+    {
+      "address": "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
+      "chainId": 2,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
+      "chainId": 4,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 5,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 6,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 23,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 24,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
+      "chainId": 30,
+      "commit": "227578fd7cba3c60951567101cd3c50ff3325ef4"
+    },
+    {
+      "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
+      "chainId": 40
+    }
+  ]
+}

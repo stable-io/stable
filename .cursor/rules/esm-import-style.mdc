@@ -1,0 +1,55 @@
+---
+description: Enforce the use of ESM style imports by requiring .js extensions in TypeScript import statements
+globs: *.tsx,*.ts
+alwaysApply: false
+---
+<rule>
+name: esm_import_style_enforcement
+description: Enforce the use of ESM style imports by requiring .js extensions in TypeScript import statements
+filters:
+  # Match TypeScript files
+  - type: file_extension
+    pattern: "\\.(ts|tsx)$"
+  # Match import statements without .js extension
+  - type: content
+    pattern: "import\\s+.*from\\s+['\"][^'\"]*\\.(?!js)['\"]"
+
+actions:
+  - type: reject
+    conditions:
+      - pattern: "import\\s+.*from\\s+['\"][^'\"]*\\.(?!js)['\"]"
+        message: "All import statements must use the .js extension for ESM style."
+
+  - type: suggest
+    message: |
+      **Use ESM style imports with .js extensions:**
+
+      ### ✅ Correct ESM Import Pattern
+      ```typescript
+      // Good: ESM style with .js extension
+      import { myFunction } from './myModule.js';
+      import { anotherFunction } from '../anotherModule.js';
+      ```
+
+      ### ❌ Incorrect Import Pattern
+      ```typescript
+      // Bad: Missing .js extension
+      import { myFunction } from './myModule';
+      import { anotherFunction } from '../anotherModule';
+      ```
+
+      ### Guidelines
+      - Always include the `.js` extension in import paths.
+      - Ensure all import paths are updated to reflect this style.
+      - This rule helps maintain consistency and compatibility with ESM standards.
+
+examples:
+  - input: |
+      import { myFunction } from './myModule';
+    output: |
+      import { myFunction } from './myModule.js';
+
+metadata:
+  priority: medium
+  version: 1.0
+</rule>

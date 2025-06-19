@@ -3965,6 +3965,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-async-storage/async-storage@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@react-native-async-storage/async-storage@npm:2.2.0"
+  dependencies:
+    merge-options: "npm:^3.0.4"
+  peerDependencies:
+    react-native: ^0.0.0-0 || >=0.65 <1.0
+  checksum: 10c0/84900eba46a40225c4ac9bf5eb58885200dc1e789d873ecda46a2a213870cc7110536ed1fd7a74b873071f3603c093958fbd84c635d6f6d4f94bfbb616ffa0ef
+  languageName: node
+  linkType: hard
+
 "@react-native-community/cli-clean@npm:13.6.4":
   version: 13.6.4
   resolution: "@react-native-community/cli-clean@npm:13.6.4"
@@ -4802,6 +4813,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@stable-io/cctpr-evm-deployment@workspace:deployment/evm/cctpr":
+  version: 0.0.0-use.local
+  resolution: "@stable-io/cctpr-evm-deployment@workspace:deployment/evm/cctpr"
+  dependencies:
+    "@stable-io/cctp-sdk-cctpr-evm": "workspace:^"
+    "@stable-io/cctp-sdk-definitions": "workspace:^"
+    "@stable-io/utils": "workspace:^"
+    eslint: "npm:^9.22.0"
+    eslint-config: "workspace:^"
+    tsx: "npm:^4.19.3"
+    typescript: "npm:^5.8.2"
+    viem: "npm:^2.23.12"
+  languageName: unknown
+  linkType: soft
+
 "@stable-io/front-end@workspace:apps/front-end":
   version: 0.0.0-use.local
   resolution: "@stable-io/front-end@workspace:apps/front-end"
@@ -4810,13 +4836,13 @@ __metadata:
     "@dynamic-labs/sdk-react-core": "npm:^4.19.1"
     "@dynamic-labs/wagmi-connector": "npm:^4.19.1"
     "@eslint/eslintrc": "npm:^3.3.1"
+    "@react-native-async-storage/async-storage": "npm:^2.2.0"
     "@stable-io/sdk": "workspace:^"
     "@stable-io/utils": "workspace:^"
     "@tanstack/react-query": "npm:^5.77.2"
     "@types/node": "npm:^22.15.21"
     "@types/react": "npm:^19.1.6"
     "@types/react-dom": "npm:^19.1.5"
-    chalk: "npm:^5.4.1"
     eslint: "npm:^9.27.0"
     eslint-config: "workspace:^"
     eslint-config-next: "npm:15.3.2"
@@ -7926,13 +7952,6 @@ __metadata:
     ansi-styles: "npm:^4.1.0"
     supports-color: "npm:^7.1.0"
   checksum: 10c0/4a3fef5cc34975c898ffe77141450f679721df9dde00f6c304353fa9c8b571929123b26a0e4617bde5018977eb655b31970c297b91b63ee83bb82aeb04666880
-  languageName: node
-  linkType: hard
-
-"chalk@npm:^5.4.1":
-  version: 5.4.1
-  resolution: "chalk@npm:5.4.1"
-  checksum: 10c0/b23e88132c702f4855ca6d25cb5538b1114343e41472d5263ee8a37cccfccd9c4216d111e1097c6a27830407a1dc81fecdf2a56f2c63033d4dbbd88c10b0dcef
   languageName: node
   linkType: hard
 
@@ -11458,6 +11477,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-plain-obj@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "is-plain-obj@npm:2.1.0"
+  checksum: 10c0/e5c9814cdaa627a9ad0a0964ded0e0491bfd9ace405c49a5d63c88b30a162f1512c069d5b80997893c4d0181eadc3fed02b4ab4b81059aba5620bfcdfdeb9c53
+  languageName: node
+  linkType: hard
+
 "is-plain-object@npm:^2.0.4":
   version: 2.0.4
   resolution: "is-plain-object@npm:2.0.4"
@@ -12883,6 +12909,15 @@ __metadata:
   version: 2.0.0
   resolution: "merge-descriptors@npm:2.0.0"
   checksum: 10c0/95389b7ced3f9b36fbdcf32eb946dc3dd1774c2fdf164609e55b18d03aa499b12bd3aae3a76c1c7185b96279e9803525550d3eb292b5224866060a288f335cb3
+  languageName: node
+  linkType: hard
+
+"merge-options@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "merge-options@npm:3.0.4"
+  dependencies:
+    is-plain-obj: "npm:^2.1.0"
+  checksum: 10c0/02b5891ceef09b0b497b5a0154c37a71784e68ed71b14748f6fd4258ffd3fe4ecd5cb0fd6f7cae3954fd11e7686c5cb64486daffa63c2793bbe8b614b61c7055
   languageName: node
   linkType: hard
 
@@ -16936,6 +16971,22 @@ __metadata:
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
+  languageName: node
+  linkType: hard
+
+"tsx@npm:^4.19.3":
+  version: 4.20.2
+  resolution: "tsx@npm:4.20.2"
+  dependencies:
+    esbuild: "npm:~0.25.0"
+    fsevents: "npm:~2.3.3"
+    get-tsconfig: "npm:^4.7.5"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    tsx: dist/cli.mjs
+  checksum: 10c0/f4225df78fa76e87d787aa9d58271405b29bcba5107e8cbfe541068254e4330563615f13136892bac3e7fd814ec682538c31dfe13af3287a15fcb54af3d132c4
   languageName: node
   linkType: hard
 

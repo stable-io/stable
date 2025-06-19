@@ -1,0 +1,54 @@
+{
+  "description": "This file contains the chains against which all the scripts should run.",
+  "chains": [
+    {
+      "domain": "Avalanche",
+      "description": "Fuji",
+      "evmNetworkId": 43113,
+      "chainId": 6,
+      "rpc": ""
+    },
+    {
+      "domain": "Ethereum",
+      "description": "Sepolia",
+      "evmNetworkId": 11155111,
+      "chainId": 10002,
+      "rpc": ""
+    },
+    {
+      "domain": "Arbitrum",
+      "description": "Arbitrum Sepolia",
+      "evmNetworkId": 421614,
+      "chainId": 10003,
+      "rpc": ""
+    },
+    {
+      "domain": "Base",
+      "description": "Base Sepolia",
+      "evmNetworkId": 84532,
+      "chainId": 10004,
+      "rpc": ""
+    },
+    {
+      "domain": "Optimism",
+      "description": "Optimism Sepolia",
+      "evmNetworkId": 43113,
+      "chainId": 10005,
+      "rpc": ""
+    },
+    {
+      "domain": "Polygon",
+      "description": "Polygon Sepolia",
+      "evmNetworkId": 80002,
+      "chainId": 10007,
+      "rpc": ""
+    },
+    {
+      "domain": "Unichain",
+      "description": "Unichain Sepolia",
+      "evmNetworkId": 1301,
+      "chainId": 44,
+      "rpc": "https://unichain-sepolia-rpc.publicnode.com"
+    }
+  ]
+}

@@ -17,7 +17,9 @@ export const platformDomainEntries = [[
     "Polygon",
     "Unichain",
     "Linea",
+    "Codex",
     "Sonic",
+    "Worldchain",
   ]], [
   "Cosmwasm", [
     "Noble",
