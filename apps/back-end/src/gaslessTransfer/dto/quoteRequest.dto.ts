@@ -6,7 +6,6 @@ import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Transform } from "class-transformer";
 import {
-  IsBoolean,
   IsOptional,
   IsIn,
   ValidateIf,
@@ -19,6 +18,7 @@ import {
   IsUsdcAmount,
   IsEvmGasTokenAmount,
   IsEvmAddress,
+  IsBooleanString,
 } from "../../common/validators";
 
 const domains = domainsOf("Evm");
@@ -119,12 +119,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
    * (checked and constructed on client side)
    * @example true
    */
-  @IsBoolean()
+  @IsBooleanString()
   @IsOptional()
-  @Transform(
-    ({ value }: { value: string }) =>
-      value === "true" || (value === "false" ? false : undefined),
-    { toClassOnly: true },
-  )
   permit2PermitRequired?: boolean;
 }

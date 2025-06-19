@@ -3,3 +3,4 @@ export * from "./isAmount.validator";
 export * from "./isUsdcAmount.validator";
 export * from "./isEvmGasAmount.validator";
 export * from "./isEvmAddress.validator";
+export * from "./isBooleanString.validator";
