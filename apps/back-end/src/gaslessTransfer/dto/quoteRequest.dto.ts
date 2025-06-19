@@ -21,7 +21,7 @@ import {
   IsBooleanString,
 } from "../../common/validators";
 
-const domains = domainsOf("Evm");
+const domains = domainsOf("Evm").filter(domain => domain !== "Codex");
 
 export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
   /**
