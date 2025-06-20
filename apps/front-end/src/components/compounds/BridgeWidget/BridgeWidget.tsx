@@ -1,3 +1,4 @@
+import type { Duration } from "@stable-io/cctp-sdk-definitions";
 import type { ReactElement } from "react";
 
 import {
@@ -22,8 +23,7 @@ interface BridgeWidgetProps {
   availableChains: readonly AvailableChains[];
   walletAddress?: string;
   balance: number;
-  route?: { corridor: string; estimatedDuration: number } | undefined;
-  estimatedDuration: string;
+  route?: { corridor: string; estimatedDuration: Duration } | undefined;
   isInProgress: boolean;
   onTransfer: () => void;
 }
@@ -41,7 +41,6 @@ export const BridgeWidget = ({
   walletAddress,
   balance,
   route,
-  estimatedDuration,
   isInProgress,
   onTransfer,
 }: BridgeWidgetProps): ReactElement => {
@@ -74,10 +73,10 @@ export const BridgeWidget = ({
 
         <SectionDivider style={{ margin: "25px 0px" }} />
 
-        <RouteInformation route={route} estimatedDuration={estimatedDuration} />
+        <RouteInformation route={route} />
 
         <TransferSummary
-          estimatedDuration={estimatedDuration}
+          estimatedDuration={route?.estimatedDuration}
           amount={amount}
         />
 
