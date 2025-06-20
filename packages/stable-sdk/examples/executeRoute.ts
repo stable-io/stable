@@ -76,7 +76,7 @@ for (const route of selectedRoutes) {
   console.info(`Transfer Redeemed:`, getTestnetScannerTxUrl(route.intent.targetChain, redeemHash));
 }
 
-function logRouteInfo(route: Route) {
+function logRouteInfo(route: Route<keyof EvmDomains, keyof EvmDomains>) {
   console.info("");
   console.info(`Transferring from ${intent.sourceChain} to ${intent.targetChain}.`);
   console.info(`Sender: ${sender}`);
