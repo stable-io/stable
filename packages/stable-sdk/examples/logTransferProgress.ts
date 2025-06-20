@@ -34,7 +34,7 @@ const intent = {
   gasDropoffDesired: 0n,
 };
 
-const routes = await sdk.findRoutes(intent, { paymentToken: "usdc" });
+const routes = await sdk.findRoutes(intent);
 
 console.info(`Transfers from ${intent.sourceChain} to ${intent.targetChain}.`);
 console.info(`Sender: ${sender}`);
