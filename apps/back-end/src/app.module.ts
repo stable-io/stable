@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule as NestConfigModule } from "@nestjs/config";
+import { AuthModule } from "./auth/auth.module";
 import { LoggingMiddleware } from "./common/middleware/logging.middleware";
 import { ConfigModule } from "./config/config.module";
 import { MetricsModule } from "./metrics/metrics.module";
@@ -12,6 +13,7 @@ import { CctpRModule } from './cctpr/cctpr.module';
     NestConfigModule,
     ConfigModule,
     MetricsModule,
+    AuthModule,
     TxLandingModule,
     CctpRModule,
     GaslessTransferModule,
