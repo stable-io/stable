@@ -1,19 +1,8 @@
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
-import type { Eip712Data, EvmAddress } from "@stable-io/cctp-sdk-evm";
+import type { Permit2TypedData, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { dateToUnixTimestamp } from "@stable-io/cctp-sdk-evm";
 
 export const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
-
-export interface Permit2TransferFromMessage {
-  readonly permitted: {
-    readonly token: string;
-    readonly amount: bigint;
-  };
-  readonly nonce: bigint;
-  readonly deadline: bigint;
-}
-
-export type Permit2TypedData = Eip712Data<Permit2TransferFromMessage>;
 
 const maxUint256 = 2n ** 256n - 1n;
 

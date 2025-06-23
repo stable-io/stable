@@ -4,12 +4,16 @@ import { LoggingMiddleware } from "./common/middleware/logging.middleware";
 import { ConfigModule } from "./config/config.module";
 import { MetricsModule } from "./metrics/metrics.module";
 import { GaslessTransferModule } from "./gaslessTransfer/gaslessTransfer.module";
+import { TxLandingModule } from "./tx-landing/tx-landing.module";
+import { CctpRModule } from './cctpr/cctpr.module';
 
 @Module({
   imports: [
     NestConfigModule,
     ConfigModule,
     MetricsModule,
+    TxLandingModule,
+    CctpRModule,
     GaslessTransferModule,
   ],
 })
