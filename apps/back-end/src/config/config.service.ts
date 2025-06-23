@@ -27,4 +27,8 @@ export class ConfigService {
   public get jwtExpiresInSeconds(): EnvironmentVariables["JWT_EXPIRES_IN_SECONDS"] {
     return this.env.getOrThrow("JWT_EXPIRES_IN_SECONDS");
   }
+
+  public get txLandingApiKey(): EnvironmentVariables["TX_LANDING_API_KEY"] {
+    return this.env.getOrThrow("TX_LANDING_API_KEY");
+  }
 }

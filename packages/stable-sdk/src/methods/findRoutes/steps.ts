@@ -9,7 +9,7 @@ import { Corridor, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
 import { SupportedPlatform } from "../../types/signer.js";
 import { encoding } from "@stable-io/utils";
 
-export type StepType = "sign-permit" | "pre-approve" | "transfer";
+export type StepType = "sign-permit" | "pre-approve" | "transfer" | "gasless-transfer";
 
 interface BaseRouteExecutionStep {
   type: StepType;
@@ -22,7 +22,7 @@ interface BaseRouteExecutionStep {
   gasCostEstimation: bigint;
 };
 
-export type RouteExecutionStep = SignPermitStep | PreApproveStep | TransferStep;
+export type RouteExecutionStep = SignPermitStep | PreApproveStep | TransferStep | GaslessTransferStep;
 
 export const SIGN_PERMIT = "sign-permit" as const;
 export interface SignPermitStep extends BaseRouteExecutionStep {
@@ -36,6 +36,10 @@ export interface PreApproveStep extends BaseRouteExecutionStep {
 
 export interface TransferStep extends BaseRouteExecutionStep {
   type: "transfer";
+};
+
+export interface GaslessTransferStep extends BaseRouteExecutionStep {
+  type: "gasless-transfer";
 };
 
 /**
@@ -86,7 +90,7 @@ export function isTransferTx(subject: ContractTx): boolean {
 export function buildTransferStep(
   corridor: Corridor,
   sourceChain: keyof EvmDomains,
-): RouteExecutionStep {
+): TransferStep {
   const sharedTxData = {
     platform: "Evm" as const,
     chain: sourceChain,
@@ -117,4 +121,32 @@ export function buildTransferStep(
     default:
       throw new Error(`Corridor: ${corridor} not supported.`);
   }
+}
+
+
+export function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
+  return {
+    platform: "Evm",
+    type: "sign-permit",
+    chain: sourceChain,
+    gasCostEstimation: 0n,
+  };
+}
+const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
+export function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
+  return {
+    platform: "Evm",
+    chain: sourceChain,
+    type: "pre-approve",
+    gasCostEstimation: EVM_APPROVAL_TX_GAS_COST_APROXIMATE,
+  };
+}
+
+export function gaslessTransferStep(sourceChain: keyof EvmDomains): GaslessTransferStep {
+  return {
+    platform: "Evm",
+    chain: sourceChain,
+    type: "gasless-transfer",
+    gasCostEstimation: 0n,
+  };
 }

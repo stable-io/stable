@@ -81,3 +81,14 @@ export type Eip712Data<MessageType> = Readonly<{
 }>;
 
 export type Eip2612Data = Eip712Data<Eip2612MessageBody>;
+
+export interface Permit2TransferFromMessage {
+  readonly permitted: {
+    readonly token: string;
+    readonly amount: bigint;
+  };
+  readonly nonce: bigint;
+  readonly deadline: bigint;
+}
+
+export type Permit2TypedData = Eip712Data<Permit2TransferFromMessage>;
