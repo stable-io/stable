@@ -1,18 +1,13 @@
-import { Module } from '@nestjs/common';
-import { GaslessTransferService } from './gaslessTransfer.service.js';
-import { CctpRModule } from '../cctpr/cctpr.module.js';
-import { TxLandingModule } from '../tx-landing/tx-landing.module.js';
-import { ConfigModule } from '../config/config.module.js';
-import { AuthModule } from '../auth/auth.module.js';
-import { GaslessTransferController } from './gaslessTransfer.controller.js';
+import { Module } from "@nestjs/common";
+import { CctpRModule } from "../cctpr/cctpr.module";
+import { TxLandingModule } from "../tx-landing/tx-landing.module";
+import { ConfigModule } from "../config/config.module";
+import { AuthModule } from "../auth/auth.module";
+import { GaslessTransferController } from "./gaslessTransfer.controller";
+import { GaslessTransferService } from "./gaslessTransfer.service";
 
 @Module({
-  imports: [
-    CctpRModule,
-    TxLandingModule,
-    ConfigModule,
-    AuthModule,
-  ],
+  imports: [CctpRModule, TxLandingModule, ConfigModule, AuthModule],
   controllers: [GaslessTransferController],
   providers: [GaslessTransferService],
   exports: [GaslessTransferService],
