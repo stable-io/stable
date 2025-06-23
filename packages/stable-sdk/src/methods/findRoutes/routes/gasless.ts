@@ -68,15 +68,13 @@ export async function buildGaslessRoute<
     ? [signPermitStep(intent.sourceChain)]
     : [];
 
-  const totalFees = corridorFees;
+  const totalFees = [quote.gaslessFee, ...corridorFees];
 
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
     gaslessTransferStep(intent.sourceChain),
   ];
   
-  const nonce = "todo";
-
   return {
     intent,
     fees: totalFees,
@@ -84,17 +82,16 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost(routeSteps, corridorFees),
+    estimatedTotalCost: await calculateTotalCost(routeSteps, totalFees),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(
       evmClient,
-      permit2PermitRequired,
       evmClient.network,
+      permit2PermitRequired,
       intent,
-      nonce // todo: get the transfer nonce from the quote.
-                          // perhaps signaturedeadline and deadline are
-                          // part of the quote.
+      quote.permit2TypedData,
+      quote.jwt,
     ),
   }
 }

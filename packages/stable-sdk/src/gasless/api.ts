@@ -3,10 +3,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { Url, TODO } from "@stable-io/utils";
+import { Url, TODO, BaseObject, encoding } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { layouts, GaslessQuoteMessage } from "@stable-io/cctp-sdk-cctpr-evm";
-import { fetchApiResponse, EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { deserializeBigints } from "@stable-io/utils";
 
@@ -28,6 +28,42 @@ export const apiEndpointWithQuery = <N extends Network>(network: N) => (
   return `${endpoint}?${queryParams}` as Url;
 };
 
+export type HTTPCode = 200 | 201 | 202 | 204 | 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
+export type APIResponse<S extends HTTPCode, V> = Readonly<{
+  status: S;
+  value: V;
+}>;
+
+export interface ApiRequestOptions {
+  method?: "GET" | "POST";
+  body?: BaseObject;
+  headers?: Record<string, string>;
+}
+
+const defaultHeaders = { "Content-Type": "application/json" };
+
+export async function apiRequest<T extends APIResponse<HTTPCode, BaseObject>>(
+  endpoint: Url,
+  options: ApiRequestOptions = {},
+): Promise<T> {
+  const { method = "GET", body, headers = {} } = options;
+  
+  const requestOptions: RequestInit = {
+    method,
+    headers: { ...defaultHeaders, ...headers },
+  };
+
+  if (body && method === "POST") {
+    requestOptions.body = JSON.stringify(body);
+  }
+
+  const response = await fetch(endpoint, requestOptions);
+  const status = response.status as HTTPCode;
+  const value = await response.json();
+  
+  return { status, value } as T;
+}
+
 export type OnchainGaslessQuote = GaslessQuoteMessage & { type: "onChain" };
 
 export type GetQuoteParams = {
@@ -42,12 +78,14 @@ export type GetQuoteParams = {
 };
 
 export type GetQuoteResponse = {
-  iat: number,
-  exp: number,
-  quoteRequest: GetQuoteParams,
-  permit2TypedData: Permit2TypedData,
-
+  iat: number;
+  exp: number;
+  quoteRequest: GetQuoteParams;
+  permit2TypedData: Permit2TypedData;
+  gaslessFee: Usdc;
+  jwt: string;
 };
+
 export async function getTransferQuote(
   network: Network,
   quoteParams: GetQuoteParams,
@@ -56,10 +94,10 @@ export async function getTransferQuote(
 
   const endpoint = apiEndpointWithQuery(network)("quote", apiParams);
 
-  const apiResponse = await fetchApiResponse(endpoint);
+  const apiResponse = await apiRequest(endpoint, { method: "GET" });
 
   if (apiResponse.status >= 400) {
-    throw new Error("Failed to get quote from API")
+    throw new Error(`Failed to get quote from API. Status Code: ${apiResponse.status}`);
   }
 
   const jwt = extractJwtFromQuoteResponse(apiResponse.value);
@@ -67,12 +105,14 @@ export async function getTransferQuote(
   const payload = decodeAndDeserializeJwt(jwt);
 
   const quoteRequest = deserializeQuoteRequest(payload.quoteRequest as Record<string, unknown>);
-
+  const gaslessFee = usdc(payload.gaslessFee! as string);
   return {
     iat: payload.iat as number,
     exp: payload.exp as number,
     permit2TypedData: payload.permit2TypedData as Permit2TypedData,
     quoteRequest,
+    gaslessFee,
+    jwt,
   };
 }
 
@@ -136,13 +176,11 @@ const decodeJwtPayload = (token: string): unknown => {
     const decodedPayload = atob(paddedPayload);
     return JSON.parse(decodedPayload);
   } catch (error) {
-    console.error("Failed to decode JWT:", error);
     throw error;
   }
 };
 
 const decodeAndDeserializeJwt = (jwt: string): Record<string, unknown> => {
-  console.info("\n4️⃣ Decoding & deserializing JWT payload...");
   const jwtPayload = decodeJwtPayload(jwt);
   if (typeof jwtPayload !== "object" || !jwtPayload) {
     throw new Error("Invalid JWT payload structure");
@@ -156,11 +194,35 @@ const decodeAndDeserializeJwt = (jwt: string): Record<string, unknown> => {
   return restoredPayload;
 };
 
-export type PostTransferRequestResponse = {
+export type PostTransferParams = {
+  jwt: string;
+  takeFeesFromInput: boolean;
+  permit2Signature: Uint8Array;
+  permitSignature?: Uint8Array;
+};
+
+export type PostTransferResponse = {
   txHash: string;
 };
-export function postTransferRequest(): PostTransferRequestResponse {
-  // const endpoint = apiEndpoint(network)
-  // return fetchApiResponse()
-  throw new Error("NotImplemented");
+
+export async function postTransferRequest(network: Network, params: PostTransferParams): Promise<PostTransferResponse> {
+  const endpoint = apiEndpoint(network)("relay");
+  
+  const requestBody = {
+    takeFeesFromInput: params.takeFeesFromInput.toString(),
+    permitSignature: params.permitSignature ? encoding.hex.encode(params.permitSignature, true) : undefined,
+    permit2Signature: encoding.hex.encode(params.permit2Signature, true),
+    jwt: params.jwt,
+  };
+
+  const apiResponse = await apiRequest<APIResponse<HTTPCode, { txHash: string }>>(
+    endpoint,
+    { method: "POST", body: requestBody }
+  );
+
+  if (apiResponse.status >= 400) {
+    throw new Error(`Failed to initiate transfer: ${apiResponse.status}`);
+  }
+
+  return { txHash: apiResponse.value.txHash };
 }

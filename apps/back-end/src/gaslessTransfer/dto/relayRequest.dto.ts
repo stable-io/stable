@@ -1,5 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsOptional } from "class-validator";
+
+import { IsBooleanString } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
 
@@ -25,4 +27,24 @@ export class RelayRequestDto {
   })
   @IsNotEmpty()
   permit2Signature!: string;
+
+  /**
+   * User's signature of a permit message for permit2 contract
+   * @example "0x1234567890abcdef..."
+   */
+  @ApiProperty({
+    format: "hex",
+    pattern: "^0x[a-fA-F0-9]+$",
+  })
+  @IsOptional()
+  permitSignature!: string;
+
+  /**
+   * Whether the fees will be taken from the input or added
+   * on top of it
+   * @example "true"
+   */
+  @IsBooleanString()
+  @IsOptional()
+  takeFeesFromInput!: "true" | "false";
 }

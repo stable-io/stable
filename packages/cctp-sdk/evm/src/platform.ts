@@ -59,7 +59,7 @@ export interface EvmClient<
   readonly getLatestBlock: () => Promise<bigint>;
 }
 
-type Eip2612MessageBody = {
+export type Eip2612MessageBody = {
   owner: string;
   spender: string;
   value: bigint;

@@ -7,8 +7,6 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { Injectable } from "@nestjs/common";
-import type { TODO } from "@stable-io/utils";
-import { encoding } from "@stable-io/utils";
 
 import type { PlainDto } from "../common/types";
 import { composePermit2Msg, instanceToPlain } from "../common/utils";
@@ -16,11 +14,19 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
-import type { RelayTx } from "./initiateGaslessTransfer";
+import { TODO } from "@stable-io/utils";
 
+export type RelayTx = {
+  hash: `0x${string}`;
+};
+
+type GaslessFeeDto = {
+  value: Usdc;
+}
 export interface JwtPayload extends Record<string, unknown> {
   readonly permit2TypedData: Permit2TypedData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
+  readonly gaslessFee: string, // Usdc =(
 }
 
 export type Network = "Mainnet" | "Testnet";
@@ -60,6 +66,8 @@ export class GaslessTransferService {
     const nonce = this.getNonce();
     const deadline = this.getDeadline();
 
+    const gaslessFee = usdc("0.1"); // TODO: calculate gasless fee.
+
     const jwtPayload: JwtPayload = {
       permit2TypedData: composePermit2Msg(
         chainIdOf(this.configService.network, request.sourceDomain),
@@ -69,6 +77,7 @@ export class GaslessTransferService {
         deadline,
       ),
       quoteRequest: instanceToPlain(request),
+      gaslessFee: gaslessFee.toUnit("human").toString(),
     };
 
     const jwt = await this.jwtService.signAsync(jwtPayload);
@@ -79,38 +88,35 @@ export class GaslessTransferService {
     request: RelayRequestDto,
   ): Promise<RelayTx> {
     // Access the validated JWT payload and permit2 signature
-    const { jwt: jwtPayload, permit2Signature } = request;
     const {
-      quoteRequest: {
-        sourceDomain,
-        targetDomain,
-        amount,
-        recipient,
-        gasDropoff,
-        corridor,
-      },
+      jwt: jwtPayload,
+      permit2Signature,
+      permitSignature,
+      takeFeesFromInput,
+    } = request;
+
+    const {
+      quoteRequest,
       permit2TypedData,
+      gaslessFee,
     } = jwtPayload;
-    // const cctprEvm = this.cctpRService.getCctprEvm(sourceDomain);
-    // const client = this.txLandingService.getClient();
 
-    // const txDetails = cctprEvm.transferGasless(
-    //   targetDomain,
-    //   amount,
-    //   recipient.toUniversalAddress(),
-    //   gasDropoff as TODO,
-    //   corridor as TODO,
-    //   permit2TypedData.message.permitted as TODO,
-    //   permit2TypedData.message.nonce as TODO,
-    //   permit2TypedData.message.deadline as TODO,
-    //   permit2TypedData.message.permitted as TODO,
-    //   true,
-    //   permit2Signature as TODO,
-    // );
 
-    // const cctprAddress = "0xTODO";
+    if (quoteRequest.permit2PermitRequired && !permitSignature) {
+      // This should throw a 500, not a 400.
+      throw new Error("Missing Permit for Permit2 Contract Allowance");
+    }
 
-    // const { txHashes } = await client.signAndLandTransaction({
+    const txDetails = await this.cctpRService.gaslessTransferTx(
+      quoteRequest,
+      permit2TypedData,
+      permit2Signature,
+      gaslessFee,
+      takeFeesFromInput === "true"
+    );
+    
+    throw new Error("Not Fully Implemented");
+    // const { txHashes } = await this.txLandingService.signAndLandTransaction({
     //   chain: targetDomain,
     //   txRequests: [
     //     {
@@ -121,12 +127,9 @@ export class GaslessTransferService {
     //   ],
     // });
 
-    // fire some metric?
-
-    // 4. respond.
+    // todo: metric?
     // return txHashes[0];
-
-    throw new Error("Not Fully Implemented");
+    
   }
 
   private calculateQuotedAmount(request: QuoteRequestDto): Usdc {

@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { IsBoolean } from "class-validator";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -116,5 +117,5 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
    */
   @IsBooleanString()
   @IsOptional()
-  permit2PermitRequired?: boolean;
+  permit2PermitRequired?: "true" | "false";
 }

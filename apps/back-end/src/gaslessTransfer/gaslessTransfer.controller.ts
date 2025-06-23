@@ -48,9 +48,6 @@ export class GaslessTransferController {
     };
   }
 
-  /**
-   * Initiate a gasless transfer transaction
-   */
   @Post("/relay")
   @SwaggerApiResponse({
     status: 201,
