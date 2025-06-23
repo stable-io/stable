@@ -7,14 +7,16 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { Injectable } from "@nestjs/common";
+import type { TODO } from "@stable-io/utils";
+import { encoding } from "@stable-io/utils";
 
 import type { PlainDto } from "../common/types";
 import { composePermit2Msg, instanceToPlain } from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
-import { QuoteDto, QuoteRequestDto } from "./dto";
-import type { InitiateTransferParams, RelayTx } from "./initiateGaslessTransfer.js";
+import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
+import type { RelayTx } from "./initiateGaslessTransfer";
 
 export interface JwtPayload extends Record<string, unknown> {
   readonly permit2TypedData: Permit2TypedData;
@@ -73,33 +75,50 @@ export class GaslessTransferService {
     return { jwt };
   }
 
-  public async initiateGaslessTransfer(transferParams: InitiateTransferParams): Promise<RelayTx> {
-    // const cctprEvm = this.cctpRService.getCctprEvm(transferParams.sourceChain);
+  public async initiateGaslessTransfer(
+    request: RelayRequestDto,
+  ): Promise<RelayTx> {
+    // Access the validated JWT payload and permit2 signature
+    const { jwt: jwtPayload, permit2Signature } = request;
+    const {
+      quoteRequest: {
+        sourceDomain,
+        targetDomain,
+        amount,
+        recipient,
+        gasDropoff,
+        corridor,
+      },
+      permit2TypedData,
+    } = jwtPayload;
+    // const cctprEvm = this.cctpRService.getCctprEvm(sourceDomain);
     // const client = this.txLandingService.getClient();
 
     // const txDetails = cctprEvm.transferGasless(
-    //   transferParams.targetChain,
-    //   transferParams.inputAmount,
-    //   transferParams.mintRecipient,
-    //   transferParams.gasDropoff,
-    //   transferParams.corridor,
-    //   transferParams.quote,
-    //   transferParams.nonce,
-    //   transferParams.deadline,
-    //   transferParams.gaslessFee,
-    //   transferParams.takeFeesFromInput,
-    //   transferParams.permit2Signature,
+    //   targetDomain,
+    //   amount,
+    //   recipient.toUniversalAddress(),
+    //   gasDropoff as TODO,
+    //   corridor as TODO,
+    //   permit2TypedData.message.permitted as TODO,
+    //   permit2TypedData.message.nonce as TODO,
+    //   permit2TypedData.message.deadline as TODO,
+    //   permit2TypedData.message.permitted as TODO,
+    //   true,
+    //   permit2Signature as TODO,
     // );
 
-    const cctprAddress = "0xTODO";
+    // const cctprAddress = "0xTODO";
 
     // const { txHashes } = await client.signAndLandTransaction({
-    //   chain: transferParams.targetChain,
-    //   txRequests: [{
-    //     to: cctprAddress,
-    //     value: txDetails.value?.toUnit("atomic") ?? 0n,
-    //     data: encoding.hex.encode(txDetails.data, true),
-    //   }],
+    //   chain: targetDomain,
+    //   txRequests: [
+    //     {
+    //       to: cctprAddress,
+    //       value: txDetails.value?.toUnit("atomic") ?? 0n,
+    //       data: encoding.hex.encode(txDetails.data, true),
+    //     },
+    //   ],
     // });
 
     // fire some metric?
