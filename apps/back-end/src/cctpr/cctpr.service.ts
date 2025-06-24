@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Size, TODO, encoding } from "@stable-io/utils";
-import { Usdc } from "@stable-io/cctp-sdk-definitions";
-import { CctpR, SupportedEvmDomain, GaslessQuote } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Usdc } from "@stable-io/cctp-sdk-definitions";
+import { CctpR, GaslessQuote } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { ContractTx, EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
-import { usdc } from "@stable-io/cctp-sdk-definitions";
-import type { Network, RelayTx } from '../gaslessTransfer/gaslessTransfer.service.js';
-import { ConfigService } from '../config/config.service.js';
+import { ConfigService } from '../config/config.service';
 import { QuoteRequestDto } from '../gaslessTransfer/dto/quoteRequest.dto';
 import { contractAddressOf as cctprContractAddressOf } from '@stable-io/cctp-sdk-cctpr-definitions';
 
@@ -16,7 +14,7 @@ export class CctpRService {
     private readonly configService: ConfigService,
   ) {}
 
-  public async gaslessTransferTx(
+  public gaslessTransferTx(
     quoteRequest: QuoteRequestDto,
     permit2TypedData: Permit2TypedData,
     permit2Signature: string,
@@ -24,9 +22,9 @@ export class CctpRService {
     maxRelayFee: Usdc,
     maxFastFeeUsdc: Usdc,
     takeFeesFromInput: boolean,
-  ): Promise<ContractTx> {
+  ): ContractTx {
     const client = ViemEvmClient.fromNetworkAndDomain(this.configService.network, quoteRequest.sourceDomain);
-    
+
     const cctprAddress = cctprContractAddressOf(this.configService.network, quoteRequest.sourceDomain);
 
     if (!cctprAddress) throw new Error("CCTPR Address Not Found");
@@ -56,4 +54,4 @@ export class CctpRService {
       encoding.hex.decode(permit2Signature),
     );
   }
-} 
+}

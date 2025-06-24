@@ -104,7 +104,7 @@ export class GaslessTransferService {
       throw new Error("Missing Permit for Permit2 Contract Allowance");
     }
 
-    const gaslessTxDetails = await this.cctpRService.gaslessTransferTx(
+    const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
       quoteRequest,
       permit2TypedData,
       permit2Signature,
@@ -117,7 +117,9 @@ export class GaslessTransferService {
     const txDetails = quoteRequest.permit2PermitRequired
       ? this.multiCallWithPermit(gaslessTxDetails, permitSignature)
       : gaslessTxDetails;
-    
+
+    console.log("TX DETAILS", txDetails);
+
     throw new Error("Not Fully Implemented");
     // const { txHashes } = await this.txLandingService.signAndLandTransaction({
     //   chain: targetDomain,
@@ -168,7 +170,7 @@ export class GaslessTransferService {
     return 0n;
   }
 
-  private multiCallWithPermit(gasslesTx: ContractTx, permitSignature: string): ContractTx {
+  private multiCallWithPermit(gaslessTx: ContractTx, permitSignature: string): ContractTx {
     // returns a new contract transaction that wraps permit and gasless into a single tx
     // using multicall contract.
     throw new Error("Not Implemented");
