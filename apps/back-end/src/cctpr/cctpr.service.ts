@@ -27,9 +27,7 @@ export class CctpRService {
 
     const cctprAddress = cctprContractAddressOf(this.configService.network, quoteRequest.sourceDomain);
 
-    if (!cctprAddress) throw new Error("CCTPR Address Not Found");
-
-    const cctpr = new CctpR(client, new EvmAddress(cctprAddress));
+    const cctpr = new CctpR(client, cctprAddress);
 
     const corridor = quoteRequest.corridor === "v1"
       ? { type: quoteRequest.corridor }

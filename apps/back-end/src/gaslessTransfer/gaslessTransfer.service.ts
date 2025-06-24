@@ -1,3 +1,5 @@
+import { Injectable } from "@nestjs/common";
+import { encoding } from "@stable-io/utils";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
 import {
@@ -6,13 +8,13 @@ import {
   chainIdOf,
 } from "@stable-io/cctp-sdk-definitions";
 import { ContractTx, EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
-import { Injectable } from "@nestjs/common";
 
 import type { PlainDto } from "../common/types";
 import { composePermit2Msg, instanceToPlain } from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
+import { TxLandingService } from "../tx-landing/tx-landing.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
 
 export type RelayTx = {
@@ -32,7 +34,7 @@ export class GaslessTransferService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-    // private readonly txLandingService: TxLandingService,
+    private readonly txLandingService: TxLandingService,
     private readonly cctpRService: CctpRService,
   ) {}
 
@@ -103,6 +105,9 @@ export class GaslessTransferService {
       // This should generate a 400, not a 500.
       throw new Error("Missing Permit for Permit2 Contract Allowance");
     }
+    const addr = cctprContractAddressOf(this.configService.network, quoteRequest.sourceDomain)
+    if (!addr) throw new Error("CCTPR Address Not Found");
+    const cctprAddress = new EvmAddress(addr);
 
     const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
       quoteRequest,
@@ -111,7 +116,8 @@ export class GaslessTransferService {
       gaslessFee,
       maxRelayFee,
       maxFastFee,
-      takeFeesFromInput === "true"
+      takeFeesFromInput === "true",
+      cctprAddress,
     );
 
     const txDetails = quoteRequest.permit2PermitRequired
@@ -120,21 +126,9 @@ export class GaslessTransferService {
 
     console.log("TX DETAILS", txDetails);
 
-    throw new Error("Not Fully Implemented");
-    // const { txHashes } = await this.txLandingService.signAndLandTransaction({
-    //   chain: targetDomain,
-    //   txRequests: [
-    //     {
-    //       to: cctprAddress,
-    //       value: txDetails.value?.toUnit("atomic") ?? 0n,
-    //       data: encoding.hex.encode(txDetails.data, true),
-    //     },
-    //   ],
-    // });
-
-    // todo: metric?
-    // return txHashes[0];
-
+    const txHash = await this.txLandingService.sendTransaction(cctprAddress, quoteRequest.targetDomain, txDetails);
+    
+    return { hash: `0x${txHash}`};
   }
 
   private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
