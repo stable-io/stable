@@ -101,7 +101,6 @@ export class GaslessTransferService {
       gaslessFee,
     } = jwtPayload;
 
-
     if (quoteRequest.permit2PermitRequired && !permitSignature) {
       // This should throw a 500, not a 400.
       throw new Error("Missing Permit for Permit2 Contract Allowance");
@@ -114,7 +113,7 @@ export class GaslessTransferService {
       gaslessFee,
       takeFeesFromInput === "true"
     );
-    
+
     throw new Error("Not Fully Implemented");
     // const { txHashes } = await this.txLandingService.signAndLandTransaction({
     //   chain: targetDomain,
@@ -129,7 +128,7 @@ export class GaslessTransferService {
 
     // todo: metric?
     // return txHashes[0];
-    
+
   }
 
   private calculateQuotedAmount(request: QuoteRequestDto): Usdc {

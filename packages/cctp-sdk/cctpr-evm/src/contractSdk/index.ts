@@ -398,11 +398,13 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
         ? { type: "offChain",
             expirationTime: quote.expirationTime,
             feePaymentVariant: { payIn: "usdc", relayFeeUsdc: quote.relayFee },
+            quoterSignature: quote.quoterSignature,
           }
-        : { type: "onChain",
+        : { type: "onChainUsdc",
             maxRelayFeeUsdc: quote.maxRelayFee,
+            takeRelayFeeFromInput: quote.takeFeesFromInput,
           }
-      ) as GaslessQuoteVariant,
+      ),
     } as const satisfies Transfer<N>;
     return this.execTx(
       evmGasToken(0),

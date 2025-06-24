@@ -2,6 +2,7 @@ import type { Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { IsNotEmpty, IsObject, ValidateNested } from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
+import { IsUsdcAmount } from "../../common/validators";
 
 export class JwtPayloadDto {
   /**
@@ -19,6 +20,6 @@ export class JwtPayloadDto {
   @ValidateNested()
   readonly quoteRequest!: QuoteRequestDto;
 
-
+  @IsUsdcAmount()
   readonly gaslessFee!: Usdc;
 }
