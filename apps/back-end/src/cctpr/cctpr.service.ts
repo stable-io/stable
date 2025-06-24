@@ -21,8 +21,9 @@ export class CctpRService {
     permit2TypedData: Permit2TypedData,
     permit2Signature: string,
     gaslessFee: Usdc,
+    maxRelayFee: Usdc,
+    maxFastFeeUsdc: Usdc,
     takeFeesFromInput: boolean,
-    permitSignature?: string,
   ): Promise<ContractTx> {
     const client = ViemEvmClient.fromNetworkAndDomain(this.configService.network, quoteRequest.sourceDomain);
     
@@ -32,10 +33,12 @@ export class CctpRService {
 
     const cctpr = new CctpR(client, new EvmAddress(cctprAddress));
 
-    const corridor = { type: "v1" as const };
+    const corridor = quoteRequest.corridor === "v1"
+      ? { type: quoteRequest.corridor }
+      : { type: quoteRequest.corridor, maxFastFeeUsdc };
     const quote: GaslessQuote & { type: "onChain" } = {
       type: "onChain",
-      maxRelayFee: usdc("0.1"),
+      maxRelayFee: maxRelayFee,
       takeFeesFromInput,
     };
 

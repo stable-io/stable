@@ -5,7 +5,7 @@ import {
   usdcContracts,
   chainIdOf,
 } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import { ContractTx, EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { Injectable } from "@nestjs/common";
 
 import type { PlainDto } from "../common/types";
@@ -14,15 +14,11 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
-import { TODO } from "@stable-io/utils";
 
 export type RelayTx = {
   hash: `0x${string}`;
 };
 
-type GaslessFeeDto = {
-  value: Usdc;
-}
 export interface JwtPayload extends Record<string, unknown> {
   readonly permit2TypedData: Permit2TypedData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
@@ -93,6 +89,8 @@ export class GaslessTransferService {
       permit2Signature,
       permitSignature,
       takeFeesFromInput,
+      maxRelayFee,
+      maxFastFee,
     } = request;
 
     const {
@@ -102,18 +100,24 @@ export class GaslessTransferService {
     } = jwtPayload;
 
     if (quoteRequest.permit2PermitRequired && !permitSignature) {
-      // This should throw a 500, not a 400.
+      // This should generate a 400, not a 500.
       throw new Error("Missing Permit for Permit2 Contract Allowance");
     }
 
-    const txDetails = await this.cctpRService.gaslessTransferTx(
+    const gaslessTxDetails = await this.cctpRService.gaslessTransferTx(
       quoteRequest,
       permit2TypedData,
       permit2Signature,
       gaslessFee,
+      maxRelayFee,
+      maxFastFee,
       takeFeesFromInput === "true"
     );
 
+    const txDetails = quoteRequest.permit2PermitRequired
+      ? this.multiCallWithPermit(gaslessTxDetails, permitSignature)
+      : gaslessTxDetails;
+    
     throw new Error("Not Fully Implemented");
     // const { txHashes } = await this.txLandingService.signAndLandTransaction({
     //   chain: targetDomain,
@@ -162,5 +166,11 @@ export class GaslessTransferService {
     // @todo: Query permit2 contract to find a free nonce
     // @todo: Cache latest nonce per user?
     return 0n;
+  }
+
+  private multiCallWithPermit(gasslesTx: ContractTx, permitSignature: string): ContractTx {
+    // returns a new contract transaction that wraps permit and gasless into a single tx
+    // using multicall contract.
+    throw new Error("Not Implemented");
   }
 }

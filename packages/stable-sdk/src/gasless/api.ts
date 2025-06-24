@@ -199,6 +199,8 @@ export type PostTransferParams = {
   takeFeesFromInput: boolean;
   permit2Signature: Uint8Array;
   permitSignature?: Uint8Array;
+  maxRelayFee: Usdc;
+  maxFastFee: Usdc;
 };
 
 export type PostTransferResponse = {
@@ -209,10 +211,12 @@ export async function postTransferRequest(network: Network, params: PostTransfer
   const endpoint = apiEndpoint(network)("relay");
   
   const requestBody = {
-    takeFeesFromInput: params.takeFeesFromInput.toString(),
-    permitSignature: params.permitSignature ? encoding.hex.encode(params.permitSignature, true) : undefined,
-    permit2Signature: encoding.hex.encode(params.permit2Signature, true),
     jwt: params.jwt,
+    takeFeesFromInput: params.takeFeesFromInput.toString(),
+    maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
+    maxFastFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
+    permit2Signature: encoding.hex.encode(params.permit2Signature, true),
+    permitSignature: params.permitSignature ? encoding.hex.encode(params.permitSignature, true) : undefined,
   };
 
   const apiResponse = await apiRequest<APIResponse<HTTPCode, { txHash: string }>>(
@@ -221,7 +225,7 @@ export async function postTransferRequest(network: Network, params: PostTransfer
   );
 
   if (apiResponse.status >= 400) {
-    throw new Error(`Failed to initiate transfer: ${apiResponse.status}`);
+    throw new Error(`Gasless Transfer Request Failed. Status Code: ${apiResponse.status}.`);
   }
 
   return { txHash: apiResponse.value.txHash };

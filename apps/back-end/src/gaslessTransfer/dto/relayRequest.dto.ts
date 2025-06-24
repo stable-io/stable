@@ -1,7 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional } from "class-validator";
+import { Transform } from "class-transformer";
 
-import { IsBooleanString } from "../../common/validators";
+import { Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
+
+import { IsBooleanString, IsUsdcAmount } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
 
@@ -47,4 +50,18 @@ export class RelayRequestDto {
   @IsBooleanString()
   @IsOptional()
   takeFeesFromInput!: "true" | "false";
+
+  /**
+   * Max usdc value the user is willing to pay for a relay.
+   * Not sure at this point if in the gasless case is for both
+   * relays or only the gasless one. We need to check with @r8zon
+   */
+  @IsUsdcAmount({ min: usdc(0.000001) })
+  maxRelayFee!: Usdc;
+
+    /**
+   * Max usdc value the user is willing to pay for fast transfer.
+   */
+    @IsUsdcAmount({ min: usdc(0.000001) })
+    maxFastFee!: Usdc;
 }

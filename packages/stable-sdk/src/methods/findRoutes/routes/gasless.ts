@@ -46,7 +46,7 @@ export async function buildGaslessRoute<
     usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
   );
 
-  const { corridorFees } = getCorridorFees(corridor.cost, intent);
+  const { corridorFees, maxRelayFee, maxFastFeeUsdc } = getCorridorFees(corridor.cost, intent);
 
   const transferParams: GetQuoteParams = {
     sourceChain: intent.sourceChain,
@@ -70,6 +70,9 @@ export async function buildGaslessRoute<
 
   const totalFees = [quote.gaslessFee, ...corridorFees];
 
+  const maxRelayFeeIncludingGasless = maxRelayFee; // TODO: corridor fees don't include gasless.
+                                                           //       cctp-sdk doesn't specify if maxRelayFee
+                                                           //       includes boths relays or only gasless in this case.
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
     gaslessTransferStep(intent.sourceChain),
@@ -92,6 +95,8 @@ export async function buildGaslessRoute<
       intent,
       quote.permit2TypedData,
       quote.jwt,
+      maxRelayFeeIncludingGasless as Usdc, // gasless route is not built if payment token is not usdc.
+      maxFastFeeUsdc,
     ),
   }
 }

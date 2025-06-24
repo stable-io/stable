@@ -19,6 +19,8 @@ export async function* transferWithGaslessRelay<
   intent: Intent<S,D>,
   permit2TypedData: Permit2TypedData,
   jwt: string,
+  maxRelayFee: Usdc,
+  maxFastFee: Usdc,
 ): AsyncGenerator<any, any, any> {
   const usdcAddress = new EvmAddress(usdcContracts.contractAddressOf[network][intent.sourceChain]);
   const permit2Addr = new EvmAddress(permit2Address);
@@ -38,6 +40,8 @@ export async function* transferWithGaslessRelay<
       permitSignature: permit?.signature,
       permit2Signature,
       jwt,
+      maxRelayFee,
+      maxFastFee,
     }
   );
 
