@@ -1,0 +1,1 @@
+anchor_extra_util::declare_id_env!("CCTPR_PROGRAM_ID");

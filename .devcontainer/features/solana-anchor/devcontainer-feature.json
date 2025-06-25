@@ -1,0 +1,10 @@
+{
+    "id": "solana-anchor",
+    "version": "1.0.0",
+    "name": "Solana + Anchor CLI",
+    "documentationURL": "https://www.anchor-lang.com/docs/installation",
+    "installsAfter": ["ghcr.io/devcontainers/features/rust"],
+    "containerEnv": {
+        "PATH": "${PATH}:/home/vscode/.cargo/bin:/home/vscode/.avm/bin:/home/vscode/.local/share/solana/install/active_release/bin"
+    }
+}

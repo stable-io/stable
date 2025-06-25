@@ -4,7 +4,7 @@ define install_lib
 dependencies: $(call tolib,$(1))
 
 $(call tolib,$(1)):
-	forge install $(1) --no-git --no-commit
+	forge install $(1) --no-git
 endef
 
 .DEFAULT_GOAL = build

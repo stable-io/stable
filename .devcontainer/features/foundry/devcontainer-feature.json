@@ -1,0 +1,17 @@
+{
+    "id": "foundry",
+    "version": "1.0.0",
+    "name": "Foundry EVM Tools",
+    "documentationURL": "https://book.getfoundry.sh",
+    "containerEnv": {
+        "PATH": "${PATH}:/home/vscode/.foundry/bin"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "juanblanco.solidity"
+            ]
+        }
+    }
+}
+  

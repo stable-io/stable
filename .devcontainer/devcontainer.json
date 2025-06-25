@@ -1,0 +1,25 @@
+//We use Ubuntu as the base image because it comes with glibc 2.39 which is required for Anchor 0.31.1 (debian only ships with 2.36)
+//devcontainer build --workspace-folder . --image-name devbox
+{
+	"name": "Ubuntu",
+	"image": "mcr.microsoft.com/devcontainers/base:noble",
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"nodeGypDependencies": true,
+			"installYarnUsingApt": true,
+			"version": "latest",
+			"pnpmVersion": "latest",
+			"nvmVersion": "latest"
+		},
+		"ghcr.io/devcontainers/features/rust:1": {
+			"version": "latest",
+			"profile": "default",
+			"targets": "aarch64-unknown-linux-gnu"
+		},
+		"ghcr.io/devcontainers-extra/features/typescript:2": {
+			"version": "latest"
+		},
+		"./features/foundry": {},
+		"./features/solana-anchor": {}
+	}
+}

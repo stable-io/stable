@@ -339,6 +339,7 @@ abstract contract CctpRQuote is CctpRBase {
     bool isSolana = targetChainId == CHAIN_ID_SOLANA;
     bool isSui = targetChainId == CHAIN_ID_SUI;
     bool isAptos = targetChainId == CHAIN_ID_APTOS;
+    //TODO implement Solana V2 execution cost calculation
     require(!eagerOr(eagerOr(isSolana, isSui), isAptos), "v2Direct only supports EVM");
 
     EvmFeeParams evmFeeParams = EvmFeeParams.wrap(targetFeeParams);
