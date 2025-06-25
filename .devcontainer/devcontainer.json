@@ -21,5 +21,6 @@
 		},
 		"./features/foundry": {},
 		"./features/solana-anchor": {}
-	}
+	},
+	"remoteUser": "vscode"
 }
