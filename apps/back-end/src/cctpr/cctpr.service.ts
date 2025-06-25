@@ -22,10 +22,9 @@ export class CctpRService {
     maxRelayFee: Usdc,
     maxFastFeeUsdc: Usdc,
     takeFeesFromInput: boolean,
+    cctprAddress: EvmAddress,
   ): ContractTx {
     const client = ViemEvmClient.fromNetworkAndDomain(this.configService.network, quoteRequest.sourceDomain);
-
-    const cctprAddress = cctprContractAddressOf(this.configService.network, quoteRequest.sourceDomain);
 
     const cctpr = new CctpR(client, cctprAddress);
 
