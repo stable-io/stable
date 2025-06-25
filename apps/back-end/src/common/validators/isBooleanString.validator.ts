@@ -20,8 +20,8 @@ export class IsBooleanStringConstraint implements ValidatorConstraintInterface {
     return true;
   }
 
-  defaultMessage() {
-    return "Value must be a boolean string ('true' or 'false')";
+  defaultMessage({ property }: ValidationArguments) {
+    return `${property} must be a boolean string ('true' or 'false')`;
   }
 }
 
