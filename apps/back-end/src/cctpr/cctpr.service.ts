@@ -13,6 +13,8 @@ import { QuoteRequestDto } from '../gaslessTransfer/dto/quoteRequest.dto';
 import { contractAddressOf as cctprContractAddressOf } from '@stable-io/cctp-sdk-cctpr-definitions';
 import { Network } from '../common/types';
 import { CorridorVariant } from '../../../../packages/cctp-sdk/cctpr-evm/dist/contractSdk/layouts/transfer';
+import type { ParsedSignature } from "../common/types";
+import { serializeSignature } from "../common/utils";
 
 export type OnchainGaslessQuote = GaslessQuote & { type: "onChain" };
 import {
@@ -58,7 +60,7 @@ export class CctpRService {
   public gaslessTransferTx(
     quoteRequest: QuoteRequestDto,
     permit2TypedData: Permit2TypedData,
-    permit2Signature: string,
+    permit2Signature: ParsedSignature,
     gaslessFee: Usdc,
   ): ContractTx {
     const cctpr = this.contractInterface(quoteRequest.sourceDomain);
@@ -75,7 +77,7 @@ export class CctpRService {
       new Date(Number(permit2TypedData.message.deadline.toString()) * 1000),
       gaslessFee,
       quoteRequest.takeFeesFromInput,
-      encoding.hex.decode(permit2Signature),
+      serializeSignature(permit2Signature),
     );
   }
 

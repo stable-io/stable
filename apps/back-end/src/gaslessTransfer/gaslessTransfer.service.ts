@@ -1,21 +1,32 @@
 import { Injectable } from "@nestjs/common";
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdc } from "@stable-io/cctp-sdk-definitions";
 
-import type { PlainDto } from "../common/types";
-import { instanceToPlain } from "../common/utils";
+import {
+  usdc,
+  usdcContracts,
+  evmGasToken,
+} from "@stable-io/cctp-sdk-definitions";
 import {
   ContractTx,
   EvmAddress,
   Permit2TypedData,
+  permit2Address,
 } from "@stable-io/cctp-sdk-evm";
+import { stringifyWithBigints } from "@stable-io/utils";
 
+import type { ParsedSignature, PlainDto } from "../common/types";
+import {
+  instanceToPlain,
+  multicall3Address,
+  encodePermitCall,
+  encodeAggregate3ValueCall,
+  type Call3Value,
+} from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
-import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
-
+import { JwtPayloadDto, QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
 
 export type RelayTx = {
   hash: `0x${string}`;
@@ -61,6 +72,7 @@ export class GaslessTransferService {
     return { jwt };
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   public async initiateGaslessTransfer(
     request: RelayRequestDto,
   ): Promise<RelayTx> {
@@ -85,10 +97,10 @@ export class GaslessTransferService {
     );
 
     const txDetails = quoteRequest.permit2PermitRequired
-      ? this.multiCallWithPermit(gaslessTxDetails, permitSignature)
+      ? this.multiCallWithPermit(gaslessTxDetails, permitSignature!, jwtPayload)
       : gaslessTxDetails;
 
-    console.log("TX DETAILS", txDetails);
+    console.log("TX DETAILS", stringifyWithBigints(txDetails));
 
     const txHash = await this.txLandingService.sendTransaction(
       this.cctpRService.contractAddress(quoteRequest.sourceDomain),
@@ -121,9 +133,45 @@ export class GaslessTransferService {
     return request.amount.add(corridorCost).add(permitCost);
   }
 
-  private multiCallWithPermit(gaslessTx: ContractTx, permitSignature: string): ContractTx {
-    // returns a new contract transaction that wraps permit and gasless into a single tx
-    // using multicall contract.
-    throw new Error("Not Implemented");
+  private multiCallWithPermit(
+    gaslessTx: ContractTx,
+    permitSignature: ParsedSignature,
+    { quoteRequest, permit2TypedData }: JwtPayloadDto,
+  ): ContractTx {
+    const usdcAddress = new EvmAddress(
+      usdcContracts.contractAddressOf[this.configService.network][
+        quoteRequest.sourceDomain
+      ],
+    );
+
+    const permitData = encodePermitCall(
+      quoteRequest.sender,
+      new EvmAddress(permit2Address),
+      usdc(permit2TypedData.message.permitted.amount, "atomic"),
+      new Date(Number(permit2TypedData.message.deadline) * 1000),
+      permitSignature,
+    );
+
+    const calls: Call3Value[] = [
+      {
+        target: usdcAddress,
+        allowFailure: false,
+        value: evmGasToken(0),
+        callData: permitData,
+      },
+      {
+        target: gaslessTx.to,
+        allowFailure: false,
+        value: gaslessTx.value ?? evmGasToken(0),
+        callData: gaslessTx.data,
+      },
+    ];
+
+    return {
+      to: new EvmAddress(multicall3Address),
+      data: encodeAggregate3ValueCall(calls),
+      value: gaslessTx.value,
+      from: gaslessTx.from,
+    };
   }
 }
