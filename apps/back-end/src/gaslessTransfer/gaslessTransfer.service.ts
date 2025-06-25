@@ -1,14 +1,19 @@
 import { Injectable } from "@nestjs/common";
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
 import { usdc } from "@stable-io/cctp-sdk-definitions";
-import { ContractTx, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
 import type { PlainDto } from "../common/types";
 import { instanceToPlain } from "../common/utils";
+import {
+  ContractTx,
+  EvmAddress,
+  Permit2TypedData,
+} from "@stable-io/cctp-sdk-evm";
+
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
-import { TxLandingService } from "../tx-landing/tx-landing.service";
+import { TxLandingService } from "../txLanding/txLanding.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
 
 
@@ -19,7 +24,7 @@ export type RelayTx = {
 export interface JwtPayload extends Record<string, unknown> {
   readonly permit2TypedData: Permit2TypedData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
-  readonly gaslessFee: string, // Usdc =(
+  readonly gaslessFee: string; // Usdc =(
 }
 
 export type Network = "Mainnet" | "Testnet";
@@ -65,11 +70,7 @@ export class GaslessTransferService {
       permitSignature,
     } = request;
 
-    const {
-      quoteRequest,
-      permit2TypedData,
-      gaslessFee,
-    } = jwtPayload;
+    const { quoteRequest, permit2TypedData, gaslessFee } = jwtPayload;
 
     if (quoteRequest.permit2PermitRequired && !permitSignature) {
       // This should generate a 400, not a 500.
@@ -92,7 +93,7 @@ export class GaslessTransferService {
     const txHash = await this.txLandingService.sendTransaction(
       this.cctpRService.contractAddress(quoteRequest.sourceDomain),
       quoteRequest.sourceDomain,
-      txDetails
+      txDetails,
     );
 
     return { hash: `0x${txHash}` };

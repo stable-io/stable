@@ -1,40 +1,40 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 import { TxLandingClient } from "@stable-io/tx-landing-client";
 import { encoding } from "@stable-io/utils";
-import { ConfigService } from '../config/config.service.js';
-import { EvmDomains } from '@stable-io/cctp-sdk-definitions';
+import { ConfigService } from "../config/config.service.js";
+import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
-import { ContractTx, EvmAddress } from '@stable-io/cctp-sdk-evm';
+import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 
 @Injectable()
 export class TxLandingService {
   private readonly cctpSdkDomainsToChains = {
     Testnet: {
-      "Ethereum": "Sepolia",
-      "Avalanche": "Avalanche",
-      "Optimism": "OptimismSepolia",
-      "Arbitrum": "ArbitrumSepolia",
-      "Base": "BaseSepolia",
-      "Polygon": "PolygonSepolia",
-      "Unichain": "Unichain",
-      "Linea": "Linea",
-      "Codex": "",
-      "Sonic": "",
-      "Worldchain": "WorldChain",
+      Ethereum: "Sepolia",
+      Avalanche: "Avalanche",
+      Optimism: "OptimismSepolia",
+      Arbitrum: "ArbitrumSepolia",
+      Base: "BaseSepolia",
+      Polygon: "PolygonSepolia",
+      Unichain: "Unichain",
+      Linea: "Linea",
+      Codex: "",
+      Sonic: "",
+      Worldchain: "WorldChain",
     },
     Mainnet: {
-      "Ethereum": "Ethereum",
-      "Avalanche": "Avalanche",
-      "Optimism": "Optimism",
-      "Arbitrum": "Arbitrum",
-      "Base": "Base",
-      "Polygon": "Polygon",
-      "Unichain": "Unichain",
-      "Linea": "Linea",
-      "Codex": "",
-      "Sonic": "",
-      "Worldchain": "WorldChain",
-    }
+      Ethereum: "Ethereum",
+      Avalanche: "Avalanche",
+      Optimism: "Optimism",
+      Arbitrum: "Arbitrum",
+      Base: "Base",
+      Polygon: "Polygon",
+      Unichain: "Unichain",
+      Linea: "Linea",
+      Codex: "",
+      Sonic: "",
+      Worldchain: "WorldChain",
+    },
   } satisfies { [K in Network]: { [key in keyof EvmDomains]: string } };
 
   private readonly txLandingBaseUrls = {
@@ -43,12 +43,10 @@ export class TxLandingService {
   } as const;
 
   private readonly client!: TxLandingClient;
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     this.client = new TxLandingClient(
       this.txLandingBaseUrls[this.configService.network],
-      this.configService.txLandingApiKey
+      this.configService.txLandingApiKey,
     );
   }
 
@@ -77,8 +75,11 @@ export class TxLandingService {
   }
 
   private toChain(domain: keyof EvmDomains): string {
-    const chain = this.cctpSdkDomainsToChains[this.configService.network][domain];
-    if (!chain) { throw new Error(`TX LandingService: Unsupported Chain: ${domain}`)};
+    const chain =
+      this.cctpSdkDomainsToChains[this.configService.network][domain];
+    if (!chain) {
+      throw new Error(`TX LandingService: Unsupported Chain: ${domain}`);
+    }
     return chain;
   }
-} 
+}

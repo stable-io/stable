@@ -41,4 +41,27 @@ export class RelayRequestDto {
   })
   @IsOptional()
   permitSignature!: string;
+
+  /**
+   * Whether the fees will be taken from the input or added
+   * on top of it
+   * @example "true"
+   */
+  @IsBooleanString()
+  @IsOptional()
+  takeFeesFromInput!: boolean;
+
+  /**
+   * Max usdc value the user is willing to pay for a relay.
+   * Not sure at this point if in the gasless case is for both
+   * relays or only the gasless one. We need to check with @r8zon
+   */
+  @IsUsdcAmount({ min: usdc(0.000001) })
+  maxRelayFee!: Usdc;
+
+  /**
+   * Max usdc value the user is willing to pay for fast transfer.
+   */
+  @IsUsdcAmount({ min: usdc(0.000001) })
+  maxFastFee!: Usdc;
 }
