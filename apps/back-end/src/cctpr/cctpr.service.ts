@@ -46,7 +46,7 @@ export class CctpRService {
       corridor,
       quote,
       encoding.bignum.toBytes(permit2TypedData.message.nonce, 32 as Size),
-      new Date(Number(permit2TypedData.message.deadline.toString())),
+      new Date(Number(permit2TypedData.message.deadline.toString()) * 1000),
       gaslessFee,
       takeFeesFromInput,
       encoding.hex.decode(permit2Signature),

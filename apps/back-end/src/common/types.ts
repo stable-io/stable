@@ -13,3 +13,5 @@ type SerializedAsString = Address | Amount<any>;
 export type PlainDto<T> = {
   [K in keyof T]: T[K] extends SerializedAsString ? string : T[K];
 };
+
+export type Network = "Testnet" | "Mainnet";

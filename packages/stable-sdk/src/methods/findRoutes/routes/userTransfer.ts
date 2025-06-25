@@ -48,7 +48,7 @@ export async function buildUserTransferRoute<
   const quote = intent.paymentToken === "usdc"
   ? {
       maxRelayFee: maxRelayFee as Usdc,
-      takeFeesFromInput: false,
+      takeFeesFromInput: true,
     }
   : { maxRelayFee: maxRelayFee as GasTokenOf<S, keyof EvmDomains> };
 

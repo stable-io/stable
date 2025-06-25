@@ -49,7 +49,7 @@ export class RelayRequestDto {
    */
   @IsBooleanString()
   @IsOptional()
-  takeFeesFromInput!: "true" | "false";
+  takeFeesFromInput!: boolean;
 
   /**
    * Max usdc value the user is willing to pay for a relay.

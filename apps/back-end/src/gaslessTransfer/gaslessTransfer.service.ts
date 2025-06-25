@@ -70,7 +70,7 @@ export class GaslessTransferService {
       permit2TypedData: composePermit2Msg(
         chainIdOf(this.configService.network, request.sourceDomain),
         usdcAddress,
-        quotedAmount,
+        request.amount,
         nonce,
         deadline,
       ),
@@ -116,7 +116,7 @@ export class GaslessTransferService {
       gaslessFee,
       maxRelayFee,
       maxFastFee,
-      takeFeesFromInput === "true",
+      takeFeesFromInput,
       cctprAddress,
     );
 
@@ -126,9 +126,13 @@ export class GaslessTransferService {
 
     console.log("TX DETAILS", txDetails);
 
-    const txHash = await this.txLandingService.sendTransaction(cctprAddress, quoteRequest.targetDomain, txDetails);
-    
-    return { hash: `0x${txHash}`};
+    const txHash = await this.txLandingService.sendTransaction(
+      cctprAddress,
+      quoteRequest.sourceDomain,
+      txDetails
+    );
+
+    return { hash: `0x${txHash}` };
   }
 
   private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
