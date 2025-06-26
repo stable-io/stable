@@ -1,21 +1,28 @@
 import { Injectable } from "@nestjs/common";
-import { encoding } from "@stable-io/utils";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { Usdc } from "@stable-io/cctp-sdk-definitions";
+import type { Usdc, DomainsOf } from "@stable-io/cctp-sdk-definitions";
 import {
   usdc,
   usdcContracts,
   chainIdOf,
+  domainsOf,
 } from "@stable-io/cctp-sdk-definitions";
 import { ContractTx, EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
 import type { PlainDto } from "../common/types";
-import { composePermit2Msg, instanceToPlain } from "../common/utils";
+import {
+  composePermit2Msg,
+  fetchNextPermit2Nonce,
+  instanceToPlain,
+  Permit2Nonce
+} from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../tx-landing/tx-landing.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
+import { Chain, createPublicClient, Hex, http } from "viem";
+import { viemChainOf } from "@stable-io/cctp-sdk-viem";
 
 export type RelayTx = {
   hash: `0x${string}`;
@@ -31,6 +38,11 @@ export type Network = "Mainnet" | "Testnet";
 
 @Injectable()
 export class GaslessTransferService {
+
+  private nonceCache = Object.fromEntries(
+    domainsOf("Evm").map(domain => [domain, {}])
+  ) as Record<DomainsOf<"Evm">, Record<Hex, Permit2Nonce>>;
+
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
@@ -61,7 +73,7 @@ export class GaslessTransferService {
     }
 
     const quotedAmount = this.calculateQuotedAmount(request);
-    const nonce = this.getNonce();
+    const nonce = await this.getNextNonce(request);
     const deadline = this.getDeadline();
 
     const gaslessFee = usdc("0.1"); // TODO: calculate gasless fee.
@@ -161,11 +173,24 @@ export class GaslessTransferService {
     return new Date(Date.now() + this.configService.jwtExpiresInSeconds * 1000);
   }
 
-  private getNonce(): bigint {
-    // @todo: Add a stable offset
-    // @todo: Query permit2 contract to find a free nonce
-    // @todo: Cache latest nonce per user?
-    return 0n;
+  private async getNextNonce(request: QuoteRequestDto): Promise<Permit2Nonce> {
+    const network = this.configService.network;
+    const domain = request.sourceDomain as DomainsOf<"Evm">;
+    const sender = request.sender.toString();
+    const domainNonceCache = this.nonceCache[domain];
+    const cachedNonce = domainNonceCache[sender];
+    if (cachedNonce !== undefined) {
+      domainNonceCache[sender] = cachedNonce + 1n;
+      return cachedNonce + 1n;
+    }
+    // TODO: RPC Urls? Create clients at startup?
+    const client = createPublicClient({
+      chain: viemChainOf[network][domain] as Chain,
+      transport: http(),
+    });
+    const nonce = await fetchNextPermit2Nonce(client, request.sender);
+    domainNonceCache[sender] = nonce;
+    return nonce;
   }
 
   private multiCallWithPermit(gaslessTx: ContractTx, permitSignature: string): ContractTx {
