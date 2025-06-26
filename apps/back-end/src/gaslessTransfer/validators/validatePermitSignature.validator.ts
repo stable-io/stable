@@ -12,7 +12,9 @@ import type { JwtPayload } from "../types";
 
 @ValidatorConstraint({ name: "validatePermitSignature", async: true })
 @Injectable()
-export class ValidatePermitSignatureConstraint implements ValidatorConstraintInterface {
+export class ValidatePermitSignatureConstraint
+  implements ValidatorConstraintInterface
+{
   private readonly isSignatureValidator = new IsSignatureConstraint();
 
   constructor(@Inject(JwtService) private readonly jwtService: JwtService) {}
@@ -48,7 +50,10 @@ export class ValidatePermitSignatureConstraint implements ValidatorConstraintInt
       return "permitSignature must be provided when permit2PermitRequired is true in the quote";
     }
 
-    const tempArgs = { ...args, object: { [args.property]: dto["permitSignature"] } };
+    const tempArgs = {
+      ...args,
+      object: { [args.property]: dto["permitSignature"] },
+    };
     // @todo: Check whether signature is required first?
     return this.isSignatureValidator.validate(dto["permitSignature"], tempArgs)
       ? "permitSignature must not be provided when permit2PermitRequired is false in the quote"

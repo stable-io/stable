@@ -1,11 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {
-  IsOptional,
-  IsIn,
-  ValidateIf,
-  Validate,
-  IsBoolean,
-} from "class-validator";
+import { IsOptional, IsIn, ValidateIf, Validate, IsBoolean } from "class-validator";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";

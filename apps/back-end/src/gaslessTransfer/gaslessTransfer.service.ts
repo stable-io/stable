@@ -10,6 +10,7 @@ import {
   ContractTx,
   EvmAddress,
   permit2Address,
+  Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
 
 import type { ParsedSignature } from "../common/types";
@@ -68,12 +69,10 @@ export class GaslessTransferService {
     request: RelayRequestDto,
   ): Promise<RelayTx> {
     const {
-      jwt: jwtPayload,
+      jwt: { quoteRequest, permit2TypedData, gaslessFee },
       permit2Signature,
       permitSignature,
     } = request;
-
-    const { quoteRequest, permit2TypedData, gaslessFee } = jwtPayload;
 
     if (quoteRequest.permit2PermitRequired && !permitSignature) {
       // This should generate a 400, not a 500.
@@ -88,8 +87,13 @@ export class GaslessTransferService {
     );
 
     const txDetails = quoteRequest.permit2PermitRequired
-      // @note: permitSignature is guaranteed to be present in this case by validation
-      ? this.multiCallWithPermit(gaslessTxDetails, permitSignature!, jwtPayload)
+      ? this.multiCallWithPermit(
+          gaslessTxDetails,
+          // @note: permitSignature is guaranteed to be present in this case by validation
+          permitSignature!,
+          quoteRequest,
+          permit2TypedData,
+        )
       : gaslessTxDetails;
 
     const txHash = await this.txLandingService.sendTransaction(
@@ -126,7 +130,8 @@ export class GaslessTransferService {
   private multiCallWithPermit(
     gaslessTx: ContractTx,
     permitSignature: ParsedSignature,
-    { quoteRequest, permit2TypedData }: JwtPayloadDto,
+    quoteRequest: QuoteRequestDto,
+    permit2TypedData: Permit2TypedData,
   ): ContractTx {
     const usdcAddress = new EvmAddress(
       usdcContracts.contractAddressOf[this.configService.network][

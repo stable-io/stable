@@ -1,6 +1,4 @@
-import {
-  Permit2TypedData,
-} from "@stable-io/cctp-sdk-evm";
+import { Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
 import type { PlainDto } from "../common/types";
 import type { QuoteRequestDto } from "./dto";
