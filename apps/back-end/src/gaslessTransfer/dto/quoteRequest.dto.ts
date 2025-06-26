@@ -118,4 +118,43 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
   @IsBooleanString()
   @IsOptional()
   permit2PermitRequired?: "true" | "false";
+
+  /**
+   * Max price in usdc the user is willing to pay for a relay
+   * @example "1.5"
+   */
+  @ApiProperty({
+    type: String,
+    format: "amount",
+    pattern: AMOUNT_PATTERNS.USDC,
+  })
+  @IsUsdcAmount({ min: usdc(0.000001) })
+  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
+    toPlainOnly: true,
+  })
+  maxRelayFee!: Usdc;
+
+  /**
+   * Max price in usdc the user is willing to pay for Circle's fast-transfer service
+   * @example "1.5"
+   */
+  @ApiProperty({
+    type: String,
+    format: "amount",
+    pattern: AMOUNT_PATTERNS.USDC,
+  })
+  @IsUsdcAmount({ min: usdc(0) })
+  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
+    toPlainOnly: true,
+  })
+  maxFastFee!: Usdc;
+
+  /**
+   * Whether the fees will be taken from the input or added
+   * on top of it
+   * @example "true"
+   */
+  @Transform(({ value }) => value === "true")
+  @IsBoolean()
+  takeFeesFromInput!: boolean;
 }

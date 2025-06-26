@@ -36,12 +36,9 @@ export async function* transferWithGaslessRelay<
   const { txHash } = await postTransferRequest(
     network,
     {
-      takeFeesFromInput: true,
       permitSignature: permit?.signature,
       permit2Signature,
       jwt,
-      maxRelayFee,
-      maxFastFee,
     }
   );
 

@@ -39,6 +39,7 @@ import type {
   Eip712Data,
   Permit,
   CallData,
+  Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
 import {
   wordSize,
@@ -233,7 +234,7 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
     quote: Quote<S>,
     permit?: Permit,
   ): ContractTx {
-    this.checkCorridorDestinationCoherence(destination, corridor);
+    CctpR.checkCorridorDestinationCoherence(destination, corridor);
 
     const value = evmGasToken(
       quote.type === "onChain" && quote.maxRelayFee.kind.name !== "Usdc"
@@ -278,8 +279,15 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
     return this.execTx(value, serialize(transferLayout(this.client.network), transfer) as CallData);
   }
 
-  composeGaslessTransferMessage<D extends SupportedDomain<N>>(
+  static composeGaslessTransferMessage<
+    N extends Network,
+    S extends SupportedDomain<N>,
+    D extends SupportedDomain<N>,
+  >(
+    network: N,
+    source: S,
     destination: D,
+    cctprAddress: EvmAddress,
     inputAmount: Usdc,
     mintRecipient: UniversalAddress,
     gasDropoff: GasTokenOf<D, SupportedDomain<N>>,
@@ -288,7 +296,7 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
     nonce: Uint8Array, //TODO better type
     deadline: Date,
     gaslessFee: Usdc,
-  ): Eip712Data<Record<string, unknown>> {
+  ): Permit2TypedData {
     this.checkCorridorDestinationCoherence(destination, corridor);
     if (nonce.length !== wordSize)
       throw new Error(`Nonce must be ${wordSize} bytes`);
@@ -331,16 +339,16 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
       primaryType: "PermitWitnessTransferFrom",
       domain: {
         name: "Permit2",
-        chainId: chainIdOf(this.client.network, this.client.domain as TODO),
+        chainId: chainIdOf(network, source as TODO),
         verifyingContract: permit2Address,
       },
       message: {
         permitted: {
-          token: usdcContracts.contractAddressOf[this.client.network][this.client.domain],
+          token: usdcContracts.contractAddressOf[network][source],
           amount: amount.toUnit("atomic"),
         },
-        spender: this.address.unwrap(),
-        nonce: encoding.bytes.decode(nonce),
+        spender: cctprAddress.unwrap(),
+        nonce: BigInt(encoding.hex.encode(nonce)),
         deadline: dateToUnixTimestamp(deadline),
         parameters: {
           baseAmount: inputAmount.toUnit("atomic"),
@@ -412,7 +420,7 @@ export class CctpR<N extends Network, S extends DomainsOf<"Evm">> extends CctpRB
     );
   }
 
-  private checkCorridorDestinationCoherence(destination: Domain, corridor: CorridorVariant) {
+  static checkCorridorDestinationCoherence(destination: Domain, corridor: CorridorVariant) {
     if (corridor.type === "avaxHop" && destination === "Avalanche")
       throw new Error("Avalanche can't be destination of AvaxHop transfers");
   }

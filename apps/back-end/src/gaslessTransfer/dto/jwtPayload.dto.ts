@@ -1,5 +1,5 @@
 import type { Permit2TypedData } from "@stable-io/cctp-sdk-evm";
-import { IsNotEmpty, IsObject, ValidateNested } from "class-validator";
+import { IsBoolean, isBoolean, IsNotEmpty, IsObject, ValidateNested } from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";
 import { Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
 import { IsUsdcAmount } from "../../common/validators";

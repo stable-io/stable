@@ -64,8 +64,6 @@ export async function apiRequest<T extends APIResponse<HTTPCode, BaseObject>>(
   return { status, value } as T;
 }
 
-export type OnchainGaslessQuote = GaslessQuoteMessage & { type: "onChain" };
-
 export type GetQuoteParams = {
   sourceChain: keyof EvmDomains,
   targetChain: keyof EvmDomains;
@@ -75,6 +73,9 @@ export type GetQuoteParams = {
   corridor: layouts.CorridorVariant["type"];
   gasDropoff: GenericGasToken;
   permit2PermitRequired: boolean;
+  maxRelayFee: Usdc;
+  maxFastFee: Usdc;
+  takeFeesFromInput: boolean;
 };
 
 export type GetQuoteResponse = {
@@ -86,6 +87,12 @@ export type GetQuoteResponse = {
   jwt: string;
 };
 
+function throwBadRequestError(apiResponse: any) {
+  console.log("apiResponse", apiResponse);
+  
+
+}
+
 export async function getTransferQuote(
   network: Network,
   quoteParams: GetQuoteParams,
@@ -95,6 +102,10 @@ export async function getTransferQuote(
   const endpoint = apiEndpointWithQuery(network)("quote", apiParams);
 
   const apiResponse = await apiRequest(endpoint, { method: "GET" });
+
+  if (apiResponse.status === 400) {
+    throwBadRequestError(apiResponse.value);
+  }
 
   if (apiResponse.status >= 400) {
     throw new Error(`Failed to get quote from API. Status Code: ${apiResponse.status}`);
@@ -116,16 +127,21 @@ export async function getTransferQuote(
   };
 }
 
-function serializeQuoteRequest(quoteParams: GetQuoteParams): Record<string, string> {
+function serializeQuoteRequest(params: GetQuoteParams): Record<string, string> {
   return {
-    ...quoteParams,
-    sourceDomain: quoteParams.sourceChain,
-    targetDomain: quoteParams.targetChain,
-    permit2PermitRequired: quoteParams.permit2PermitRequired.toString(),
-    amount: quoteParams.amount.toUnit("human").toString(),
-    sender: quoteParams.sender.toString(),
-    recipient: quoteParams.recipient.toString(),
-    gasDropoff: quoteParams.gasDropoff.toUnit("human").toString(),
+    ...params,
+    sourceDomain: params.sourceChain,
+    targetDomain: params.targetChain,
+    permit2PermitRequired: params.permit2PermitRequired.toString(),
+    amount: params.amount.toUnit("human").toString(),
+    sender: params.sender.toString(),
+    recipient: params.recipient.toString(),
+    gasDropoff: params.gasDropoff.toUnit("human").toString(),
+    takeFeesFromInput: params.takeFeesFromInput.toString(),
+    maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
+    maxFastFee: params.corridor === "v2Direct"
+      ? params.maxRelayFee.toUnit("human").toFixed(6).toString()
+      : "0"
   };
 }
 
@@ -139,6 +155,9 @@ function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): 
     recipient: new EvmAddress(responseQuoteParams.recipient as string),
     gasDropoff: genericGasToken(responseQuoteParams.gasDropoff as string, "human"),
     corridor: responseQuoteParams.corridor as layouts.CorridorVariant["type"],
+    takeFeesFromInput: responseQuoteParams.takeFeesFromInput as boolean,
+    maxRelayFee: usdc(responseQuoteParams.maxRelayFee as string),
+    maxFastFee: usdc(responseQuoteParams.maxFastFee as string ?? 0),
   }
 }
 
@@ -196,11 +215,8 @@ const decodeAndDeserializeJwt = (jwt: string): Record<string, unknown> => {
 
 export type PostTransferParams = {
   jwt: string;
-  takeFeesFromInput: boolean;
   permit2Signature: Uint8Array;
   permitSignature?: Uint8Array;
-  maxRelayFee: Usdc;
-  maxFastFee: Usdc;
 };
 
 export type PostTransferResponse = {
@@ -212,9 +228,6 @@ export async function postTransferRequest(network: Network, params: PostTransfer
   
   const requestBody = {
     jwt: params.jwt,
-    takeFeesFromInput: params.takeFeesFromInput.toString(),
-    maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
-    maxFastFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
     permit2Signature: encoding.hex.encode(params.permit2Signature, true),
     permitSignature: params.permitSignature ? encoding.hex.encode(params.permitSignature, true) : undefined,
   };

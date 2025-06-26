@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { DomainsOf, EvmGasToken, GasTokenOf, Network, Usdc } from "@stable-io/cctp-sdk-definitions";
-import type { Brand, BrandedSubArray } from "@stable-io/utils";
+import type { Brand, BrandedSubArray, TODO } from "@stable-io/utils";
 import { EvmAddress } from "./address.js";
 
 export type CallData = Brand<BrandedSubArray<CallData>, "CallData">;
@@ -89,6 +89,8 @@ export interface Permit2TransferFromMessage {
   };
   readonly nonce: bigint;
   readonly deadline: bigint;
+  readonly spender: string;
+  readonly parameters: TODO; // Sorry for that =)
 }
 
 export type Permit2TypedData = Eip712Data<Permit2TransferFromMessage>;

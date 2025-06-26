@@ -7,7 +7,7 @@ import { TODO } from "@stable-io/utils";
 import { init as initDefinitions, usdc, Usdc, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
-import { SupportedEvmDomain, Corridor, CorridorStats, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
+import { SupportedEvmDomain, Corridor, CorridorStats } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
@@ -57,6 +57,9 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     gasDropoff: intent.gasDropoffDesired as TODO,
     permit2PermitRequired,
+    maxFastFee: maxFastFeeUsdc,
+    maxRelayFee: maxRelayFee as Usdc,
+    takeFeesFromInput: true,
   };
 
   const quote = await getTransferQuote(
@@ -70,9 +73,6 @@ export async function buildGaslessRoute<
 
   const totalFees = [quote.gaslessFee, ...corridorFees];
 
-  const maxRelayFeeIncludingGasless = maxRelayFee; // TODO: corridor fees don't include gasless.
-                                                           //       cctp-sdk doesn't specify if maxRelayFee
-                                                           //       includes boths relays or only gasless in this case.
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
     gaslessTransferStep(intent.sourceChain),
@@ -95,7 +95,7 @@ export async function buildGaslessRoute<
       intent,
       quote.permit2TypedData,
       quote.jwt,
-      maxRelayFeeIncludingGasless as Usdc, // gasless route is not built if payment token is not usdc.
+      maxRelayFee as Usdc, // gasless route is not built if payment token is not usdc.
       maxFastFeeUsdc,
     ),
   }
