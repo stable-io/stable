@@ -1,12 +1,18 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsOptional } from "class-validator";
+import { Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
+import { IsOptional, ValidateIf } from "class-validator";
 import { Transform } from "class-transformer";
 
-import { Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
-
-import { IsBooleanString, IsUsdcAmount } from "../../common/validators";
+import type { ParsedSignature } from "../../common/types";
+import { AMOUNT_PATTERNS } from "../../common/utils";
+import {
+  IsBooleanString,
+  IsUsdcAmount,
+  IsSignature,
+} from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
+import { ValidatePermitSignature } from "../validators";
 
 export class RelayRequestDto {
   /**
@@ -25,20 +31,65 @@ export class RelayRequestDto {
    * @example "0x1234567890abcdef..."
    */
   @ApiProperty({
+    type: String,
     format: "hex",
-    pattern: "^0x[a-fA-F0-9]+$",
+    pattern: "^0x[a-fA-F0-9]{130}$",
   })
-  @IsNotEmpty()
-  permit2Signature!: string;
+  @IsSignature()
+  permit2Signature!: ParsedSignature;
 
   /**
    * User's signature of a permit message for permit2 contract
    * @example "0x1234567890abcdef..."
    */
   @ApiProperty({
+    type: String,
     format: "hex",
-    pattern: "^0x[a-fA-F0-9]+$",
+    pattern: "^0x[a-fA-F0-9]{130}$",
+    required: false,
   })
+  @ValidatePermitSignature()
+  permitSignature?: ParsedSignature;
+
+  /**
+   * Whether the fees will be taken from the input or added
+   * on top of it
+   * @example "true"
+   */
   @IsOptional()
-  permitSignature!: string;
+  @ValidateIf((_, value) => typeof value === "string")
+  @IsBooleanString()
+  takeFeesFromInput: boolean = false;
+
+  /**
+   * Max usdc value the user is willing to pay for a relay.
+   * Not sure at this point if in the gasless case is for both
+   * relays or only the gasless one. We need to check with @r8zon
+   * @example "0.1"
+   */
+  @ApiProperty({
+    type: String,
+    format: "amount",
+    pattern: AMOUNT_PATTERNS.USDC,
+  })
+  @IsUsdcAmount({ min: usdc(0.000001) })
+  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
+    toPlainOnly: true,
+  })
+  maxRelayFee!: Usdc;
+
+  /**
+   * Max usdc value the user is willing to pay for fast transfer.
+   * @example "0.1"
+   */
+  @ApiProperty({
+    type: String,
+    format: "amount",
+    pattern: AMOUNT_PATTERNS.USDC,
+  })
+  @IsUsdcAmount({ min: usdc(0.000001) })
+  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
+    toPlainOnly: true,
+  })
+  maxFastFee!: Usdc;
 }

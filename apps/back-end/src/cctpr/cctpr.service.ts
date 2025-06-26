@@ -1,14 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 import { Size, TODO, encoding } from "@stable-io/utils";
 import type { Usdc, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { CctpR, GaslessQuote } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { ContractTx, EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import {
+  ContractTx,
+  EvmAddress,
+  Permit2TypedData,
+} from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from '../config/config.service';
 import { QuoteRequestDto } from '../gaslessTransfer/dto/quoteRequest.dto';
 import { contractAddressOf as cctprContractAddressOf } from '@stable-io/cctp-sdk-cctpr-definitions';
 import { Network } from '../common/types';
 import { CorridorVariant } from '../../../../packages/cctp-sdk/cctpr-evm/dist/contractSdk/layouts/transfer';
+import type { ParsedSignature } from "../common/types";
+import { serializeSignature } from "../common/utils";
 
 export type OnchainGaslessQuote = GaslessQuote & { type: "onChain" };
 import {
@@ -23,9 +29,7 @@ export class CctpRService {
     domainsOf("Evm").map(domain => [domain, {}])
   ) as Record<DomainsOf<"Evm">, Record<`0x${string}`, Permit2Nonce>>;
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   public contractAddress<D extends keyof EvmDomains>(domain: D): EvmAddress {
     const addr = cctprContractAddressOf(this.configService.network, domain)
@@ -56,7 +60,7 @@ export class CctpRService {
   public gaslessTransferTx(
     quoteRequest: QuoteRequestDto,
     permit2TypedData: Permit2TypedData,
-    permit2Signature: string,
+    permit2Signature: ParsedSignature,
     gaslessFee: Usdc,
   ): ContractTx {
     const cctpr = this.contractInterface(quoteRequest.sourceDomain);
@@ -73,7 +77,7 @@ export class CctpRService {
       new Date(Number(permit2TypedData.message.deadline.toString()) * 1000),
       gaslessFee,
       quoteRequest.takeFeesFromInput,
-      encoding.hex.decode(permit2Signature),
+      serializeSignature(permit2Signature),
     );
   }
 

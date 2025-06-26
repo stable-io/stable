@@ -5,7 +5,10 @@ export interface ApiResponseDto<T> {
   readonly data: T;
 }
 
-export type Domain = Exclude<DomainsOf<"Evm">, "Codex">;
+export type Domain = Exclude<
+  DomainsOf<"Evm">,
+  "Codex" | "Sonic" | "Worldchain"
+>;
 
 // @todo: Probably most things will be serializable as strings, so do this the other way around
 type SerializedAsString = Address | Amount<any>;
@@ -15,3 +18,9 @@ export type PlainDto<T> = {
 };
 
 export type Network = "Testnet" | "Mainnet";
+
+export interface ParsedSignature {
+  v: bigint;
+  r: Uint8Array;
+  s: Uint8Array;
+}

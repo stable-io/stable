@@ -1,12 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean } from "class-validator";
+import { IsOptional, IsIn, ValidateIf, Validate, IsBoolean } from "class-validator";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Transform } from "class-transformer";
-import { IsOptional, IsIn, ValidateIf, Validate } from "class-validator";
 import type { Domain } from "../../common/types";
 import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
 import {
@@ -115,9 +114,10 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
    * (checked and constructed on client side)
    * @example true
    */
-  @IsBooleanString()
   @IsOptional()
-  permit2PermitRequired?: "true" | "false";
+  @ValidateIf((_, value) => typeof value === "string")
+  @IsBooleanString()
+  permit2PermitRequired: boolean = false;
 
   /**
    * Max price in usdc the user is willing to pay for a relay

@@ -11,18 +11,18 @@ const mostSignificantBit = 1n << 255n;
 
 const PERMIT2_NONCE_ABI = [
   {
-    "inputs": [
-      { "internalType": "address", "name": "owner", "type": "address" },
-      { "internalType": "uint256", "name": "wordPos", "type": "uint256" }
+    inputs: [
+      { internalType: "address", name: "owner", type: "address" },
+      { internalType: "uint256", name: "wordPos", type: "uint256" },
     ],
-    "name": "nonceBitmap",
-    "outputs": [{ "internalType": "uint256", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  }
+    name: "nonceBitmap",
+    outputs: [{ internalType: "uint256", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
 
-const PERMIT2_CCTPR_NONCE_START = (2n ** 128n) + (2n ** 64n);
+const PERMIT2_CCTPR_NONCE_START = 2n ** 128n + 2n ** 64n;
 const PERMIT2_NONCE_INDEX_SHIFT = 8n;
 
 export async function fetchPermit2NonceBitmap(
@@ -53,7 +53,7 @@ export async function nextAvailablePermit2Nonce(
     inc <<= 1n;
   }
   // Now we need to do binary search between index and the previous checked index
-  for (let low = index - (inc >> 1n), high = index; low !== high;) {
+  for (let low = index - (inc >> 1n), high = index; low !== high; ) {
     index = low + (high - low + 1n) / 2n;
     nonce = await fetchNonce(index);
     if (nonce === 0n) {

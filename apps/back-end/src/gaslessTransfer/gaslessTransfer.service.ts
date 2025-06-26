@@ -1,28 +1,37 @@
 import { Injectable } from "@nestjs/common";
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdc } from "@stable-io/cctp-sdk-definitions";
-import { ContractTx, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
-import type { PlainDto } from "../common/types";
-import { instanceToPlain } from "../common/utils";
+import {
+  usdc,
+  usdcContracts,
+  evmGasToken,
+} from "@stable-io/cctp-sdk-definitions";
+import {
+  ContractTx,
+  EvmAddress,
+  permit2Address,
+  Permit2TypedData,
+} from "@stable-io/cctp-sdk-evm";
+
+import type { ParsedSignature } from "../common/types";
+import {
+  instanceToPlain,
+  multicall3Address,
+  encodePermitCall,
+  encodeAggregate3ValueCall,
+  type Call3Value,
+} from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
-import { TxLandingService } from "../tx-landing/tx-landing.service";
-import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
-
-
-export type RelayTx = {
-  hash: `0x${string}`;
-};
-
-export interface JwtPayload extends Record<string, unknown> {
-  readonly permit2TypedData: Permit2TypedData;
-  readonly quoteRequest: PlainDto<QuoteRequestDto>;
-  readonly gaslessFee: string, // Usdc =(
-}
-
-export type Network = "Mainnet" | "Testnet";
+import { TxLandingService } from "../txLanding/txLanding.service";
+import {
+  QuoteDto,
+  QuoteRequestDto,
+  RelayRequestDto,
+  JwtPayloadDto,
+} from "./dto";
+import type { JwtPayload, RelayTx } from "./types";
 
 @Injectable()
 export class GaslessTransferService {
@@ -60,16 +69,10 @@ export class GaslessTransferService {
     request: RelayRequestDto,
   ): Promise<RelayTx> {
     const {
-      jwt: jwtPayload,
+      jwt: { quoteRequest, permit2TypedData, gaslessFee },
       permit2Signature,
       permitSignature,
     } = request;
-
-    const {
-      quoteRequest,
-      permit2TypedData,
-      gaslessFee,
-    } = jwtPayload;
 
     if (quoteRequest.permit2PermitRequired && !permitSignature) {
       // This should generate a 400, not a 500.
@@ -84,15 +87,19 @@ export class GaslessTransferService {
     );
 
     const txDetails = quoteRequest.permit2PermitRequired
-      ? this.multiCallWithPermit(gaslessTxDetails, permitSignature)
+      ? this.multiCallWithPermit(
+          gaslessTxDetails,
+          // @note: permitSignature is guaranteed to be present in this case by validation
+          permitSignature!,
+          quoteRequest,
+          permit2TypedData,
+        )
       : gaslessTxDetails;
-
-    console.log("TX DETAILS", txDetails);
 
     const txHash = await this.txLandingService.sendTransaction(
       this.cctpRService.contractAddress(quoteRequest.sourceDomain),
       quoteRequest.sourceDomain,
-      txDetails
+      txDetails,
     );
 
     return { hash: `0x${txHash}` };
@@ -120,9 +127,46 @@ export class GaslessTransferService {
     return request.amount.add(corridorCost).add(permitCost);
   }
 
-  private multiCallWithPermit(gaslessTx: ContractTx, permitSignature: string): ContractTx {
-    // returns a new contract transaction that wraps permit and gasless into a single tx
-    // using multicall contract.
-    throw new Error("Not Implemented");
+  private multiCallWithPermit(
+    gaslessTx: ContractTx,
+    permitSignature: ParsedSignature,
+    quoteRequest: QuoteRequestDto,
+    permit2TypedData: Permit2TypedData,
+  ): ContractTx {
+    const usdcAddress = new EvmAddress(
+      usdcContracts.contractAddressOf[this.configService.network][
+        quoteRequest.sourceDomain
+      ],
+    );
+
+    const permitData = encodePermitCall(
+      quoteRequest.sender,
+      new EvmAddress(permit2Address),
+      usdc(permit2TypedData.message.permitted.amount, "atomic"),
+      new Date(Number(permit2TypedData.message.deadline) * 1000),
+      permitSignature,
+    );
+
+    const calls: Call3Value[] = [
+      {
+        target: usdcAddress,
+        allowFailure: false,
+        value: evmGasToken(0),
+        callData: permitData,
+      },
+      {
+        target: gaslessTx.to,
+        allowFailure: false,
+        value: gaslessTx.value ?? evmGasToken(0),
+        callData: gaslessTx.data,
+      },
+    ];
+
+    return {
+      to: new EvmAddress(multicall3Address),
+      data: encodeAggregate3ValueCall(calls),
+      value: gaslessTx.value,
+      from: gaslessTx.from,
+    };
   }
 }
