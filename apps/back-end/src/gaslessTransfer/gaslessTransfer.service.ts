@@ -9,12 +9,11 @@ import {
 import {
   ContractTx,
   EvmAddress,
-  Permit2TypedData,
   permit2Address,
 } from "@stable-io/cctp-sdk-evm";
 import { stringifyWithBigints } from "@stable-io/utils";
 
-import type { ParsedSignature, PlainDto } from "../common/types";
+import type { ParsedSignature } from "../common/types";
 import {
   instanceToPlain,
   multicall3Address,
@@ -26,19 +25,13 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
-import { JwtPayloadDto, QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
-
-export type RelayTx = {
-  hash: `0x${string}`;
-};
-
-export interface JwtPayload extends Record<string, unknown> {
-  readonly permit2TypedData: Permit2TypedData;
-  readonly quoteRequest: PlainDto<QuoteRequestDto>;
-  readonly gaslessFee: string; // Usdc =(
-}
-
-export type Network = "Mainnet" | "Testnet";
+import {
+  QuoteDto,
+  QuoteRequestDto,
+  RelayRequestDto,
+  JwtPayloadDto,
+} from "./dto";
+import type { JwtPayload, RelayTx } from "./types";
 
 @Injectable()
 export class GaslessTransferService {

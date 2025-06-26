@@ -12,6 +12,7 @@ import {
 } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
+import { ValidatePermitSignature } from "../validators";
 
 export class RelayRequestDto {
   /**
@@ -45,9 +46,9 @@ export class RelayRequestDto {
     type: String,
     format: "hex",
     pattern: "^0x[a-fA-F0-9]{130}$",
+    required: false,
   })
-  @IsOptional()
-  @IsSignature()
+  @ValidatePermitSignature()
   permitSignature?: ParsedSignature;
 
   /**
