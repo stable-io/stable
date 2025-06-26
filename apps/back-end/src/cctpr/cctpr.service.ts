@@ -9,21 +9,19 @@ import { QuoteRequestDto } from '../gaslessTransfer/dto/quoteRequest.dto';
 import { contractAddressOf as cctprContractAddressOf } from '@stable-io/cctp-sdk-cctpr-definitions';
 import { Network } from '../common/types';
 import { CorridorVariant } from '../../../../packages/cctp-sdk/cctpr-evm/dist/contractSdk/layouts/transfer';
-import { Chain, createPublicClient, Hex, http } from "viem";
-import { viemChainOf } from "@stable-io/cctp-sdk-viem";
+
 export type OnchainGaslessQuote = GaslessQuote & { type: "onChain" };
 import {
   domainsOf,
   DomainsOf,
 } from "@stable-io/cctp-sdk-definitions";
 
-import type { PlainDto } from "../common/types";
 import { fetchNextPermit2Nonce, Permit2Nonce } from "../common/utils";
 @Injectable()
 export class CctpRService {
   private nonceCache = Object.fromEntries(
     domainsOf("Evm").map(domain => [domain, {}])
-  ) as Record<DomainsOf<"Evm">, Record<Hex, Permit2Nonce>>;
+  ) as Record<DomainsOf<"Evm">, Record<`0x${string}`, Permit2Nonce>>;
 
   constructor(
     private readonly configService: ConfigService,
@@ -91,15 +89,15 @@ export class CctpRService {
   }
 
   private async getNextNonce(request: QuoteRequestDto): Promise<Permit2Nonce> {
-    const network = this.configService.network;
     const domain = request.sourceDomain as DomainsOf<"Evm">;
     const sender = request.sender.toString();
     const domainNonceCache = this.nonceCache[domain];
     // TODO: RPC Urls? Create clients at startup?
-    const client = createPublicClient({
-      chain: viemChainOf[network][domain] as Chain,
-      transport: http(),
-    });
+    const client = ViemEvmClient.fromNetworkAndDomain(
+      this.configService.network,
+      domain
+    ).client;
+    
     const nonce = await fetchNextPermit2Nonce(client, request.sender, domainNonceCache[sender]);
     domainNonceCache[sender] = nonce;
     return nonce;

@@ -3,9 +3,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { Url, TODO, BaseObject, encoding } from "@stable-io/utils";
+import { Url, BaseObject, encoding } from "@stable-io/utils";
 import { Network } from "../types/index.js";
-import { layouts, GaslessQuoteMessage } from "@stable-io/cctp-sdk-cctpr-evm";
+import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { deserializeBigints } from "@stable-io/utils";
@@ -87,12 +87,6 @@ export type GetQuoteResponse = {
   jwt: string;
 };
 
-function throwBadRequestError(apiResponse: any) {
-  console.log("apiResponse", apiResponse);
-  
-
-}
-
 export async function getTransferQuote(
   network: Network,
   quoteParams: GetQuoteParams,
@@ -102,10 +96,6 @@ export async function getTransferQuote(
   const endpoint = apiEndpointWithQuery(network)("quote", apiParams);
 
   const apiResponse = await apiRequest(endpoint, { method: "GET" });
-
-  if (apiResponse.status === 400) {
-    throwBadRequestError(apiResponse.value);
-  }
 
   if (apiResponse.status >= 400) {
     throw new Error(`Failed to get quote from API. Status Code: ${apiResponse.status}`);
