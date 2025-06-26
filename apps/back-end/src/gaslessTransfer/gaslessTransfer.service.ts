@@ -88,6 +88,7 @@ export class GaslessTransferService {
     );
 
     const txDetails = quoteRequest.permit2PermitRequired
+      // @note: permitSignature is guaranteed to be present in this case by validation
       ? this.multiCallWithPermit(gaslessTxDetails, permitSignature!, jwtPayload)
       : gaslessTxDetails;
 
