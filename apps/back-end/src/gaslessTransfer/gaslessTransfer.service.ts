@@ -11,7 +11,6 @@ import {
   EvmAddress,
   permit2Address,
 } from "@stable-io/cctp-sdk-evm";
-import { stringifyWithBigints } from "@stable-io/utils";
 
 import type { ParsedSignature } from "../common/types";
 import {
@@ -65,7 +64,6 @@ export class GaslessTransferService {
     return { jwt };
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   public async initiateGaslessTransfer(
     request: RelayRequestDto,
   ): Promise<RelayTx> {
@@ -92,8 +90,6 @@ export class GaslessTransferService {
     const txDetails = quoteRequest.permit2PermitRequired
       ? this.multiCallWithPermit(gaslessTxDetails, permitSignature!, jwtPayload)
       : gaslessTxDetails;
-
-    console.log("TX DETAILS", stringifyWithBigints(txDetails));
 
     const txHash = await this.txLandingService.sendTransaction(
       this.cctpRService.contractAddress(quoteRequest.sourceDomain),
