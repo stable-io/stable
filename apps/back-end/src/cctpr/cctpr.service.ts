@@ -95,17 +95,12 @@ export class CctpRService {
     const domain = request.sourceDomain as DomainsOf<"Evm">;
     const sender = request.sender.toString();
     const domainNonceCache = this.nonceCache[domain];
-    const cachedNonce = domainNonceCache[sender];
-    if (cachedNonce !== undefined) {
-      domainNonceCache[sender] = cachedNonce + 1n;
-      return cachedNonce + 1n;
-    }
     // TODO: RPC Urls? Create clients at startup?
     const client = createPublicClient({
       chain: viemChainOf[network][domain] as Chain,
       transport: http(),
     });
-    const nonce = await fetchNextPermit2Nonce(client, request.sender);
+    const nonce = await fetchNextPermit2Nonce(client, request.sender, domainNonceCache[sender]);
     domainNonceCache[sender] = nonce;
     return nonce;
   }
