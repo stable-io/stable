@@ -19,8 +19,6 @@ export async function* transferWithGaslessRelay<
   intent: Intent<S,D>,
   permit2TypedData: Permit2TypedData,
   jwt: string,
-  maxRelayFee: Usdc,
-  maxFastFee: Usdc,
 ): AsyncGenerator<any, any, any> {
   const usdcAddress = new EvmAddress(usdcContracts.contractAddressOf[network][intent.sourceChain]);
   const permit2Addr = new EvmAddress(permit2Address);
@@ -33,14 +31,9 @@ export async function* transferWithGaslessRelay<
 
   const { signature: permit2Signature } = yield permit2TypedData
 
-  const { txHash } = await postTransferRequest(
-    network,
-    {
-      permitSignature: permit?.signature,
-      permit2Signature,
-      jwt,
-    }
-  );
+  // TODO: this should happen during executeRouteSteps
+  // since that layer controls events
+  const { txHash } = await postTransferRequest(network, jwt, permit2Signature, permit);
 
   throw new Error("not fully implemented");
 }

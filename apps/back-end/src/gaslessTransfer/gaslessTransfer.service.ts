@@ -9,6 +9,7 @@ import {
 import {
   ContractTx,
   EvmAddress,
+  Permit,
   permit2Address,
   Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
@@ -25,7 +26,12 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
-import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
+import {
+  QuoteDto,
+  QuoteRequestDto,
+  RelayRequestDto,
+  PermitDto,
+} from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 
 @Injectable()
@@ -65,13 +71,8 @@ export class GaslessTransferService {
     const {
       jwt: { quoteRequest, permit2TypedData, gaslessFee },
       permit2Signature,
-      permitSignature,
+      permit,
     } = request;
-
-    if (quoteRequest.permit2PermitRequired && !permitSignature) {
-      // This should generate a 400, not a 500.
-      throw new Error("Missing Permit for Permit2 Contract Allowance");
-    }
 
     const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
       quoteRequest,
@@ -84,14 +85,17 @@ export class GaslessTransferService {
       ? this.multiCallWithPermit(
           gaslessTxDetails,
           // @note: permitSignature is guaranteed to be present in this case by validation
-          permitSignature!,
+          permit!,
           quoteRequest,
-          permit2TypedData,
         )
       : gaslessTxDetails;
 
+    const toAddress = quoteRequest.permit2PermitRequired
+        ? new EvmAddress(multicall3Address)
+        : this.cctpRService.contractAddress(quoteRequest.sourceDomain);
+
     const txHash = await this.txLandingService.sendTransaction(
-      this.cctpRService.contractAddress(quoteRequest.sourceDomain),
+      toAddress,
       quoteRequest.sourceDomain,
       txDetails,
     );
@@ -123,9 +127,8 @@ export class GaslessTransferService {
 
   private multiCallWithPermit(
     gaslessTx: ContractTx,
-    permitSignature: ParsedSignature,
+    permit: PermitDto,
     quoteRequest: QuoteRequestDto,
-    permit2TypedData: Permit2TypedData,
   ): ContractTx {
     const usdcAddress = new EvmAddress(
       usdcContracts.contractAddressOf[this.configService.network][
@@ -136,9 +139,9 @@ export class GaslessTransferService {
     const permitData = encodePermitCall(
       quoteRequest.sender,
       new EvmAddress(permit2Address),
-      usdc(permit2TypedData.message.permitted.amount, "atomic"),
-      new Date(Number(permit2TypedData.message.deadline) * 1000),
-      permitSignature,
+      permit.value,
+      permit.deadline,
+      permit.signature,
     );
 
     const calls: Call3Value[] = [
@@ -160,7 +163,6 @@ export class GaslessTransferService {
       to: new EvmAddress(multicall3Address),
       data: encodeAggregate3ValueCall(calls),
       value: gaslessTx.value,
-      from: gaslessTx.from,
     };
   }
 }

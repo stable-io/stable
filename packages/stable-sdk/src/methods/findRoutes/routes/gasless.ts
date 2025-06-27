@@ -95,8 +95,6 @@ export async function buildGaslessRoute<
       intent,
       quote.permit2TypedData,
       quote.jwt,
-      maxRelayFee as Usdc, // gasless route is not built if payment token is not usdc.
-      maxFastFeeUsdc,
     ),
   }
 }

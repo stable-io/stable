@@ -12,6 +12,7 @@ import {
 @ValidatorConstraint({ name: "isBooleanString", async: false })
 export class IsBooleanStringConstraint implements ValidatorConstraintInterface {
   validate(value: unknown, args: ValidationArguments) {
+    if (typeof value === "boolean") return true;
     if (typeof value !== "string") return false;
     if (value !== "true" && value !== "false") return false;
 

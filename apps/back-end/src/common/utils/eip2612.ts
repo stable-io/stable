@@ -12,8 +12,8 @@ export const eip2612PermitAbi = parseAbiItem(
 export const encodePermitCall = (
   owner: EvmAddress,
   spender: EvmAddress,
-  value: Usdc,
-  deadline: Date,
+  value: bigint,
+  deadline: bigint,
   signature: ParsedSignature,
 ): CallData => {
   const hexData = encodeFunctionData({
@@ -22,8 +22,8 @@ export const encodePermitCall = (
     args: [
       owner.unwrap(),
       spender.unwrap(),
-      value.toUnit("atomic"),
-      BigInt(Math.floor(deadline.getTime() / 1000)),
+      value,
+      deadline,
       Number(signature.v),
       encoding.hex.encode(signature.r, true),
       encoding.hex.encode(signature.s, true),

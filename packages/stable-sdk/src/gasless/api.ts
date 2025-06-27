@@ -7,7 +7,7 @@ import { Url, BaseObject, encoding } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import { dateToUnixTimestamp, EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { deserializeBigints } from "@stable-io/utils";
 
 export const apiUrl = {
@@ -203,23 +203,26 @@ const decodeAndDeserializeJwt = (jwt: string): Record<string, unknown> => {
   return restoredPayload;
 };
 
-export type PostTransferParams = {
-  jwt: string;
-  permit2Signature: Uint8Array;
-  permitSignature?: Uint8Array;
-};
-
 export type PostTransferResponse = {
   txHash: string;
 };
 
-export async function postTransferRequest(network: Network, params: PostTransferParams): Promise<PostTransferResponse> {
+export async function postTransferRequest(
+  network: Network,
+  jwt: string,
+  permit2Signature: Uint8Array,
+  permit?: Permit,
+): Promise<PostTransferResponse> {
   const endpoint = apiEndpoint(network)("relay");
   
   const requestBody = {
-    jwt: params.jwt,
-    permit2Signature: encoding.hex.encode(params.permit2Signature, true),
-    permitSignature: params.permitSignature ? encoding.hex.encode(params.permitSignature, true) : undefined,
+    jwt: jwt,
+    permit2Signature: encoding.hex.encode(permit2Signature, true),
+    ...(permit ? { permit: {
+      signature: encoding.hex.encode(permit.signature, true),
+      value: permit.value.toString(),
+      deadline: permit.deadline.toString(),
+    }} : {})
   };
 
   const apiResponse = await apiRequest<APIResponse<HTTPCode, { txHash: string }>>(

@@ -160,7 +160,6 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
    * on top of it
    * @example "true"
    */
-  @Transform(({ value }) => value === "true")
-  @IsBoolean()
+  @IsBooleanString()
   takeFeesFromInput!: boolean;
 }

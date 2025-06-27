@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
-import { IsOptional, ValidateIf } from "class-validator";
-import { Transform } from "class-transformer";
+import { IsOptional, ValidateIf, ValidateNested, IsString, IsNotEmpty, Matches } from "class-validator";
+import { Transform, Type } from "class-transformer";
 
 import type { ParsedSignature } from "../../common/types";
 import { AMOUNT_PATTERNS } from "../../common/utils";
@@ -13,6 +13,46 @@ import {
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
 import { ValidatePermitSignature } from "../validators";
+
+export class PermitDto {
+  /**
+   * User's signature of a permit message for permit2 contract
+   * @example "0x1234567890abcdef..."
+   */
+  @ApiProperty({
+    type: String,
+    format: "hex",
+    pattern: "^0x[a-fA-F0-9]{130}$",
+  })
+  @IsSignature()
+  signature!: ParsedSignature;
+
+  /**
+   * Permit value amount as string (converted from bigint)
+   * @example "1000000"
+   */
+  @ApiProperty({
+    type: String,
+    description: "Permit value amount as string representation of bigint"
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => BigInt(value))
+  value!: bigint;
+
+  /**
+   * Permit deadline as string representation of bigint
+   * @example "1704067200"
+   */
+  @ApiProperty({
+    type: String,
+    description: "Permit deadline as string representation of bigint"
+  })
+  @IsNotEmpty()
+  @Transform(({ value }) => {
+    return BigInt(value)
+  })
+  deadline!: bigint;
+}
 
 export class RelayRequestDto {
   /**
@@ -39,57 +79,15 @@ export class RelayRequestDto {
   permit2Signature!: ParsedSignature;
 
   /**
-   * User's signature of a permit message for permit2 contract
-   * @example "0x1234567890abcdef..."
+   * User's permit data including signature, value, and deadline
    */
   @ApiProperty({
-    type: String,
-    format: "hex",
-    pattern: "^0x[a-fA-F0-9]{130}$",
+    type: PermitDto,
     required: false,
   })
-  @ValidatePermitSignature()
-  permitSignature?: ParsedSignature;
-
-  /**
-   * Whether the fees will be taken from the input or added
-   * on top of it
-   * @example "true"
-   */
   @IsOptional()
-  @ValidateIf((_, value) => typeof value === "string")
-  @IsBooleanString()
-  takeFeesFromInput: boolean = false;
-
-  /**
-   * Max usdc value the user is willing to pay for a relay.
-   * Not sure at this point if in the gasless case is for both
-   * relays or only the gasless one. We need to check with @r8zon
-   * @example "0.1"
-   */
-  @ApiProperty({
-    type: String,
-    format: "amount",
-    pattern: AMOUNT_PATTERNS.USDC,
-  })
-  @IsUsdcAmount({ min: usdc(0.000001) })
-  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
-    toPlainOnly: true,
-  })
-  maxRelayFee!: Usdc;
-
-  /**
-   * Max usdc value the user is willing to pay for fast transfer.
-   * @example "0.1"
-   */
-  @ApiProperty({
-    type: String,
-    format: "amount",
-    pattern: AMOUNT_PATTERNS.USDC,
-  })
-  @IsUsdcAmount({ min: usdc(0.000001) })
-  @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
-    toPlainOnly: true,
-  })
-  maxFastFee!: Usdc;
+  @ValidateNested()
+  @Type(() => PermitDto)
+  @ValidatePermitSignature()
+  permit?: PermitDto;
 }
