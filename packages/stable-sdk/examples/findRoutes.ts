@@ -37,9 +37,6 @@ const intent = {
   recipient: someoneElse,
 };
 
-const routes = await sdk.findRoutes(intent, {
-  paymentToken: "native",
-  relayFeeMaxChangeMargin: 1.05,
-});
+const routes = await sdk.findRoutes(intent);
 
 console.info("Routes:", stringify(routes.all));

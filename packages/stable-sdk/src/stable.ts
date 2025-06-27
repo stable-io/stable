@@ -11,7 +11,7 @@ import { Url } from "@stable-io/utils";
 
 import { $checkHasEnoughFunds } from "./methods/checkHasEnoughFunds.js";
 import { $executeRoute } from "./methods/executeRoute/index.js";
-import { $findRoutes } from "./methods/findRoutes.js";
+import { $findRoutes } from "./methods/findRoutes/index.js";
 import { $getBalance } from "./methods/getBalance.js";
 import { SDK, SDKOptions } from "./types/sdk.js";
 import { Network } from "./types/general.js";
