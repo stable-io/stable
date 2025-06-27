@@ -1,6 +1,4 @@
-import { Usdc } from "@stable-io/cctp-sdk-definitions";
-import type { Permit2TypedData, EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { dateToUnixTimestamp } from "@stable-io/cctp-sdk-evm";
+import type { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Brand } from "@stable-io/utils";
 import { PublicClient } from "viem";
 
@@ -30,12 +28,12 @@ export async function fetchPermit2NonceBitmap(
   owner: EvmAddress,
   index: bigint,
 ): Promise<Permit2Nonce> {
-  return await client.readContract({
+  return (await client.readContract({
     address: PERMIT2_ADDRESS,
     abi: PERMIT2_NONCE_ABI,
     functionName: "nonceBitmap",
     args: [owner.toString(), index],
-  }) as Permit2Nonce;
+  })) as Permit2Nonce;
 }
 
 export async function nextAvailablePermit2Nonce(
@@ -64,9 +62,11 @@ export async function nextAvailablePermit2Nonce(
       break;
     }
   }
-  if (nonce & mostSignificantBit) return (index + 1n) << PERMIT2_NONCE_INDEX_SHIFT as Permit2Nonce;
-  if (nonce === 0n) return index << PERMIT2_NONCE_INDEX_SHIFT as Permit2Nonce;
-  return (index << PERMIT2_NONCE_INDEX_SHIFT) + BigInt(nonce.toString(2).length) as Permit2Nonce;
+  if (nonce & mostSignificantBit)
+    return ((index + 1n) << PERMIT2_NONCE_INDEX_SHIFT) as Permit2Nonce;
+  if (nonce === 0n) return (index << PERMIT2_NONCE_INDEX_SHIFT) as Permit2Nonce;
+  return ((index << PERMIT2_NONCE_INDEX_SHIFT) +
+    BigInt(nonce.toString(2).length)) as Permit2Nonce;
 }
 
 export async function fetchNextPermit2Nonce(
@@ -74,7 +74,9 @@ export async function fetchNextPermit2Nonce(
   owner: EvmAddress,
   nonceHint?: Permit2Nonce,
 ): Promise<Permit2Nonce> {
-  const fetchNonce = async (index: bigint) => fetchPermit2NonceBitmap(client, owner, index);
-  const startingIndex = (nonceHint ?? PERMIT2_CCTPR_NONCE_START) >> PERMIT2_NONCE_INDEX_SHIFT;
+  const fetchNonce = async (index: bigint) =>
+    fetchPermit2NonceBitmap(client, owner, index);
+  const startingIndex =
+    (nonceHint ?? PERMIT2_CCTPR_NONCE_START) >> PERMIT2_NONCE_INDEX_SHIFT;
   return nextAvailablePermit2Nonce(fetchNonce, startingIndex);
 }

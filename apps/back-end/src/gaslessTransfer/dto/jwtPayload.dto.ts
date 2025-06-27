@@ -1,7 +1,8 @@
+import type { Usdc } from "@stable-io/cctp-sdk-definitions";
+import { usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Permit2TypedData } from "@stable-io/cctp-sdk-evm";
-import { IsBoolean, isBoolean, IsNotEmpty, IsObject, ValidateNested } from "class-validator";
+import { IsNotEmpty, IsObject, ValidateNested } from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";
-import { Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
 import { IsUsdcAmount } from "../../common/validators";
 
 export class JwtPayloadDto {

@@ -25,12 +25,7 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
-import {
-  QuoteDto,
-  QuoteRequestDto,
-  RelayRequestDto,
-  JwtPayloadDto,
-} from "./dto";
+import { QuoteDto, QuoteRequestDto, RelayRequestDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 
 @Injectable()
@@ -49,7 +44,6 @@ export class GaslessTransferService {
   public async quoteGaslessTransfer(
     request: QuoteRequestDto,
   ): Promise<QuoteDto> {
-
     const gaslessFee = this.calculateQuotedAmount(request);
 
     const jwtPayload: JwtPayload = {
