@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:check": "tsc",
     "start": "next start",
     "format": "prettier --write ./src",
     "format:check": "prettier --check ./src",

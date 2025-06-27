@@ -35,6 +35,7 @@ const tsRulesConfig = {
   rules: {
     "@typescript-eslint/explicit-function-return-type": "error",
     "@typescript-eslint/consistent-type-imports": "error",
+    "@typescript-eslint/no-unused-vars": "error",
     "import/order": [
       "error",
       {
