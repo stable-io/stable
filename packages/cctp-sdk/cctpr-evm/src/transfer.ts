@@ -21,13 +21,12 @@ import type { ContractTx, Eip2612Data, EvmClient, Permit } from "@stable-io/cctp
 import { EvmAddress, init as initEvm } from "@stable-io/cctp-sdk-evm";
 import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Amount } from "@stable-io/amount";
-import { CctpR, layouts, quoteIsInUsdc } from "./contractSdk/index.js";
+import { CctpR, quoteIsInUsdc } from "./contractSdk/index.js";
 import type {
   Quote as ContractQuote,
   CorridorParams,
   SupportedEvmDomain,
 } from "./contractSdk/index.js";
-
 
 export type Quote<N extends Network, S extends SupportedEvmDomain<N>> =
   Exclude<ContractQuote<S>, { type: "offChain" }>;
@@ -51,11 +50,11 @@ export const transfer = <N extends Network>(network: N) => {
     sender: EvmAddress,
     destinationDomain: D,
     recipient: UniversalOrNative<SupportedDomain<N> & LoadedDomain>,
-    inputAmountUsdc: Usdc,
+    IoAmountUsdc: Usdc, //TODO: this should use InOrOut too
     quote: Quote<N, S>,
     gasDropoff: GasTokenOf<D>,
     corridor: CorridorParams<N, S, D>,
-    takeFeesFromInput: boolean,
+    takeFeesFromInput: boolean, //TODO: this should use InOrOut too
     usePermit: boolean = true,
   ): AsyncGenerator<ContractTx | Eip2612Data, ContractTx> {
     const sourceDomain = client.domain;
@@ -77,10 +76,9 @@ export const transfer = <N extends Network>(network: N) => {
     ]);
 
     const requiredAllowance = cctprSdk.checkCostAndCalcRequiredAllowance(
-      inputAmountUsdc,
+      { amount: IoAmountUsdc, type: takeFeesFromInput ? "in" : "out" },
       quote,
       corridor,
-      takeFeesFromInput,
     );
 
     if (usdcBalance.lt(requiredAllowance))
@@ -100,16 +98,13 @@ export const transfer = <N extends Network>(network: N) => {
 
     const recipientUniversal = recipient.toUniversalAddress();
 
-    // If the fee is paid in usdc. And is not taken from input, then we need to add
-    // the fee to the input amount
     return cctprSdk.transferWithRelay(
       destinationDomain,
-      inputAmountUsdc,
+      { amount: IoAmountUsdc, type: takeFeesFromInput ? "in" : "out" },
       recipientUniversal,
       gasDropoff,
       corridor,
       quote,
-      takeFeesFromInput,
       permit,
     );
   };

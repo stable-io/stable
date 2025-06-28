@@ -5,8 +5,9 @@
 
 pragma solidity ^0.8.28;
 
-import {IPermit2} from "permit2/interfaces/IPermit2.sol";
+import {IPermit2}           from "permit2/interfaces/IPermit2.sol";
 import {ISignatureTransfer} from "permit2/interfaces/ISignatureTransfer.sol";
+
 import {CCTP_DOMAIN_AVALANCHE} from "wormhole-sdk/constants/CctpDomains.sol";
 import {ITokenMessenger}       from "wormhole-sdk/interfaces/cctp/ITokenMessenger.sol";
 import {IERC20Permit}          from "wormhole-sdk/interfaces/token/IERC20Permit.sol";
@@ -15,16 +16,13 @@ import {toUniversalAddress}    from "wormhole-sdk/Utils.sol";
 
 import {ITokenMessengerV2} from "cctpr/interfaces/ITokenMessengerV2.sol";
 import {Route}             from "cctpr/assets/CctpRBase.sol";
-import {CctpRQuote}       from "cctpr/assets/CctpRQuote.sol";
+import {CctpRQuote}        from "cctpr/assets/CctpRQuote.sol";
 
 //see https://github.com/circlefin/evm-cctp-contracts/blob/63ab1f0ac06ce0793c0bbfbb8d09816bc211386d/src/v2/FinalityThresholds.sol#L27
 uint32 constant TOKEN_MESSENGER_V2_MIN_FINALITY_THRESHOLD = 500;
 
 string constant WITNESS_TYPE_STRING =
   "TransferWithRelayWitness parameters)"
-  //if amount == baseAmount, then all fees are taken from baseAmount
-  //otherwise, amount must equal baseAmount + gaslessFee + maxRelayFee
-  //  (and baseAmount - fastFee will be transferred)
   "TokenPermissions(address token,uint256 amount)"
   "TransferWithRelayWitness("
     "uint64 baseAmount,"
