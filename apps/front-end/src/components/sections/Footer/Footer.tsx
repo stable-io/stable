@@ -20,7 +20,9 @@ export const Footer = (): ReactElement => (
       </ul>
       <ul className="footer-links">
         <li>
-          <Link href="https://blog.stableit.com/enter-stable">Why Stableit</Link>
+          <Link href="https://blog.stableit.com/enter-stable">
+            Why Stableit
+          </Link>
         </li>
         <li>
           <Link href="https://blog.stableit.com">Blog</Link>

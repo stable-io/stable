@@ -16,4 +16,4 @@ export const Announcement = (): ReactElement => (
       </p>
     </div>
   </div>
-); 
+);
