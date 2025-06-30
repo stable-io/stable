@@ -50,7 +50,7 @@ export class GaslessTransferService {
   public async quoteGaslessTransfer(
     request: QuoteRequestDto,
   ): Promise<QuoteDto> {
-    const gaslessFee = this.calculateQuotedAmount(request);
+    const gaslessFee = this.calculateGaslessFee(request);
 
     const jwtPayload: JwtPayload = {
       permit2TypedData: await this.cctpRService.composeGaslessTransferMessage(
@@ -103,7 +103,7 @@ export class GaslessTransferService {
     return { hash: `0x${txHash}` };
   }
 
-  private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
+  private calculateGaslessFee(request: QuoteRequestDto): Usdc {
     // @todo: Get these dynamically
     const costs = {
       v1: usdc(0.1),
@@ -122,7 +122,7 @@ export class GaslessTransferService {
       }
     })();
     const permitCost = usdc(request.permit2PermitRequired ? 0.2 : 0);
-    return request.amount.add(corridorCost).add(permitCost);
+    return corridorCost.add(permitCost);
   }
 
   private multiCallWithPermit(
