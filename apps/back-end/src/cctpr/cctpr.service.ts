@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Size, TODO, encoding } from "@stable-io/utils";
 import type {
   DomainsOf,
+  Percentage,
   Usdc,
   EvmDomains,
 } from "@stable-io/cctp-sdk-definitions";
@@ -9,7 +10,6 @@ import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { CorridorParams, layouts, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CctpR, GaslessQuoteVariant } from "@stable-io/cctp-sdk-cctpr-evm";
-import { Percentage } from "@stable-io/cctp-sdk-definitions";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import {
   ContractTx,
@@ -48,7 +48,7 @@ export class CctpRService {
     return cctpr.composeGaslessTransferMessage(
       quoteRequest.targetDomain,
       this.contractAddress(quoteRequest.sourceDomain),
-      quoteRequest.amount,
+      { amount: quoteRequest.amount, type: "in" },
       quoteRequest.recipient.toUniversalAddress(),
       quoteRequest.gasDropoff as TODO,
       this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
@@ -59,7 +59,6 @@ export class CctpRService {
       ),
       this.getDeadline(),
       gaslessFee,
-      quoteRequest.takeFeesFromInput,
     );
   }
 
@@ -73,7 +72,7 @@ export class CctpRService {
 
     return cctpr.transferGasless(
       quoteRequest.targetDomain,
-      quoteRequest.amount,
+      { amount: quoteRequest.amount, type: "in" },
       quoteRequest.recipient.toUniversalAddress(),
       quoteRequest.gasDropoff as TODO,
       this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
@@ -82,7 +81,6 @@ export class CctpRService {
       // deadline is expressed in unix timestamp (Seconds).
       new Date(Number(permit2TypedData.message.deadline.toString()) * 1000),
       gaslessFee,
-      quoteRequest.takeFeesFromInput,
       serializeSignature(permit2Signature),
     );
   }
