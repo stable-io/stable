@@ -529,6 +529,9 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           burnAmount
         ];
 
+    if (baseAmount.le(usdc(0)))
+      throw new Error("Base Amount Less or Equal to 0");
+
     return [amount, baseAmount, burnAmount];
   }
 
@@ -557,6 +560,9 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       burnAmount = CctpR.ceilToMicroUsdc(
         burnAmount.div(Rational.from(1).sub(corridor.fastFeeRate.toUnit("scalar")))
       );
+
+    if (burnAmount.le(usdc(0)))
+      throw new Error("Transer Amount Less or Equal to 0 After Fees");
 
     return burnAmount;
   }
