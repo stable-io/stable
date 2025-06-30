@@ -46,7 +46,7 @@ export const BridgeWidget = ({
   onTransfer,
 }: BridgeWidgetProps): ReactElement => {
   return (
-    <div className="bridge-widget">
+    <div className="bridge-widget content-box">
       <div className="widget-title">
         <h2>Transfer USDC</h2>
       </div>

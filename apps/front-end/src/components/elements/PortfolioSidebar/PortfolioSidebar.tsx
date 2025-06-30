@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 
 export const PortfolioSidebar = (): ReactElement => {
   return (
-    <div className="sidebar">
+    <div className="sidebar content-box">
       <ul className="tabs">
         <li className="active">My Portfolio</li>
         <li>History</li>
