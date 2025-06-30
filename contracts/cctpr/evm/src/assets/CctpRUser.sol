@@ -37,7 +37,7 @@ string constant WITNESS_TYPE_STRING =
   ")";
 
 struct Permit2Data {
-  address spender;
+  address owner;
   uint256 amount;
   uint256 nonce;
   uint32  deadline;
@@ -136,7 +136,7 @@ abstract contract CctpRUser is CctpRQuote {
         permit2Data.deadline
       ),
       ISignatureTransfer.SignatureTransferDetails(address(this), requiredAmount),
-      permit2Data.spender,
+      permit2Data.owner,
       witness,
       WITNESS_TYPE_STRING,
       permit2Data.signature

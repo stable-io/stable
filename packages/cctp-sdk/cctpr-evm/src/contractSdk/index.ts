@@ -343,7 +343,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
   composeGaslessTransferMessage<DD extends SupportedDomain<N>>(
     destination: DD,
-    cctprAddress: EvmAddress,
+    cctprAddress: EvmAddress, //FIXME eliminate and use this.address instead
     inOrOut: InOrOut,
     mintRecipient: UniversalAddress,
     gasDropoff: GasTokenOf<DD, SupportedDomain<N>>,
@@ -403,7 +403,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           token: usdcContracts.contractAddressOf[network][domain],
           amount: amount.toUnit("atomic"),
         },
-        spender: cctprAddress.unwrap(),
+        spender: cctprAddress.unwrap(), //FIXME eliminate and use this.address instead
         nonce: encoding.bignum.decode(nonce),
         deadline: dateToUnixTimestamp(deadline),
         parameters: {
@@ -438,6 +438,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     nonce: Uint8Array, //TODO better type
     deadline: Date,
     gaslessFee: Usdc,
+    user: EvmAddress,
     permit2Signature: Uint8Array, //TODO better type
   ): ContractTx {
     const [amount, baseAmount, burnAmount] =
@@ -446,7 +447,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     const transfer = {
       approvalType: "Gasless",
       permit2Data: {
-        spender: this.address,
+        owner: user,
         amount,
         nonce,
         deadline,
