@@ -1,17 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import type { Usdc } from "@stable-io/cctp-sdk-definitions";
-
-import {
-  usdc,
-  usdcContracts,
-  evmGasToken,
-} from "@stable-io/cctp-sdk-definitions";
+import type { EvmGasToken, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { usdcContracts, evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import {
   ContractTx,
   EvmAddress,
   permit2Address,
 } from "@stable-io/cctp-sdk-evm";
-
 import {
   instanceToPlain,
   multicall3Address,
@@ -25,6 +19,7 @@ import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
+import { getPrices } from "../common/utils/oracle";
 
 @Injectable()
 export class GaslessTransferService {
@@ -42,7 +37,7 @@ export class GaslessTransferService {
   public async quoteGaslessTransfer(
     request: QuoteRequestDto,
   ): Promise<QuoteDto> {
-    const gaslessFee = this.calculateGaslessFee(request);
+    const gaslessFee = await this.calculateGaslessFee(request);
 
     const jwtPayload: JwtPayload = {
       permit2TypedData: await this.cctpRService.composeGaslessTransferMessage(
@@ -95,12 +90,33 @@ export class GaslessTransferService {
     return { hash: txHash };
   }
 
-  private calculateGaslessFee(request: QuoteRequestDto): Usdc {
-    // @todo: Get these dynamically
-    const costs = {
-      v1: usdc(0.1),
-      v2: usdc(0.1),
+  private async getPricesForRequest(
+    request: QuoteRequestDto,
+  ): Promise<{ gasTokenPrice: Usdc; gasPrice: EvmGasToken }> {
+    const prices = await getPrices(
+      [request.sourceDomain],
+      this.configService.network,
+    );
+    return prices[0]!;
+  }
+
+  private async calculateGaslessFee(request: QuoteRequestDto): Promise<Usdc> {
+    const prices = await this.getPricesForRequest(request);
+    // TODO: Calculate these properly
+    const gasCosts = {
+      permit2Permit: 100000n,
+      v1: 100000n,
+      v2: 100000n,
     } as const;
+    const costs = Object.entries(gasCosts).reduce(
+      (acc, [key, value]) => {
+        acc[key as keyof typeof gasCosts] = prices.gasTokenPrice.mul(
+          prices.gasPrice.mul(value).toUnit("EvmGasToken"),
+        );
+        return acc;
+      },
+      {} as Record<keyof typeof gasCosts, Usdc>,
+    );
     const corridorCost = ((): Usdc => {
       switch (request.corridor) {
         case "v1":
@@ -113,8 +129,9 @@ export class GaslessTransferService {
           throw new Error(`Invalid corridor: ${request.corridor}`);
       }
     })();
-    const permitCost = usdc(request.permit2PermitRequired ? 0.2 : 0);
-    return corridorCost.add(permitCost);
+    if (request.permit2PermitRequired)
+      return corridorCost.add(costs.permit2Permit);
+    return corridorCost;
   }
 
   private multiCallWithPermit(

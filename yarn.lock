@@ -5654,6 +5654,7 @@ __metadata:
     "@types/express": "npm:^5.0.2"
     "@types/node": "npm:^22.15.30"
     axios: "npm:^1.9.0"
+    binary-layout: "npm:^1.2.2"
     class-transformer: "npm:^0.5.1"
     class-validator: "npm:^0.14.2"
     dotenv: "npm:^16.5.0"
