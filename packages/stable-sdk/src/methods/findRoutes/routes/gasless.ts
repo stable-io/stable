@@ -12,7 +12,7 @@ import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
 import { GetQuoteParams, getTransferQuote } from "../../../gasless/api.js";
-import { transferWithGaslessRelay } from "src/gasless/transfer.js";
+import { transferWithGaslessRelay } from "../../../gasless/transfer.js";
 import { calculateTotalCost, getCorridorFees } from '../fees.js';
 import { TransactionEmitter } from "../../../transactionEmitter.js";
 import { TransferProgressEmitter } from "../../../progressEmitter.js";
@@ -77,7 +77,7 @@ export async function buildGaslessRoute<
     ...tokenAllowanceSteps,
     gaslessTransferStep(intent.sourceChain),
   ];
-  
+
   return {
     intent,
     fees: totalFees,
