@@ -23,7 +23,10 @@ import {PermitParsing}        from "wormhole-sdk/libraries/PermitParsing.sol";
 import {toUniversalAddress}   from "wormhole-sdk/Utils.sol";
 
 import "cctpr/assets/CctpRIds.sol";
-import {WITNESS_TYPE_STRING} from "cctpr/assets/CctpRUser.sol";
+import {
+  WITNESS_TYPE_STRING,
+  TRANSFER_WITH_RELAY_WITNESS_TYPE_HASH
+} from "cctpr/assets/CctpRUser.sol";
 import {
   QUOTE_OFF_CHAIN,
   QUOTE_ON_CHAIN_USDC,
@@ -328,8 +331,12 @@ contract RequestRelay is CctpRTestBase {
       ? vars.quote - (withError && permitType != 2 ? 1 : 0)
       : 0;
 
-    vars.approveAmount = vars.userUsdc + vars.gaslessFee +
-      (vars.paymentInUsdc && !vars.takeFeeFromInput ? vars.quote : 0);
+    if (vars.takeFeeFromInput)
+      vars.userUsdc += vars.quote;
+    else
+      vars.approveAmount = vars.quote;
+
+    vars.approveAmount += vars.userUsdc + vars.gaslessFee;
 
     usdc().deal(user, vars.approveAmount);
 
@@ -399,7 +406,7 @@ contract RequestRelay is CctpRTestBase {
           vars.gasDropoffMicroGasToken,
           0, //maxFastFee
           vars.gaslessFee,
-          quoteType == QuoteType.OffChainUsdc ? vars.quote :vars.maxFeeUsd,
+          quoteType == QuoteType.OffChainUsdc ? vars.quote : vars.maxFeeUsd,
           quoteType
         ),
         uint64(vars.gaslessFee)
@@ -567,20 +574,29 @@ contract RequestRelay is CctpRTestBase {
       WITNESS_TYPE_STRING
     ));
 
+    string memory corridorString =
+      corridor == Route.V1
+      ? "CCTPv1"
+      : corridor == Route.V2Direct
+      ? "CCTPv2"
+      : "CCTPv2->Avalanche->CCTPv1";
+
+    string memory quoteSource =
+      quoteType == QuoteType.OffChainUsdc
+      ? "OffChain"
+      : "OnChain";
+
     bytes32 witness = keccak256(abi.encode(
+      TRANSFER_WITH_RELAY_WITNESS_TYPE_HASH,
       baseAmount,
       destinationDomain,
       toUniversalAddress(user),
       microGasDropoff,
-      corridor == Route.V1
-        ? "CCTPv1"
-        : corridor == Route.V2Direct
-        ? "CCTPv2"
-        : "CCTPv2ToAvalancheThenCCTPv1",
+      keccak256(abi.encodePacked(corridorString)),
       maxFastFee,
       gaslessFee,
       maxRelayFee,
-      quoteType == QuoteType.OffChainUsdc ? "OffChain" : "OnChain"
+      keccak256(abi.encodePacked(quoteSource))
     ));
 
     ISignatureTransfer.TokenPermissions memory tokenPermissions =

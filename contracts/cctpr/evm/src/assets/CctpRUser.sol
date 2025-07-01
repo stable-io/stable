@@ -36,6 +36,27 @@ string constant WITNESS_TYPE_STRING =
     "string quoteSource" //"OffChain" or "OnChain"
   ")";
 
+//keccak256("TransferWithRelayWitness(uint64 baseAmount, ..., string quoteSource)")
+bytes32 constant TRANSFER_WITH_RELAY_WITNESS_TYPE_HASH =
+  0xd8d8f589690ec7b04cede9a901610a0b0ff2cfec22ba31db6b1dafafe14784b7;
+
+//keccak256("CCTPv1")
+bytes32 constant CORRIDOR_CCTPV1_HASH =
+  0xf1533fb304796ed47c5a84ee7aa17d7d2758d8e35e01eca21b7bc862ed739c56;
+//keccak256("CCTPv2")
+bytes32 constant CORRIDOR_CCTPV2_HASH =
+  0xc64e7cd858aaed1e95e01a9ce10518ae3bee81bb20fdb394c41cebb3b92b5c11;
+//keccak256("CCTPv2->Avalanche->CCTPv1")
+bytes32 constant CORRIDOR_CCTPV2_TO_AVALANCHE_TO_CCTPV1_HASH =
+  0xa51cd44d941d29943efd82dc41f83b1e1ec039f17d9c38f6b34845338eb287ff;
+
+//keccak256("OnChain")
+bytes32 constant QUOTE_SOURCE_ONCHAIN_HASH =
+  0x04efdc127211e85550104881d990ac0ad8cab62a718ef27996783a3eefba1984;
+//keccak256("OffChain")
+bytes32 constant QUOTE_SOURCE_OFFCHAIN_HASH =
+  0x05d3f7a2772bed1f9df7112906d61ae47d491128761de849c14fcd68aa8eee30;
+
 struct Permit2Data {
   address owner;
   uint256 amount;
@@ -114,19 +135,20 @@ abstract contract CctpRUser is CctpRQuote {
     bool isOnChainQuote
   ) internal { unchecked {
     bytes32 witness = keccak256(abi.encode(
+      TRANSFER_WITH_RELAY_WITNESS_TYPE_HASH,
       baseAmount,
       destinationDomain,
       mintRecipient,
       microGasDropoff,
       corridor == Route.V1
-        ? "CCTPv1"
+        ? CORRIDOR_CCTPV1_HASH
         : corridor == Route.V2Direct
-        ? "CCTPv2"
-        : "CCTPv2->Avalanche->CCTPv1",
+        ? CORRIDOR_CCTPV2_HASH
+        : CORRIDOR_CCTPV2_TO_AVALANCHE_TO_CCTPV1_HASH,
       maxFastFee,
       gaslessFee,
       maxRelayFee,
-      isOnChainQuote ? "OnChain" : "OffChain"
+      isOnChainQuote ? QUOTE_SOURCE_ONCHAIN_HASH : QUOTE_SOURCE_OFFCHAIN_HASH
     ));
 
     _permit2.permitWitnessTransferFrom(
