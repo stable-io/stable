@@ -19,10 +19,10 @@ export const Header = (): ReactElement => {
             <Link href="/bridge">USDC Bridge</Link>
           </li>
           <li>
-            <a href="https://docs.stableit.com">Stable SDK</a>
+            <a href="https://docs.stableit.com">Stableit SDK</a>
           </li>
           <li>
-            <a href="https://blog.stableit.com/enter-stable">Why Stable</a>
+            <a href="https://blog.stableit.com">Why Stableit</a>
           </li>
           <li>
             <a href="mailto:hello@stableit.com">Reach out</a>

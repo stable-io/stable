@@ -10,7 +10,7 @@ const Home: NextPageWithLayout = (): ReactElement => (
   <>
     <Head>
       <title>
-        Stable | Move USDC across networks with high speed and minimal costs
+        Stableit | Move USDC across networks with high speed and minimal costs
       </title>
     </Head>
     <div className="hero">
@@ -20,14 +20,14 @@ const Home: NextPageWithLayout = (): ReactElement => (
           Blazing <span style={{ color: "#48C6DA" }}>FAST!</span>
         </h1>
         <h2>
-          Powered by Circle, Stable&apos;s SDK enables instant USDC transfers
+          Powered by Circle, Stableit&apos;s SDK enables instant USDC transfers
           across networks.
         </h2>
         <Link href="/bridge" className="bridge-link">
           <button className="main-cta">Bridge Now</button>
         </Link>
         <Link
-          href="https://docs.stable.io"
+          href="https://docs.stableit.com"
           className="docs-link"
           style={{ marginLeft: "20px" }}
         >
@@ -110,8 +110,8 @@ const Home: NextPageWithLayout = (): ReactElement => (
             <div className="details">
               <div className="step-title">Initialize The SDK</div>
               <div className="step-desc">
-                Create a StableSDK instance by providing a network, signer, and
-                optional RPCs.
+                Create a Stableit SDK instance by providing a network, signer,
+                and optional RPCs.
               </div>
             </div>
           </li>
@@ -146,7 +146,7 @@ const Home: NextPageWithLayout = (): ReactElement => (
             </div>
           </li>
         </ul>
-        <Link href="https://docs.stable.io/">
+        <Link href="https://docs.stableit.com/">
           <button className="main-cta">Start building →</button>
         </Link>
       </div>
