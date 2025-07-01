@@ -28,7 +28,7 @@ export const Footer = (): ReactElement => (
           <Link href="https://blog.stableit.com">Blog</Link>
         </li>
         <li>
-          <Link href="https://x.com/stable_io" target="_blank">
+          <Link href="https://x.com/stable_it" target="_blank">
             Twitter
           </Link>
         </li>

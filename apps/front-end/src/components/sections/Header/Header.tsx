@@ -25,7 +25,7 @@ export const Header = (): ReactElement => {
             <a href="https://blog.stableit.com/enter-stable">Why Stable</a>
           </li>
           <li>
-            <a href="mailto:hello@stable.io">Reach out</a>
+            <a href="mailto:hello@stableit.com">Reach out</a>
           </li>
         </ul>
         <button className="hamburger-menu">
