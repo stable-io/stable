@@ -6,42 +6,42 @@
       "description": "Fuji",
       "evmNetworkId": 43113,
       "chainId": 6,
-      "rpc": ""
+      "rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com"
     },
     {
       "domain": "Ethereum",
       "description": "Sepolia",
       "evmNetworkId": 11155111,
       "chainId": 10002,
-      "rpc": ""
+      "rpc": "https://sepolia.drpc.org"
     },
     {
       "domain": "Arbitrum",
       "description": "Arbitrum Sepolia",
       "evmNetworkId": 421614,
       "chainId": 10003,
-      "rpc": ""
+      "rpc": "https://arbitrum-sepolia.drpc.org"
     },
     {
       "domain": "Base",
       "description": "Base Sepolia",
       "evmNetworkId": 84532,
       "chainId": 10004,
-      "rpc": ""
+      "rpc": "https://sepolia.base.org"
     },
     {
       "domain": "Optimism",
       "description": "Optimism Sepolia",
       "evmNetworkId": 43113,
       "chainId": 10005,
-      "rpc": ""
+      "rpc": "https://sepolia.optimism.io"
     },
     {
       "domain": "Polygon",
       "description": "Polygon Sepolia",
       "evmNetworkId": 80002,
       "chainId": 10007,
-      "rpc": ""
+      "rpc": "https://rpc-amoy.polygon.technology"
     },
     {
       "domain": "Unichain",
