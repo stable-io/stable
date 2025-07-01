@@ -16,10 +16,7 @@ const Document = (): ReactElement => (
         itemProp="description"
         content="Powered by Circle, Stableit's SDK enables instant USDC transfers across networks."
       />
-      <meta
-        itemProp="image"
-        content="https://stableit.com/imgs/og.jpg"
-      />
+      <meta itemProp="image" content="https://stableit.com/imgs/og.jpg" />
       <meta
         property="og:title"
         content="Stable | Move USDC across networks with high speed and minimal costs"
@@ -29,10 +26,7 @@ const Document = (): ReactElement => (
         content="Powered by Circle, Stable's SDK enables instant USDC transfers across networks."
       />
       <meta property="og:type" content="website" />
-      <meta
-        property="og:image"
-        content="https://stableit.com/imgs/og.jpg"
-      />
+      <meta property="og:image" content="https://stableit.com/imgs/og.jpg" />
       <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="700" />
@@ -49,10 +43,7 @@ const Document = (): ReactElement => (
         name="twitter:description"
         content="Powered by Circle, Stable's SDK enables instant USDC transfers across networks."
       />
-      <meta
-        name="twitter:image"
-        content="https://stableit.com/imgs/og.jpg"
-      />
+      <meta name="twitter:image" content="https://stableit.com/imgs/og.jpg" />
       <meta
         name="twitter:image:src"
         content="https://stableit.com/imgs/og.jpg"
