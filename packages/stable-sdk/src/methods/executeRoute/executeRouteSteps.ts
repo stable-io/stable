@@ -11,9 +11,9 @@ import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
-import { Route, ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
-import { isContractTx, getStepType, isEip2612Data, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2 } from "../findRoutes/steps.js";
-import { ApprovalSentEventData, TransferSentEventData, parsePermitEventData } from "../../progressEmitter.js";
+import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
+import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2 } from "../findRoutes/steps.js";
+import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
@@ -47,10 +47,10 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
       const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
       route.progress.emit(eventName, eventData);
     } else if ((stepType === SIGN_PERMIT || stepType === SIGN_PERMIT_2)) {
-      const signatureRequest = txOrSig as Eip712Data<any>;
+      const typedMessage = txOrSig as Eip712Data<any>;
       const signature = await signer.signTypedData({
         account: signer.account!,
-        ...signatureRequest,
+        ...typedMessage,
       });
 
       permit = {
@@ -60,11 +60,15 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         // We need to pass them back to the cctp-sdk so that it can know
         // what changes we made.
         // We don't modify them rn, so we give it back what it gave us.
-        value: signatureRequest.message.value,
-        deadline: signatureRequest.message.deadline,
+        value: typedMessage.message.value,
+        deadline: typedMessage.message.deadline,
       };
 
-      route.progress.emit("permit-signed", parsePermitEventData(permit));
+      route.progress.emit("message-signed", {
+        signer: signer.account!.address,
+        signature,
+        messageSigned: typedMessage,
+      });
     }
 
     if (done) break;

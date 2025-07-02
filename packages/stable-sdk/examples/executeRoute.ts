@@ -31,7 +31,7 @@ const sdk = new StableSDK({
 const intent = {
   sourceChain: "Ethereum" as const,
   targetChain: "Optimism" as const,
-  amount: "0.01",
+  amount: "0.31",
   sender,
   recipient,
   // To receive gas tokens on the target. Increases the cost of the transfer.
