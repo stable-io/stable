@@ -56,7 +56,7 @@ export class TxLandingService {
     txDetails: ContractTx,
   ): Promise<string> {
     try {
-      const { txHashes } = await this.client.signAndLandTransaction({
+      const r = await this.client.signAndLandTransaction({
         chain: this.toChain(domain),
         txRequests: [
           {
@@ -67,11 +67,33 @@ export class TxLandingService {
         ],
       });
 
-      return txHashes[0]!;
+
+      const rawTxHash = r.txHashes[0]!;
+      const cleanTxHash = this.extractHexFromMalformedResponse(rawTxHash);
+      
+      if (!cleanTxHash) {
+        throw new Error(`Failed to extract valid transaction hash from API response: ${rawTxHash}`);
+      }
+
+      return cleanTxHash;
     } catch (error) {
       console.error("Failed to send transaction:", error);
       throw error;
     }
+  }
+
+  /**
+   * TEMPORARY WORKAROUND: Extracts a valid hex string from malformed API responses.
+   * This method should be REMOVED after the transaction-landing team fixes their serialization issue.
+   * 
+   * @param input - The malformed string containing a hex transaction hash
+   * @returns The extracted hex string with 0x prefix, or undefined if not found
+   */
+  private extractHexFromMalformedResponse(input: string): string | undefined {
+    // Match 0x followed by 64 hex characters (standard transaction hash length)
+    const hexPattern = /0x[0-9a-fA-F]{64}/i;
+    const match = input.match(hexPattern);
+    return match ? match[0].toLowerCase() : undefined;
   }
 
   private toChain(domain: keyof EvmDomains): string {
