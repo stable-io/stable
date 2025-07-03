@@ -3,12 +3,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { Url, BaseObject, encoding } from "@stable-io/utils";
+import { Url, BaseObject, encoding, deserializeBigints } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
-import { deserializeBigints } from "@stable-io/utils";
 
 export const apiUrl = {
   Mainnet: "", // TODO
@@ -47,7 +46,7 @@ export async function apiRequest<T extends APIResponse<HTTPCode, BaseObject>>(
   options: ApiRequestOptions = {},
 ): Promise<T> {
   const { method = "GET", body, headers = {} } = options;
-  
+
   const requestOptions: RequestInit = {
     method,
     headers: { ...defaultHeaders, ...headers },
@@ -60,12 +59,12 @@ export async function apiRequest<T extends APIResponse<HTTPCode, BaseObject>>(
   const response = await fetch(endpoint, requestOptions);
   const status = response.status as HTTPCode;
   const value = await response.json();
-  
+
   return { status, value } as T;
 }
 
 export type GetQuoteParams = {
-  sourceChain: keyof EvmDomains,
+  sourceChain: keyof EvmDomains;
   targetChain: keyof EvmDomains;
   amount: Usdc;
   sender: EvmAddress;
@@ -131,7 +130,7 @@ function serializeQuoteRequest(params: GetQuoteParams): Record<string, string> {
     maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
     fastFeeRate: params.corridor === "v2Direct"
       ? params.fastFeeRate.toUnit("human").toString()
-      : "0"
+      : "0",
   };
 }
 
@@ -147,8 +146,8 @@ function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): 
     corridor: responseQuoteParams.corridor as layouts.CorridorVariant["type"],
     takeFeesFromInput: responseQuoteParams.takeFeesFromInput as boolean,
     maxRelayFee: usdc(responseQuoteParams.maxRelayFee as string),
-    fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string ?? "0"),
-  }
+    fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string || "0"),
+  };
 }
 
 const extractJwtFromQuoteResponse = (quoteResponse: unknown): string => {
@@ -170,23 +169,19 @@ const extractJwtFromQuoteResponse = (quoteResponse: unknown): string => {
 };
 
 const decodeJwtPayload = (token: string): unknown => {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      throw new Error("Invalid JWT format");
-    }
-
-    const payload = parts[1];
-    if (!payload) {
-      throw new Error("Missing JWT payload");
-    }
-
-    const paddedPayload = payload + "=".repeat((4 - (payload.length % 4)) % 4);
-    const decodedPayload = atob(paddedPayload);
-    return JSON.parse(decodedPayload);
-  } catch (error) {
-    throw error;
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    throw new Error("Invalid JWT format");
   }
+
+  const payload = parts[1];
+  if (!payload) {
+    throw new Error("Missing JWT payload");
+  }
+
+  const paddedPayload = payload + "=".repeat((4 - (payload.length % 4)) % 4);
+  const decodedPayload = atob(paddedPayload);
+  return JSON.parse(decodedPayload);
 };
 
 const decodeAndDeserializeJwt = (jwt: string): Record<string, unknown> => {
@@ -214,20 +209,22 @@ export async function postTransferRequest(
   permit?: Permit,
 ): Promise<PostTransferResponse> {
   const endpoint = apiEndpoint(network)("relay");
-  
+
   const requestBody = {
     jwt: jwt,
     permit2Signature: encoding.hex.encode(permit2Signature, true),
-    ...(permit ? { permit: {
+    ...(permit
+? { permit: {
       signature: encoding.hex.encode(permit.signature, true),
       value: permit.value.toString(),
       deadline: permit.deadline.toString(),
-    }} : {})
+    } }
+: {}),
   };
 
   const apiResponse = await apiRequest<APIResponse<HTTPCode, { txHash: string }>>(
     endpoint,
-    { method: "POST", body: requestBody }
+    { method: "POST", body: requestBody },
   );
 
   if (apiResponse.status >= 400) {

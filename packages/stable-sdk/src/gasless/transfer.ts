@@ -6,7 +6,7 @@ import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { Usdc, usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 
 import { Intent } from "../types/index.js";
-import { postTransferRequest } from './api.js';
+import { postTransferRequest } from "./api.js";
 
 export async function* transferWithGaslessRelay<
   N extends Network,
@@ -16,7 +16,7 @@ export async function* transferWithGaslessRelay<
   evmClient: ViemEvmClient<N, S>,
   network: N,
   permit2RequiresAllowance: boolean,
-  intent: Intent<S,D>,
+  intent: Intent<S, D>,
   permit2TypedData: Permit2TypedData,
   jwt: string,
 ): AsyncGenerator<any, any, any> {
@@ -26,10 +26,12 @@ export async function* transferWithGaslessRelay<
 
   let permit: Permit | undefined;
   if (permit2RequiresAllowance) {
-    permit = yield composePermitMsg(network)(evmClient, usdcAddress, intent.sender, permit2Addr, maxUint256Usdc);
+    permit = yield composePermitMsg(network)(
+      evmClient, usdcAddress, intent.sender, permit2Addr, maxUint256Usdc,
+    );
   }
 
-  const { signature: permit2Signature } = yield permit2TypedData
+  const { signature: permit2Signature } = yield permit2TypedData;
 
   // TODO: this should happen during executeRouteSteps
   // since that layer controls events
@@ -37,5 +39,3 @@ export async function* transferWithGaslessRelay<
 
   throw new Error("not fully implemented");
 }
-
-

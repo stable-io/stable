@@ -29,7 +29,6 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
     const stepType = getStepType(txOrSig);
 
-    // TODO: correct usage of types (since we already got the tep type isContractTx shouldn't be necessary)
     if ((stepType === PRE_APPROVE || stepType === TRANSFER)) {
       const contractTx = txOrSig as ContractTx;
       const txParameters = buildEvmTxParameters(contractTx, signer.chain!, signer.account!);
@@ -89,7 +88,9 @@ export type EvmTxParameters = {
   maxPriorityFeePerGas: bigint;
 };
 
-function buildEvmTxParameters(tx: ContractTx, chain: ViemChain, account: ViemAccount) {
+function buildEvmTxParameters(
+  tx: ContractTx, chain: ViemChain, account: ViemAccount,
+) {
   const callData = `0x${Buffer.from(tx.data).toString("hex")}` as const;
   const txValue = tx.value
     ? BigInt(tx.value.toUnit("atomic").toString())

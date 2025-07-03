@@ -1,4 +1,3 @@
-import type { Usdc } from "@stable-io/cctp-sdk-definitions";
 import type { CallData, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { encoding } from "@stable-io/utils";
 import { encodeFunctionData, parseAbiItem } from "viem";

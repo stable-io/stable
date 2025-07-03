@@ -67,10 +67,9 @@ export type ApprovalSentEventData = {
 
 export type MessageSignedEventData = {
   signer: Hex;
-  messageSigned: Eip712Data<any>,
-  signature: Hex,
+  messageSigned: Eip712Data<any>;
+  signature: Hex;
 };
-
 
 /**
  * Transfer:

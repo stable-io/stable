@@ -91,7 +91,7 @@ export class TxLandingService {
    */
   private extractHexFromMalformedResponse(input: string): string | undefined {
     // Match 0x followed by 64 hex characters (standard transaction hash length)
-    const hexPattern = /0x[0-9a-fA-F]{64}/i;
+    const hexPattern = /0x[0-9a-f]{64}/i;
     const match = input.match(hexPattern);
     return match ? match[0].toLowerCase() : undefined;
   }

@@ -199,7 +199,7 @@ const processJwtPayload = (jwt: string, scenarioName: string): JwtPayload => {
   console.info("JWT token:", jwt.slice(0, 50) + "...");
 
   const jwtPayload = decodeJwtPayload(jwt);
-  const restoredPayload = deserializeBigints(jwtPayload) as JwtPayload;
+  const restoredPayload = deserializeBigints(jwtPayload);
 
   console.info("JWT contains:");
   console.info("- Permit2 permit required:", restoredPayload.quoteRequest.permit2PermitRequired);
@@ -301,7 +301,7 @@ const initiateGaslessTransfer = async (
 const runScenario = async (scenario: TestScenario, scenarioNumber: number): Promise<void> => {
   console.info(`\n${"=".repeat(60)}`);
   console.info(`🎯 SCENARIO ${scenarioNumber}: ${scenario.name.toUpperCase()}`);
-  console.info(`${"=".repeat(60)}`);
+  console.info("=".repeat(60));
 
   try {
     const quoteResponse = await requestQuote(scenario);
@@ -327,7 +327,7 @@ const runScenario = async (scenario: TestScenario, scenarioNumber: number): Prom
 const printFinalSummary = (): void => {
   console.info(`\n${"=".repeat(60)}`);
   console.info("🎉 ALL SCENARIOS COMPLETED SUCCESSFULLY");
-  console.info(`${"=".repeat(60)}`);
+  console.info("=".repeat(60));
   console.info("✅ Basic gasless transfer (no permit required)");
   console.info("✅ Gasless transfer with permit2 permit");
   console.info("✅ Both JWT flows handled correctly");

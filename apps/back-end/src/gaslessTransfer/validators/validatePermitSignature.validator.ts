@@ -36,7 +36,7 @@ export class ValidatePermitSignatureConstraint
       return false;
     }
 
-    if (hasPermit && typeof value === "object" && value !== null) {
+    if (hasPermit && typeof value === "object") {
       const permit = value as Record<string, unknown>;
       // Check that the permit has the required signature field
       // The actual signature validation will be handled by @IsSignature on the signature field

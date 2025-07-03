@@ -204,7 +204,9 @@ export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
 
   constructor(client: EvmClient<N, SD>) {
     this.client = client;
-    this.address = new EvmAddress((contractAddressOf as TODO)(this.client.network, this.client.domain));
+    this.address = new EvmAddress((contractAddressOf as TODO)(
+      this.client.network, this.client.domain,
+    ));
   }
 
   protected execTx(value: EvmGasToken, commandData: CallData): ContractTx {
@@ -224,7 +226,7 @@ export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
 export type InOrOut = {
   amount: Usdc;
   type: "in" | "out";
-}
+};
 
 export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends CctpRBase<N, SD> {
   //On-chain quotes should always allow for a safety margin of at least a few percent to make sure a
@@ -273,7 +275,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
     const totalFeesUsdc = gaslessFee.add(quoteIsInUsdc(quote)
       ? (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee)
-      : usdc(0)
+      : usdc(0),
     );
 
     return inOrOut.type === "in"
@@ -299,7 +301,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
     const value = evmGasToken(quoteIsInUsdc(quote)
       ? 0n
-      : (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee).toUnit("human")
+      : (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee).toUnit("human"),
     );
 
     const quoteVariant = (
@@ -325,7 +327,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       ? inOrOut.amount
       : burnAmount.add(quoteIsInUsdc(quote) && quote.type === "offChain"
         ? quote.relayFee
-        : usdc(0)
+        : usdc(0),
       );
 
     const transfer = {
@@ -416,9 +418,9 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
             v2Direct: "CCTPv2",
             avaxHop:  "CCTPv2->Avalanche->CCTPv1",
           }[corridor.type],
-          maxFastFee: erasedCorridor.type !== "v1"
-            ? CctpR.calcFastFee(burnAmount, erasedCorridor.fastFeeRate).toUnit("atomic")
-            : 0n,
+          maxFastFee: erasedCorridor.type === "v1"
+            ? 0n
+            : CctpR.calcFastFee(burnAmount, erasedCorridor.fastFeeRate).toUnit("atomic"),
           gaslessFee: gaslessFee.toUnit("atomic"),
           maxRelayFee:
             (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee).toUnit("atomic"),
@@ -507,7 +509,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     return corridor.type === "v1"
       ? corridor
       : { type: corridor.type,
-          maxFastFeeUsdc: CctpR.calcFastFee(burnAmount, corridor.fastFeeRate)
+          maxFastFeeUsdc: CctpR.calcFastFee(burnAmount, corridor.fastFeeRate),
         };
   }
 
@@ -522,12 +524,12 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       ? [ inOrOut.amount,
           inOrOut.amount
             .sub(gaslessFee)
-            .sub(quote.type === "offChain" ? quote.relayFee : usdc(0))
+            .sub(quote.type === "offChain" ? quote.relayFee : usdc(0)),
         ]
       : [ burnAmount
             .add(gaslessFee)
             .add(quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee),
-          burnAmount
+          burnAmount,
         ];
 
     if (baseAmount.le(usdc(0)))
@@ -559,7 +561,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     }
     else if (corridor.type !== "v1")
       burnAmount = CctpR.ceilToMicroUsdc(
-        burnAmount.div(Rational.from(1).sub(corridor.fastFeeRate.toUnit("scalar")))
+        burnAmount.div(Rational.from(1).sub(corridor.fastFeeRate.toUnit("scalar"))),
       );
 
     if (burnAmount.le(usdc(0)))

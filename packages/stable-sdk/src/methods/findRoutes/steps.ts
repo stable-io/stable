@@ -22,7 +22,10 @@ interface BaseRouteExecutionStep {
   gasCostEstimation: bigint;
 };
 
-export type RouteExecutionStep = SignPermitStep | PreApproveStep | TransferStep | GaslessTransferStep;
+export type RouteExecutionStep = SignPermitStep
+  | PreApproveStep
+  | TransferStep
+  | GaslessTransferStep;
 
 export const SIGN_PERMIT = "sign-permit" as const;
 export interface SignPermitStep extends BaseRouteExecutionStep {
@@ -87,7 +90,8 @@ export function isEip2612Data(subject: unknown): subject is Eip2612Data {
   return isEip2612MessageBody(subject.message);
 }
 
-export function isPermit2TransferFromMessageBody(subject: unknown): subject is Permit2TransferFromMessage {
+export function isPermit2TransferFromMessageBody(subject: unknown):
+  subject is Permit2TransferFromMessage {
   return typeof subject === "object" &&
     subject !== null &&
     "nonce" in subject &&
@@ -105,7 +109,7 @@ export function isPermit2TypedData(subject: unknown): subject is Permit2TypedDat
 }
 
 export type GaslessTransferData = {
-  something: string
+  something: string;
 };
 export function isGaslessTransfer(subject: unknown): subject is GaslessTransferData {
   // TODO.
@@ -175,7 +179,6 @@ export function buildTransferStep(
       throw new Error(`Corridor: ${corridor} not supported.`);
   }
 }
-
 
 export function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
   return {

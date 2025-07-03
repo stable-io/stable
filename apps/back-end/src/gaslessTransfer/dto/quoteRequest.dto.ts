@@ -4,11 +4,9 @@ import {
   IsIn,
   ValidateIf,
   Validate,
-  IsBoolean,
 } from "class-validator";
-import { Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
+import { Percentage, domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
-import { domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";

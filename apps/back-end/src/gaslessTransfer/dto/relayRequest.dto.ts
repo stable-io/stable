@@ -1,13 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
-import { IsOptional, ValidateIf, ValidateNested, IsString, IsNotEmpty, Matches } from "class-validator";
+import { IsOptional, ValidateNested, IsNotEmpty } from "class-validator";
 import { Transform, Type } from "class-transformer";
 
 import type { ParsedSignature } from "../../common/types";
-import { AMOUNT_PATTERNS } from "../../common/utils";
 import {
-  IsBooleanString,
-  IsUsdcAmount,
   IsSignature,
 } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";

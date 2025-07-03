@@ -494,5 +494,5 @@ export function buildOverrides(chain: ChainInfo): Omit<Overrides, "gas"> {
 }
 
 export function toReadable(chainId: number): string {
-  return domainOfWormholeChainId(env as "Testnet" | "Mainnet", chainId as any)
+  return domainOfWormholeChainId(env as "Testnet" | "Mainnet", chainId as any);
 }

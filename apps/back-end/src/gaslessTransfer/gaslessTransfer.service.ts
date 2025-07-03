@@ -9,12 +9,9 @@ import {
 import {
   ContractTx,
   EvmAddress,
-  Permit,
   permit2Address,
-  Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
 
-import type { ParsedSignature } from "../common/types";
 import {
   instanceToPlain,
   multicall3Address,

@@ -46,11 +46,15 @@ async function run() {
   for (const task of cctprTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
-      console.info(`Deployment of CCTPR failed in chain ${toReadable(task.chainId)}. Error: ${error}`);
+      console.info(chalk.red(
+        `Deployment of CCTPR failed in chain ${toReadable(task.chainId)}. Error: ${error}`,
+      ));
       // There's no need to cancel the rest of the deployment here since this is a leaf deployment.
       failed = true;
     } else {
-      console.info(chalk.blue(`Deployed CCTPR to chain ${toReadable(task.chainId)} on address: ${task.address}`));
+      console.info(chalk.blue(
+        `Deployed CCTPR to chain ${toReadable(task.chainId)} on address: ${task.address}`,
+      ));
       cctprDeployments[cctprName].push(task);
     }
   }
@@ -72,12 +76,17 @@ async function run() {
   for (const task of dropoffTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
-      console.info(chalk.red(`Deployment of CCTPR Gas Dropoff failed in chain ${toReadable(task.chainId)}.`));
+      console.info(chalk.red(
+        `Deployment of CCTPR Gas Dropoff failed in chain ${toReadable(task.chainId)}.`,
+      ));
       console.info(`Error: ${error}`);
       // There's no need to cancel the rest of the deployment here since this is a leaf deployment.
       failed = true;
     } else {
-      console.info(chalk.blue(`Deployed CCTPR Gas Dropoff to chain ${toReadable(task.chainId)} on address: ${task.address}`));
+      console.info(chalk.blue(
+        `Deployed CCTPR Gas Dropoff to chain ${
+          toReadable(task.chainId)} on address: ${task.address}`,
+      ));
       cctpGasDropoffDeployments[cctpGasDropoffName].push(task);
     }
   }
