@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { encoding } from "@stable-io/utils";
-import { Permit } from "@stable-io/cctp-sdk-evm";
+import { Eip712Data, Permit } from "@stable-io/cctp-sdk-evm";
 import { Hex } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Redeem } from "./types/redeem.js";
@@ -32,8 +32,10 @@ export interface TransferProgressEventEmitter extends EventEmitter {
 export interface TransferProgressEvent {
 
   // Approval:
-  "permit-signed": PermitSignedEventData;
   "approval-sent": ApprovalSentEventData;
+
+  // Message (permit or permit2):
+  "message-signed": MessageSignedEventData;
 
   // Transfer:
   "transfer-sent": TransferSentEventData;
@@ -57,20 +59,16 @@ export interface TransferProgressEvent {
 /**
  * Approval:
  */
-export type PermitSignedEventData = Omit<Permit, "signature"> & {
-  signature: Hex;
-};
-
-export function parsePermitEventData(permit: Permit): PermitSignedEventData {
-  return {
-    ...permit,
-    signature: `0x${encoding.hex.encode(permit.signature)}`,
-  };
-};
 
 export type ApprovalSentEventData = {
   transactionHash: Hex;
   approvalAmount: bigint;
+};
+
+export type MessageSignedEventData = {
+  signer: Hex;
+  messageSigned: Eip712Data<any>;
+  signature: Hex;
 };
 
 /**

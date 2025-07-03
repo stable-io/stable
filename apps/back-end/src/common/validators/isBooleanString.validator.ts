@@ -12,6 +12,7 @@ import {
 @ValidatorConstraint({ name: "isBooleanString", async: false })
 export class IsBooleanStringConstraint implements ValidatorConstraintInterface {
   validate(value: unknown, args: ValidationArguments) {
+    if (typeof value === "boolean") return true;
     if (typeof value !== "string") return false;
     if (value !== "true" && value !== "false") return false;
 
@@ -20,8 +21,8 @@ export class IsBooleanStringConstraint implements ValidatorConstraintInterface {
     return true;
   }
 
-  defaultMessage() {
-    return "Value must be a boolean string ('true' or 'false')";
+  defaultMessage({ property }: ValidationArguments) {
+    return `${property} must be a boolean string ('true' or 'false')`;
   }
 }
 

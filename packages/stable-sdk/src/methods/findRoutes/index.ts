@@ -68,7 +68,7 @@ export const $findRoutes = <
       const userTransferRoute = buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor);
       const gaslessRoutes = intent.paymentToken === "usdc"
         ? [buildGaslessRoute(viemEvmClient, intent, corridor)]
-: [];
+        : [];
 
       const corridorRoutes = await Promise.all([
         ...gaslessRoutes,

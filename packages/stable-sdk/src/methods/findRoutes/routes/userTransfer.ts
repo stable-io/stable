@@ -7,6 +7,7 @@ import { init as initDefinitions,
   EvmDomains,
   GasTokenOf,
   Usdc,
+  percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
@@ -21,7 +22,7 @@ import { TODO } from "@stable-io/utils";
 
 import { TransferProgressEmitter } from "../../../progressEmitter.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
-import { buildTransferStep, PreApproveStep, SignPermitStep } from "../steps.js";
+import { buildTransferStep, preApprovalStep, signPermitStep } from "../steps.js";
 import type {
   Network,
   Intent,
@@ -29,8 +30,6 @@ import type {
 import { Route } from "../../../types/index.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 import { init as initCctprEvm } from "@stable-io/cctp-sdk-cctpr-evm";
-
-const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
 
 export async function buildUserTransferRoute<
   N extends Network,
@@ -42,15 +41,16 @@ export async function buildUserTransferRoute<
   intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
 ): Promise<Route<S, D>> {
-  const { corridorFees, maxRelayFee, maxFastFeeUsdc } = getCorridorFees(
+  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
     corridor.cost,
     intent,
   );
 
+  const takeFeesFromInput = true;
+
   const quote = intent.paymentToken === "usdc"
   ? {
       maxRelayFee: maxRelayFee as Usdc,
-      takeFeesFromInput: false,
     }
   : { maxRelayFee: maxRelayFee as GasTokenOf<S, keyof EvmDomains> };
 
@@ -77,6 +77,10 @@ export async function buildUserTransferRoute<
     buildTransferStep(corridor.corridor, intent.sourceChain),
   ];
 
+  const corridorParams = corridor.corridor === "v1"
+    ? { type: corridor.corridor }
+    : { type: corridor.corridor, fastFeeRate };
+
   return {
     intent,
     fees: corridorFees,
@@ -98,10 +102,9 @@ export async function buildUserTransferRoute<
       intent.amount,
       { type: "onChain", ...quote },
       intent.gasDropoffDesired as TODO,
-      {
-        usePermit: true,
-        corridor: { type: corridor.corridor, maxFastFeeUsdc },
-      } as TODO,
+      corridorParams as TODO,
+      takeFeesFromInput,
+      intent.usePermit,
     ),
   };
 }
@@ -141,22 +144,4 @@ async function cctprRequiresAllowance<
   );
 
   return totalUsdcValue.gt(allowance);
-}
-
-function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
-  return {
-    platform: "Evm",
-    type: "sign-permit",
-    chain: sourceChain,
-    gasCostEstimation: 0n,
-  };
-}
-
-function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
-  return {
-    platform: "Evm",
-    chain: sourceChain,
-    type: "pre-approve",
-    gasCostEstimation: EVM_APPROVAL_TX_GAS_COST_APROXIMATE,
-  };
 }

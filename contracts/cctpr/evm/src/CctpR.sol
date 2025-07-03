@@ -109,7 +109,7 @@ contract CctpR is CctpRBase, CctpROwner, CctpRQuote, CctpRUser, RawDispatcher {
         _checkZeroMsgValue();
 
         Permit2Data memory permit2Data; uint gaslessFeeUsdc;
-        (permit2Data.spender,   offset) = data.asAddressCdUnchecked(offset);
+        (permit2Data.owner,     offset) = data.asAddressCdUnchecked(offset);
         (permit2Data.amount,    offset) = data.asUint64CdUnchecked(offset);
         (permit2Data.nonce,     offset) = data.asUint256CdUnchecked(offset);
         (permit2Data.deadline,  offset) = data.asUint32CdUnchecked(offset);

@@ -4,12 +4,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { Permit, ContractTx, Eip2612Data, selectorOf } from "@stable-io/cctp-sdk-evm";
+import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Permit2TypedData, Eip2612MessageBody, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
 import { Corridor, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
 import { SupportedPlatform } from "../../types/signer.js";
 import { encoding } from "@stable-io/utils";
 
-export type StepType = "sign-permit" | "pre-approve" | "transfer";
+export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "transfer" | "gasless-transfer";
 
 interface BaseRouteExecutionStep {
   type: StepType;
@@ -22,20 +22,34 @@ interface BaseRouteExecutionStep {
   gasCostEstimation: bigint;
 };
 
-export type RouteExecutionStep = SignPermitStep | PreApproveStep | TransferStep;
+export type RouteExecutionStep = SignPermitStep
+  | PreApproveStep
+  | TransferStep
+  | GaslessTransferStep;
 
 export const SIGN_PERMIT = "sign-permit" as const;
 export interface SignPermitStep extends BaseRouteExecutionStep {
   type: typeof SIGN_PERMIT;
 };
 
+export const SIGN_PERMIT_2 = "sign-permit-2" as const;
+export interface SignPermit2Step extends BaseRouteExecutionStep {
+  type: typeof SIGN_PERMIT_2;
+}
+
 export const PRE_APPROVE = "pre-approve" as const;
 export interface PreApproveStep extends BaseRouteExecutionStep {
   type: typeof PRE_APPROVE;
 };
 
+export const TRANSFER = "transfer" as const;
 export interface TransferStep extends BaseRouteExecutionStep {
-  type: "transfer";
+  type: typeof TRANSFER;
+};
+
+export const GASLESS_TRANSFER = "gasless-transfer" as const;
+export interface GaslessTransferStep extends BaseRouteExecutionStep {
+  type: typeof GASLESS_TRANSFER;
 };
 
 /**
@@ -43,9 +57,11 @@ export interface TransferStep extends BaseRouteExecutionStep {
  *                or an eip2612 message to sign and return to it.
  */
 export function getStepType(txOrSig: ContractTx | Eip2612Data): StepType {
-  if (isEip2612Data(txOrSig)) return "sign-permit";
-  if (isContractTx(txOrSig) && isTransferTx(txOrSig)) return "transfer";
-  if (isContractTx(txOrSig) && isApprovalTx(txOrSig)) return "pre-approve";
+  if (isGaslessTransfer(txOrSig)) return GASLESS_TRANSFER;
+  if (isPermit2TypedData(txOrSig)) return SIGN_PERMIT_2;
+  if (isEip2612Data(txOrSig)) return SIGN_PERMIT;
+  if (isTransferTx(txOrSig)) return TRANSFER;
+  if (isApprovalTx(txOrSig)) return PRE_APPROVE;
   throw new Error("Unknown Step Type");
 }
 
@@ -54,12 +70,55 @@ export function isContractTx(subject: unknown): subject is ContractTx {
   return "data" in subject && "to" in subject;
 }
 
-export function isEip2612Data(subject: unknown): subject is Eip2612Data {
+export function isEip712TypedData(subject: unknown): subject is Eip712Data<any> {
   if (typeof subject !== "object" || subject === null) return false;
   return "domain" in subject && "types" in subject && "message" in subject;
 }
 
-export function isApprovalTx(subject: ContractTx): boolean {
+export function isEip2612MessageBody(subject: unknown): subject is Eip2612MessageBody {
+  return typeof subject === "object" &&
+    subject !== null &&
+    "owner" in subject &&
+    "spender" in subject &&
+    "value" in subject &&
+    "nonce" in subject &&
+    "deadline" in subject;
+}
+
+export function isEip2612Data(subject: unknown): subject is Eip2612Data {
+  if (!isEip712TypedData(subject)) return false;
+  return isEip2612MessageBody(subject.message);
+}
+
+export function isPermit2TransferFromMessageBody(subject: unknown):
+  subject is Permit2TransferFromMessage {
+  return typeof subject === "object" &&
+    subject !== null &&
+    "nonce" in subject &&
+    "deadline" in subject &&
+    "permitted" in subject &&
+    typeof subject.permitted === "object" &&
+    subject.permitted !== null &&
+    "token" in subject.permitted &&
+    "amount" in subject.permitted;
+}
+
+export function isPermit2TypedData(subject: unknown): subject is Permit2TypedData {
+  if (!isEip712TypedData(subject)) return false;
+  return isPermit2TransferFromMessageBody(subject.message);
+}
+
+export type GaslessTransferData = {
+  something: string;
+};
+export function isGaslessTransfer(subject: unknown): subject is GaslessTransferData {
+  // TODO.
+  return false;
+}
+
+export interface ApprovalTx extends ContractTx {};
+export function isApprovalTx(subject: unknown): subject is ApprovalTx {
+  if (!isContractTx(subject)) return false;
   const approvalFuncSelector = selectorOf("approve(address,uint256)");
   return encoding.bytes.equals(
     subject.data.subarray(0, approvalFuncSelector.length),
@@ -67,7 +126,9 @@ export function isApprovalTx(subject: ContractTx): boolean {
   );
 }
 
-export function isTransferTx(subject: ContractTx): boolean {
+export interface TransferTx extends ContractTx {};
+export function isTransferTx(subject: unknown): subject is TransferTx {
+  if (!isContractTx(subject)) return false;
   /**
    * Warning: this implementation is brittle at best.
    *          "exec768" selector can be used for other things (such as governance atm).
@@ -86,7 +147,7 @@ export function isTransferTx(subject: ContractTx): boolean {
 export function buildTransferStep(
   corridor: Corridor,
   sourceChain: keyof EvmDomains,
-): RouteExecutionStep {
+): TransferStep {
   const sharedTxData = {
     platform: "Evm" as const,
     chain: sourceChain,
@@ -117,4 +178,31 @@ export function buildTransferStep(
     default:
       throw new Error(`Corridor: ${corridor} not supported.`);
   }
+}
+
+export function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
+  return {
+    platform: "Evm",
+    type: "sign-permit",
+    chain: sourceChain,
+    gasCostEstimation: 0n,
+  };
+}
+const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
+export function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
+  return {
+    platform: "Evm",
+    chain: sourceChain,
+    type: "pre-approve",
+    gasCostEstimation: EVM_APPROVAL_TX_GAS_COST_APROXIMATE,
+  };
+}
+
+export function gaslessTransferStep(sourceChain: keyof EvmDomains): GaslessTransferStep {
+  return {
+    platform: "Evm",
+    chain: sourceChain,
+    type: "gasless-transfer",
+    gasCostEstimation: 0n,
+  };
 }

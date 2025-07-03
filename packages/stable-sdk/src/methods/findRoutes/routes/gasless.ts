@@ -3,14 +3,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import { TODO } from "@stable-io/utils";
 import { init as initDefinitions, usdc, Usdc, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
-import { SupportedEvmDomain, Corridor, CorridorStats, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
+import { SupportedEvmDomain, Corridor, CorridorStats } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
-import { getCorridorFees } from "../fees.js";
-import { GaslessTransferQuoteParams, getTransferQuote } from "../../../gasless/api.js";
+import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
+import { GetQuoteParams, getTransferQuote } from "../../../gasless/api.js";
+import { transferWithGaslessRelay } from "../../../gasless/transfer.js";
+import { calculateTotalCost, getCorridorFees } from "../fees.js";
+import { TransactionEmitter } from "../../../transactionEmitter.js";
+import { TransferProgressEmitter } from "../../../progressEmitter.js";
 
 /**
  * We set the allowance for permit2 contract to the max value that fits uint256.
@@ -31,29 +36,67 @@ export async function buildGaslessRoute<
   intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
 ): Promise<Route<S, D>> {
-  const permitSignatureRequired = await permit2RequiresAllowance(
+  if (intent.paymentToken !== "usdc")
+    throw new Error("Gasless Transfer can't be paid in native token");
+
+  const permit2PermitRequired = await permit2RequiresAllowance(
     evmClient,
     intent.sourceChain,
     intent.sender,
     usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
   );
 
-  const transferParameters = buildTransferParameters(intent, corridor);
+  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(corridor.cost, intent);
+
+  const transferParams: GetQuoteParams = {
+    sourceChain: intent.sourceChain,
+    targetChain: intent.targetChain,
+    amount: intent.amount,
+    sender: intent.sender,
+    recipient: intent.recipient,
+    corridor: corridor.corridor,
+    gasDropoff: intent.gasDropoffDesired as TODO,
+    permit2PermitRequired,
+    fastFeeRate: fastFeeRate,
+    maxRelayFee: maxRelayFee as Usdc,
+    takeFeesFromInput: true,
+  };
 
   const quote = await getTransferQuote(
     evmClient.network,
-    transferParameters,
-    permitSignatureRequired,
+    transferParams,
   );
 
-  // assemble transfer parameters
-  // get quote from gasless api
-  // assemble steps
-  // create workflow async generator
-  // calculate total cost
-  // return route
+  const tokenAllowanceSteps = permit2PermitRequired
+    ? [signPermitStep(intent.sourceChain)]
+    : [];
 
-  throw new Error("Not fully implemented yet");
+  const totalFees = [quote.gaslessFee, ...corridorFees];
+
+  const routeSteps: RouteExecutionStep[] = [
+    ...tokenAllowanceSteps,
+    gaslessTransferStep(intent.sourceChain),
+  ];
+
+  return {
+    intent,
+    fees: totalFees,
+    estimatedDuration: corridor.transferTime,
+    corridor: corridor.corridor,
+    requiresMessageSignature: true,
+    steps: routeSteps,
+    estimatedTotalCost: await calculateTotalCost(routeSteps, totalFees),
+    transactionListener: new TransactionEmitter(),
+    progress: new TransferProgressEmitter(),
+    workflow: transferWithGaslessRelay(
+      evmClient,
+      evmClient.network,
+      permit2PermitRequired,
+      intent,
+      quote.permit2TypedData,
+      quote.jwt,
+    ),
+  };
 }
 
 async function permit2RequiresAllowance<
@@ -82,43 +125,4 @@ async function permit2RequiresAllowance<
   );
 
   return totalUsdcValue.gt(allowance);
-}
-
-function buildTransferParameters<
-  N extends Network,
-  S extends keyof EvmDomains,
-  D extends keyof EvmDomains,
->(
-  intent: Intent<S, D>,
-  corridor: CorridorStats<N, keyof EvmDomains, Corridor>,
-): GaslessTransferQuoteParams {
-  const corridorFees = getCorridorFees(corridor.cost, intent);
-
-  if (intent.paymentToken !== "usdc")
-    throw new Error("Gasless Transfer can't be paid in native token");
-
-  const maxRelayFee = corridorFees.maxRelayFee as Usdc;
-
-  const corridorType = corridor.corridor;
-
-  const corridorVariant: layouts.CorridorVariant = corridor.corridor === "v1"
-    ? { type: corridor.corridor }
-    : { type: corridor.corridor, maxFastFeeUsdc: corridorFees.maxFastFeeUsdc! };
-
-  return {
-    destination: intent.targetChain,
-    // TODO: how to serialize input? it must match what the backend expects
-    inputAmount: intent.amount.toString(),
-    mintRecipient: intent.recipient.toString(),
-
-    // TODO: this probably won't work.
-    gasDropoff: intent.gasDropoffDesired.toUnit("atomic").toString(),
-
-    corridor: corridorVariant,
-    quote: {
-      type: "onChain",
-      takeFeesFromInput: false,
-      maxRelayFee,
-    },
-  };
 }

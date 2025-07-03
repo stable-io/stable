@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { eth, EvmDomains, Network, WormholeChainId } from "@stable-io/cctp-sdk-definitions";
+import { eth, EvmDomains, Network, WormholeChainId, domainOfWormholeChainId } from "@stable-io/cctp-sdk-definitions";
 import { viemChainOf, ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { BaseTx } from "@stable-io/cctp-sdk-evm";
 import { Url, encoding } from "@stable-io/utils";
@@ -290,11 +290,11 @@ export function getViemClient(network: Network, chain: ChainInfo) {
 }
 
 export function getRpcURL(chain: ChainInfo): Url {
-  const providerRpc = loadChains().find((x: any) => x.chainId == chain.chainId)?.rpc || "";
-  if (!providerRpc) {
-    throw new Error(`Failed to find a provider RPC for ${chain.domain}`);
+  const provider = loadChains().find((x: any) => x.chainId == chain.chainId)?.rpc || "";
+  if (!provider) {
+    throw new Error(`Failed to find a RPC provider for ${chain.domain}`);
   }
-  return providerRpc as Url;
+  return provider as Url;
 }
 
 export function getDeliveryProviderAddress(chain: ChainInfo): string {
@@ -491,4 +491,8 @@ export function buildOverrides(chain: ChainInfo): Omit<Overrides, "gas"> {
     ...(maxFeePerGas !== undefined && { maxFeePerGas }),
     ...(maxPriorityFeePerGas !== undefined && { maxPriorityFeePerGas }),
   } as Omit<Overrides, "gas">;
+}
+
+export function toReadable(chainId: number): string {
+  return domainOfWormholeChainId(env as "Testnet" | "Mainnet", chainId as any);
 }

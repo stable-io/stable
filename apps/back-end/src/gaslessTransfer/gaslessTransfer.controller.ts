@@ -1,6 +1,11 @@
-import { Controller, Get, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { ApiResponse as SwaggerApiResponse } from "@nestjs/swagger";
-import { QuoteRequestDto, QuoteResponseDto, RelayResponseDto } from "./dto";
+import {
+  QuoteRequestDto,
+  QuoteResponseDto,
+  RelayRequestDto,
+  RelayResponseDto,
+} from "./dto";
 import { GaslessTransferService } from "./gaslessTransfer.service";
 
 @Controller("gasless-transfer")
@@ -44,9 +49,20 @@ export class GaslessTransferController {
   }
 
   @Post("/relay")
-  public async initiateGaslessTransfer(): Promise<RelayResponseDto> {
+  @SwaggerApiResponse({
+    status: 201,
+    description: "Transfer initiated successfully",
+    type: RelayResponseDto,
+  })
+  @SwaggerApiResponse({
+    status: 400,
+    description: "Invalid request parameters or JWT validation failed",
+  })
+  public async initiateGaslessTransfer(
+    @Body() request: RelayRequestDto,
+  ): Promise<RelayResponseDto> {
     return {
-      data: await this.gaslessTransferService.initiateGaslessTransfer(),
+      data: await this.gaslessTransferService.initiateGaslessTransfer(request),
     };
   }
 }

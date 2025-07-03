@@ -31,13 +31,13 @@ const sdk = new StableSDK({
 const intent = {
   sourceChain: "Ethereum" as const,
   targetChain: "Optimism" as const,
-  amount: "0.01",
+  amount: "0.31",
   sender,
   recipient,
   // To receive gas tokens on the target. Increases the cost of the transfer.
   // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
 
-  paymentToken: "usdc" as const,
+  paymentToken: "usdc" as const, // defaults to usdc
 };
 
 const routes = await sdk.findRoutes(intent);
@@ -76,7 +76,7 @@ for (const route of selectedRoutes) {
   console.info(`Transfer Redeemed:`, getTestnetScannerTxUrl(route.intent.targetChain, redeemHash));
 }
 
-function logRouteInfo(route: Route<keyof EvmDomains, keyof EvmDomains>) {
+function logRouteInfo(route: Route<any, any>) {
   console.info("");
   console.info(`Transferring from ${intent.sourceChain} to ${intent.targetChain}.`);
   console.info(`Sender: ${sender}`);

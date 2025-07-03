@@ -8,8 +8,8 @@ import { getCorridors } from "./getCorridors.js";
 import { transfer } from "./transfer.js";
 
 export * from "./registry.js";
-
 export type { CorridorStats } from "./getCorridors.js";
+export * from "./contractSdk/index.js";
 
 export * from "./contractSdk/index.js";
 
@@ -17,9 +17,10 @@ export * from "./contractSdk/index.js";
  * @todo: this import looks weird.
  */
 export type { Corridor, GovernanceCommand, FeeAdjustment, FeeAdjustmentType } from "./contractSdk/layouts/index.js";
-export type { SupportedEvmDomain } from "./common.js";
+export type { SupportedEvmDomain } from "./contractSdk/index.js";
 
 export { corridors } from "./contractSdk/layouts/common.js";
+export type { GaslessQuoteVariant } from "./contractSdk/layouts/transfer.js";
 export { routerHookDataLayout } from "./contractSdk/layouts/routerHookData.js";
 export { chainDataLayout } from "./contractSdk/layouts/constructor.js";
 
@@ -28,7 +29,7 @@ export { chainDataLayout } from "./contractSdk/layouts/constructor.js";
  * > The inferred type of this node exceeds the maximum length the compiler will serialize.
  * > An explicit type annotation is needed.
  */
-interface CctprEvmModule<N extends Network> {
+export interface CctprEvmModule<N extends Network> {
   getCorridors: ReturnType<typeof getCorridors<N>>;
   transfer: ReturnType<typeof transfer<N>>;
 }

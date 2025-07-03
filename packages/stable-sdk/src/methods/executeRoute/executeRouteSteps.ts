@@ -5,15 +5,15 @@
 
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
-import { Permit, ContractTx } from "@stable-io/cctp-sdk-evm";
+import { Permit, ContractTx, Eip712Data } from "@stable-io/cctp-sdk-evm";
 import { ViemEvmClient, viemChainOf } from "@stable-io/cctp-sdk-viem";
 import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
-import { Route, ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
-import { isContractTx, getStepType, isEip2612Data } from "../findRoutes/steps.js";
-import { ApprovalSentEventData, TransferSentEventData, parsePermitEventData } from "../../progressEmitter.js";
+import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
+import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2 } from "../findRoutes/steps.js";
+import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
@@ -29,8 +29,9 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
     const stepType = getStepType(txOrSig);
 
-    if (stepType !== "sign-permit" && isContractTx(txOrSig)) {
-      const txParameters = buildEvmTxParameters(txOrSig, signer.chain!, signer.account!);
+    if ((stepType === PRE_APPROVE || stepType === TRANSFER)) {
+      const contractTx = txOrSig as ContractTx;
+      const txParameters = buildEvmTxParameters(contractTx, signer.chain!, signer.account!);
       const tx = await signer.sendTransaction(txParameters);
 
       route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
@@ -42,12 +43,13 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
       if (receipt.status === "reverted") throw new Error("Execution Reverted");
 
-      const { eventName, eventData } = buildTransactionEventData(network, stepType, txOrSig, tx);
+      const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
       route.progress.emit(eventName, eventData);
-    } else if (stepType === "sign-permit" && isEip2612Data(txOrSig)) {
+    } else if ((stepType === SIGN_PERMIT || stepType === SIGN_PERMIT_2)) {
+      const typedMessage = txOrSig as Eip712Data<any>;
       const signature = await signer.signTypedData({
         account: signer.account!,
-        ...txOrSig,
+        ...typedMessage,
       });
 
       permit = {
@@ -57,11 +59,15 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         // We need to pass them back to the cctp-sdk so that it can know
         // what changes we made.
         // We don't modify them rn, so we give it back what it gave us.
-        value: txOrSig.message.value,
-        deadline: txOrSig.message.deadline,
+        value: typedMessage.message.value,
+        deadline: typedMessage.message.deadline,
       };
 
-      route.progress.emit("permit-signed", parsePermitEventData(permit));
+      route.progress.emit("message-signed", {
+        signer: signer.account!.address,
+        signature,
+        messageSigned: typedMessage,
+      });
     }
 
     if (done) break;
@@ -82,7 +88,9 @@ export type EvmTxParameters = {
   maxPriorityFeePerGas: bigint;
 };
 
-function buildEvmTxParameters(tx: ContractTx, chain: ViemChain, account: ViemAccount) {
+function buildEvmTxParameters(
+  tx: ContractTx, chain: ViemChain, account: ViemAccount,
+) {
   const callData = `0x${Buffer.from(tx.data).toString("hex")}` as const;
   const txValue = tx.value
     ? BigInt(tx.value.toUnit("atomic").toString())
@@ -98,7 +106,7 @@ function buildEvmTxParameters(tx: ContractTx, chain: ViemChain, account: ViemAcc
      * @todo: Proper gas calculation will be necessary at some point...
      *        we could consider using the gasEstimation field of the corresponding step.
      */
-    gas: fromGwei(0.01),
+    gas: fromGwei(0.001),
     maxFeePerGas: fromGwei(40),
     maxPriorityFeePerGas: fromGwei(20),
   };

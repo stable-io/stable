@@ -89,7 +89,7 @@ const permit2NonceItem = { binary: "bytes", size: wordSize } as const;
 const permit2DataItem = {
   binary: "bytes",
   layout: [
-    { name: "spender",        ...evmAddressItem   },
+    { name: "owner",          ...evmAddressItem   },
     { name: "amount",         ...usdcItem         },
     { name: "nonce",          ...permit2NonceItem },
     { name: "deadline",       ...timestampItem    },

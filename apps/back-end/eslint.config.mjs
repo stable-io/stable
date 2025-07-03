@@ -25,7 +25,9 @@ const nestConfig = {
 const overridesConfig = {
   name: "back-end:overrides",
   rules: {
+    "@typescript-eslint/no-unused-vars": "error",
     "unicorn/prefer-top-level-await": "off",
+    "@typescript-eslint/no-extraneous-class": "off",
   },
 };
 

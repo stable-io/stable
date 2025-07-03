@@ -1,13 +1,16 @@
 import { Module } from "@nestjs/common";
-import { AuthModule } from "../auth/auth.module";
+import { CctpRModule } from "../cctpr/cctpr.module";
+import { TxLandingModule } from "../txLanding/txLanding.module";
 import { ConfigModule } from "../config/config.module";
-import { MetricsModule } from "../metrics/metrics.module";
+import { AuthModule } from "../auth/auth.module";
 import { GaslessTransferController } from "./gaslessTransfer.controller";
 import { GaslessTransferService } from "./gaslessTransfer.service";
+import { ValidatePermitSignatureConstraint } from "./validators";
 
 @Module({
-  imports: [MetricsModule, ConfigModule, AuthModule],
+  imports: [CctpRModule, TxLandingModule, ConfigModule, AuthModule],
   controllers: [GaslessTransferController],
-  providers: [GaslessTransferService],
+  providers: [GaslessTransferService, ValidatePermitSignatureConstraint],
+  exports: [GaslessTransferService],
 })
 export class GaslessTransferModule {}

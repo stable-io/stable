@@ -1,29 +1,43 @@
-import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { Injectable } from "@nestjs/common";
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
+
 import {
   usdc,
   usdcContracts,
-  chainIdOf,
+  evmGasToken,
 } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { Injectable } from "@nestjs/common";
-import type { PlainDto } from "../common/types";
-import type { Permit2TypedData } from "../common/utils";
-import { composePermit2Msg, instanceToPlain } from "../common/utils";
+import {
+  ContractTx,
+  EvmAddress,
+  permit2Address,
+} from "@stable-io/cctp-sdk-evm";
+
+import {
+  instanceToPlain,
+  multicall3Address,
+  encodePermitCall,
+  encodeAggregate3ValueCall,
+  type Call3Value,
+} from "../common/utils";
 import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
-import { QuoteDto, QuoteRequestDto } from "./dto";
-
-export interface JwtPayload extends Record<string, unknown> {
-  readonly permit2TypedData: Permit2TypedData;
-  readonly quoteRequest: PlainDto<QuoteRequestDto>;
-}
+import { CctpRService } from "../cctpr/cctpr.service";
+import { TxLandingService } from "../txLanding/txLanding.service";
+import {
+  QuoteDto,
+  QuoteRequestDto,
+  RelayRequestDto,
+  PermitDto,
+} from "./dto";
+import type { JwtPayload, RelayTx } from "./types";
 
 @Injectable()
 export class GaslessTransferService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly txLandingService: TxLandingService,
+    private readonly cctpRService: CctpRService,
   ) {}
 
   getStatus(): string {
@@ -33,54 +47,64 @@ export class GaslessTransferService {
   public async quoteGaslessTransfer(
     request: QuoteRequestDto,
   ): Promise<QuoteDto> {
-    const usdcAddress = new EvmAddress(
-      usdcContracts.contractAddressOf[this.configService.network][
-        request.sourceDomain
-      ],
-    );
-    const relayerContractAddress = cctprContractAddressOf(
-      this.configService.network,
-      request.sourceDomain,
-    );
-    if (!relayerContractAddress) {
-      throw new Error(
-        `Relayer contract address not found for source domain: ${request.sourceDomain}`,
-      );
-    }
-
-    const quotedAmount = this.calculateQuotedAmount(request);
-    const nonce = this.getNonce();
-    const deadline = this.getDeadline();
+    const gaslessFee = this.calculateGaslessFee(request);
 
     const jwtPayload: JwtPayload = {
-      permit2TypedData: composePermit2Msg(
-        chainIdOf(this.configService.network, request.sourceDomain),
-        usdcAddress,
-        quotedAmount,
-        nonce,
-        deadline,
+      permit2TypedData: await this.cctpRService.composeGaslessTransferMessage(
+        request,
+        gaslessFee,
       ),
       quoteRequest: instanceToPlain(request),
+      gaslessFee: gaslessFee.toUnit("human").toString(),
     };
 
     const jwt = await this.jwtService.signAsync(jwtPayload);
     return { jwt };
   }
 
-  public initiateGaslessTransfer(): Promise<object> {
-    // @todo: verify quote signature and throw if invalid
-    // @todo: call tx-landing-service and request the tx to be landed. set nonce+sender as
-    //    the transaction tracking id.
-    // @todo: poll tx-landing-service for transaction confirmation
-    // @todo: respond.
-    return Promise.resolve({});
+  public async initiateGaslessTransfer(
+    request: RelayRequestDto,
+  ): Promise<RelayTx> {
+    const {
+      jwt: { quoteRequest, permit2TypedData, gaslessFee },
+      permit2Signature,
+      permit,
+    } = request;
+
+    const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
+      quoteRequest,
+      permit2TypedData,
+      permit2Signature,
+      gaslessFee,
+    );
+
+    const txDetails = quoteRequest.permit2PermitRequired
+      ? this.multiCallWithPermit(
+          gaslessTxDetails,
+          // @note: permitSignature is guaranteed to be present in this case by validation
+          permit!,
+          quoteRequest,
+        )
+      : gaslessTxDetails;
+
+    const toAddress = quoteRequest.permit2PermitRequired
+        ? new EvmAddress(multicall3Address)
+        : this.cctpRService.contractAddress(quoteRequest.sourceDomain);
+
+    const txHash = await this.txLandingService.sendTransaction(
+      toAddress,
+      quoteRequest.sourceDomain,
+      txDetails,
+    );
+
+    return { hash: `0x${txHash}` };
   }
 
-  private calculateQuotedAmount(request: QuoteRequestDto): Usdc {
+  private calculateGaslessFee(request: QuoteRequestDto): Usdc {
     // @todo: Get these dynamically
     const costs = {
-      v1: usdc(1_000_000),
-      v2: usdc(2_000_000),
+      v1: usdc(0.1),
+      v2: usdc(0.1),
     } as const;
     const corridorCost = ((): Usdc => {
       switch (request.corridor) {
@@ -94,18 +118,48 @@ export class GaslessTransferService {
           throw new Error(`Invalid corridor: ${request.corridor}`);
       }
     })();
-    const permitCost = usdc(request.permit2PermitRequired ? 300_000 : 0);
-    return request.amount.add(corridorCost).add(permitCost);
+    const permitCost = usdc(request.permit2PermitRequired ? 0.2 : 0);
+    return corridorCost.add(permitCost);
   }
 
-  private getDeadline(): Date {
-    return new Date(Date.now() + this.configService.jwtExpiresInSeconds * 1000);
-  }
+  private multiCallWithPermit(
+    gaslessTx: ContractTx,
+    permit: PermitDto,
+    quoteRequest: QuoteRequestDto,
+  ): ContractTx {
+    const usdcAddress = new EvmAddress(
+      usdcContracts.contractAddressOf[this.configService.network][
+        quoteRequest.sourceDomain
+      ],
+    );
 
-  private getNonce(): bigint {
-    // @todo: Add a stable offset
-    // @todo: Query permit2 contract to find a free nonce
-    // @todo: Cache latest nonce per user?
-    return 0n;
+    const permitData = encodePermitCall(
+      quoteRequest.sender,
+      new EvmAddress(permit2Address),
+      permit.value,
+      permit.deadline,
+      permit.signature,
+    );
+
+    const calls: Call3Value[] = [
+      {
+        target: usdcAddress,
+        allowFailure: false,
+        value: evmGasToken(0),
+        callData: permitData,
+      },
+      {
+        target: gaslessTx.to,
+        allowFailure: false,
+        value: gaslessTx.value ?? evmGasToken(0),
+        callData: gaslessTx.data,
+      },
+    ];
+
+    return {
+      to: new EvmAddress(multicall3Address),
+      data: encodeAggregate3ValueCall(calls),
+      value: gaslessTx.value,
+    };
   }
 }

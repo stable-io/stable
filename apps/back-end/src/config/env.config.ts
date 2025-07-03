@@ -10,6 +10,7 @@ import {
   Min,
   validateSync,
   IsStrongPassword,
+  IsString,
 } from "class-validator";
 
 export class EnvironmentVariables {
@@ -34,6 +35,10 @@ export class EnvironmentVariables {
   @Min(1)
   @IsOptional()
   public JWT_EXPIRES_IN_SECONDS: number = 3600; // @todo: Pick a good default
+
+  @IsNotEmpty()
+  @IsString()
+  public TX_LANDING_API_KEY!: string;
 }
 
 export const validate = (

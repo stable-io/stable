@@ -20,6 +20,8 @@ import {
   gasTokenKindOf,
   gasTokenNameOf,
   gasTokenOf,
+  Percentage,
+  percentage,
 } from "@stable-io/cctp-sdk-definitions";
 
 import type { Fee, Network, Intent } from "../../types/index.js";
@@ -32,7 +34,7 @@ export function getCorridorFees<
 >(
   corridorCost: CorridorStats<N, keyof EvmDomains, Corridor>["cost"],
   intent: Intent<S, D>,
-): { corridorFees: Fee[]; maxRelayFee: Fee; maxFastFeeUsdc?: Usdc } {
+): { corridorFees: Fee[]; maxRelayFee: Fee; fastFeeRate: Percentage } {
   const corridorFees = [] as Fee[];
 
   const relayFee: Fee = intent.paymentToken === "usdc"
@@ -42,15 +44,13 @@ export function getCorridorFees<
   const maxRelayFee = relayFee.mul(intent.relayFeeMaxChangeMargin);
 
   corridorFees.push(maxRelayFee);
-  let maxFastFeeUsdc: Usdc | undefined = undefined;
+  let fastFeeRate: Percentage = percentage(0);
 
   if (corridorCost.fast !== undefined) {
-    const percentage = corridorCost.fast.toUnit("whole");
-    maxFastFeeUsdc = usdc(intent.amount.mul(percentage).toUnit("µUSDC").ceil(), "µUSDC");
-    corridorFees.push(maxFastFeeUsdc);
+    fastFeeRate =  corridorCost.fast;
   }
 
-  return { corridorFees, maxRelayFee, maxFastFeeUsdc };
+  return { corridorFees, maxRelayFee, fastFeeRate };
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
