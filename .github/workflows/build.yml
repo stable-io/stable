@@ -18,10 +18,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
-      - name: Setup SSH for tx-landing
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.TX_LANDING_SSH_KEY }}
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TX_LANDING_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+        shell: bash
 
       - name: Set up Yarn
         run: |
