@@ -68,7 +68,7 @@ export class TxLandingService {
       });
 
 
-      const rawTxHash = r.txHashes[0]!;
+      const rawTxHash = r.txResults[0]!.txHash;
       const cleanTxHash = this.extractHexFromMalformedResponse(rawTxHash);
       
       if (!cleanTxHash) {
