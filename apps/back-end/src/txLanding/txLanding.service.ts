@@ -67,12 +67,13 @@ export class TxLandingService {
         ],
       });
 
-
       const rawTxHash = r.txResults[0]!.txHash;
       const cleanTxHash = this.extractHexFromMalformedResponse(rawTxHash);
-      
+
       if (!cleanTxHash) {
-        throw new Error(`Failed to extract valid transaction hash from API response: ${rawTxHash}`);
+        throw new Error(
+          `Failed to extract valid transaction hash from API response: ${rawTxHash}`,
+        );
       }
 
       return cleanTxHash;
@@ -85,7 +86,7 @@ export class TxLandingService {
   /**
    * TEMPORARY WORKAROUND: Extracts a valid hex string from malformed API responses.
    * This method should be REMOVED after the transaction-landing team fixes their serialization issue.
-   * 
+   *
    * @param input - The malformed string containing a hex transaction hash
    * @returns The extracted hex string with 0x prefix, or undefined if not found
    */

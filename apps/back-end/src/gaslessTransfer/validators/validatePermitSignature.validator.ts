@@ -59,7 +59,7 @@ export class ValidatePermitSignatureConstraint
       property: "signature",
       object: permit,
     };
-    
+
     return this.isSignatureValidator.validate(permit["signature"], tempArgs)
       ? "permit must not be provided when permit2PermitRequired is false in the quote"
       : this.isSignatureValidator.defaultMessage(tempArgs);

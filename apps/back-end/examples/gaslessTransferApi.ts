@@ -187,9 +187,9 @@ const requestQuote = async (scenario: TestScenario): Promise<QuoteResponse> => {
   const quoteParams = new URLSearchParams(scenario.parameters);
   console.info("Parameters:", Object.fromEntries(quoteParams));
 
-  const quoteResponse = await apiRequest(
+  const quoteResponse = (await apiRequest(
     `/gasless-transfer/quote?${quoteParams}`,
-  ) as QuoteResponse;
+  )) as QuoteResponse;
 
   return quoteResponse;
 };
@@ -202,7 +202,10 @@ const processJwtPayload = (jwt: string, scenarioName: string): JwtPayload => {
   const restoredPayload = deserializeBigints(jwtPayload);
 
   console.info("JWT contains:");
-  console.info("- Permit2 permit required:", restoredPayload.quoteRequest.permit2PermitRequired);
+  console.info(
+    "- Permit2 permit required:",
+    restoredPayload.quoteRequest.permit2PermitRequired,
+  );
   console.info("- Gasless fee:", restoredPayload.gaslessFee);
   console.info("- Source domain:", restoredPayload.quoteRequest.sourceDomain);
   console.info("- Target domain:", restoredPayload.quoteRequest.targetDomain);
@@ -224,7 +227,9 @@ const signPermit2Data = async (
 
   console.info(`Using wallet address: ${account.address}`);
 
-  const signature = await account.signTypedData(payload.permit2TypedData as any);
+  const signature = await account.signTypedData(
+    payload.permit2TypedData as any,
+  );
 
   console.info("Permit2 signature:", signature.slice(0, 20) + "...");
   console.info("✅ Permit2 typed data successfully signed");
@@ -264,7 +269,10 @@ const createPermitData = async (
 
   console.info("Permit data created:");
   console.info("- Value:", permitData.value);
-  console.info("- Deadline:", new Date(permitData.deadline * 1000).toISOString());
+  console.info(
+    "- Deadline:",
+    new Date(permitData.deadline * 1000).toISOString(),
+  );
   console.info("- Signature:", permitData.signature.slice(0, 20) + "...");
 
   return permitData;
@@ -290,15 +298,18 @@ const initiateGaslessTransfer = async (
     permit: permit ? "✅ Permit2 permit data" : "❌ No permit required",
   });
 
-  const relayResponse = await apiRequest("/gasless-transfer/relay", {
+  const relayResponse = (await apiRequest("/gasless-transfer/relay", {
     method: "POST",
     body: JSON.stringify(relayRequest),
-  }) as RelayResponse;
+  })) as RelayResponse;
 
   return relayResponse;
 };
 
-const runScenario = async (scenario: TestScenario, scenarioNumber: number): Promise<void> => {
+const runScenario = async (
+  scenario: TestScenario,
+  scenarioNumber: number,
+): Promise<void> => {
   console.info(`\n${"=".repeat(60)}`);
   console.info(`🎯 SCENARIO ${scenarioNumber}: ${scenario.name.toUpperCase()}`);
   console.info("=".repeat(60));
@@ -376,7 +387,9 @@ const handleError = (error: unknown): void => {
 const main = async (): Promise<void> => {
   try {
     console.info(`Using API URL: ${API_BASE_URL}`);
-    console.info("This example will run both gasless transfer scenarios sequentially\n");
+    console.info(
+      "This example will run both gasless transfer scenarios sequentially\n",
+    );
 
     await checkServiceStatus();
     const scenarios = createTestScenarios();
@@ -386,7 +399,6 @@ const main = async (): Promise<void> => {
     }
 
     printFinalSummary();
-
   } catch (error) {
     handleError(error);
   }

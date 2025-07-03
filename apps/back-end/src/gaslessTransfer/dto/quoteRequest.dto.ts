@@ -1,11 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { IsOptional, IsIn, ValidateIf, Validate } from "class-validator";
 import {
-  IsOptional,
-  IsIn,
-  ValidateIf,
-  Validate,
-} from "class-validator";
-import { Percentage, domainsOf, evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
+  Percentage,
+  domainsOf,
+  evmGasToken,
+  usdc,
+} from "@stable-io/cctp-sdk-definitions";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -150,9 +150,12 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: AMOUNT_PATTERNS.PERCENTAGE,
   })
   @IsPercentage()
-  @Transform(({ value }: { value: Percentage }) => value.toUnit("human").toString(), {
-    toPlainOnly: true,
-  })
+  @Transform(
+    ({ value }: { value: Percentage }) => value.toUnit("human").toString(),
+    {
+      toPlainOnly: true,
+    },
+  )
   fastFeeRate!: Percentage;
 
   /**

@@ -8,7 +8,11 @@ import type {
 } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { CorridorParams, layouts, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import type {
+  CorridorParams,
+  layouts,
+  SupportedEvmDomain,
+} from "@stable-io/cctp-sdk-cctpr-evm";
 import { CctpR, GaslessQuoteVariant } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import {
@@ -122,7 +126,11 @@ export class CctpRService {
   getCorridorParams(
     corridor: CorridorVariant["type"],
     fastFeeRate: Percentage,
-  ): CorridorParams<Network, SupportedEvmDomain<Network>, SupportedEvmDomain<Network>> {
+  ): CorridorParams<
+    Network,
+    SupportedEvmDomain<Network>,
+    SupportedEvmDomain<Network>
+  > {
     return corridor === "v1"
       ? { type: corridor }
       : { type: corridor, fastFeeRate: fastFeeRate };

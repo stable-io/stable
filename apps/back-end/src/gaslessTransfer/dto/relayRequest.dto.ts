@@ -3,9 +3,7 @@ import { IsOptional, ValidateNested, IsNotEmpty } from "class-validator";
 import { Transform, Type } from "class-transformer";
 
 import type { ParsedSignature } from "../../common/types";
-import {
-  IsSignature,
-} from "../../common/validators";
+import { IsSignature } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
 import { ValidatePermitSignature } from "../validators";
@@ -29,7 +27,7 @@ export class PermitDto {
    */
   @ApiProperty({
     type: String,
-    description: "Permit value amount as string representation of bigint"
+    description: "Permit value amount as string representation of bigint",
   })
   @IsNotEmpty()
   @Transform(({ value }) => BigInt(value))
@@ -41,11 +39,11 @@ export class PermitDto {
    */
   @ApiProperty({
     type: String,
-    description: "Permit deadline as string representation of bigint"
+    description: "Permit deadline as string representation of bigint",
   })
   @IsNotEmpty()
   @Transform(({ value }) => {
-    return BigInt(value)
+    return BigInt(value);
   })
   deadline!: bigint;
 }

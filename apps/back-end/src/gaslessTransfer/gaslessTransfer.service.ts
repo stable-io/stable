@@ -23,12 +23,7 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
-import {
-  QuoteDto,
-  QuoteRequestDto,
-  RelayRequestDto,
-  PermitDto,
-} from "./dto";
+import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 
 @Injectable()
@@ -88,8 +83,8 @@ export class GaslessTransferService {
       : gaslessTxDetails;
 
     const toAddress = quoteRequest.permit2PermitRequired
-        ? new EvmAddress(multicall3Address)
-        : this.cctpRService.contractAddress(quoteRequest.sourceDomain);
+      ? new EvmAddress(multicall3Address)
+      : this.cctpRService.contractAddress(quoteRequest.sourceDomain);
 
     const txHash = await this.txLandingService.sendTransaction(
       toAddress,
