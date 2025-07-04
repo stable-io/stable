@@ -15,19 +15,6 @@ export class GaslessTransferController {
   ) {}
 
   /**
-   * Get the current status of the gasless transfer service
-   */
-  @Get("/status")
-  @SwaggerApiResponse({
-    status: 200,
-    description: "Service status information",
-    type: String,
-  })
-  public getStatus(): string {
-    return this.gaslessTransferService.getStatus();
-  }
-
-  /**
    * Generate a quote for a gasless transfer
    */
   @Get("/quote")

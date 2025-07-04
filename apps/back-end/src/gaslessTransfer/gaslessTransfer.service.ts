@@ -30,10 +30,6 @@ export class GaslessTransferService {
     private readonly cctpRService: CctpRService,
   ) {}
 
-  getStatus(): string {
-    return "Gasless Transfer Service is running";
-  }
-
   public async quoteGaslessTransfer(
     request: QuoteRequestDto,
   ): Promise<QuoteDto> {

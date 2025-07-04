@@ -7,6 +7,7 @@ import { MetricsModule } from "./metrics/metrics.module";
 import { GaslessTransferModule } from "./gaslessTransfer/gaslessTransfer.module";
 import { TxLandingModule } from "./txLanding/txLanding.module";
 import { CctpRModule } from "./cctpr/cctpr.module";
+import { StatusModule } from "./status/status.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CctpRModule } from "./cctpr/cctpr.module";
     TxLandingModule,
     CctpRModule,
     GaslessTransferModule,
+    StatusModule,
   ],
 })
 export class AppModule implements NestModule {
