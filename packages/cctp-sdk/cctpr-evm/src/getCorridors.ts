@@ -14,14 +14,13 @@ import type {
 } from "@stable-io/cctp-sdk-definitions";
 import { duration, v1, v2, genericGasToken } from "@stable-io/cctp-sdk-definitions";
 import type { EvmClient } from "@stable-io/cctp-sdk-evm";
-import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Text, TODO } from "@stable-io/utils";
 import { assertDistinct, assertEqual } from "@stable-io/utils";
 import type { RoArray } from "@stable-io/map-utils";
 
 import type { QuoteRelay, Corridor } from "./contractSdk/layouts/index.js";
+import type { SupportedEvmDomain } from "./contractSdk/index.js";
 import { CctpR as CctpRContract } from "./contractSdk/index.js";
-import type { SupportedEvmDomain } from "./common.js";
 
 type SensibleV2Corridor<
   N extends Network,
@@ -202,8 +201,7 @@ export const getCorridors = <N extends Network>() =>
     const source = client.domain;
     assertDistinct<SupportedDomain<N>>(source, destination);
     const corridors = getSensibleCorridors(network, source, destination);
-    const cctprAddress = new EvmAddress(cctpr.contractAddressOf(network, source as TODO));
-    const cctprContract = new CctpRContract(client, cctprAddress);
+    const cctprContract = new CctpRContract(client);
     const [{ allowance: fastBurnAllowance }, stats] = await Promise.all([
       v2.fetchFastBurnAllowanceFactory(network)(),
       getCorridorStats(

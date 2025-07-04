@@ -11,4 +11,24 @@ export class ConfigService {
   public constructor(
     private readonly env: NestConfigService<EnvironmentVariables, true>,
   ) {}
+
+  public get port(): EnvironmentVariables["PORT"] {
+    return this.env.getOrThrow("PORT");
+  }
+
+  public get network(): EnvironmentVariables["NETWORK"] {
+    return this.env.getOrThrow("NETWORK");
+  }
+
+  public get jwtSecret(): EnvironmentVariables["JWT_SECRET"] {
+    return this.env.getOrThrow("JWT_SECRET");
+  }
+
+  public get jwtExpiresInSeconds(): EnvironmentVariables["JWT_EXPIRES_IN_SECONDS"] {
+    return this.env.getOrThrow("JWT_EXPIRES_IN_SECONDS");
+  }
+
+  public get txLandingApiKey(): EnvironmentVariables["TX_LANDING_API_KEY"] {
+    return this.env.getOrThrow("TX_LANDING_API_KEY");
+  }
 }

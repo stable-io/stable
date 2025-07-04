@@ -7,12 +7,13 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "clean": "make -C ../../../contracts/cctpr/evm/ clean",
+    "clean": "make -C ../../../contracts/cctpr/evm/ clean && rm -rf dist build-contracts",
     "build-contracts": "make -C ../../../contracts/cctpr/evm/ && mkdir -p build-contracts && cp -r ../../../contracts/cctpr/evm/out/* ./build-contracts",
     "build": "tsc"
   },
   "license": "MPL-2.0",
   "devDependencies": {
+    "chalk": "^5.4.1",
     "eslint": "^9.22.0",
     "eslint-config": "workspace:^",
     "tsx": "^4.19.3",

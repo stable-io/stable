@@ -3,6 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import chalk from "chalk";
 import {
   cctpGasDropoffName,
   CctpRChainConfig,
@@ -18,6 +19,7 @@ import {
   init,
   saveDeployments,
   SerializedDeployment,
+  toReadable,
 } from "./src/common.js";
 
 const processName = "deployCctpR";
@@ -44,10 +46,15 @@ async function run() {
   for (const task of cctprTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
-      console.info(`Deployment of CCTPR failed in chain ${task.chainId}. Error: ${error}`);
+      console.info(chalk.red(
+        `Deployment of CCTPR failed in chain ${toReadable(task.chainId)}. Error: ${error}`,
+      ));
       // There's no need to cancel the rest of the deployment here since this is a leaf deployment.
       failed = true;
     } else {
+      console.info(chalk.blue(
+        `Deployed CCTPR to chain ${toReadable(task.chainId)} on address: ${task.address}`,
+      ));
       cctprDeployments[cctprName].push(task);
     }
   }
@@ -69,11 +76,17 @@ async function run() {
   for (const task of dropoffTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
-      console.info(`Deployment of CCTPR Gas Dropoff failed in chain ${task.chainId}.`);
+      console.info(chalk.red(
+        `Deployment of CCTPR Gas Dropoff failed in chain ${toReadable(task.chainId)}.`,
+      ));
       console.info(`Error: ${error}`);
       // There's no need to cancel the rest of the deployment here since this is a leaf deployment.
       failed = true;
     } else {
+      console.info(chalk.blue(
+        `Deployed CCTPR Gas Dropoff to chain ${
+          toReadable(task.chainId)} on address: ${task.address}`,
+      ));
       cctpGasDropoffDeployments[cctpGasDropoffName].push(task);
     }
   }
@@ -83,11 +96,11 @@ async function run() {
   }
 
   if (failed) {
-    throw new Error(`Some deployments failed, check logs above.`);
+    console.error(chalk.red(`Some deployments failed, check logs above.`));
   }
 }
 
 // --------------------------------------------------------------------------------
 
 await run();
-console.info("Done!");
+console.info(chalk.yellow("⚠️ Please add the addresses of the new CCTPR instances to the CCTPR Definitions package. ⚠️"));

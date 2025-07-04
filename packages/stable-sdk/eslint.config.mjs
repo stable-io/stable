@@ -19,22 +19,18 @@ const tsConfig = {
   },
 };
 
-const overrides = [
-  {
-    files: ["examples/*"],
-    rules: {
-      "unicorn/no-console-spaces": "off",
-    },
+const srcConfig = {
+  files: ["src/**/*"],
+  rules: {
+    "unicorn/prefer-node-protocol": "off",
   },
-];
+};
 
-const nodeEventsOverride = [
-  {
-    files: ["src/*"],
-    rules: {
-      "unicorn/prefer-node-protocol": "off",
-    },
+const examplesConfig = {
+  files: ["examples/*"],
+  rules: {
+    "unicorn/no-process-exit": "off",
   },
-];
+};
 
-export default [...eslintConfig, ignoreConfig, tsConfig, ...overrides, ...nodeEventsOverride];
+export default [...eslintConfig, ignoreConfig, tsConfig, srcConfig, examplesConfig];

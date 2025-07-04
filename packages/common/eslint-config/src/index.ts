@@ -45,6 +45,7 @@ const ruleOverridesConfig: Linter.Config = {
     "no-console": ["warn", { allow: ["error", "info", "table", "warn"] }],
     "@stylistic/array-bracket-spacing": "off",
     "@stylistic/indent": "off",
+    "@stylistic/indent-binary-ops": "off",
     "@stylistic/key-spacing": "off",
     "@stylistic/max-len": ["error", { code: 100, ignoreStrings: true, ignoreUrls: true }],
     "@stylistic/no-multi-spaces": "off",

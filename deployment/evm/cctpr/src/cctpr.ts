@@ -154,7 +154,7 @@ export function getCctpRGovernance(
   if (address === undefined) {
     throw new Error(`Chain ${chain.chainId} does not have a ${cctprName} deployment.`);
   }
-  return new CctpRGovernance(client, new EvmAddress(address));
+  return new CctpRGovernance(client);
 }
 
 export function loadCctpRAddress(chain: WormholeChainId) {

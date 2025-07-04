@@ -25,6 +25,7 @@
     "@stable-io/cctp-sdk-viem": "workspace:^",
     "@stable-io/map-utils": "workspace:^",
     "@stable-io/utils": "workspace:^",
+    "@uniswap/permit2-sdk": "^1.3.1",
     "events": "^3.3.0",
     "viem": "^2.27.0"
   },
@@ -35,7 +36,7 @@
     "eslint": "^9.15.0",
     "eslint-config": "workspace:^",
     "jest": "^29.7.0",
-    "ts-jest": "^29.2.6",
+    "ts-jest": "29.2.6",
     "tsx": "^4.19.4",
     "typescript": "^5.8.2"
   }

@@ -76,6 +76,7 @@ export function replace<const O extends PlainObject, K extends keyof O, V>(
 
 // ---- Spread ----
 
+//Spread<{ a: 1; n: { b: 2; c: 3 } }, "n"> = { a: 1; b: 2; c: 3 }
 export type Spread<O extends PlainObject, K extends keyof O> =
   Simplify<Omit<O, K> & { [SK in keyof O[K]]: O[K][SK] }>;
 
@@ -89,6 +90,7 @@ export function spread<const O extends PlainObject, K extends keyof O>(
 
 // ---- Nest ----
 
+//Nest<{ a: 1; b: 2; c: 3 }, "n", "b" | "c">; = { a: 1; n: { b: 2; c: 3 } }
 export type Nest<O extends PlainObject, NK extends PropertyKey, K extends keyof O> =
   Simplify<Omit<O, K> & { [_ in NK]: { [SK in K]: O[SK] } }>;
 

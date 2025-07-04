@@ -1,0 +1,181 @@
+---
+description:
+globs: apps/back-end/src/*.ts
+alwaysApply: false
+---
+# Swagger API Response Documentation Rule
+
+Rule for enforcing API response documentation on all NestJS controller methods.
+
+<rule>
+name: swagger_api_response_documentation
+description: Ensure all controller methods have proper Swagger API response documentation
+filters:
+  # Match controller files
+  - type: filename
+    pattern: "\\.controller\\.(ts|js)$"
+  # Match HTTP method decorators
+  - type: content
+    pattern: "@(Get|Post|Put|Delete|Patch)\\("
+
+actions:
+  - type: reject
+    conditions:
+      - pattern: "@(Get|Post|Put|Delete|Patch)\\([^)]*\\)\\s*(?!.*@(ApiResponse|SwaggerApiResponse))"
+        message: "All controller methods must have @ApiResponse decorator for Swagger documentation"
+
+  - type: suggest
+    message: |
+      **All controller methods must have Swagger documentation:**
+
+      ### ✅ Properly Documented Controller Methods
+      ```typescript
+      @Controller("gasless-transfer")
+      export class GaslessTransferController {
+
+        /**
+         * Get the current status of the gasless transfer service
+         */
+        @Get("/status")
+        @ApiResponse({
+          status: 200,
+          description: "Service status information",
+          type: String,
+        })
+        public getStatus(): string {
+          return this.gaslessTransferService.getStatus();
+        }
+
+        /**
+         * Generate a quote for a gasless transfer
+         */
+        @Get("/quote")
+        @ApiResponse({
+          status: 200,
+          description: "Quote for gasless transfer with fee estimates",
+          type: QuoteResponseDto,
+        })
+        @ApiResponse({
+          status: 400,
+          description: "Invalid request parameters",
+        })
+        public async quoteGaslessTransfer(
+          @Query() request: QuoteRequestDto
+        ): Promise<QuoteResponseDto> {
+          return this.gaslessTransferService.quoteGaslessTransfer(request);
+        }
+
+        /**
+         * Initiate a gasless transfer transaction
+         */
+        @Post("/relay")
+        @ApiResponse({
+          status: 201,
+          description: "Transfer initiated successfully",
+          type: RelayResponseDto,
+        })
+        @ApiResponse({
+          status: 400,
+          description: "Invalid transfer parameters",
+        })
+        @ApiResponse({
+          status: 500,
+          description: "Internal server error during transfer",
+        })
+        public async initiateGaslessTransfer(
+          @Body() request: RelayRequestDto
+        ): Promise<RelayResponseDto> {
+          return this.gaslessTransferService.initiateGaslessTransfer(request);
+        }
+      }
+      ```
+
+      ### ❌ Missing Documentation
+      ```typescript
+      // Bad: No API response documentation
+      @Get("/quote")
+      public async quoteGaslessTransfer(): Promise<QuoteResponseDto> {
+        return this.service.quote();
+      }
+
+      // Bad: Missing error response documentation
+      @Post("/relay")
+      @ApiResponse({ status: 200, type: RelayResponseDto })
+      public async initiateTransfer(): Promise<RelayResponseDto> {
+        // Missing 400, 500 error responses
+      }
+      ```
+
+      ### Documentation Best Practices
+      - **Always document success responses** with status code and return type
+      - **Document common error responses** (400, 401, 403, 404, 500)
+      - **Use descriptive messages** that explain what each response means
+      - **Specify response types** using your DTO classes
+      - **Add JSDoc comments** above methods for additional context
+      - **Group related responses** using consistent descriptions
+
+      ### Common Response Patterns
+      ```typescript
+      // Success responses
+      @ApiResponse({
+        status: 200,
+        description: "Operation completed successfully",
+        type: YourResponseDto,
+      })
+
+      // Validation errors
+      @ApiResponse({
+        status: 400,
+        description: "Invalid request parameters",
+      })
+
+      // Authentication errors
+      @ApiResponse({
+        status: 401,
+        description: "Authentication required",
+      })
+
+      // Not found errors
+      @ApiResponse({
+        status: 404,
+        description: "Resource not found",
+      })
+
+      // Server errors
+      @ApiResponse({
+        status: 500,
+        description: "Internal server error",
+      })
+      ```
+
+      ### Integration with Comment Introspection
+      Since comment introspection is enabled, JSDoc comments on methods and DTOs will automatically enhance your Swagger documentation with rich descriptions and examples.
+
+examples:
+  - input: |
+      @Get("/users")
+      public async getUsers(): Promise<UserDto[]> {
+        return this.userService.findAll();
+      }
+    output: |
+      /**
+       * Retrieve all users from the system
+       */
+      @Get("/users")
+      @ApiResponse({
+        status: 200,
+        description: "List of all users",
+        type: [UserDto],
+      })
+      @ApiResponse({
+        status: 500,
+        description: "Internal server error",
+      })
+      public async getUsers(): Promise<UserDto[]> {
+        return this.userService.findAll();
+      }
+
+metadata:
+  priority: high
+  version: 1.0
+</rule>

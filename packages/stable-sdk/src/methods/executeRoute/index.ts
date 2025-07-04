@@ -5,8 +5,9 @@
 
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
+import type { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { Route, SDK } from "../../types/index.js";
+import { Route, SDK, SupportedRoute } from "../../types/index.js";
 
 import { executeRouteSteps } from "./executeRouteSteps.js";
 import { CctpAttestation, findTransferAttestation } from "./findTransferAttestation.js";
@@ -21,7 +22,7 @@ export const $executeRoute =
     getNetwork,
     getRpcUrl,
   }: ExecuteRouteDeps<N>): SDK<N>["executeRoute"] =>
-  async (route: Route) => {
+  async (route: SupportedRoute<N>) => {
     const { sourceChain } = route.intent;
     const signer = await getSigner(sourceChain);
     const network = getNetwork();
@@ -33,8 +34,6 @@ export const $executeRoute =
     );
 
     /**
-     * @todo: we could get and return signatures along with the transactions and
-     *        we'd be providing all infromation the integrator may possibly need.
      * @todo: review return value of executeRouteSteps. Having only the tx hashes
      *        makes it hard/unreliable to know which is the transfer transaction.
      *        For the time being we can get our way by getting the last tx, but

@@ -5,8 +5,9 @@
 
 pragma solidity ^0.8.28;
 
-import {IPermit2} from "permit2/interfaces/IPermit2.sol";
+import {IPermit2}           from "permit2/interfaces/IPermit2.sol";
 import {ISignatureTransfer} from "permit2/interfaces/ISignatureTransfer.sol";
+
 import {CCTP_DOMAIN_AVALANCHE} from "wormhole-sdk/constants/CctpDomains.sol";
 import {ITokenMessenger}       from "wormhole-sdk/interfaces/cctp/ITokenMessenger.sol";
 import {IERC20Permit}          from "wormhole-sdk/interfaces/token/IERC20Permit.sol";
@@ -15,16 +16,13 @@ import {toUniversalAddress}    from "wormhole-sdk/Utils.sol";
 
 import {ITokenMessengerV2} from "cctpr/interfaces/ITokenMessengerV2.sol";
 import {Route}             from "cctpr/assets/CctpRBase.sol";
-import {CctpRQuote}       from "cctpr/assets/CctpRQuote.sol";
+import {CctpRQuote}        from "cctpr/assets/CctpRQuote.sol";
 
 //see https://github.com/circlefin/evm-cctp-contracts/blob/63ab1f0ac06ce0793c0bbfbb8d09816bc211386d/src/v2/FinalityThresholds.sol#L27
 uint32 constant TOKEN_MESSENGER_V2_MIN_FINALITY_THRESHOLD = 500;
 
 string constant WITNESS_TYPE_STRING =
   "TransferWithRelayWitness parameters)"
-  //if amount == baseAmount, then all fees are taken from baseAmount
-  //otherwise, amount must equal baseAmount + gaslessFee + maxRelayFee
-  //  (and baseAmount - fastFee will be transferred)
   "TokenPermissions(address token,uint256 amount)"
   "TransferWithRelayWitness("
     "uint64 baseAmount,"
@@ -38,8 +36,29 @@ string constant WITNESS_TYPE_STRING =
     "string quoteSource" //"OffChain" or "OnChain"
   ")";
 
+//keccak256("TransferWithRelayWitness(uint64 baseAmount, ..., string quoteSource)")
+bytes32 constant TRANSFER_WITH_RELAY_WITNESS_TYPE_HASH =
+  0xd8d8f589690ec7b04cede9a901610a0b0ff2cfec22ba31db6b1dafafe14784b7;
+
+//keccak256("CCTPv1")
+bytes32 constant CORRIDOR_CCTPV1_HASH =
+  0xf1533fb304796ed47c5a84ee7aa17d7d2758d8e35e01eca21b7bc862ed739c56;
+//keccak256("CCTPv2")
+bytes32 constant CORRIDOR_CCTPV2_HASH =
+  0xc64e7cd858aaed1e95e01a9ce10518ae3bee81bb20fdb394c41cebb3b92b5c11;
+//keccak256("CCTPv2->Avalanche->CCTPv1")
+bytes32 constant CORRIDOR_CCTPV2_TO_AVALANCHE_TO_CCTPV1_HASH =
+  0xa51cd44d941d29943efd82dc41f83b1e1ec039f17d9c38f6b34845338eb287ff;
+
+//keccak256("OnChain")
+bytes32 constant QUOTE_SOURCE_ONCHAIN_HASH =
+  0x04efdc127211e85550104881d990ac0ad8cab62a718ef27996783a3eefba1984;
+//keccak256("OffChain")
+bytes32 constant QUOTE_SOURCE_OFFCHAIN_HASH =
+  0x05d3f7a2772bed1f9df7112906d61ae47d491128761de849c14fcd68aa8eee30;
+
 struct Permit2Data {
-  address spender;
+  address owner;
   uint256 amount;
   uint256 nonce;
   uint32  deadline;
@@ -116,19 +135,20 @@ abstract contract CctpRUser is CctpRQuote {
     bool isOnChainQuote
   ) internal { unchecked {
     bytes32 witness = keccak256(abi.encode(
+      TRANSFER_WITH_RELAY_WITNESS_TYPE_HASH,
       baseAmount,
       destinationDomain,
       mintRecipient,
       microGasDropoff,
       corridor == Route.V1
-        ? "CCTPv1"
+        ? CORRIDOR_CCTPV1_HASH
         : corridor == Route.V2Direct
-        ? "CCTPv2"
-        : "CCTPv2->Avalanche->CCTPv1",
+        ? CORRIDOR_CCTPV2_HASH
+        : CORRIDOR_CCTPV2_TO_AVALANCHE_TO_CCTPV1_HASH,
       maxFastFee,
       gaslessFee,
       maxRelayFee,
-      isOnChainQuote ? "OnChain" : "OffChain"
+      isOnChainQuote ? QUOTE_SOURCE_ONCHAIN_HASH : QUOTE_SOURCE_OFFCHAIN_HASH
     ));
 
     _permit2.permitWitnessTransferFrom(
@@ -138,7 +158,7 @@ abstract contract CctpRUser is CctpRQuote {
         permit2Data.deadline
       ),
       ISignatureTransfer.SignatureTransferDetails(address(this), requiredAmount),
-      permit2Data.spender,
+      permit2Data.owner,
       witness,
       WITNESS_TYPE_STRING,
       permit2Data.signature
