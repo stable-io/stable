@@ -146,7 +146,6 @@ export const fetchMessagesFactory = <N extends Network>(network: N) => async (
     "messages",
     sourceDomainId.toString(10),
   );
-  
   const response = await fetchApiResponse<GetMessagesRawResponse<HTTPCode>>(endpoint, ttl);
   if (response.status === 400) {
     throw new Error("The GetMessages request was malformed");
