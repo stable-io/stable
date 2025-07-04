@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { DomainsOf, EvmGasToken, GasTokenOf, Network, Usdc } from "@stable-io/cctp-sdk-definitions";
+import type { DomainsOf, EvmGasToken, GasTokenOf, Network, DomainId } from "@stable-io/cctp-sdk-definitions";
 import type { Brand, BrandedSubArray, TODO } from "@stable-io/utils";
 import { EvmAddress } from "./address.js";
 
@@ -90,7 +90,17 @@ export interface Permit2TransferFromMessage {
   readonly nonce: bigint;
   readonly deadline: bigint;
   readonly spender: string;
-  readonly parameters: TODO; // Sorry for that =)
+  readonly parameters: {
+    baseAmount: bigint;
+    destinationDomain: DomainId;
+    mintRecipient: `0x${string}`;
+    microGasDropoff: bigint;
+    corridor: "CCTPv1" | "CCTPv2" | "CCTPv2->Avalanche->CCTPv1";
+    maxFastFee: bigint;
+    gaslessFee: bigint;
+    maxRelayFee: bigint;
+    quoteSource: "OffChain" | "OnChain";
+  };
 }
 
 export type Permit2TypedData = Eip712Data<Permit2TransferFromMessage>;

@@ -56,8 +56,8 @@ export interface GaslessTransferStep extends BaseRouteExecutionStep {
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
-export function getStepType(txOrSig: ContractTx | Eip2612Data): StepType {
-  if (isGaslessTransfer(txOrSig)) return GASLESS_TRANSFER;
+export function getStepType(txOrSig: ContractTx | Eip712Data<any> | GaslessTransferData): StepType {
+  if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2TypedData(txOrSig)) return SIGN_PERMIT_2;
   if (isEip2612Data(txOrSig)) return SIGN_PERMIT;
   if (isTransferTx(txOrSig)) return TRANSFER;
@@ -92,6 +92,7 @@ export function isEip2612Data(subject: unknown): subject is Eip2612Data {
 
 export function isPermit2TransferFromMessageBody(subject: unknown):
   subject is Permit2TransferFromMessage {
+
   return typeof subject === "object" &&
     subject !== null &&
     "nonce" in subject &&
@@ -109,13 +110,30 @@ export function isPermit2TypedData(subject: unknown): subject is Permit2TypedDat
 }
 
 export type GaslessTransferData = {
-  something: string;
-};
-export function isGaslessTransfer(subject: unknown): subject is GaslessTransferData {
-  // TODO.
-  return false;
+  permit2TypedData: Permit2TypedData,
+  txHash: `0x${string}`,
+  permit2Signature: `0x${string}`,
+  // present if a permit was involved in the transfer
+  permit?: Permit,
+}
+export function isGaslessTransferData(subject: unknown): subject is GaslessTransferData {
+  if (typeof subject !== "object" || subject === null) return false;
+  if (!("permit2TypedData" in subject) || !isPermit2TypedData(subject.permit2TypedData)) return false;
+  if (!("txHash" in subject) || typeof subject.txHash !== "string") return false;
+  if (!("permit2Signature" in subject) || typeof subject.permit2Signature !== "string") return false;
+  if (("permit" in subject) && !isPermit(subject.permit)) return false;
+
+  return true;
 }
 
+function isPermit(subject: unknown): subject is Permit {
+  if (typeof subject !== "object" || subject === null) return false;
+  return (
+    "value" in subject
+    && "deadline" in subject
+    && "signature" in subject
+  )
+}
 export interface ApprovalTx extends ContractTx {};
 export function isApprovalTx(subject: unknown): subject is ApprovalTx {
   if (!isContractTx(subject)) return false;

@@ -6,13 +6,13 @@
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
 import { Permit, ContractTx, Eip712Data } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient, viemChainOf } from "@stable-io/cctp-sdk-viem";
+import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
+import { evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
-import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2 } from "../findRoutes/steps.js";
+import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 
@@ -24,13 +24,14 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
   const txHashes = [] as string[];
   let permit: Permit | undefined = undefined;
   while (true) {
-    const { value: txOrSig, done } = await route.workflow.next(permit);
+    const { value: stepData, done } = await route.workflow.next(permit);
     permit = undefined;
 
-    const stepType = getStepType(txOrSig);
+    const stepType = getStepType(stepData);
 
     if ((stepType === PRE_APPROVE || stepType === TRANSFER)) {
-      const contractTx = txOrSig as ContractTx;
+      const contractTx = stepData as ContractTx;
+
       const txParameters = buildEvmTxParameters(contractTx, signer.chain!, signer.account!);
       const tx = await signer.sendTransaction(txParameters);
 
@@ -45,8 +46,11 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
       const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
       route.progress.emit(eventName, eventData);
-    } else if ((stepType === SIGN_PERMIT || stepType === SIGN_PERMIT_2)) {
-      const typedMessage = txOrSig as Eip712Data<any>;
+    }
+    
+    else if ((stepType === SIGN_PERMIT || stepType === SIGN_PERMIT_2)) {
+      const typedMessage = stepData as Eip712Data<any>;
+
       const signature = await signer.signTypedData({
         account: signer.account!,
         ...typedMessage,
@@ -61,13 +65,28 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         // We don't modify them rn, so we give it back what it gave us.
         value: typedMessage.message.value,
         deadline: typedMessage.message.deadline,
-      };
+      }
 
       route.progress.emit("message-signed", {
         signer: signer.account!.address,
         signature,
         messageSigned: typedMessage,
       });
+    }
+
+    else if (stepType === GASLESS_TRANSFER) {
+      const transferData = stepData as GaslessTransferData;
+      const transferParameters = transferData.permit2TypedData.message.parameters;
+      route.progress.emit("transfer-sent", {
+        transactionHash: transferData.txHash,
+        approvalType: "Gasless",
+        gasDropOff: transferParameters.microGasDropoff,
+        usdcAmount: usdc(transferParameters.baseAmount),
+        recipient: transferParameters.mintRecipient,
+        quoted: "onChainUsdc",
+      })
+
+      txHashes.push(transferData.txHash);
     }
 
     if (done) break;
@@ -161,7 +180,7 @@ function parseTransferTransactionEventData(
     transactionHash: txHash,
     approvalType: transferData.approvalType,
     gasDropOff: BigInt(transferData.gasDropoff.toUnit("aGasToken").toString()),
-    usdcAmount: transferData.inputAmountUsdc.toUnit("human").toNumber(),
+    usdcAmount: transferData.inputAmountUsdc,
     recipient: `0x${encoding.hex.encode(transferData.mintRecipient.unwrap())}`,
     quoted: transferData.quoteVariant.type,
   };

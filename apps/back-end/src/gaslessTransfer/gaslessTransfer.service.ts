@@ -92,7 +92,7 @@ export class GaslessTransferService {
       txDetails,
     );
 
-    return { hash: `0x${txHash}` };
+    return { hash: txHash };
   }
 
   private calculateGaslessFee(request: QuoteRequestDto): Usdc {

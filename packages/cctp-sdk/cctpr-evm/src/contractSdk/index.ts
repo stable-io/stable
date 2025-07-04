@@ -414,9 +414,9 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           mintRecipient: mintRecipient.toString(),
           microGasDropoff: gasDropoff.toUnit("human").mul(1000).floor(),
           corridor: {
-            v1:       "CCTPv1",
-            v2Direct: "CCTPv2",
-            avaxHop:  "CCTPv2->Avalanche->CCTPv1",
+            v1:       "CCTPv1" as const,
+            v2Direct: "CCTPv2" as const,
+            avaxHop:  "CCTPv2->Avalanche->CCTPv1" as const,
           }[corridor.type],
           maxFastFee: erasedCorridor.type === "v1"
             ? 0n

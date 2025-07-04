@@ -54,7 +54,7 @@ export class TxLandingService {
     to: EvmAddress,
     domain: keyof EvmDomains,
     txDetails: ContractTx,
-  ): Promise<string> {
+  ): Promise<`0x${string}`> {
     try {
       const r = await this.client.signAndLandTransaction({
         chain: this.toChain(domain),
@@ -90,11 +90,11 @@ export class TxLandingService {
    * @param input - The malformed string containing a hex transaction hash
    * @returns The extracted hex string with 0x prefix, or undefined if not found
    */
-  private extractHexFromMalformedResponse(input: string): string | undefined {
+  private extractHexFromMalformedResponse(input: string): `0x${string}` | undefined {
     // Match 0x followed by 64 hex characters (standard transaction hash length)
     const hexPattern = /0x[0-9a-f]{64}/i;
     const match = input.match(hexPattern);
-    return match ? match[0].toLowerCase() : undefined;
+    return match ? match[0].toLowerCase() as `0x${string}` : undefined;
   }
 
   private toChain(domain: keyof EvmDomains): string {

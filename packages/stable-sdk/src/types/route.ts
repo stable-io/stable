@@ -17,7 +17,7 @@ import { Intent } from "./intent.js";
 import { TransferProgressEventEmitter } from "../progressEmitter.js";
 import { TransactionEventEmitter } from "../transactionEmitter.js";
 
-import { RouteExecutionStep } from "../methods/findRoutes/steps.js";
+import { RouteExecutionStep, GaslessTransferData } from "../methods/findRoutes/steps.js";
 
 export type Fee = Usdc | GasTokenOf<keyof EvmDomains>;
 
@@ -64,7 +64,7 @@ export interface Route<
   // for a relay request that is sent to our api instead of signed or sent to a node.
   // See `executeRouteSteps` where we need to do duck-typing to understand what kind
   // of step we'll be executing.
-  workflow: AsyncGenerator<ContractTx | Eip2612Data, ContractTx, Permit | undefined>;
+  workflow: AsyncGenerator<ContractTx | Eip2612Data | GaslessTransferData, ContractTx, Permit | undefined>;
 
   /**
    * Tracking:

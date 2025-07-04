@@ -199,17 +199,21 @@ const decodeAndDeserializeJwt = (jwt: string): Record<string, unknown> => {
 };
 
 export type PostTransferResponse = {
-  txHash: string;
+  txHash: `0x${string}`;
 };
+
+export type PostTransferParams = {
+  jwt: string;
+  permit2Signature: Uint8Array;
+  permit?: Permit;
+}
 
 export async function postTransferRequest(
   network: Network,
-  jwt: string,
-  permit2Signature: Uint8Array,
-  permit?: Permit,
+  params: PostTransferParams,
 ): Promise<PostTransferResponse> {
   const endpoint = apiEndpoint(network)("relay");
-
+  const { jwt, permit2Signature, permit } = params;
   const requestBody = {
     jwt: jwt,
     permit2Signature: encoding.hex.encode(permit2Signature, true),
@@ -222,7 +226,7 @@ export async function postTransferRequest(
 : {}),
   };
 
-  const apiResponse = await apiRequest<APIResponse<HTTPCode, { txHash: string }>>(
+  const apiResponse = await apiRequest<APIResponse<HTTPCode, { data: { hash: string }} >>(
     endpoint,
     { method: "POST", body: requestBody },
   );
@@ -230,6 +234,5 @@ export async function postTransferRequest(
   if (apiResponse.status >= 400) {
     throw new Error(`Gasless Transfer Request Failed. Status Code: ${apiResponse.status}.`);
   }
-
-  return { txHash: apiResponse.value.txHash };
+  return { txHash: apiResponse.value.data.hash as `0x${string}` };
 }

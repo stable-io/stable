@@ -4,6 +4,7 @@ import { Eip712Data, Permit } from "@stable-io/cctp-sdk-evm";
 import { Hex } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Redeem } from "./types/redeem.js";
+import { Usdc } from "@stable-io/cctp-sdk-definitions";
 
 export class TransferProgressEmitter extends (
   EventEmitter as { new(): TransferProgressEventEmitter }
@@ -79,7 +80,7 @@ export type TransferSentEventData = {
   transactionHash: Hex;
   approvalType: "Permit" | "Preapproval" | "Gasless";
   gasDropOff: bigint;
-  usdcAmount: number;
+  usdcAmount: Usdc;
   recipient: Hex;
   quoted: "onChainUsdc" | "onChainGas" | "offChain";
 };
