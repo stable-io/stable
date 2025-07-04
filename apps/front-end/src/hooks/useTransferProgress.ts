@@ -1,12 +1,12 @@
 import type { Route } from "@stable-io/sdk";
 import { useCallback, useEffect, useReducer } from "react";
 
-type UIStepStatus = "pending" | "inProgress" | "complete";
+import type { StepStatus } from "@/constants";
 
 interface UIStep {
   title: string;
   description?: string;
-  status: UIStepStatus;
+  status: StepStatus;
 }
 
 interface UIStepsState {
@@ -98,6 +98,23 @@ const setStepInProgress = (
     state,
   );
 
+const setStepFailed = (state: UIStepsState): UIStepsState => {
+  const failedStepIndex = STEP_ORDER.findIndex(
+    (stepName) => state[stepName].status === "inProgress",
+  );
+  return failedStepIndex === -1
+    ? state
+    : {
+        ...state,
+        [STEP_ORDER[failedStepIndex]!]: {
+          ...state[STEP_ORDER[failedStepIndex]!],
+          title: "Something went wrong",
+          description: undefined,
+          status: "failed",
+        },
+      };
+};
+
 type TransferAction =
   | { type: "CLOSE_MODAL" }
   | { type: "SET_TIME_REMAINING"; time: number }
@@ -184,6 +201,7 @@ const transferReducer = (
         ...state,
         isTransferActive: false,
         timeRemaining: 0,
+        uiSteps: setStepFailed(state.uiSteps),
       };
 
     default:
