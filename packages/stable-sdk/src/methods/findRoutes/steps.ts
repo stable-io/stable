@@ -92,7 +92,6 @@ export function isEip2612Data(subject: unknown): subject is Eip2612Data {
 
 export function isPermit2TransferFromMessageBody(subject: unknown):
   subject is Permit2TransferFromMessage {
-
   return typeof subject === "object" &&
     subject !== null &&
     "nonce" in subject &&
@@ -110,12 +109,12 @@ export function isPermit2TypedData(subject: unknown): subject is Permit2TypedDat
 }
 
 export type GaslessTransferData = {
-  permit2TypedData: Permit2TypedData,
-  txHash: `0x${string}`,
-  permit2Signature: `0x${string}`,
+  permit2TypedData: Permit2TypedData;
+  txHash: `0x${string}`;
+  permit2Signature: `0x${string}`;
   // present if a permit was involved in the transfer
-  permit?: Permit,
-}
+  permit?: Permit;
+};
 export function isGaslessTransferData(subject: unknown): subject is GaslessTransferData {
   if (typeof subject !== "object" || subject === null) return false;
   if (!("permit2TypedData" in subject) || !isPermit2TypedData(subject.permit2TypedData)) return false;
@@ -132,7 +131,7 @@ function isPermit(subject: unknown): subject is Permit {
     "value" in subject
     && "deadline" in subject
     && "signature" in subject
-  )
+  );
 }
 export interface ApprovalTx extends ContractTx {};
 export function isApprovalTx(subject: unknown): subject is ApprovalTx {

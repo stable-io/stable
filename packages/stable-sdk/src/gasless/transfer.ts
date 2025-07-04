@@ -40,6 +40,6 @@ export async function* transferWithGaslessRelay<
     permit2TypedData,
     txHash,
     permit2Signature: encoding.hex.encode(permit2Signature, true),
-    ...(permit ?? {}),
-  }
+    ...permit,
+  };
 }

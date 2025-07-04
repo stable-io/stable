@@ -11,7 +11,7 @@ import {
   Duration,
   Network,
 } from "@stable-io/cctp-sdk-definitions";
-import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
+import { Permit, ContractTx, Eip2612Data, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 import { Corridor, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Intent } from "./intent.js";
 import { TransferProgressEventEmitter } from "../progressEmitter.js";
@@ -64,7 +64,11 @@ export interface Route<
   // for a relay request that is sent to our api instead of signed or sent to a node.
   // See `executeRouteSteps` where we need to do duck-typing to understand what kind
   // of step we'll be executing.
-  workflow: AsyncGenerator<ContractTx | Eip2612Data | GaslessTransferData, ContractTx, Permit | undefined>;
+  workflow: AsyncGenerator<
+    ContractTx | Eip2612Data | Permit2TypedData | GaslessTransferData,
+    ContractTx,
+    Permit | undefined
+  >;
 
   /**
    * Tracking:

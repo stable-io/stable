@@ -29,7 +29,9 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
     const stepType = getStepType(stepData);
 
-    if ((stepType === PRE_APPROVE || stepType === TRANSFER)) {
+    switch (stepType) {
+    case PRE_APPROVE:
+    case TRANSFER: {
       const contractTx = stepData as ContractTx;
 
       const txParameters = buildEvmTxParameters(contractTx, signer.chain!, signer.account!);
@@ -46,9 +48,11 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
       const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
       route.progress.emit(eventName, eventData);
+
+    break;
     }
-    
-    else if ((stepType === SIGN_PERMIT || stepType === SIGN_PERMIT_2)) {
+    case SIGN_PERMIT:
+    case SIGN_PERMIT_2: {
       const typedMessage = stepData as Eip712Data<any>;
 
       const signature = await signer.signTypedData({
@@ -65,16 +69,17 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         // We don't modify them rn, so we give it back what it gave us.
         value: typedMessage.message.value,
         deadline: typedMessage.message.deadline,
-      }
+      };
 
       route.progress.emit("message-signed", {
         signer: signer.account!.address,
         signature,
         messageSigned: typedMessage,
       });
-    }
 
-    else if (stepType === GASLESS_TRANSFER) {
+    break;
+    }
+    case GASLESS_TRANSFER: {
       const transferData = stepData as GaslessTransferData;
       const transferParameters = transferData.permit2TypedData.message.parameters;
       route.progress.emit("transfer-sent", {
@@ -84,9 +89,13 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         usdcAmount: usdc(transferParameters.baseAmount),
         recipient: transferParameters.mintRecipient,
         quoted: "onChainUsdc",
-      })
+      });
 
       txHashes.push(transferData.txHash);
+
+    break;
+    }
+    // No default
     }
 
     if (done) break;

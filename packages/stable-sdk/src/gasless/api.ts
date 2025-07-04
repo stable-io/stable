@@ -206,7 +206,7 @@ export type PostTransferParams = {
   jwt: string;
   permit2Signature: Uint8Array;
   permit?: Permit;
-}
+};
 
 export async function postTransferRequest(
   network: Network,
@@ -226,7 +226,7 @@ export async function postTransferRequest(
 : {}),
   };
 
-  const apiResponse = await apiRequest<APIResponse<HTTPCode, { data: { hash: string }} >>(
+  const apiResponse = await apiRequest<APIResponse<HTTPCode, { data: { hash: string } } >>(
     endpoint,
     { method: "POST", body: requestBody },
   );
