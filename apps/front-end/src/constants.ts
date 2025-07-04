@@ -32,3 +32,5 @@ export const gasDropoffs = {
   avg: (maxGasDropoff * 2n) / 3n,
   high: maxGasDropoff,
 } as const satisfies Record<GasDropoffLevel, bigint>;
+
+export type StepStatus = "pending" | "inProgress" | "complete" | "failed";

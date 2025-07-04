@@ -84,7 +84,7 @@ export const BridgeWidget = ({
         <TransferButton
           onTransfer={onTransfer}
           isInProgress={isInProgress}
-          disabled={!route}
+          disabled={!route || isInProgress}
         />
       </div>
     </div>
