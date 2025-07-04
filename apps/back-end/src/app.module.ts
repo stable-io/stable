@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule as NestConfigModule } from "@nestjs/config";
 import { AuthModule } from "./auth/auth.module";
-import { LoggingMiddleware } from "./common/middleware/logging.middleware";
+import { LoggingMiddleware, MetricsMiddleware } from "./common/middleware";
 import { ConfigModule } from "./config/config.module";
 import { MetricsModule } from "./metrics/metrics.module";
 import { GaslessTransferModule } from "./gaslessTransfer/gaslessTransfer.module";
@@ -21,6 +21,8 @@ import { CctpRModule } from "./cctpr/cctpr.module";
 })
 export class AppModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(LoggingMiddleware).forRoutes("*");
+    consumer
+      .apply(MetricsMiddleware, LoggingMiddleware)
+      .forRoutes("*");
   }
 }
