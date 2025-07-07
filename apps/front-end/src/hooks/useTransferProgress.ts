@@ -45,11 +45,7 @@ const initialTransferState: TransferState = {
   timeRemaining: 0,
 };
 
-const STEP_ORDER = [
-  "authorization",
-  "sending",
-  "moving",
-] as const;
+const STEP_ORDER = ["authorization", "sending", "moving"] as const;
 type StepName = (typeof STEP_ORDER)[number];
 
 const STEP_COMPLETE_STATES = {
@@ -93,7 +89,7 @@ const setStepCompleted = (
   state: UIStepsState,
 ): UIStepsState => ({
   ...state,
-  [stepName]: STEP_COMPLETE_STATES[stepName]
+  [stepName]: STEP_COMPLETE_STATES[stepName],
 });
 
 const setStepFailed = (state: UIStepsState): UIStepsState => {
@@ -282,7 +278,7 @@ export const useTransferProgress = (
     };
 
     const handleTransferFailed = (): void => {
-      dispatch({ type: "TRANSFER_FAILED" })
+      dispatch({ type: "TRANSFER_FAILED" });
     };
 
     route.progress.on("transfer-initiated", handleTransferInitiated);

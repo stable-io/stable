@@ -102,7 +102,12 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
         </title>
       </Head>
       {address && route && isInProgress && (
-        <Overlay onClose={() => { closeModal() }} disableClose={isTransferActive}>
+        <Overlay
+          onClose={() => {
+            closeModal();
+          }}
+          disableClose={isTransferActive}
+        >
           <TransactionTrackingWidget
             sourceChain={sourceChain}
             targetChain={targetChain}

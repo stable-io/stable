@@ -1,8 +1,10 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import { Announcement } from "@/components/sections";
+
 import { Background } from "../../elements/Background";
 import { Footer } from "../../sections/Footer";
 import { Header } from "../../sections/Header";
+
+import { Announcement } from "@/components/sections";
 
 export type BridgeLayoutProps = PropsWithChildren<object>;
 
