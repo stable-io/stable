@@ -43,9 +43,6 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     isTransferActive,
     timeRemaining,
     resetTransfer,
-    initiateTransfer,
-    completeTransfer,
-    failTransfer,
     closeModal,
     steps,
   } = useTransferProgress(route);
@@ -86,17 +83,14 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
       return;
     }
     resetTransfer();
-    initiateTransfer();
 
     stable
       .executeRoute(route)
       .then(() => {
-        completeTransfer();
         void updateBalance();
       })
       .catch((error: unknown) => {
         console.error(error);
-        failTransfer();
       });
   };
 
@@ -108,7 +102,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
         </title>
       </Head>
       {address && route && isInProgress && (
-        <Overlay onClose={closeModal} disableClose={isTransferActive}>
+        <Overlay onClose={() => { closeModal() }} disableClose={isTransferActive}>
           <TransactionTrackingWidget
             sourceChain={sourceChain}
             targetChain={targetChain}

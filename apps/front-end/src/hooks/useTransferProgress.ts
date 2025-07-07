@@ -13,7 +13,7 @@ interface UIStepsState {
   authorization: UIStep;
   sending: UIStep;
   moving: UIStep;
-  finalizing: UIStep;
+  // finalizing: UIStep;
 }
 
 interface TransferState {
@@ -29,15 +29,11 @@ const initialUISteps: UIStepsState = {
     status: "pending",
   },
   sending: {
-    title: "Sending transfer to the network",
+    title: "Sending transfer to the source chain",
     status: "pending",
   },
   moving: {
-    title: "Transfer moving through Stableit network",
-    status: "pending",
-  },
-  finalizing: {
-    title: "Finalizing transfer",
+    title: "Funds are arriving on the destination chain",
     status: "pending",
   },
 } as const;
@@ -53,7 +49,6 @@ const STEP_ORDER = [
   "authorization",
   "sending",
   "moving",
-  "finalizing",
 ] as const;
 type StepName = (typeof STEP_ORDER)[number];
 
@@ -69,12 +64,7 @@ const STEP_COMPLETE_STATES = {
     status: "complete",
   },
   moving: {
-    title: "Transfer ready on destination chain",
-    description: "Funds are arriving on the destination chain.",
-    status: "complete",
-  },
-  finalizing: {
-    title: "Transfer complete",
+    title: "Transfer Completed",
     description: "Your assets are now available in the destination wallet.",
     status: "complete",
   },
@@ -97,6 +87,14 @@ const setStepInProgress = (
     }),
     state,
   );
+
+const setStepCompleted = (
+  stepName: StepName,
+  state: UIStepsState,
+): UIStepsState => ({
+  ...state,
+  [stepName]: STEP_COMPLETE_STATES[stepName]
+});
 
 const setStepFailed = (state: UIStepsState): UIStepsState => {
   const failedStepIndex = STEP_ORDER.findIndex(
@@ -181,20 +179,15 @@ const transferReducer = (
       return state;
 
     case "HOP_CONFIRMED":
-      return {
-        ...state,
-        uiSteps: setStepInProgress("finalizing", state.uiSteps),
-      };
+      return state;
 
     case "TRANSFER_REDEEMED":
       return {
         ...state,
         isTransferActive: false,
         timeRemaining: 0,
+        uiSteps: setStepCompleted("moving", state.uiSteps),
       };
-
-    case "TRANSFER_COMPLETED":
-      return state;
 
     case "TRANSFER_FAILED":
       return {
@@ -211,9 +204,6 @@ const transferReducer = (
 
 interface UseTransferProgressReturn extends Omit<TransferState, "uiSteps"> {
   resetTransfer: () => void;
-  initiateTransfer: () => void;
-  completeTransfer: () => void;
-  failTransfer: () => void;
   closeModal: () => void;
   steps: readonly UIStep[];
 }
@@ -229,18 +219,6 @@ export const useTransferProgress = (
       estimatedDuration: route?.estimatedDuration,
     });
   }, [route?.estimatedDuration]);
-
-  const initiateTransfer = useCallback(() => {
-    dispatch({ type: "TRANSFER_INITIATED" });
-  }, []);
-
-  const completeTransfer = useCallback(() => {
-    dispatch({ type: "TRANSFER_COMPLETED" });
-  }, []);
-
-  const failTransfer = useCallback(() => {
-    dispatch({ type: "TRANSFER_FAILED" });
-  }, []);
 
   const closeModal = useCallback(() => {
     dispatch({ type: "CLOSE_MODAL" });
@@ -271,6 +249,10 @@ export const useTransferProgress = (
   useEffect(() => {
     if (!route) return;
 
+    const handleTransferInitiated = (): void => {
+      dispatch({ type: "TRANSFER_INITIATED" });
+    };
+
     const handlePermitSigned = (): void => {
       dispatch({ type: "PERMIT_SIGNED" });
     };
@@ -299,6 +281,11 @@ export const useTransferProgress = (
       dispatch({ type: "TRANSFER_REDEEMED" });
     };
 
+    const handleTransferFailed = (): void => {
+      dispatch({ type: "TRANSFER_FAILED" })
+    };
+
+    route.progress.on("transfer-initiated", handleTransferInitiated);
     route.progress.on("permit-signed", handlePermitSigned);
     route.progress.on("approval-sent", handleApprovalSent);
     route.progress.on("transfer-sent", handleTransferSent);
@@ -306,6 +293,7 @@ export const useTransferProgress = (
     route.progress.on("hop-redeemed", handleHopRedeemed);
     route.progress.on("hop-confirmed", handleHopConfirmed);
     route.progress.on("transfer-redeemed", handleTransferRedeemed);
+    route.progress.on("error", handleTransferFailed);
 
     return (): void => {
       route.progress.off("permit-signed", handlePermitSigned);
@@ -315,6 +303,7 @@ export const useTransferProgress = (
       route.progress.off("hop-redeemed", handleHopRedeemed);
       route.progress.off("hop-confirmed", handleHopConfirmed);
       route.progress.off("transfer-redeemed", handleTransferRedeemed);
+      route.progress.off("error", handleTransferFailed);
     };
   }, [route]);
 
@@ -323,9 +312,6 @@ export const useTransferProgress = (
   return {
     ...stateToExpose,
     resetTransfer,
-    initiateTransfer,
-    completeTransfer,
-    failTransfer,
     closeModal,
     steps,
   };

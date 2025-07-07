@@ -32,15 +32,12 @@ export const $executeRoute =
       rpcUrl,
     );
 
-    /**
-     * @todo: we could get and return signatures along with the transactions and
-     *        we'd be providing all infromation the integrator may possibly need.
-     * @todo: review return value of executeRouteSteps. Having only the tx hashes
-     *        makes it hard/unreliable to know which is the transfer transaction.
-     *        For the time being we can get our way by getting the last tx, but
-     *        this wouldn't resist integrating protocols with multiple transactions.
-     */
-    const transactions = await executeRouteSteps(network, route, signer, client);
+    route.progress.emit("transfer-initiated", { intent: route.intent })
+
+    const transactions = await executeRouteSteps(network, route, signer, client).catch(e => {
+      route.progress.emit("error", { type: "transfer-failed", details: {} });
+      throw e;
+    });
     const transferTx = transactions.at(-1)!; // there's always 1 or 2 hashes.
 
     const attestations = [] as CctpAttestation[];
@@ -68,7 +65,10 @@ export const $executeRoute =
       network,
       getRpcUrl(attestation.targetDomain),
       attestation,
-    );
+    ).catch(e => {
+      route.progress.emit("error", { type: "attestation-failed", details: { txHash: transferTx }});
+      throw e;
+    });
     redeems.push(redeem);
 
     /**
@@ -90,7 +90,11 @@ export const $executeRoute =
         network,
         attestation.targetDomain,
         redeem.transactionHash,
-      );
+      ).catch(e => {
+        route.progress.emit("error", { type: "attestation-failed", details: { txHash: redeem.transactionHash }});
+        throw e;
+      });
+
       attestations.push(secondHopAttestation);
       route.progress.emit("hop-confirmed", secondHopAttestation); // uses hop attestation
 
@@ -98,7 +102,11 @@ export const $executeRoute =
         network,
         getRpcUrl(secondHopAttestation.targetDomain),
         secondHopAttestation,
-      );
+      ).catch(e => {
+        route.progress.emit("error", { type: "receive-failed", details: { txHash: redeem.transactionHash }});
+        throw e;
+      });
+
       redeems.push(secondHopRedeem);
       route.progress.emit("transfer-redeemed", secondHopRedeem); // uses hopRedeem
     }
