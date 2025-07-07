@@ -13,11 +13,22 @@ import type { Hex } from "viem";
 import type { Redeem } from "src/types/redeem.js";
 import type { PollingConfig } from "../../utils.js";
 import { pollUntil } from "../../utils.js";
+import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
-/**
- * @todo: Should be configured by chain.
- */
-const REDEEM_SCAN_BLOCKS_BUFFER = 15n;
+const redeemScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
+  // Around 40s for each chain, depending on their block time
+  "Ethereum": 4n,
+  "Avalanche": 20n,
+  "Optimism": 20n,
+  "Arbitrum": 180n,
+  "Base": 20n,
+  "Polygon": 210n,
+  "Unichain": 180n,
+  "Linea": 20n,
+  "Codex": 20n, // couldn't find blocktime data. just guessing for this one.
+  "Sonic": 40n,
+  "Worldchain": 20n,
+}
 
 export async function findTransferRedeem<N extends Network>(
   network: N,
@@ -35,8 +46,7 @@ export async function findTransferRedeem<N extends Network>(
     rpcUrl,
   );
 
-  let fromBlock = await viemEvmClient.getLatestBlock() - REDEEM_SCAN_BLOCKS_BUFFER;
-
+  let fromBlock = await viemEvmClient.getLatestBlock() - redeemScanBufferPerChain[targetDomain];
   return await pollUntil(async () => {
     const [latestBlock, logs] = await Promise.all([
       viemEvmClient.getLatestBlock(),
