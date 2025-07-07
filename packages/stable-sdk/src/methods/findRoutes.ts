@@ -5,7 +5,7 @@
 
 import { Amount, Conversion } from "@stable-io/amount";
 import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   Corridor,
   CorridorStats,
@@ -366,23 +366,17 @@ async function composeStepsWithApproval<
   routeSteps: RouteExecutionStep[],
 ): Promise<RouteExecutionStep[]> {
   const definitions = initDefinitions(evmClient.network);
-  const cctpr = initCctpr(evmClient.network);
   const evm = initEvm(evmClient.network);
 
   const usdcAddress = new EvmAddress(
     definitions.usdcContracts.contractAddressOf[sourceDomain],
   );
   const cctprAddress = new EvmAddress(
-    /**
-     * @todo: type system thinks contractAddressOf is not callable,
-     *        but at runtime it is. Figure out what's up.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    (cctpr.contractAddressOf as any)(sourceDomain),
+    cctprContractAddressOf(evmClient.network, sourceDomain as TODO),
   );
 
   const allowance = await evm.getTokenAllowance(
-    evmClient as any,
+    evmClient,
     usdcAddress,
     sender,
     cctprAddress,
