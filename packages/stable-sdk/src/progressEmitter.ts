@@ -1,7 +1,6 @@
 import { EventEmitter } from "events";
-import { encoding } from "@stable-io/utils";
-import { Eip712Data, Permit } from "@stable-io/cctp-sdk-evm";
-import { Hex } from "./types/index.js";
+import { Eip712Data } from "@stable-io/cctp-sdk-evm";
+import { Hex, Intent } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Redeem } from "./types/redeem.js";
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
@@ -31,7 +30,7 @@ export interface TransferProgressEventEmitter extends EventEmitter {
 // events related to the steps of the transfer, not necessarily
 // transactions.
 export interface TransferProgressEvent {
-
+  "transfer-initiated": TransferInitiatedEventData;
   // Approval:
   "approval-sent": ApprovalSentEventData;
 
@@ -49,6 +48,8 @@ export interface TransferProgressEvent {
 
   "transfer-redeemed": TransferRedeemedEventData;
 
+  "error": TransferFailedEventData;
+
   // Catch all:
   "step-completed": StepCompletedEventData<keyof TransferProgressEvent>;
 }
@@ -56,6 +57,12 @@ export interface TransferProgressEvent {
 /**
  * Transfer Life Cycle Events
  */
+
+export type TransferInitiatedEventData = {
+  intent: Intent;
+  // other info could be added here such as
+  // quote, corridor, gasless or not, etc.
+};
 
 /**
  * Approval:
@@ -95,6 +102,21 @@ export type TransferRedeemedEventData = Redeem;
 export type HopRedeemedEventData = Redeem;
 
 export type HopConfirmedEventData = CctpAttestation;
+
+/**
+ * Error:
+ */
+export type FailureScenarios = "transfer-failed" // tokens never left the account
+  | "attestation-failed" // ball is on circle's court
+  | "receive-failed"; // ball is on blockchain watcher or relayers court
+
+export type TransferFailedEventData<S extends FailureScenarios=FailureScenarios> = {
+  type: FailureScenarios;
+  details: S extends "transfer-failed" ? undefined
+            : S extends "attestation-failed" ? { txHash: Hex } // timeout boolean
+            : S extends "receive-failed" ? { txHash: Hex }
+            : never;
+};
 
 /**
  * Catch all:

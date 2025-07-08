@@ -1,19 +1,20 @@
+import type { Route } from "@stable-io/sdk";
 import Head from "next/head";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import type { ReactElement } from "react";
 
 import {
   BridgeLayout,
-  TopSection,
+  Overlay,
   LeftSection,
   RightSection,
-  TransferStatusAlert,
+  TransactionTrackingWidget,
   BridgeWidget,
   PortfolioSidebar,
 } from "@/components";
 import type { AvailableChains, GasDropoffLevel } from "@/constants";
 import { availableChains } from "@/constants";
-import { useBalance, useRoutes } from "@/hooks";
+import { useBalance, useRoutes, useTransferProgress } from "@/hooks";
 import { useStableContext } from "@/providers";
 import type { NextPageWithLayout } from "@/utils";
 
@@ -27,9 +28,6 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
   const [targetChain, setTargetChain] = useState<AvailableChains>(
     availableChains[1],
   );
-  const [isInProgress, setIsInProgress] = useState(false);
-  const [transferTxHash, setTransferTxHash] = useState<string | undefined>();
-  const [redeemTxHash, setRedeemTxHash] = useState<string | undefined>();
 
   const { address, stable } = useStableContext();
   const { balance, updateBalance } = useBalance({ sourceChain });
@@ -40,44 +38,20 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     gasDropoffLevel,
   });
 
-  const resetTransferState = useCallback(() => {
-    setTransferTxHash(undefined);
-    setRedeemTxHash(undefined);
-    setIsInProgress(false);
-  }, []);
+  const {
+    isInProgress,
+    isTransferActive,
+    timeRemaining,
+    resetTransfer,
+    closeModal,
+    steps,
+  } = useTransferProgress(route);
 
-  useEffect(() => {
-    if (!route) return;
+  const estimatedDuration = route?.estimatedDuration.toString(10) ?? "??";
 
-    const handleTransferSent = (eventData: {
-      transactionHash: string;
-    }): void => {
-      setTransferTxHash(eventData.transactionHash);
-    };
-
-    route.progress.on("transfer-sent", handleTransferSent);
-
-    return (): void => {
-      route.progress.off("transfer-sent", handleTransferSent);
-    };
-  }, [route]);
-
-  useEffect(() => {
-    if (!route) return;
-
-    const handleTransferRedeemed = (redeemData: {
-      transactionHash: string;
-    }): void => {
-      setRedeemTxHash(redeemData.transactionHash);
-      void updateBalance();
-    };
-
-    route.progress.on("transfer-redeemed", handleTransferRedeemed);
-
-    return (): void => {
-      route.progress.off("transfer-redeemed", handleTransferRedeemed);
-    };
-  }, [route, updateBalance]);
+  const formatCost = (cost: Route["estimatedTotalCost"]): string => {
+    return `$${cost.toUnit("human")}`;
+  };
 
   // @todo: Subtract expected fees
   // const maxAmount = balance;
@@ -108,8 +82,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     if (!route || !stable) {
       return;
     }
-    setIsInProgress(true);
-    resetTransferState();
+    resetTransfer();
 
     stable
       .executeRoute(route)
@@ -118,9 +91,6 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
       })
       .catch((error: unknown) => {
         console.error(error);
-      })
-      .finally(() => {
-        setIsInProgress(false);
       });
   };
 
@@ -128,17 +98,28 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     <>
       <Head>
         <title>
-          Stable | Move USDC across networks with high speed and minimal costs
+          Stableit | Move USDC across networks with high speed and minimal costs
         </title>
       </Head>
-      {transferTxHash && (
-        <TopSection>
-          <TransferStatusAlert
-            transferTxHash={transferTxHash}
-            redeemTxHash={redeemTxHash}
+      {address && route && isInProgress && (
+        <Overlay
+          onClose={() => {
+            closeModal();
+          }}
+          disableClose={isTransferActive}
+        >
+          <TransactionTrackingWidget
+            sourceChain={sourceChain}
             targetChain={targetChain}
+            amount={amount}
+            timeRemaining={timeRemaining}
+            isTransferActive={isTransferActive}
+            destinationWallet={address}
+            routePath={route.corridor}
+            estimatedCost={formatCost(route.estimatedTotalCost)}
+            steps={steps}
           />
-        </TopSection>
+        </Overlay>
       )}
       <LeftSection>
         <BridgeWidget
