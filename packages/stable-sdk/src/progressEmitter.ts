@@ -1,9 +1,10 @@
 import { EventEmitter } from "events";
 import { Eip712Data } from "@stable-io/cctp-sdk-evm";
-import { Hex, Intent } from "./types/index.js";
+import { Hex, Intent, Network } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Redeem } from "./types/redeem.js";
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
+import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
 export class TransferProgressEmitter extends (
   EventEmitter as { new(): TransferProgressEventEmitter }
@@ -59,7 +60,7 @@ export interface TransferProgressEvent {
  */
 
 export type TransferInitiatedEventData = {
-  intent: Intent;
+  intent: Intent<SupportedEvmDomain<Network>, SupportedEvmDomain<Network>>;
   // other info could be added here such as
   // quote, corridor, gasless or not, etc.
 };

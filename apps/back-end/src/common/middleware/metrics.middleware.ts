@@ -18,11 +18,7 @@ export class MetricsMiddleware implements NestMiddleware {
     const method = req.method;
     const route = this.normalizeRoute(req.originalUrl);
 
-    this.metricsService.gauge(
-      "http_requests_active",
-      { method, route },
-      1
-    );
+    this.metricsService.gauge("http_requests_active", { method, route }, 1);
 
     res.on("finish", () => {
       const duration = (Date.now() - startTime) / 1000;
@@ -31,43 +27,41 @@ export class MetricsMiddleware implements NestMiddleware {
       this.metricsService.counter(
         "http_requests_total",
         { method, route, status_code: statusCode },
-        1
+        1,
       );
 
       this.metricsService.histogram(
         "http_request_duration_seconds",
         { method, route },
-        duration
+        duration,
       );
 
       if (statusCode.startsWith("4") || statusCode.startsWith("5")) {
         this.metricsService.counter(
           "http_requests_errors_total",
           { method, route, status_code: statusCode },
-          1
+          1,
         );
       }
 
-      this.metricsService.gauge(
-        "http_requests_active",
-        { method, route },
-        -1
-      );
+      this.metricsService.gauge("http_requests_active", { method, route }, -1);
     });
 
     next();
   }
 
   private isHealthCheckRoute(url: string): boolean {
-    return HEALTH_CHECK_ROUTES.some(route => url.includes(route));
+    return HEALTH_CHECK_ROUTES.some((route) => url.includes(route));
   }
 
   private normalizeRoute(url: string): string {
     const path = url.split("?")[0] ?? "";
-    return path
-      .replace(/^\//, "")
-      .replace(/\//g, "_")
-      .replace(/-/g, "_")
-      .toLowerCase() || "root";
+    return (
+      path
+        .replace(/^\//, "")
+        .replaceAll("/", "_")
+        .replaceAll("-", "_")
+        .toLowerCase() || "root"
+    );
   }
-} 
+}

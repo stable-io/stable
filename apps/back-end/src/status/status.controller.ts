@@ -19,4 +19,4 @@ export class StatusController {
   public getStatus(): string {
     return this.statusService.getStatus();
   }
-} 
+}

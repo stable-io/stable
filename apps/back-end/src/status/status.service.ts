@@ -5,4 +5,4 @@ export class StatusService {
   public getStatus(): string {
     return "OK";
   }
-} 
+}

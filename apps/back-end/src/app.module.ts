@@ -23,8 +23,6 @@ import { StatusModule } from "./status/status.module";
 })
 export class AppModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): void {
-    consumer
-      .apply(MetricsMiddleware, LoggingMiddleware)
-      .forRoutes("*");
+    consumer.apply(MetricsMiddleware, LoggingMiddleware).forRoutes("*");
   }
 }

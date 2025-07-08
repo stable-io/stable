@@ -1,6 +1,6 @@
-import { TODO, encoding } from "@stable-io/utils";
+import { encoding } from "@stable-io/utils";
 import { composePermitMsg, EvmAddress, permit2Address, Permit, Permit2TypedData, Eip2612Data } from "@stable-io/cctp-sdk-evm";
-import { layouts, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Network } from "src/types/general.js";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { Usdc, usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
