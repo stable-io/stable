@@ -21,7 +21,7 @@
     "@stable-io/sdk": "workspace:^",
     "@stable-io/utils": "workspace:^",
     "@tanstack/react-query": "^5.77.2",
-    "next": "15.3.2",
+    "next": "15.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "viem": "^2.23.12",
