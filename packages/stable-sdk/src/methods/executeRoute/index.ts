@@ -6,7 +6,7 @@
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { Route, SDK } from "../../types/index.js";
+import { Route, SDK, Hex } from "../../types/index.js";
 
 import { executeRouteSteps } from "./executeRouteSteps.js";
 import { CctpAttestation, findTransferAttestation } from "./findTransferAttestation.js";
@@ -32,16 +32,16 @@ export const $executeRoute =
       rpcUrl,
     );
 
-    /**
-     * @todo: we could get and return signatures along with the transactions and
-     *        we'd be providing all infromation the integrator may possibly need.
-     * @todo: review return value of executeRouteSteps. Having only the tx hashes
-     *        makes it hard/unreliable to know which is the transfer transaction.
-     *        For the time being we can get our way by getting the last tx, but
-     *        this wouldn't resist integrating protocols with multiple transactions.
-     */
-    const transactions = await executeRouteSteps(network, route, signer, client);
-    const transferTx = transactions.at(-1)!; // there's always 1 or 2 hashes.
+    route.progress.emit("transfer-initiated", { intent: route.intent });
+
+    const transactions = await executeRouteSteps(network, route, signer, client).catch(
+      (error: unknown) => {
+        route.progress.emit("error", { type: "transfer-failed", details: undefined });
+        throw error;
+      },
+    );
+
+    const transferTx = transactions.at(-1)! as Hex; // there's always 1 or 2 hashes.
 
     const attestations = [] as CctpAttestation[];
     const redeems = [] as Redeem[];
@@ -68,7 +68,10 @@ export const $executeRoute =
       network,
       getRpcUrl(attestation.targetDomain),
       attestation,
-    );
+    ).catch((error: unknown) => {
+      route.progress.emit("error", { type: "attestation-failed", details: { txHash: transferTx } });
+      throw error;
+    });
     redeems.push(redeem);
 
     /**
@@ -90,7 +93,15 @@ export const $executeRoute =
         network,
         attestation.targetDomain,
         redeem.transactionHash,
-      );
+      ).catch((error: unknown) => {
+        route.progress.emit("error", {
+          type: "attestation-failed",
+          details: { txHash: redeem.transactionHash },
+        });
+
+        throw error;
+      });
+
       attestations.push(secondHopAttestation);
       route.progress.emit("hop-confirmed", secondHopAttestation); // uses hop attestation
 
@@ -98,7 +109,11 @@ export const $executeRoute =
         network,
         getRpcUrl(secondHopAttestation.targetDomain),
         secondHopAttestation,
-      );
+      ).catch((error: unknown) => {
+        route.progress.emit("error", { type: "receive-failed", details: { txHash: redeem.transactionHash } });
+        throw error;
+      });
+
       redeems.push(secondHopRedeem);
       route.progress.emit("transfer-redeemed", secondHopRedeem); // uses hopRedeem
     }

@@ -19,11 +19,11 @@ const Document = (): ReactElement => (
       <meta itemProp="image" content="https://stableit.com/imgs/og.jpg" />
       <meta
         property="og:title"
-        content="Stable | Move USDC across networks with high speed and minimal costs"
+        content="Stableit | Move USDC across networks with high speed and minimal costs"
       />
       <meta
         property="og:description"
-        content="Powered by Circle, Stable's SDK enables instant USDC transfers across networks."
+        content="Powered by Circle, Stableit's SDK enables instant USDC transfers across networks."
       />
       <meta property="og:type" content="website" />
       <meta property="og:image" content="https://stableit.com/imgs/og.jpg" />
@@ -41,7 +41,7 @@ const Document = (): ReactElement => (
       />
       <meta
         name="twitter:description"
-        content="Powered by Circle, Stable's SDK enables instant USDC transfers across networks."
+        content="Powered by Circle, Stableit's SDK enables instant USDC transfers across networks."
       />
       <meta name="twitter:image" content="https://stableit.com/imgs/og.jpg" />
       <meta

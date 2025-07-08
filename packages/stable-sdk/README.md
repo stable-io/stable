@@ -2,7 +2,7 @@
 
 ## Official SDK Documentation
 
-https://docs.stable.io
+https://docs.stableit.com
 
 ## Development
 
