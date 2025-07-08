@@ -284,7 +284,7 @@ export const useTransferProgress = (
     };
 
     route.progress.on("transfer-initiated", handleTransferInitiated);
-    route.progress.on("permit-signed", handlePermitSigned);
+    route.progress.on("message-signed", handlePermitSigned);
     route.progress.on("approval-sent", handleApprovalSent);
     route.progress.on("transfer-sent", handleTransferSent);
     route.progress.on("transfer-confirmed", handleTransferConfirmed);
