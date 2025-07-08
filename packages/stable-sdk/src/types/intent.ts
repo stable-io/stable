@@ -3,16 +3,35 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { Address, Amount } from "./general.js";
-export interface IntentBase {
+import { EvmDomains, GasTokenOf, GenericGasToken, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { Address, Amount, Network } from "./general.js";
+import { PaymentTokenOptions } from "./sdk.js";
+
+export type UserIntent = {
   sourceChain: keyof EvmDomains;
   targetChain: keyof EvmDomains;
-  amount: Amount;
-  gasDropoffDesired?: bigint;
-}
+  amount: string;
+  sender: string; // | EvmAddress; TODO
+  recipient: string; // | EvmAddress; TODO
 
-export interface Intent extends IntentBase {
-  sender: Address;
-  recipient: Address;
-}
+  usePermit?: boolean;
+  gasDropoffDesired?: bigint; // | GasTokenOf<N>; TODO
+  paymentToken?: PaymentTokenOptions;
+  relayFeeMaxChangeMargin?: number; // | percentage?; TODO
+};
+
+export type Intent<
+  S extends keyof EvmDomains,
+  D extends keyof EvmDomains,
+> = {
+  sourceChain: S;
+  targetChain: D;
+  amount: Usdc;
+  sender: EvmAddress; // eventually universal address
+  recipient: EvmAddress; // eventually universal address
+  usePermit: boolean;
+  gasDropoffDesired: GasTokenOf<D>;
+  paymentToken: PaymentTokenOptions;
+  relayFeeMaxChangeMargin: number;
+};

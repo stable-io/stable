@@ -5,8 +5,9 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { useContainer } from "class-validator";
 import { AppModule } from "./app.module";
 import { HttpExceptionFilter } from "./common/filters/httpException.filter";
+import metadata from "./metadata";
 
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 3001;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,6 +19,8 @@ async function bootstrap() {
     .setDescription("Documentation for the Stable API.")
     .setVersion("0.0")
     .build();
+
+  await SwaggerModule.loadPluginMetadata(metadata);
   const documentFactory = (): OpenAPIObject =>
     SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory);

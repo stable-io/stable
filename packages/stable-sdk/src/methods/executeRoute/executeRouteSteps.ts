@@ -5,31 +5,36 @@
 
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
-import { Permit, ContractTx } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient, viemChainOf } from "@stable-io/cctp-sdk-viem";
+import { Permit, ContractTx, Eip712Data } from "@stable-io/cctp-sdk-evm";
+import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
+import { evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
-import { isContractTx, Route, getStepType, isEip2612Data, ViemWalletClient, TxHash, Hex } from "../../types/index.js";
-import { ApprovalSentEventData, TransferSentEventData, parsePermitEventData } from "../../progressEmitter.js";
+import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
+import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData } from "../findRoutes/steps.js";
+import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
 
 export async function executeRouteSteps<N extends Network, D extends keyof EvmDomains>(
-  network: N, route: Route, signer: ViemWalletClient, client: ViemEvmClient<N, D>,
+  network: N, route: SupportedRoute<N>, signer: ViemWalletClient, client: ViemEvmClient<N, D>,
 ): Promise<TxHash[]> {
   const txHashes = [] as string[];
   let permit: Permit | undefined = undefined;
   while (true) {
-    const { value: txOrSig, done } = await route.workflow.next(permit);
+    const { value: stepData, done } = await route.workflow.next(permit);
     permit = undefined;
 
-    const stepType = getStepType(txOrSig);
+    const stepType = getStepType(stepData);
 
-    if (stepType !== "sign-permit" && isContractTx(txOrSig)) {
-      const txParameters = buildEvmTxParameters(txOrSig, signer.chain!, signer.account!);
+    switch (stepType) {
+    case PRE_APPROVE:
+    case TRANSFER: {
+      const contractTx = stepData as ContractTx;
+
+      const txParameters = buildEvmTxParameters(contractTx, signer.chain!, signer.account!);
       const tx = await signer.sendTransaction(txParameters);
 
       route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
@@ -41,12 +46,18 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
       if (receipt.status === "reverted") throw new Error("Execution Reverted");
 
-      const { eventName, eventData } = buildTransactionEventData(network, stepType, txOrSig, tx);
+      const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
       route.progress.emit(eventName, eventData);
-    } else if (stepType === "sign-permit" && isEip2612Data(txOrSig)) {
+
+    break;
+    }
+    case SIGN_PERMIT:
+    case SIGN_PERMIT_2: {
+      const typedMessage = stepData as Eip712Data<any>;
+
       const signature = await signer.signTypedData({
         account: signer.account!,
-        ...txOrSig,
+        ...typedMessage,
       });
 
       permit = {
@@ -56,11 +67,35 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         // We need to pass them back to the cctp-sdk so that it can know
         // what changes we made.
         // We don't modify them rn, so we give it back what it gave us.
-        value: txOrSig.message.value,
-        deadline: txOrSig.message.deadline,
+        value: typedMessage.message.value,
+        deadline: typedMessage.message.deadline,
       };
 
-      route.progress.emit("permit-signed", parsePermitEventData(permit));
+      route.progress.emit("message-signed", {
+        signer: signer.account!.address,
+        signature,
+        messageSigned: typedMessage,
+      });
+
+    break;
+    }
+    case GASLESS_TRANSFER: {
+      const transferData = stepData as GaslessTransferData;
+      const transferParameters = transferData.permit2TypedData.message.parameters;
+      route.progress.emit("transfer-sent", {
+        transactionHash: transferData.txHash,
+        approvalType: "Gasless",
+        gasDropOff: transferParameters.microGasDropoff,
+        usdcAmount: usdc(transferParameters.baseAmount),
+        recipient: transferParameters.mintRecipient,
+        quoted: "onChainUsdc",
+      });
+
+      txHashes.push(transferData.txHash);
+
+    break;
+    }
+    // No default
     }
 
     if (done) break;
@@ -81,7 +116,9 @@ export type EvmTxParameters = {
   maxPriorityFeePerGas: bigint;
 };
 
-function buildEvmTxParameters(tx: ContractTx, chain: ViemChain, account: ViemAccount) {
+function buildEvmTxParameters(
+  tx: ContractTx, chain: ViemChain, account: ViemAccount,
+) {
   const callData = `0x${Buffer.from(tx.data).toString("hex")}` as const;
   const txValue = tx.value
     ? BigInt(tx.value.toUnit("atomic").toString())
@@ -152,7 +189,7 @@ function parseTransferTransactionEventData(
     transactionHash: txHash,
     approvalType: transferData.approvalType,
     gasDropOff: BigInt(transferData.gasDropoff.toUnit("aGasToken").toString()),
-    usdcAmount: transferData.inputAmountUsdc.toUnit("human").toNumber(),
+    usdcAmount: transferData.inputAmountUsdc,
     recipient: `0x${encoding.hex.encode(transferData.mintRecipient.unwrap())}`,
     quoted: transferData.quoteVariant.type,
   };

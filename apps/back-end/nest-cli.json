@@ -26,6 +26,5 @@
   },
   "language": "ts",
   "monorepo": true,
-  "sourceRoot": "src",
-  "typeCheck": true
+  "sourceRoot": "src"
 }

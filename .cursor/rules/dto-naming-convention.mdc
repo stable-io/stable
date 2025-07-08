@@ -1,0 +1,178 @@
+---
+description:
+globs: apps/back-end/src/*.ts
+alwaysApply: false
+---
+# DTO Naming Convention Rule
+
+Rule for enforcing consistent DTO naming and file organization in NestJS applications.
+
+<rule>
+name: dto_naming_convention
+description: Enforce consistent DTO naming patterns and file organization
+filters:
+  # Match DTO-related files and classes
+  - type: filename
+    pattern: "\\.(dto|response|request)\\.(ts|js)$"
+  # Match class definitions that might be DTOs
+  - type: content
+    pattern: "export class \\w+(Dto|Response|Request)"
+  # Match imports of DTO files
+  - type: content
+    pattern: "from ['\"].*\\.(dto|response|request)"
+
+actions:
+  - type: reject
+    conditions:
+      - pattern: "export class \\w+(?!.*Dto).*\\s+extends.*Dto"
+        message: "DTO classes must end with 'Dto' suffix"
+      - pattern: "\\.(response|request)\\.(ts|js)$"
+        message: "Use '.dto.ts' extension instead of '.response.ts' or '.request.ts'"
+
+  - type: suggest
+    message: |
+      **Follow consistent DTO naming conventions:**
+
+      ### ✅ Correct DTO Patterns
+
+      **File Naming:**
+      ```
+      # Good: DTO files
+      quote-request.dto.ts        # Request DTOs
+      quote-response.dto.ts       # Response DTOs
+      user.dto.ts                 # General DTOs
+      create-user.dto.ts          # Specific operation DTOs
+      update-user.dto.ts          # Update operation DTOs
+
+      # Good: Index file for exports
+      dto/index.ts
+      ```
+
+      **Class Naming:**
+      ```typescript
+      // Good: Request DTOs
+      export class QuoteRequestDto { }
+      export class CreateUserDto { }
+      export class UpdateUserDto { }
+
+      // Good: Response DTOs
+      export class QuoteResponseDto { }
+      export class UserResponseDto { }
+      export class ListUsersResponseDto { }
+
+      // Good: General DTOs
+      export class UserDto { }
+      export class TransferDto { }
+      ```
+
+      **Directory Structure:**
+      ```
+      src/
+        gaslessTransfer/
+          dto/
+            index.ts                    # Exports all DTOs
+            quote-request.dto.ts        # QuoteRequestDto
+            quote-response.dto.ts       # QuoteResponseDto
+            relay-request.dto.ts        # RelayRequestDto
+            relay-response.dto.ts       # RelayResponseDto
+          gaslessTransfer.controller.ts
+          gaslessTransfer.service.ts
+          gaslessTransfer.module.ts
+      ```
+
+      ### ❌ Incorrect Patterns
+
+      **Wrong File Extensions:**
+      ```
+      # Bad: Wrong extensions
+      quote.request.ts            # Should be quote-request.dto.ts
+      quote.response.ts           # Should be quote-response.dto.ts
+      user-data.ts               # Should be user.dto.ts
+      ```
+
+      **Wrong Class Names:**
+      ```typescript
+      // Bad: Missing Dto suffix
+      export class QuoteRequest { }   # Should be QuoteRequestDto
+      export class UserData { }       # Should be UserDto
+      export class ApiResponse { }    # Should be SomethingResponseDto
+      ```
+
+      ### Naming Convention Rules
+
+      **Request DTOs:**
+      - End with `RequestDto`
+      - Describe the operation: `CreateUserRequestDto`, `QuoteRequestDto`
+      - File: `operation-request.dto.ts`
+
+      **Response DTOs:**
+      - End with `ResponseDto`
+      - Match the operation: `CreateUserResponseDto`, `QuoteResponseDto`
+      - File: `operation-response.dto.ts`
+
+      **General DTOs:**
+      - End with `Dto`
+      - Represent entities: `UserDto`, `TransferDto`
+      - File: `entity.dto.ts`
+
+      ### Index File Pattern
+      ```typescript
+      // dto/index.ts
+      export * from "./quote-request.dto";
+      export * from "./quote-response.dto";
+      export * from "./relay-request.dto";
+      export * from "./relay-response.dto";
+      ```
+
+      ### Import Patterns
+      ```typescript
+      // Good: Clean imports using index
+      import { QuoteRequestDto, QuoteResponseDto } from "./dto";
+
+      // Good: Direct import when needed
+      import { QuoteRequestDto } from "./dto/quote-request.dto";
+
+      // Bad: Inconsistent naming
+      import { QuoteRequest } from "./dto/quote.request";
+      ```
+
+      ### Integration with Swagger
+      When using these DTOs with Swagger decorators:
+      ```typescript
+      @ApiResponse({
+        status: 200,
+        description: "Quote generated successfully",
+        type: QuoteResponseDto,  // Clear what type is returned
+      })
+      ```
+
+examples:
+  - input: |
+      // quote.request.ts
+      export class QuoteRequest {
+        amount: number;
+        sourceChain: string;
+      }
+
+      // quote.response.ts
+      export class QuoteResponse {
+        fee: number;
+        estimatedTime: number;
+      }
+    output: |
+      // quote-request.dto.ts
+      export class QuoteRequestDto {
+        amount: number;
+        sourceChain: string;
+      }
+
+      // quote-response.dto.ts
+      export class QuoteResponseDto {
+        fee: number;
+        estimatedTime: number;
+      }
+
+metadata:
+  priority: medium
+  version: 1.0
+</rule>

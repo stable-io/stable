@@ -23,7 +23,7 @@ export async function pollUntil<T>(
   config: PollingConfig = {},
 ): Promise<T> {
   const {
-    timeoutMs = 60_000,
+    timeoutMs = 90_000,
     baseDelayMs = 500,
     maxDelayMs = 5000,
     backoffMultiplier = 1.5,

@@ -17,6 +17,7 @@
     "build:cctp-sdk": "yarn on:cctp-sdk --topological run build",
     "build:common": "yarn on:common --topological run build",
     "build:sdk": "yarn on:sdk run build",
+    "build:packages": "yarn build:common && yarn build:cctp-sdk && yarn build:sdk",
     "upgrade:cctp-sdk": "yarn on:cctp-sdk version",
     "upgrade:common": "yarn on:common version",
     "upgrade:sdk": "yarn on:sdk version",

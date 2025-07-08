@@ -1,7 +1,7 @@
 import type { Route } from "@stable-io/sdk";
 import { useCallback, useEffect, useReducer } from "react";
 
-import type { StepStatus } from "@/constants";
+import type { StepStatus, AvailableChains } from "@/constants";
 
 interface UIStep {
   title: string;
@@ -205,16 +205,18 @@ interface UseTransferProgressReturn extends Omit<TransferState, "uiSteps"> {
 }
 
 export const useTransferProgress = (
-  route?: Route,
+  route?: Route<AvailableChains, AvailableChains>,
 ): UseTransferProgressReturn => {
   const [state, dispatch] = useReducer(transferReducer, initialTransferState);
 
   const resetTransfer = useCallback(() => {
+    if (!route)
+      throw new Error("resetTransfer can't be called without a route set");
     dispatch({
       type: "RESET_TRANSFER",
-      estimatedDuration: route?.estimatedDuration,
+      estimatedDuration: route.estimatedDuration.toUnit("sec").toNumber(),
     });
-  }, [route?.estimatedDuration]);
+  }, [route]);
 
   const closeModal = useCallback(() => {
     dispatch({ type: "CLOSE_MODAL" });
@@ -223,7 +225,7 @@ export const useTransferProgress = (
   useEffect(() => {
     dispatch({
       type: "SET_TIME_REMAINING",
-      time: route?.estimatedDuration ?? 0,
+      time: route?.estimatedDuration.toUnit("sec").toNumber() ?? 0,
     });
   }, [route?.estimatedDuration]);
 
@@ -282,7 +284,7 @@ export const useTransferProgress = (
     };
 
     route.progress.on("transfer-initiated", handleTransferInitiated);
-    route.progress.on("permit-signed", handlePermitSigned);
+    route.progress.on("message-signed", handlePermitSigned);
     route.progress.on("approval-sent", handleApprovalSent);
     route.progress.on("transfer-sent", handleTransferSent);
     route.progress.on("transfer-confirmed", handleTransferConfirmed);

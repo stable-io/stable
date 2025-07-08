@@ -1,4 +1,5 @@
 import eslintConfig from "eslint-config";
+import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 
 const ignoreConfig = {
@@ -15,7 +16,7 @@ const nestConfig = {
     sourceType: "commonjs",
     parserOptions: {
       projectService: {
-        allowDefaultProject: ["*.mjs"],
+        allowDefaultProject: ["*.mjs", "examples/*.ts"],
       },
     },
   },
@@ -26,9 +27,16 @@ const overridesConfig = {
   rules: {
     "@typescript-eslint/no-unused-vars": "error",
     "unicorn/prefer-top-level-await": "off",
+    "@typescript-eslint/no-extraneous-class": "off",
   },
 };
 
-const flatConfig = [ignoreConfig, ...eslintConfig, nestConfig, overridesConfig];
+const flatConfig = [
+  ignoreConfig,
+  ...eslintConfig,
+  nestConfig,
+  overridesConfig,
+  prettierConfig,
+];
 
 export default flatConfig;

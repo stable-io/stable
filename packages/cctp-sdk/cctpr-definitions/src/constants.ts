@@ -26,18 +26,20 @@ export const contractAddressEntries = [[
     ["Worldchain", undefined],
   ]], [
   "Testnet", [
-    ["Ethereum",  "0xd60c838bcF9585B549f78bcf4903C950782DA13c"],
-    ["Avalanche", "0x3b87De75dc34F02434468d361ca7A4a09b7e3072"],
-    ["Optimism",  "0xeeD58C96245F920CF3a317258310C00dF6e41f72"],
-    ["Arbitrum",  "0xeeD58C96245F920CF3a317258310C00dF6e41f72"],
-    ["Base",      "0xd60c838bcF9585B549f78bcf4903C950782DA13c"],
-    // ["Solana",    undefined],
-    ["Polygon",   "0xeeD58C96245F920CF3a317258310C00dF6e41f72"],
-    // ["Sui",       undefined],
-    // ["Aptos",     undefined],
-    ["Unichain",  "0x61a7DbC232C0Bf3ad1c81cBE0c7538D6a542E197"],
-    ["Linea",     undefined],
-    ["Sonic",     undefined],
+    ["Ethereum",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    ["Avalanche",  "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Optimism",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    ["Arbitrum",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    ["Base",       "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    // ["Solana",     undefined],
+    ["Polygon",    "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    // ["Sui",        undefined],
+    // ["Aptos",      undefined],
+    ["Unichain",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    ["Linea",      undefined],
+    ["Codex",      undefined],
+    ["Sonic",      undefined],
+    ["Worldchain", undefined],
   ]],
 ] as const satisfies MapLevels<[Network, Domain, string | undefined]>;
 
@@ -48,7 +50,7 @@ export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDoma
 
 export const avaxRouterContractAddress = {
   Mainnet: "0x", //TODO
-  Testnet: "0x6f15237908e4f284eaddaa5d10d94ea5988f2010",
+  Testnet: "0x6f097674abc0895f9ec2cff13c8312492cf09815",
 } as const satisfies Record<Network, `0x${string}` | undefined>;
 
 export const relayOverheadOf = {

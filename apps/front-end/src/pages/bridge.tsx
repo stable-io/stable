@@ -47,9 +47,9 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     steps,
   } = useTransferProgress(route);
 
-  const estimatedDuration = route?.estimatedDuration.toString(10) ?? "??";
-
-  const formatCost = (cost: Route["estimatedTotalCost"]): string => {
+  const formatCost = (
+    cost: Route<AvailableChains, AvailableChains>["estimatedTotalCost"],
+  ): string => {
     return `$${cost.toUnit("human")}`;
   };
 
@@ -135,7 +135,6 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
           walletAddress={address}
           balance={balance}
           route={route}
-          estimatedDuration={estimatedDuration}
           isInProgress={isInProgress}
           onTransfer={handleTransfer}
         />

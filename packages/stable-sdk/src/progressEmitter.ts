@@ -1,9 +1,10 @@
 import { EventEmitter } from "events";
-import { encoding } from "@stable-io/utils";
-import { Permit } from "@stable-io/cctp-sdk-evm";
-import { Hex, Intent } from "./types/index.js";
+import { Eip712Data } from "@stable-io/cctp-sdk-evm";
+import { Hex, Intent, Network } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Redeem } from "./types/redeem.js";
+import { Usdc } from "@stable-io/cctp-sdk-definitions";
+import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
 export class TransferProgressEmitter extends (
   EventEmitter as { new(): TransferProgressEventEmitter }
@@ -32,8 +33,10 @@ export interface TransferProgressEventEmitter extends EventEmitter {
 export interface TransferProgressEvent {
   "transfer-initiated": TransferInitiatedEventData;
   // Approval:
-  "permit-signed": PermitSignedEventData;
   "approval-sent": ApprovalSentEventData;
+
+  // Message (permit or permit2):
+  "message-signed": MessageSignedEventData;
 
   // Transfer:
   "transfer-sent": TransferSentEventData;
@@ -57,7 +60,7 @@ export interface TransferProgressEvent {
  */
 
 export type TransferInitiatedEventData = {
-  intent: Intent;
+  intent: Intent<SupportedEvmDomain<Network>, SupportedEvmDomain<Network>>;
   // other info could be added here such as
   // quote, corridor, gasless or not, etc.
 };
@@ -65,20 +68,16 @@ export type TransferInitiatedEventData = {
 /**
  * Approval:
  */
-export type PermitSignedEventData = Omit<Permit, "signature"> & {
-  signature: Hex;
-};
-
-export function parsePermitEventData(permit: Permit): PermitSignedEventData {
-  return {
-    ...permit,
-    signature: `0x${encoding.hex.encode(permit.signature)}`,
-  };
-};
 
 export type ApprovalSentEventData = {
   transactionHash: Hex;
   approvalAmount: bigint;
+};
+
+export type MessageSignedEventData = {
+  signer: Hex;
+  messageSigned: Eip712Data<any>;
+  signature: Hex;
 };
 
 /**
@@ -89,7 +88,7 @@ export type TransferSentEventData = {
   transactionHash: Hex;
   approvalType: "Permit" | "Preapproval" | "Gasless";
   gasDropOff: bigint;
-  usdcAmount: number;
+  usdcAmount: Usdc;
   recipient: Hex;
   quoted: "onChainUsdc" | "onChainGas" | "offChain";
 };

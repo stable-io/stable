@@ -3,8 +3,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { DomainsOf, EvmGasToken, GasTokenOf, Network, Usdc } from "@stable-io/cctp-sdk-definitions";
-import type { Brand, BrandedSubArray } from "@stable-io/utils";
+import type { DomainsOf, EvmGasToken, GasTokenOf, Network, DomainId } from "@stable-io/cctp-sdk-definitions";
+import type { Brand, BrandedSubArray, TODO } from "@stable-io/utils";
 import { EvmAddress } from "./address.js";
 
 export type CallData = Brand<BrandedSubArray<CallData>, "CallData">;
@@ -59,7 +59,7 @@ export interface EvmClient<
   readonly getLatestBlock: () => Promise<bigint>;
 }
 
-type Eip2612MessageBody = {
+export type Eip2612MessageBody = {
   owner: string;
   spender: string;
   value: bigint;
@@ -81,3 +81,26 @@ export type Eip712Data<MessageType> = Readonly<{
 }>;
 
 export type Eip2612Data = Eip712Data<Eip2612MessageBody>;
+
+export interface Permit2TransferFromMessage {
+  readonly permitted: {
+    readonly token: string;
+    readonly amount: bigint;
+  };
+  readonly nonce: bigint;
+  readonly deadline: bigint;
+  readonly spender: string;
+  readonly parameters: {
+    baseAmount: bigint;
+    destinationDomain: DomainId;
+    mintRecipient: `0x${string}`;
+    microGasDropoff: bigint;
+    corridor: "CCTPv1" | "CCTPv2" | "CCTPv2->Avalanche->CCTPv1";
+    maxFastFee: bigint;
+    gaslessFee: bigint;
+    maxRelayFee: bigint;
+    quoteSource: "OffChain" | "OnChain";
+  };
+}
+
+export type Permit2TypedData = Eip712Data<Permit2TransferFromMessage>;
