@@ -27,7 +27,6 @@ export interface TransferProgressEventEmitter extends EventEmitter {
   >(event: K, payload: TransferProgressEvent[K]): boolean;
 }
 
-
 // events related to the steps of the transfer, not necessarily
 // transactions.
 export interface TransferProgressEvent {
@@ -59,9 +58,9 @@ export interface TransferProgressEvent {
 
 export type TransferInitiatedEventData = {
   intent: Intent;
-  // other info could be added here such as 
+  // other info could be added here such as
   // quote, corridor, gasless or not, etc.
-}
+};
 
 /**
  * Approval:
@@ -110,11 +109,12 @@ export type HopConfirmedEventData = CctpAttestation;
  * Error:
  */
 export type FailureScenarios = "transfer-failed" // tokens never left the account
-    | "attestation-failed" // ball is on circle's court
-    | "receive-failed"; // ball is on blockchain watcher or relayers court
+  | "attestation-failed" // ball is on circle's court
+  | "receive-failed"; // ball is on blockchain watcher or relayers court
+
 export type TransferFailedEventData<S extends FailureScenarios=FailureScenarios> = {
-  type: FailureScenarios
-  details: S extends "transfer-failed" ? {}
+  type: FailureScenarios;
+  details: S extends "transfer-failed" ? undefined
             : S extends "attestation-failed" ? { txHash: Hex } // timeout boolean
             : S extends "receive-failed" ? { txHash: Hex }
             : never;

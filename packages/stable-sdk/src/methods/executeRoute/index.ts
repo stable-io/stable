@@ -6,7 +6,7 @@
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { Route, SDK } from "../../types/index.js";
+import { Route, SDK, Hex } from "../../types/index.js";
 
 import { executeRouteSteps } from "./executeRouteSteps.js";
 import { CctpAttestation, findTransferAttestation } from "./findTransferAttestation.js";
@@ -32,13 +32,16 @@ export const $executeRoute =
       rpcUrl,
     );
 
-    route.progress.emit("transfer-initiated", { intent: route.intent })
+    route.progress.emit("transfer-initiated", { intent: route.intent });
 
-    const transactions = await executeRouteSteps(network, route, signer, client).catch(e => {
-      route.progress.emit("error", { type: "transfer-failed", details: {} });
-      throw e;
-    });
-    const transferTx = transactions.at(-1)!; // there's always 1 or 2 hashes.
+    const transactions = await executeRouteSteps(network, route, signer, client).catch(
+      (error: unknown) => {
+        route.progress.emit("error", { type: "transfer-failed", details: undefined });
+        throw error;
+      },
+    );
+
+    const transferTx = transactions.at(-1)! as Hex; // there's always 1 or 2 hashes.
 
     const attestations = [] as CctpAttestation[];
     const redeems = [] as Redeem[];
@@ -65,9 +68,9 @@ export const $executeRoute =
       network,
       getRpcUrl(attestation.targetDomain),
       attestation,
-    ).catch(e => {
-      route.progress.emit("error", { type: "attestation-failed", details: { txHash: transferTx }});
-      throw e;
+    ).catch((error: unknown) => {
+      route.progress.emit("error", { type: "attestation-failed", details: { txHash: transferTx } });
+      throw error;
     });
     redeems.push(redeem);
 
@@ -90,9 +93,13 @@ export const $executeRoute =
         network,
         attestation.targetDomain,
         redeem.transactionHash,
-      ).catch(e => {
-        route.progress.emit("error", { type: "attestation-failed", details: { txHash: redeem.transactionHash }});
-        throw e;
+      ).catch((error: unknown) => {
+        route.progress.emit("error", {
+          type: "attestation-failed",
+          details: { txHash: redeem.transactionHash },
+        });
+
+        throw error;
       });
 
       attestations.push(secondHopAttestation);
@@ -102,9 +109,9 @@ export const $executeRoute =
         network,
         getRpcUrl(secondHopAttestation.targetDomain),
         secondHopAttestation,
-      ).catch(e => {
-        route.progress.emit("error", { type: "receive-failed", details: { txHash: redeem.transactionHash }});
-        throw e;
+      ).catch((error: unknown) => {
+        route.progress.emit("error", { type: "receive-failed", details: { txHash: redeem.transactionHash } });
+        throw error;
       });
 
       redeems.push(secondHopRedeem);

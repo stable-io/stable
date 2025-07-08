@@ -17,18 +17,18 @@ import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
 const redeemScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
   // Around 40s for each chain, depending on their block time
-  "Ethereum": 4n,
-  "Avalanche": 20n,
-  "Optimism": 20n,
-  "Arbitrum": 180n,
-  "Base": 20n,
-  "Polygon": 210n,
-  "Unichain": 180n,
-  "Linea": 20n,
-  "Codex": 20n, // couldn't find blocktime data. just guessing for this one.
-  "Sonic": 40n,
-  "Worldchain": 20n,
-}
+  Ethereum: 4n,
+  Avalanche: 20n,
+  Optimism: 20n,
+  Arbitrum: 180n,
+  Base: 20n,
+  Polygon: 210n,
+  Unichain: 180n,
+  Linea: 20n,
+  Codex: 20n, // couldn't find blocktime data. just guessing for this one.
+  Sonic: 40n,
+  Worldchain: 20n,
+};
 
 export async function findTransferRedeem<N extends Network>(
   network: N,
