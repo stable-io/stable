@@ -1,0 +1,32 @@
+[toolchain]
+anchor_version = "0.31.1"
+solana_version = "2.2.16"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+#solana_price_oracle = "CefQJaxQTV28gCf4MMd1PgDHgCcRmuEHZgXZwjJReUY3"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "./tests/test-deployer-keypair.json"
+
+[scripts]
+test = "yarn run mocha -t 1000000 tests/*.ts"
+
+[test.validator]
+# AjX3A4Nv2rzUuATEUWLP4rrBaBropyUnHxEvFDj1dKbx - this feature disables memory gaps.
+# We disable it because we want to test execution like in devnet or mainnet.
+# See https://github.com/anza-xyz/agave/blob/v2.2.7/feature-set/src/lib.rs
+deactivate_feature = ["AjX3A4Nv2rzUuATEUWLP4rrBaBropyUnHxEvFDj1dKbx"]
+
+[[test.genesis]]
+name = "price-oracle"
+address = "CefQJaxQTV28gCf4MMd1PgDHgCcRmuEHZgXZwjJReUY3"
+program = "target/sbf-solana-solana/release/solana_price_oracle.so"
+upgradeable = true

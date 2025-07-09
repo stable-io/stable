@@ -3,37 +3,38 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { DomainsOf, EvmGasToken, GasTokenOf, Network, DomainId } from "@stable-io/cctp-sdk-definitions";
-import type { Brand, BrandedSubArray, TODO } from "@stable-io/utils";
-import { EvmAddress } from "./address.js";
+import type { DeepReadonly } from "@stable-io/map-utils";
+import type { Brand, BrandedSubArray } from "@stable-io/utils";
+import type { DomainsOf, EvmGasToken, GasTokenOf, Network } from "@stable-io/cctp-sdk-definitions";
+import { type RawAddress, EvmAddress } from "./address.js";
 
-export type CallData = Brand<BrandedSubArray<CallData>, "CallData">;
-export type ReturnData = Brand<BrandedSubArray<ReturnData>, "ReturnData">;
+export type CallData    = Brand<BrandedSubArray<CallData>,    "CallData"   >;
+export type ReturnData  = Brand<BrandedSubArray<ReturnData>,  "ReturnData" >;
 export type StorageData = Brand<BrandedSubArray<StorageData>, "StorageData">;
 
 export type AccessList = {
-  address: EvmAddress;
+  address:     EvmAddress;
   storageKeys: bigint[];
 }[];
 
 export interface BaseTx {
-  to?: EvmAddress;
-  from?: EvmAddress;
-  value?: EvmGasToken;
-  data?: CallData;
+  to?:         EvmAddress;
+  from?:       EvmAddress;
+  value?:      EvmGasToken;
+  data?:       CallData;
   accessList?: AccessList;
 }
 
 export interface ReadCall extends BaseTx {
-  to: EvmAddress;
+  to:     EvmAddress;
   value?: EvmGasToken;
-  data: CallData;
+  data:   CallData;
 }
 
 export interface ContractTx extends BaseTx {
-  to: EvmAddress;
+  to:     EvmAddress;
   value?: EvmGasToken;
-  data: CallData;
+  data:   CallData;
 }
 
 export interface ValueTx extends BaseTx {
@@ -41,66 +42,67 @@ export interface ValueTx extends BaseTx {
 }
 
 export interface ContractValueTx extends BaseTx {
-  to: EvmAddress;
+  to:    EvmAddress;
   value: EvmGasToken;
-  data: CallData;
+  data:  CallData;
 }
 
 export interface EvmClient<
   N extends Network = Network,
   D extends DomainsOf<"Evm"> = DomainsOf<"Evm">,
 > {
-  readonly network: N;
-  readonly domain: D;
-  readonly estimateGas: (tx: BaseTx) => Promise<bigint>;
-  readonly ethCall: (tx: ContractTx) => Promise<Uint8Array>;
-  readonly getStorageAt: (contract: EvmAddress, slot: bigint) => Promise<Uint8Array>;
-  readonly getBalance: (address: EvmAddress) => Promise<GasTokenOf<D, DomainsOf<"Evm">>>;
-  readonly getLatestBlock: () => Promise<bigint>;
+  network: N;
+  domain:  D;
+
+  estimateGas:    (tx: BaseTx) => Promise<bigint>;
+  ethCall:        (tx: ContractTx) => Promise<Uint8Array>;
+  getStorageAt:   (contract: EvmAddress, slot: bigint) => Promise<Uint8Array>;
+  getBalance:     (address: EvmAddress) => Promise<GasTokenOf<D, DomainsOf<"Evm">>>;
+  getLatestBlock: () => Promise<bigint>;
 }
 
-export type Eip2612MessageBody = {
-  owner: string;
-  spender: string;
-  value: bigint;
-  nonce: bigint;
-  deadline: bigint;
-};
-
-export type Eip712Data<MessageType> = Readonly<{
-  types: Record<string, readonly Readonly<{ name: string; type: string }>[]>;
-  primaryType: string;
-  domain: {
-    name?: string;
-    version?: string;
-    chainId?: bigint;
-    verifyingContract?: `0x${string}`;
-    salt?: `0x${string}`;
-  };
-  message: MessageType;
+export type Eip712Domain = Readonly<{
+  name?:              string;
+  version?:           string;
+  chainId?:           bigint;
+  verifyingContract?: RawAddress;
+  salt?:              RawAddress;
 }>;
 
-export type Eip2612Data = Eip712Data<Eip2612MessageBody>;
+export type Eip712Data<Message = Record<string, unknown>> = Readonly<{
+  types:       Record<string, Readonly<{ name: string; type: string }>[]>;
+  primaryType: string;
+  domain:      Eip712Domain;
+  message:     DeepReadonly<Message>;
+}>;
 
-export interface Permit2TransferFromMessage {
-  readonly permitted: {
-    readonly token: string;
-    readonly amount: bigint;
-  };
-  readonly nonce: bigint;
-  readonly deadline: bigint;
-  readonly spender: string;
-  readonly parameters: {
-    baseAmount: bigint;
-    destinationDomain: DomainId;
-    mintRecipient: `0x${string}`;
-    microGasDropoff: bigint;
-    corridor: "CCTPv1" | "CCTPv2" | "CCTPv2->Avalanche->CCTPv1";
-    maxFastFee: bigint;
-    gaslessFee: bigint;
-    maxRelayFee: bigint;
-    quoteSource: "OffChain" | "OnChain";
-  };
-}
+export type Eip2612Message = Readonly<{
+  owner:    RawAddress;
+  spender:  RawAddress;
+  value:    bigint;
+  nonce:    bigint;
+  deadline: bigint;
+}>;
 
-export type Permit2TypedData = Eip712Data<Permit2TransferFromMessage>;
+export type Eip2612Data = Eip712Data<Eip2612Message>;
+
+export type Permit2TokenPermissions = Readonly<{
+  token:  RawAddress;
+  amount: bigint;
+}>;
+
+export type Permit2TransferFromMessage = Readonly<{
+  permitted: Permit2TokenPermissions;
+  nonce:     bigint;
+  deadline:  bigint;
+}>;
+
+export type Permit2TransferFromData = Eip712Data<Permit2TransferFromMessage>;
+
+export type Permit2WitnessTransferFromMessage<Witness> = 
+  Permit2TransferFromMessage &
+  { readonly spender: RawAddress; } &
+  DeepReadonly<Witness>;
+
+export type Permit2WitnessTransferFromData<Witness> = 
+  Eip712Data<Permit2WitnessTransferFromMessage<Witness>>;

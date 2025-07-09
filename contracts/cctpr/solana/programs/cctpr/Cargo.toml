@@ -1,0 +1,40 @@
+[package]
+name = "cctpr"
+version = "0.1.0"
+description = ""
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "cctpr"
+
+[features]
+default = ["price-oracle/cpi"]
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = [
+  "anchor-lang/idl-build",
+  "anchor-spl/idl-build",
+  "price-oracle/idl-build",
+]
+custom-heap = []
+custom-panic = []
+anchor-debug = []
+mainnet = ["price-oracle/mainnet"]
+testnet = ["price-oracle/testnet"]
+
+[dependencies]
+cfg-if = "1"
+anchor-lang = { version = "0.31.1", features = ["init-if-needed", "event-cpi"] }
+anchor-spl = "0.31.1"
+price-oracle = { path = "../../../../price-oracle/solana/programs/price-oracle", package = "solana-price-oracle" }
+anchor-extra-util = { path = "../../../../price-oracle/solana/magic/anchor-extra-util" }
+
+[build-dependencies]
+serde = "1"
+serde_json = "1"
+anyhow = "1"
+ed25519-dalek = "1.0.1" # Same as in the Solana dependencies
+bs58 = "0.5.1"

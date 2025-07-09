@@ -6,12 +6,15 @@
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import * as constants from "./constants.js";
 import * as transfer from "./transfer.js";
+import * as layouts from "./layouts.js";
 
 export * from "./constants.js";
 export * from "./registry.js";
 export * from "./transfer.js";
+export * from "./layouts.js";
 
 export const init = <N extends Network>(network: N) => ({
   ...constants.init(network),
   ...transfer,
+  ...layouts,
 } as const);

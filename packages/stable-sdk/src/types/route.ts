@@ -11,8 +11,9 @@ import {
   Duration,
   Network,
 } from "@stable-io/cctp-sdk-definitions";
-import { Permit, ContractTx, Eip2612Data, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
-import { Corridor, SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { SupportedEvmDomain, Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Intent } from "./intent.js";
 import { TransferProgressEventEmitter } from "../progressEmitter.js";
 import { TransactionEventEmitter } from "../transactionEmitter.js";
@@ -65,7 +66,7 @@ export interface Route<
   // See `executeRouteSteps` where we need to do duck-typing to understand what kind
   // of step we'll be executing.
   workflow: AsyncGenerator<
-    ContractTx | Eip2612Data | Permit2TypedData | GaslessTransferData,
+    ContractTx | Eip2612Data | Permit2GaslessData | GaslessTransferData,
     ContractTx,
     Permit | undefined
   >;

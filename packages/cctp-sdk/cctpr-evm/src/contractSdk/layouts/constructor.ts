@@ -7,7 +7,7 @@ import type { Layout, Item } from "binary-layout";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { uint256Item } from "@stable-io/cctp-sdk-definitions";
 import { evmAddressItem, paddedSlotItem, abiEncodedBytesItem } from "@stable-io/cctp-sdk-evm";
-import { feeAdjustmentTypes } from "./common.js";
+import { feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { feeAdjustmentsSlotItem } from "./feeAdjustments.js";
 import { chainIdsSlotItem } from "./extraChainIds.js";
 

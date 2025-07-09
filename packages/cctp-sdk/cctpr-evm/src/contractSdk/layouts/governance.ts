@@ -7,11 +7,20 @@ import type { Layout, DeriveType } from "binary-layout";
 import { enumItem } from "binary-layout";
 import { range, zip } from "@stable-io/map-utils";
 import {
-  uint256Item, arrayLayout, byteSwitchLayout, Network,
+  type Network,
+  uint256Item,
+  byteSwitchItem,
+  domainItem,
 } from "@stable-io/cctp-sdk-definitions";
 import { evmAddressItem } from "@stable-io/cctp-sdk-evm";
-import { domainChainIdPairLayout, feeAdjustmentTypes } from "./common.js";
+import { feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { feeAdjustmentsSlotItem } from "./feeAdjustments.js";
+import { extraDomains } from "./extraChainIds.js";
+
+const domainChainIdPairLayout = <N extends Network>(network: N) => [
+  { name: "domain", ...domainItem(extraDomains(network)) },
+  { name: "chainId", binary: "uint", size: 2             },
+] as const satisfies Layout;
 
 const sweepTokensLayout = [
   { name: "tokenAddress", ...evmAddressItem },
@@ -43,9 +52,9 @@ const governanceVariants = <N extends Network>(network: N) => [
   [[0x19, "setChainIdForDomain"     ], domainChainIdPairLayout(network)],
 ] as const;
 export const governanceCommandLayout = <N extends Network>(network: N) =>
-  byteSwitchLayout("command", governanceVariants(network));
+  byteSwitchItem("command", governanceVariants(network));
 export type GovernanceCommand<N extends Network> =
   DeriveType<ReturnType<typeof governanceCommandLayout<N>>>;
 
 export const governanceCommandArrayLayout = <N extends Network>(network: N) =>
-  arrayLayout(governanceCommandLayout(network));
+  ({ binary: "array", layout: governanceCommandLayout(network) } as const);

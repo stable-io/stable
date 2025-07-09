@@ -9,6 +9,8 @@ import type { Text } from "@stable-io/utils";
 import { encoding, isUint8Array } from "@stable-io/utils";
 import { isAddress, getAddress } from "viem/utils"; // TODO: Remove this dependency?
 
+export type RawAddress = `0x${string}`;
+
 export class EvmAddress implements Address {
   static readonly byteSize = 20;
   static readonly zeroAddress = new EvmAddress(new Uint8Array(EvmAddress.byteSize));
@@ -17,7 +19,7 @@ export class EvmAddress implements Address {
     return isAddress(address);
   }
 
-  private readonly address: `0x${string}`; //stored as checksum address
+  private readonly address: RawAddress; //stored as checksum address
 
   constructor(address: string | Uint8Array | UniversalAddress | EvmAddress) {
     this.address = (() => {
@@ -52,11 +54,11 @@ export class EvmAddress implements Address {
     })();
   }
 
-  unwrap(): `0x${string}` {
+  unwrap(): RawAddress {
     return this.address;
   }
 
-  toString(): `0x${string}` {
+  toString(): RawAddress {
     return this.address;
   }
 

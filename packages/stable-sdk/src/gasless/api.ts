@@ -5,9 +5,9 @@
 
 import { Url, BaseObject, encoding, deserializeBigints } from "@stable-io/utils";
 import { Network } from "../types/index.js";
-import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
+import { type Permit2GaslessData, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import { EvmAddress, Permit } from "@stable-io/cctp-sdk-evm";
 
 export const apiUrl = {
   Mainnet: "", // TODO
@@ -81,7 +81,7 @@ export type GetQuoteResponse = {
   iat: number;
   exp: number;
   quoteRequest: GetQuoteParams;
-  permit2TypedData: Permit2TypedData;
+  permit2GaslessData: Permit2GaslessData;
   gaslessFee: Usdc;
   jwt: string;
 };
@@ -109,7 +109,7 @@ export async function getTransferQuote(
   return {
     iat: payload.iat as number,
     exp: payload.exp as number,
-    permit2TypedData: payload.permit2TypedData as Permit2TypedData,
+    permit2GaslessData: payload.permit2GaslessData as Permit2GaslessData,
     quoteRequest,
     gaslessFee,
     jwt,
