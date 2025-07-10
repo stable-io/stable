@@ -214,7 +214,10 @@ pub struct OffChainQuoteData {
 pub struct AvaxHopMessage {
   pub destination_domain: u8,
   pub mint_recipient: [u8; 32],
-  pub gas_dropoff_micro_gas_token: u32,
+  //gas dropoff is actually a u32 but since it has to be serialized in big endian and it is
+  //  literally the only field where byte order matters, so we stick to this minor hack and
+  //  manually use u32.to_be_bytes(), rather than dragging in an entire serialization crate
+  pub gas_dropoff_micro_gas_token: [u8; 4],
 }
 
 pub fn transfer_with_relay(
@@ -242,12 +245,8 @@ pub fn transfer_with_relay(
       corridor_fee_adjustment.relative_percent_bps != 0,
       || {
         let (evm_transaction_gas, evm_transaction_size) =
-          if corridor == Corridor::V1 {
-            (EVM_V1_GAS_COST, EVM_V1_BILLED_SIZE)
-          }
-          else {
-            (EVM_V2_GAS_COST, EVM_V2_BILLED_SIZE)
-          };
+          if corridor == Corridor::V1 { (EVM_V1_GAS_COST, EVM_V1_BILLED_SIZE) }
+          else                        { (EVM_V2_GAS_COST, EVM_V2_BILLED_SIZE) };
 
         let (evm_transaction_gas, sui_computation_units, sui_stored_bytes, sui_deleted_bytes) =
           if gas_dropoff_micro_gas_token == 0 {
@@ -525,7 +524,7 @@ pub fn transfer_with_relay(
         let avax_hop_message = AvaxHopMessage {
           destination_domain,
           mint_recipient,
-          gas_dropoff_micro_gas_token,
+          gas_dropoff_micro_gas_token: gas_dropoff_micro_gas_token.to_be_bytes(),
         };
 
         deposit::v2::deposit_for_burn_with_hook(
