@@ -7,8 +7,8 @@ import {
   usdc,
 } from "@stable-io/cctp-sdk-definitions";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
-import type { Corridor } from "@stable-io/cctp-sdk-cctpr-evm";
-import { corridors } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { corridors } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Transform } from "class-transformer";
 import type { Domain } from "../../common/types";

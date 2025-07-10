@@ -7,18 +7,18 @@ import type {
   EvmDomains,
 } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   CorridorParams,
-  layouts,
+  Permit2GaslessData,
   SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
-import { CctpR, GaslessQuoteVariant } from "@stable-io/cctp-sdk-cctpr-evm";
+import { CctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import {
   ContractTx,
   EvmAddress,
-  Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { QuoteRequestDto } from "../gaslessTransfer/dto/quoteRequest.dto";
@@ -27,8 +27,7 @@ import type { ParsedSignature } from "../common/types";
 import type { Permit2Nonce } from "../common/utils";
 import { fetchNextPermit2Nonce, serializeSignature } from "../common/utils";
 
-type CorridorVariant = layouts.CorridorVariant;
-export type OnchainGaslessQuote = GaslessQuoteVariant & { type: "onChainUsdc" };
+export type OnchainGaslessQuote = layouts.GaslessQuoteVariant & { type: "onChainUsdc" };
 
 @Injectable()
 export class CctpRService {
@@ -47,7 +46,7 @@ export class CctpRService {
   public async composeGaslessTransferMessage(
     quoteRequest: QuoteRequestDto,
     gaslessFee: Usdc,
-  ): Promise<Permit2TypedData> {
+  ): Promise<Permit2GaslessData> {
     const cctpr = this.contractInterface(quoteRequest.sourceDomain);
     return cctpr.composeGaslessTransferMessage(
       quoteRequest.targetDomain,
@@ -68,7 +67,7 @@ export class CctpRService {
 
   public gaslessTransferTx(
     quoteRequest: QuoteRequestDto,
-    permit2TypedData: Permit2TypedData,
+    permit2GaslessData: Permit2GaslessData,
     permit2Signature: ParsedSignature,
     gaslessFee: Usdc,
   ): ContractTx {
@@ -81,9 +80,9 @@ export class CctpRService {
       quoteRequest.gasDropoff as TODO,
       this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
       { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
-      encoding.bignum.toBytes(permit2TypedData.message.nonce, 32 as Size),
+      encoding.bignum.toBytes(permit2GaslessData.message.nonce, 32 as Size),
       // deadline is expressed in unix timestamp (Seconds).
-      new Date(Number(permit2TypedData.message.deadline.toString()) * 1000),
+      new Date(Number(permit2GaslessData.message.deadline.toString()) * 1000),
       gaslessFee,
       quoteRequest.sender,
       serializeSignature(permit2Signature),
@@ -124,7 +123,7 @@ export class CctpRService {
   }
 
   getCorridorParams(
-    corridor: CorridorVariant["type"],
+    corridor: Corridor,
     fastFeeRate: Percentage,
   ): CorridorParams<
     Network,
