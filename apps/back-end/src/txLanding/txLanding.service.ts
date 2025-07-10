@@ -1,15 +1,28 @@
 import { Injectable } from "@nestjs/common";
 import { v4 as uuid } from "uuid";
-import { TxLandingClient } from "@stable-io/tx-landing-client";
-import { encoding } from "@stable-io/utils";
+import { TxLandingClient, TxStatus } from "@stable-io/tx-landing-client";
+import { encoding, pollUntil } from "@stable-io/utils";
 import { ConfigService } from "../config/config.service.js";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 
-import { pollUntil } from "@stable-io/utils";
+type GetTransactionStatusResponse = Awaited<
+  ReturnType<TxLandingClient["getTransactionStatus"]>
+>;
+type TransactionStatus = GetTransactionStatusResponse["statuses"][number];
+type ConfirmedTransactionStatus = TransactionStatus & {
+  status: TxStatus.TRANSACTION_STATUS_CONFIRMED;
+};
 
-type ConfirmedTransactionStatusResponse = Awaited<ReturnType<TxLandingClient["getTransactionStatus"]>>;
+// Ideally this would enforce that at least one item
+// is U, which it doesn't rn.
+type Some<T, U extends T> = [...(T | U)[]];
+
+type ConfirmedTransactionStatusResponse = GetTransactionStatusResponse & {
+  statuses: Some<TransactionStatus, ConfirmedTransactionStatus>;
+};
+
 @Injectable()
 export class TxLandingService {
   private readonly cctpSdkDomainsToChains = {
@@ -85,13 +98,22 @@ export class TxLandingService {
         );
       }
 
+      const isConfirmedTransactionResponse = (
+        result: GetTransactionStatusResponse,
+      ): result is ConfirmedTransactionStatusResponse => {
+        return result.statuses.some(
+          (status) => status.status === TxStatus.TRANSACTION_STATUS_CONFIRMED,
+        );
+      };
+
       const confirmationResult = await pollUntil(
         () => this.client.getTransactionStatus({ traceId }),
-        (result): result is ConfirmedTransactionStatusResponse => result.statuses[0] !== undefined
-          && result.statuses[0].status === 2,
+        isConfirmedTransactionResponse,
+        { baseDelayMs: 100, maxDelayMs: 350 },
       );
 
-      const finalTxHash = confirmationResult.statuses[0]!.txHash as `0x${string}`; // we polled until this property had a specific value.
+      const finalTxHash = confirmationResult.statuses.at(-1)!
+        .txHash as `0x${string}`; // we polled until this property had a specific value.
 
       return finalTxHash;
     } catch (error) {
