@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { v4 as uuid } from "uuid";
 import { TxLandingClient } from "@stable-io/tx-landing-client";
 import { encoding } from "@stable-io/utils";
 import { ConfigService } from "../config/config.service.js";
@@ -6,6 +7,9 @@ import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 
+import { pollUntil } from "@stable-io/utils";
+
+type ConfirmedTransactionStatusResponse = Awaited<ReturnType<TxLandingClient["getTransactionStatus"]>>;
 @Injectable()
 export class TxLandingService {
   private readonly cctpSdkDomainsToChains = {
@@ -55,8 +59,13 @@ export class TxLandingService {
     domain: keyof EvmDomains,
     txDetails: ContractTx,
   ): Promise<`0x${string}`> {
+    const traceId = uuid();
+
+    console.info(`Sending TX to landing service with trace-id ${traceId}`);
+
     try {
       const r = await this.client.signAndLandTransaction({
+        traceId,
         chain: this.toChain(domain),
         txRequests: [
           {
@@ -76,7 +85,15 @@ export class TxLandingService {
         );
       }
 
-      return cleanTxHash;
+      const confirmationResult = await pollUntil(
+        () => this.client.getTransactionStatus({ traceId }),
+        (result): result is ConfirmedTransactionStatusResponse => result.statuses[0] !== undefined
+          && result.statuses[0].status === 2,
+      );
+
+      const finalTxHash = confirmationResult.statuses[0]!.txHash as `0x${string}`; // we polled until this property had a specific value.
+
+      return finalTxHash;
     } catch (error) {
       console.error("Failed to send transaction:", error);
       throw error;

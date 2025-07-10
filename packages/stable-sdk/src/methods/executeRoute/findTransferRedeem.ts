@@ -11,8 +11,7 @@ import type { CctpAttestation } from "./findTransferAttestation.js";
 import { parseAbiItem } from "viem/utils";
 import type { Hex } from "viem";
 import type { Redeem } from "src/types/redeem.js";
-import type { PollingConfig } from "../../utils.js";
-import { pollUntil } from "../../utils.js";
+import { pollUntil, type PollingConfig } from "@stable-io/utils";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
 const redeemScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
@@ -37,7 +36,8 @@ export async function findTransferRedeem<N extends Network>(
   config: PollingConfig = {},
 ): Promise<Redeem> {
   const defaultConfig: PollingConfig = {
-    baseDelayMs: 2000,
+    baseDelayMs: 300,
+    maxDelayMs: 1200,
   };
   const { cctpVersion, nonce, sourceDomain, targetDomain } = attestation;
   const viemEvmClient = ViemEvmClient.fromNetworkAndDomain(

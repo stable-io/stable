@@ -31,7 +31,7 @@ const sdk = new StableSDK({
 const intent = {
   sourceChain: "Ethereum" as const,
   targetChain: "Optimism" as const,
-  amount: "0.31",
+  amount: "0.1",
   sender,
   recipient,
   // To receive gas tokens on the target. Increases the cost of the transfer.
@@ -42,7 +42,7 @@ const intent = {
 
 const routes = await sdk.findRoutes(intent);
 
-const selectedRoutes = [routes.fastest];
+const selectedRoutes = [routes.cheapest];
 
 for (const route of selectedRoutes) {
   const hasBalance = await sdk.checkHasEnoughFunds(route);
@@ -55,6 +55,10 @@ for (const route of selectedRoutes) {
     console.info(`Step completed: ${e.name}.`);
     console.info(`Data: ${stringify(e.data)}\n`);
   });
+
+  route.progress.on("error", (e) => {
+    console.info(`Transfer failed on ${e.type.split("-")[0]} step.`);
+  })
 
   route.transactionListener.on("*", (e) => {
     console.info(`Transaction Event: ${e.name}.`);

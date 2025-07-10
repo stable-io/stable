@@ -69,7 +69,7 @@ export const $executeRoute =
       getRpcUrl(attestation.targetDomain),
       attestation,
     ).catch((error: unknown) => {
-      route.progress.emit("error", { type: "attestation-failed", details: { txHash: transferTx } });
+      route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
       throw error;
     });
     redeems.push(redeem);
@@ -93,6 +93,7 @@ export const $executeRoute =
         network,
         attestation.targetDomain,
         redeem.transactionHash,
+        { baseDelayMs: 50, maxDelayMs: 350 }
       ).catch((error: unknown) => {
         route.progress.emit("error", {
           type: "attestation-failed",

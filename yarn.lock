@@ -5668,6 +5668,7 @@ __metadata:
     reflect-metadata: "npm:^0.2.2"
     tsx: "npm:^4.19.4"
     typescript: "npm:^5.8.3"
+    uuid: "npm:^11.1.0"
     viem: "npm:^2.31.3"
   languageName: unknown
   linkType: soft
@@ -19079,7 +19080,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.1.0":
+"uuid@npm:11.1.0, uuid@npm:^11.1.0":
   version: 11.1.0
   resolution: "uuid@npm:11.1.0"
   bin:

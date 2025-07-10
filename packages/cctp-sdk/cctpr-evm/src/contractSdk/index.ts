@@ -412,7 +412,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           baseAmount: baseAmount.toUnit("atomic"),
           destinationDomain: domainIdOf(destination),
           mintRecipient: mintRecipient.toString(),
-          microGasDropoff: gasDropoff.toUnit("human").mul(1000).floor(),
+          microGasDropoff: gasDropoff.toUnit("human").mul(1000000).floor(),
           corridor: {
             v1:       "CCTPv1" as const,
             v2Direct: "CCTPv2" as const,
