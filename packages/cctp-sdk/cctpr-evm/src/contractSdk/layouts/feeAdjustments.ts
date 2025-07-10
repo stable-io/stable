@@ -6,17 +6,12 @@
 import type { Layout, DeriveType } from "binary-layout";
 import type { RoArray } from "@stable-io/map-utils";
 import { Rational } from "@stable-io/amount";
-import { amountItem, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { Usdc, amountItem, linearTransform } from "@stable-io/cctp-sdk-definitions";
 import { paddedSlotItem } from "@stable-io/cctp-sdk-evm";
 
-//stored in cents -> shift down by 2 decimal and read as human
-const absoluteUsdcTransform = {
-  to: (value: number) => value / 100,
-  from: (human: Rational) => Number(human.mul(100).floor()),
-} as const;
 //negative values mean a discount on relay costs (but gas dropoff is never discounted)
 const feeAdjustmentAbsoluteUsdcItem = {
-  ...amountItem(2, Usdc, "human", absoluteUsdcTransform),
+  ...amountItem(2, Usdc, "human", linearTransform("from->to", 100)), //stored in cents
   binary: "int",
 } as const satisfies Layout;
 

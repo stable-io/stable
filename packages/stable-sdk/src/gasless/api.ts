@@ -4,10 +4,11 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Url, BaseObject, encoding, deserializeBigints } from "@stable-io/utils";
-import { Network } from "../types/index.js";
-import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { type Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import { EvmAddress, Permit } from "@stable-io/cctp-sdk-evm";
+import { Network } from "../types/index.js";
 
 export const apiUrl = {
   Mainnet: "", // TODO
@@ -69,7 +70,7 @@ export type GetQuoteParams = {
   amount: Usdc;
   sender: EvmAddress;
   recipient: EvmAddress;
-  corridor: layouts.CorridorVariant["type"];
+  corridor: Corridor;
   gasDropoff: GenericGasToken;
   permit2PermitRequired: boolean;
   maxRelayFee: Usdc;
@@ -81,7 +82,7 @@ export type GetQuoteResponse = {
   iat: number;
   exp: number;
   quoteRequest: GetQuoteParams;
-  permit2TypedData: Permit2TypedData;
+  permit2GaslessData: Permit2GaslessData;
   gaslessFee: Usdc;
   jwt: string;
 };
@@ -109,7 +110,7 @@ export async function getTransferQuote(
   return {
     iat: payload.iat as number,
     exp: payload.exp as number,
-    permit2TypedData: payload.permit2TypedData as Permit2TypedData,
+    permit2GaslessData: payload.permit2GaslessData as Permit2GaslessData,
     quoteRequest,
     gaslessFee,
     jwt,
@@ -143,7 +144,7 @@ function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): 
     sender: new EvmAddress(responseQuoteParams.sender as string),
     recipient: new EvmAddress(responseQuoteParams.recipient as string),
     gasDropoff: genericGasToken(responseQuoteParams.gasDropoff as string, "human"),
-    corridor: responseQuoteParams.corridor as layouts.CorridorVariant["type"],
+    corridor: responseQuoteParams.corridor as Corridor,
     takeFeesFromInput: responseQuoteParams.takeFeesFromInput as boolean,
     maxRelayFee: usdc(responseQuoteParams.maxRelayFee as string),
     fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string || "0"),

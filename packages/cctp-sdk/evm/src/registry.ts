@@ -5,7 +5,7 @@
 
 import { registerPlatformAddress } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "./address.js";
-import { BaseTx, Eip2612Data, Eip712Data } from "./platform.js";
+import { BaseTx, Eip712Data } from "./platform.js";
 
 declare module "@stable-io/cctp-sdk-definitions" {
   export interface PlatformRegistry {
@@ -13,7 +13,7 @@ declare module "@stable-io/cctp-sdk-definitions" {
       Address: EvmAddress;
       UnsignedTx: BaseTx;
       //TODO is this good enough? do we need to also support bare strings?
-      UnsignedMsg: Eip712Data<any>;
+      UnsignedMsg: Eip712Data;
     };
   }
 }

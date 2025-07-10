@@ -10,6 +10,7 @@ import type { RoArray, Simplify, TupleWithLength } from "@stable-io/map-utils";
 import { range } from "@stable-io/map-utils";
 import type { TODO } from "@stable-io/utils";
 import { keccak256, encoding, assertDistinct } from "@stable-io/utils";
+import { Rational } from "@stable-io/amount";
 import type {
   DomainsOf,
   GasTokenOf,
@@ -36,11 +37,12 @@ import {
   wormholeChainIdOf,
 } from "@stable-io/cctp-sdk-definitions";
 import type {
+  RawAddress,
   EvmClient,
   ContractTx,
   Permit,
   CallData,
-  Permit2TypedData,
+  Permit2WitnessTransferFromData,
 } from "@stable-io/cctp-sdk-evm";
 import {
   wordSize,
@@ -52,13 +54,19 @@ import {
   paddedSlotItem,
   evmAddressItem,
 } from "@stable-io/cctp-sdk-evm";
-import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type {
+  SupportedDomain,
+  Corridor,
+  CorridorVariant,
+  FeeAdjustmentType,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
+  corridors,
   avaxRouterContractAddress,
+  feeAdjustmentTypes,
   contractAddressOf,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
-  Corridor,
   GovernanceCommand,
   QuoteRelay,
   Transfer,
@@ -67,8 +75,7 @@ import type {
   ExtraChainIds,
   FeeAdjustment,
   FeeAdjustmentsSlot,
-  FeeAdjustmentType,
-  CorridorVariant,
+  GaslessQuoteVariant,
 } from "./layouts/index.js";
 import {
   quoteRelayArrayLayout,
@@ -80,12 +87,9 @@ import {
   chainIdsSlotItem,
   chainIdsPerSlot,
   feeAdjustmentsSlotItem,
-  feeAdjustmentTypes,
   constructorLayout,
-  corridors,
+  extraDomains,
 } from "./layouts/index.js";
-import { extraDomains } from "./layouts/common.js";
-import { Rational } from "@stable-io/amount";
 
 //external consumers shouldn't really need these but exporting them just in case
 export * as layouts from "./layouts/index.js";
@@ -113,35 +117,6 @@ export const parseTransferTxCalldata = <N extends Network>(network: N) =>
 export const parseGovernanceTxCalldata = <N extends Network>(network: N) =>
   (calldata: CallData) => parseExecCalldata(calldata, governanceCommandArrayLayout(network));
 
-// const tokenPermissionTypeString = "TokenPermissions(address token,uint256 amount)";
-// const tokenPermissionTypeHash = keccak256(tokenPermissionTypeString);
-// //extra structs are sorted alphabetically according to EIP-712 spec
-// const witnessTypeString = [
-//   "PermitWitnessTransferFrom(",
-//     "TokenPermissions permitted,",corridor
-//     "address spender,",
-//     "uint256 nonce,",
-//     "uint256 deadline,",
-//     "TransferWithRelayWitness parameters",
-//   ")",
-//   //if amount == baseAmount, then all fees are taken from baseAmount
-//   //otherwise, amount must equal baseAmount + gaslessFee + maxRelayFee
-//   //  (and baseAmount - fastFee will be transferred)
-//   tokenPermissionTypeString,
-//   "TransferWithRelayWitness(",
-//     "uint64 baseAmount,",
-//     "uint8 destinationDomain,",
-//     "bytes32 mintRecipient,",
-//     "uint32 microGasDropoff,",
-//     "string corridor,", //"CCTPv1", "CCTPv2", or "CCTPv2->Avalanche->CCTPv1"
-//     "uint64 maxFastFee,", //must be 0 for v1 corridor
-//     "uint64 gaslessFee,",
-//     "uint64 maxRelayFee,", //for off-chain quotes, this is the exact relay fee
-//     "string quoteSource,", //"OffChain" or "OnChain"
-//     "bytes offChainQuoteSignature,", //empty for onChain quotes
-//   ")",
-// ].join("");
-// const witnessTypeHash = keccak256(witnessTypeString);
 
 type QtOnChain = { readonly type: "onChain" };
 type QtOffChain = { readonly type: "offChain" };
@@ -167,6 +142,22 @@ type QuoteTypeImpl<
     : never
   : never
 >;
+
+export type GaslessWitness = {
+  parameters: {
+    baseAmount:        bigint;
+    destinationDomain: DomainId;
+    mintRecipient:     RawAddress;
+    microGasDropoff:   bigint;
+    corridor:          "CCTPv1" | "CCTPv2" | "CCTPv2->Avalanche->CCTPv1";
+    maxFastFee:        bigint;
+    gaslessFee:        bigint;
+    maxRelayFee:       bigint;
+    quoteSource:       "OffChain" | "OnChain";
+  };
+};
+
+export type Permit2GaslessData = Permit2WitnessTransferFromData<GaslessWitness>;
 
 export type Quote<SD extends DomainsOf<"Evm">> =
                             QuoteTypeImpl<true, GasTokenOf<SD, DomainsOf<"Evm">>>;
@@ -304,14 +295,15 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       : (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee).toUnit("human"),
     );
 
-    const quoteVariant = (
+    const userQuote = (
       quote.type === "offChain"
       ? { type: "offChain",
           expirationTime: quote.expirationTime,
           quoterSignature: quote.quoterSignature,
-          feePaymentVariant: quoteIsInUsdc(quote)
-            ? { payIn: "usdc", relayFeeUsdc: quote.relayFee }
-            : { payIn: "gasToken", relayFeeGasToken: value },
+          relayFee:
+            quote.relayFee.kind.name === "Usdc"
+            ? { payIn: "usdc",     amount: quote.relayFee as Usdc                       }
+            : { payIn: "gasToken", amount: evmGasToken(quote.relayFee.toUnit("atomic")) },
         }
       : quoteIsInUsdc(quote)
       ? { type: "onChainUsdc",
@@ -319,7 +311,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           maxRelayFeeUsdc: quote.maxRelayFee,
         }
       : { type: "onChainGas" }
-    ) as UserQuoteVariant;
+    ) satisfies UserQuoteVariant;
 
     const burnAmount = this.calcBurnAmount(inOrOut, corridor, quote, usdc(0));
 
@@ -336,8 +328,8 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       destinationDomain: destination as unknown as Transfer<N>["destinationDomain"], //TODO brrr
       mintRecipient,
       gasDropoff: genericGasToken(gasDropoff.toUnit("human")),
-      corridorVariant: CctpR.toCorridorVariant(corridor, burnAmount),
-      quoteVariant,
+      corridorVariant:  CctpR.toCorridorVariant(corridor, burnAmount),
+      quoteVariant: userQuote,
     } as const satisfies Transfer<N>;
 
     return this.execTx(value, serialize(transferLayout(this.client.network), transfer) as CallData);
@@ -354,7 +346,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     nonce: Uint8Array, //TODO better type
     deadline: Date,
     gaslessFee: Usdc,
-  ): Permit2TypedData {
+  ): Permit2GaslessData {
     this.checkCorridorDestinationCoherence(destination, corridor.type);
     if (nonce.length !== wordSize)
       throw new Error(`Nonce must be ${wordSize} bytes`);
@@ -427,7 +419,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           quoteSource: quote.type === "offChain" ? "OffChain" : "OnChain",
         },
       },
-    } as const;
+    };
   }
 
   transferGasless<DD extends SupportedDomain<N>>(
@@ -465,14 +457,14 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
         quote.type === "offChain"
         ? { type: "offChain",
             expirationTime: quote.expirationTime,
-            feePaymentVariant: { payIn: "usdc", relayFeeUsdc: quote.relayFee },
+            relayFee: { payIn: "usdc", amount: quote.relayFee as Usdc },
             quoterSignature: quote.quoterSignature,
           }
         : { type: "onChainUsdc",
             maxRelayFeeUsdc: quote.maxRelayFee,
             takeRelayFeeFromInput: inOrOut.type === "in",
           }
-      ),
+      ) satisfies GaslessQuoteVariant,
     } as const satisfies Transfer<N>;
 
     return this.execTx(
@@ -781,14 +773,9 @@ export class CctpRGovernance<
     slotOfMapping: number | bigint,
     key: number | bigint,
   ): bigint {
-    return deserialize(
-      { binary: "uint", size: wordSize },
-      keccak256(serialize([
-          { name: "key",  binary: "uint", size: wordSize },
-          { name: "slot", binary: "uint", size: wordSize },
-        ],
-        { key: BigInt(key), slot: BigInt(slotOfMapping) },
-      )),
-    );
+    return encoding.bignum.decode(keccak256(encoding.bytes.concat(
+      encoding.bignum.toBytes(key, wordSize),
+      encoding.bignum.toBytes(slotOfMapping, wordSize),
+    )));
   }
 }

@@ -4,8 +4,9 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Permit2TypedData, Eip2612MessageBody, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
-import { Corridor, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Eip2612Message, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
+import { type Permit2GaslessData, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
 import { SupportedPlatform } from "../../types/signer.js";
 import { encoding } from "@stable-io/utils";
 
@@ -56,60 +57,54 @@ export interface GaslessTransferStep extends BaseRouteExecutionStep {
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
-export function getStepType(txOrSig: ContractTx | Eip712Data<any> | GaslessTransferData): StepType {
+export function getStepType(txOrSig: ContractTx | Eip712Data | GaslessTransferData): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
-  if (isPermit2TypedData(txOrSig)) return SIGN_PERMIT_2;
+  if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
   if (isEip2612Data(txOrSig)) return SIGN_PERMIT;
   if (isTransferTx(txOrSig)) return TRANSFER;
   if (isApprovalTx(txOrSig)) return PRE_APPROVE;
   throw new Error("Unknown Step Type");
 }
 
+const isNonNullObject = (subject: unknown): subject is Record<PropertyKey, unknown> =>
+  typeof subject === "object" && subject !== null;
+
+const hasKeys = (subject: Record<PropertyKey, unknown>, keys: PropertyKey[]) =>
+  keys.every(key => key in subject);
+
+const isObjectWithKeys =
+  <K extends PropertyKey>(subject: unknown, keys: K[]): subject is Record<K, unknown> =>
+    isNonNullObject(subject) && hasKeys(subject, keys);
+
 export function isContractTx(subject: unknown): subject is ContractTx {
-  if (typeof subject !== "object" || subject === null) return false;
-  return "data" in subject && "to" in subject;
+  return isObjectWithKeys(subject, ["data", "to"]);
 }
 
-export function isEip712TypedData(subject: unknown): subject is Eip712Data<any> {
-  if (typeof subject !== "object" || subject === null) return false;
-  return "domain" in subject && "types" in subject && "message" in subject;
+export function isEip712Data(subject: unknown): subject is Eip712Data {
+  return isObjectWithKeys(subject, ["domain", "types", "message"]);
 }
 
-export function isEip2612MessageBody(subject: unknown): subject is Eip2612MessageBody {
-  return typeof subject === "object" &&
-    subject !== null &&
-    "owner" in subject &&
-    "spender" in subject &&
-    "value" in subject &&
-    "nonce" in subject &&
-    "deadline" in subject;
+export function isEip2612Message(subject: unknown): subject is Eip2612Message {
+  return isObjectWithKeys(subject, ["owner", "spender", "value", "nonce", "deadline"]);
 }
 
 export function isEip2612Data(subject: unknown): subject is Eip2612Data {
-  if (!isEip712TypedData(subject)) return false;
-  return isEip2612MessageBody(subject.message);
+  return isEip712Data(subject) && isEip2612Message(subject.message);
 }
 
-export function isPermit2TransferFromMessageBody(subject: unknown):
+export function isPermit2TransferFromMessage(subject: unknown):
   subject is Permit2TransferFromMessage {
-  return typeof subject === "object" &&
-    subject !== null &&
-    "nonce" in subject &&
-    "deadline" in subject &&
-    "permitted" in subject &&
-    typeof subject.permitted === "object" &&
-    subject.permitted !== null &&
-    "token" in subject.permitted &&
-    "amount" in subject.permitted;
+  return isObjectWithKeys(subject, ["nonce", "deadline", "permitted"]) &&
+    isNonNullObject(subject.permitted) &&
+    hasKeys(subject.permitted, ["token", "amount"]);
 }
 
-export function isPermit2TypedData(subject: unknown): subject is Permit2TypedData {
-  if (!isEip712TypedData(subject)) return false;
-  return isPermit2TransferFromMessageBody(subject.message);
+export function isPermit2GaslessData(subject: unknown): subject is Permit2GaslessData {
+  return isEip712Data(subject) && isPermit2TransferFromMessage(subject.message);
 }
 
 export type GaslessTransferData = {
-  permit2TypedData: Permit2TypedData;
+  permit2GaslessData: Permit2GaslessData;
   txHash: `0x${string}`;
   permit2Signature: `0x${string}`;
   // present if a permit was involved in the transfer
@@ -117,7 +112,7 @@ export type GaslessTransferData = {
 };
 export function isGaslessTransferData(subject: unknown): subject is GaslessTransferData {
   if (typeof subject !== "object" || subject === null) return false;
-  if (!("permit2TypedData" in subject) || !isPermit2TypedData(subject.permit2TypedData)) return false;
+  if (!("permit2GaslessData" in subject) || !isPermit2GaslessData(subject.permit2GaslessData)) return false;
   if (!("txHash" in subject) || typeof subject.txHash !== "string") return false;
   if (!("permit2Signature" in subject) || typeof subject.permit2Signature !== "string") return false;
   if (("permit" in subject) && !isPermit(subject.permit)) return false;

@@ -3,9 +3,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { MapLevels } from "@stable-io/map-utils";
-import { constMap } from "@stable-io/map-utils";
-import type { Domain, Network } from "@stable-io/cctp-sdk-definitions";
+import type { Intersect, MapLevels, RoTuple } from "@stable-io/map-utils";
+import { constMap, intersect } from "@stable-io/map-utils";
+import type { Domain, Network, Platform } from "@stable-io/cctp-sdk-definitions";
+import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 
 export const contractAddressEntries = [[
   //TODO
@@ -44,9 +45,18 @@ export const contractAddressEntries = [[
 ] as const satisfies MapLevels<[Network, Domain, string | undefined]>;
 
 export const contractAddressOf = constMap(contractAddressEntries);
-
 export const supportedDomains = constMap(contractAddressEntries, [0, 1]);
 export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDomains<N>>[number];
+
+//to nip complaints about overly long inferred types in the bud
+export type SupportedPlatformDomain<N extends Network, P extends Platform> =
+  Intersect<ReturnType<typeof domainsOf<P>>, ReturnType<typeof supportedDomains<N>>> extends
+    infer DT extends RoTuple<Domain> ? DT : never;
+
+export const supportedPlatformDomains =
+  <N extends Network, P extends Platform>(network: N, platform: P):
+    SupportedPlatformDomain<N, P> =>
+      intersect(domainsOf(platform), supportedDomains(network)) as any;
 
 export const avaxRouterContractAddress = {
   Mainnet: "0x", //TODO

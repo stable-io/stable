@@ -1,9 +1,9 @@
 import { encoding } from "@stable-io/utils";
-import { composePermitMsg, EvmAddress, permit2Address, Permit, Permit2TypedData, Eip2612Data } from "@stable-io/cctp-sdk-evm";
-import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { composePermitMsg, EvmAddress, permit2Address, Permit, Eip2612Data } from "@stable-io/cctp-sdk-evm";
+import type { SupportedEvmDomain, Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Network } from "src/types/general.js";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { Usdc, usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
+import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 
 import { Intent } from "../types/index.js";
 import { postTransferRequest } from "./api.js";
@@ -18,9 +18,9 @@ export async function* transferWithGaslessRelay<
   network: N,
   permit2RequiresAllowance: boolean,
   intent: Intent<S, D>,
-  permit2TypedData: Permit2TypedData,
+  permit2GaslessData: Permit2GaslessData,
   jwt: string,
-): AsyncGenerator<Eip2612Data | GaslessTransferData | Permit2TypedData, any, any> {
+): AsyncGenerator<Eip2612Data | GaslessTransferData | Permit2GaslessData, any, any> {
   const usdcAddress = new EvmAddress(usdcContracts.contractAddressOf[network][intent.sourceChain]);
   const permit2Addr = new EvmAddress(permit2Address);
   const maxUint256Usdc = usdc(2n ** 256n - 1n, "atomic");
@@ -32,12 +32,12 @@ export async function* transferWithGaslessRelay<
     );
   }
 
-  const { signature: permit2Signature } = yield permit2TypedData;
+  const { signature: permit2Signature } = yield permit2GaslessData;
 
   const { txHash } = await postTransferRequest(network, { jwt, permit2Signature, permit });
 
   return {
-    permit2TypedData,
+    permit2GaslessData,
     txHash,
     permit2Signature: encoding.hex.encode(permit2Signature, true),
     ...permit,

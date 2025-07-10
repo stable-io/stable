@@ -1,4 +1,4 @@
-import { Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 
 import type { PlainDto } from "../common/types";
 import type { QuoteRequestDto } from "./dto";
@@ -8,7 +8,7 @@ export type RelayTx = {
 };
 
 export interface JwtPayload extends Record<string, unknown> {
-  readonly permit2TypedData: Permit2TypedData;
+  readonly permit2GaslessData: Permit2GaslessData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
   readonly gaslessFee: string; // Usdc =(
 }

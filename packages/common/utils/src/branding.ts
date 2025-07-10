@@ -8,7 +8,13 @@ declare const __brand: unique symbol;
 type Branded<B> = { [__brand]: B };
 export type Brand<T, B> = T & Branded<B>;
 
-export type IsBranded<T> = T extends { [__brand]: unknown } ? true : false;
+export type IsBranded<T> = T extends Brand<T, unknown> ? true : false;
+export type PreserveBrand<T, R> =
+  T extends Brand<infer U, infer B>
+  ? U extends R
+    ? Brand<R, B>
+    : never
+  : R;
 
 export type Unbrand<T> = T extends Brand<infer U, unknown> ? U : T;
 

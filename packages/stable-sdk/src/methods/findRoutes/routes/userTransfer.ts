@@ -11,9 +11,8 @@ import { init as initDefinitions,
 } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
-import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { SupportedDomain, Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
-  Corridor,
   CorridorStats,
   SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";

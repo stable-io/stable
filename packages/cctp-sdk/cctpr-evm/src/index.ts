@@ -11,17 +11,15 @@ export * from "./registry.js";
 export type { CorridorStats } from "./getCorridors.js";
 export * from "./contractSdk/index.js";
 
-export * from "./contractSdk/index.js";
-
-/**
- * @todo: this import looks weird.
- */
-export type { Corridor, GovernanceCommand, FeeAdjustment, FeeAdjustmentType } from "./contractSdk/layouts/index.js";
-export type { SupportedEvmDomain } from "./contractSdk/index.js";
-
-export { corridors } from "./contractSdk/layouts/common.js";
-export type { GaslessQuoteVariant } from "./contractSdk/layouts/transfer.js";
-export { routerHookDataLayout } from "./contractSdk/layouts/routerHookData.js";
+export {
+  execSelector,
+  parseTransferTxCalldata,
+  CctpRBase,
+  CctpR,
+  CctpRGovernance,
+} from "./contractSdk/index.js";
+export type { FeeAdjustments } from "./contractSdk/index.js";
+export { routerHookDataLayout } from "@stable-io/cctp-sdk-cctpr-definitions";
 export { chainDataLayout } from "./contractSdk/layouts/constructor.js";
 
 /**

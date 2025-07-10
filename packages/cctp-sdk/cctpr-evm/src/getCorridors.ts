@@ -17,10 +17,9 @@ import type { EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Text, TODO } from "@stable-io/utils";
 import { assertDistinct, assertEqual } from "@stable-io/utils";
 import type { RoArray } from "@stable-io/map-utils";
-
-import type { QuoteRelay, Corridor } from "./contractSdk/layouts/index.js";
-import type { SupportedEvmDomain } from "./contractSdk/index.js";
-import { CctpR as CctpRContract } from "./contractSdk/index.js";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { QuoteRelay } from "./contractSdk/layouts/index.js";
+import { type SupportedEvmDomain, CctpR as CctpRContract } from "./contractSdk/index.js";
 
 type SensibleV2Corridor<
   N extends Network,

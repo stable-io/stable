@@ -5,10 +5,10 @@
 
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 
+export type { Network } from "@stable-io/cctp-sdk-definitions";
+
 export type Hex = `0x${string}`;
 export type EvmChains = keyof EvmDomains;
-
-export type Network = "Mainnet" | "Testnet";
 
 /** @todo */
 // Amount is expressed in human units, with an optional decimal point

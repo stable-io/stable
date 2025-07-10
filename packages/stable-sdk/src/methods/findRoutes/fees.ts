@@ -4,17 +4,13 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Amount, Conversion } from "@stable-io/amount";
-import type {
-  Corridor,
-  CorridorStats,
-} from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { CorridorStats } from "@stable-io/cctp-sdk-cctpr-evm";
 import {
   EvmDomains,
   GasTokenKindOf,
   GasTokenNameOf,
-  GasTokenOf,
   Usdc,
-  usdc,
   usd,
   Usd,
   gasTokenKindOf,

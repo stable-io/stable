@@ -5,7 +5,7 @@
 
 import { base16 as b16, base64 as b64, base58 as b58, bech32 as be32 } from "@scure/base";
 import type { Size } from "./misc.js";
-import type { IsBranded } from "./branding.js";
+import type { PreserveBrand } from "./branding.js";
 
 export const stripPrefix = (prefix: string, str: string): string =>
   str.startsWith(prefix) ? str.slice(prefix.length) : str;
@@ -125,21 +125,21 @@ export const bytes = {
     arr: U,
     length: Size,
     padStart: boolean = true,
-  ): IsBranded<U> extends true ? U : Uint8Array => {
+  ): PreserveBrand<U, Uint8Array> => {
     if (length === arr.length)
-      return arr;
+      return arr as Uint8Array as PreserveBrand<U, Uint8Array>;
 
     if (length < arr.length)
       throw new Error(`Padded length must be >= input length`);
 
-    const result = new Uint8Array(length) as IsBranded<U> extends true ? U : Uint8Array;
+    const result = new Uint8Array(length) as PreserveBrand<U, Uint8Array>;
     result.set(arr, padStart ? length - arr.length : 0);
     return result;
   },
 
-  concat: <U extends Uint8Array>(...args: U[]): IsBranded<U> extends true ? U : Uint8Array => {
+  concat: <U extends Uint8Array>(...args: U[]): PreserveBrand<U, Uint8Array> => {
     const length = args.reduce((acc, curr) => acc + curr.length, 0);
-    const result = new Uint8Array(length) as IsBranded<U> extends true ? U : Uint8Array;
+    const result = new Uint8Array(length) as PreserveBrand<U, Uint8Array>;
     let offset = 0;
     for (const arg of args) {
       result.set(arg, offset);

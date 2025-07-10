@@ -28,6 +28,7 @@ import {
   TRANSFER_WITH_RELAY_WITNESS_TYPE_HASH
 } from "cctpr/assets/CctpRUser.sol";
 import {
+  NANO_TO_ATO,
   QUOTE_OFF_CHAIN,
   QUOTE_ON_CHAIN_USDC,
   QUOTE_ON_CHAIN_GAS
@@ -38,21 +39,20 @@ import "./CctpMessagesV2.sol";
 import "./CctpOverrideV2.sol";
 
 contract RequestRelay is CctpRTestBase {
-  using CctpOverride for IMessageTransmitter;
-  using CctpOverrideV2 for IMessageTransmitterV2;
-  using UsdcDealer for IUSDC;
-  using CctpMessageLib for CctpTokenBurnMessage;
+  using CctpOverride     for IMessageTransmitter;
+  using CctpOverrideV2   for IMessageTransmitterV2;
+  using UsdcDealer       for IUSDC;
+  using CctpMessageLib   for CctpTokenBurnMessage;
   using CctpMessageV2Lib for CctpTokenBurnMessageV2;
-  using LogUtils for Vm.Log[];
-  using PermitParsing for bytes;
-  using BytesParsing for bytes;
+  using LogUtils         for Vm.Log[];
+  using PermitParsing    for bytes;
+  using BytesParsing     for bytes;
 
   uint constant MEGA = 1e6;
   string constant PERMIT2_TRANSFER_TYPEHASH_STUB = "PermitWitnessTransferFrom("
     "TokenPermissions permitted,address spender,uint256 nonce,uint256 deadline,";
   bytes32 constant PERMIT2_TOKEN_PERMISSIONS_TYPEHASH =
     keccak256("TokenPermissions(address token,uint256 amount)");
-
 
   enum QuoteType {
     OffChainUsdc,
@@ -327,6 +327,9 @@ contract RequestRelay is CctpRTestBase {
       vars.paymentInUsdc
     );
 
+    if (quoteType == QuoteType.OffChainGas)
+      vars.quote = (vars.quote / NANO_TO_ATO) * NANO_TO_ATO;
+
     vars.maxFeeUsd = vars.onChainQuoteInUsdc
       ? vars.quote - (withError && permitType != 2 ? 1 : 0)
       : 0;
@@ -348,6 +351,7 @@ contract RequestRelay is CctpRTestBase {
     bytes memory transferSpecificParams;
     if (quoteType == QuoteType.OffChainUsdc || quoteType == QuoteType.OffChainGas) {
       uint32 expirationTime = uint32(block.timestamp + (withError && permitType != 2 ? 0 : 1));
+      uint64 quoteVal = uint64(vars.paymentInUsdc ? vars.quote : vars.quote / NANO_TO_ATO);
       bytes memory offChainQuote = abi.encodePacked(
         uint8(CCTP_DOMAIN_ETHEREUM),
         uint8(destinationDomain),
@@ -355,7 +359,7 @@ contract RequestRelay is CctpRTestBase {
         uint32(vars.gasDropoffMicroGasToken),
         expirationTime,
         vars.paymentInUsdc,
-        uint128(vars.quote)
+        quoteVal
       );
       bytes32 hash = keccak256(offChainQuote);
       (uint8 v, bytes32 r, bytes32 s) = vm.sign(offChainQuoterSecret, hash);
@@ -364,9 +368,7 @@ contract RequestRelay is CctpRTestBase {
         QUOTE_OFF_CHAIN,
         expirationTime,
         vars.paymentInUsdc,
-        vars.paymentInUsdc
-        ? abi.encodePacked(uint64(vars.quote))
-        : abi.encodePacked(uint128(vars.quote)),
+        quoteVal,
         r, s, v
       );
     }

@@ -36,7 +36,7 @@ export class GaslessTransferService {
     const gaslessFee = await this.calculateGaslessFee(request);
 
     const jwtPayload: JwtPayload = {
-      permit2TypedData: await this.cctpRService.composeGaslessTransferMessage(
+      permit2GaslessData: await this.cctpRService.composeGaslessTransferMessage(
         request,
         gaslessFee,
       ),
@@ -52,14 +52,14 @@ export class GaslessTransferService {
     request: RelayRequestDto,
   ): Promise<RelayTx> {
     const {
-      jwt: { quoteRequest, permit2TypedData, gaslessFee },
+      jwt: { quoteRequest, permit2GaslessData, gaslessFee },
       permit2Signature,
       permit,
     } = request;
 
     const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
       quoteRequest,
-      permit2TypedData,
+      permit2GaslessData,
       permit2Signature,
       gaslessFee,
     );
