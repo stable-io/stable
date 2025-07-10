@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { Eip712Data } from "@stable-io/cctp-sdk-evm";
-import { Hex, Intent, Network } from "./types/index.js";
+import { Hex, Intent, Network, TxHash } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Redeem } from "./types/redeem.js";
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
@@ -70,7 +70,7 @@ export type TransferInitiatedEventData = {
  */
 
 export type ApprovalSentEventData = {
-  transactionHash: Hex;
+  transactionHash: TxHash;
   approvalAmount: bigint;
 };
 
@@ -85,7 +85,7 @@ export type MessageSignedEventData = {
  */
 
 export type TransferSentEventData = {
-  transactionHash: Hex;
+  transactionHash: TxHash;
   approvalType: "Permit" | "Preapproval" | "Gasless";
   gasDropOff: bigint;
   usdcAmount: Usdc;
@@ -113,10 +113,13 @@ export type FailureScenarios = "transfer-failed" // tokens never left the accoun
 
 export type TransferFailedEventData<S extends FailureScenarios=FailureScenarios> = {
   type: FailureScenarios;
-  details: S extends "transfer-failed" ? undefined
-            : S extends "attestation-failed" ? { txHash: Hex } // timeout boolean
-            : S extends "receive-failed" ? { txHash: Hex }
-            : never;
+  details: S extends "transfer-failed"
+    ? undefined
+    : S extends "attestation-failed"
+    ? { txHash: TxHash } // timeout boolean
+    : S extends "receive-failed"
+    ? { txHash: TxHash }
+    : never;
 };
 
 /**

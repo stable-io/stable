@@ -4,10 +4,11 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Url, BaseObject, encoding, deserializeBigints } from "@stable-io/utils";
-import { Network } from "../types/index.js";
-import { type Permit2GaslessData, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { type Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, Permit } from "@stable-io/cctp-sdk-evm";
+import { Network } from "../types/index.js";
 
 export const apiUrl = {
   Mainnet: "", // TODO
@@ -69,7 +70,7 @@ export type GetQuoteParams = {
   amount: Usdc;
   sender: EvmAddress;
   recipient: EvmAddress;
-  corridor: layouts.CorridorVariant["type"];
+  corridor: Corridor;
   gasDropoff: GenericGasToken;
   permit2PermitRequired: boolean;
   maxRelayFee: Usdc;
@@ -143,7 +144,7 @@ function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): 
     sender: new EvmAddress(responseQuoteParams.sender as string),
     recipient: new EvmAddress(responseQuoteParams.recipient as string),
     gasDropoff: genericGasToken(responseQuoteParams.gasDropoff as string, "human"),
-    corridor: responseQuoteParams.corridor as layouts.CorridorVariant["type"],
+    corridor: responseQuoteParams.corridor as Corridor,
     takeFeesFromInput: responseQuoteParams.takeFeesFromInput as boolean,
     maxRelayFee: usdc(responseQuoteParams.maxRelayFee as string),
     fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string || "0"),
