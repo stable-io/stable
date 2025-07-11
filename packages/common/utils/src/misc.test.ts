@@ -3,6 +3,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import type { Text } from "./misc.js";
 import { definedOrThrow, isUint8Array, throws, pollUntil } from "./misc.js";
 
@@ -82,18 +84,18 @@ describe("pollUntil", () => {
         .mockResolvedValueOnce("attempt1")
         .mockResolvedValueOnce("attempt2")
         .mockResolvedValueOnce("success");
-      
+
       const predicate = jest.fn((result: any) => result === "success");
 
       const promise = (pollUntil as any)(operation, predicate, { baseDelayMs: 10 });
-      
+
       // Let the first attempt complete
       await jest.runOnlyPendingTimersAsync();
-      
+
       // Advance through delays and let promises resolve
       jest.advanceTimersByTime(10);
       await jest.runOnlyPendingTimersAsync();
-      
+
       jest.advanceTimersByTime(15); // 10 * 1.5
       await jest.runOnlyPendingTimersAsync();
 
@@ -120,11 +122,11 @@ describe("pollUntil", () => {
         .mockResolvedValueOnce({ status: "pending" } as PendingResult)
         .mockResolvedValueOnce({ status: "success", data: "test" } as SuccessResult);
 
-      const isSuccess = (result: Result): result is SuccessResult => 
+      const isSuccess = (result: Result): result is SuccessResult =>
         result.status === "success";
 
       const promise = pollUntil(operation, isSuccess, { baseDelayMs: 10 });
-      
+
       // Let first attempt complete, then advance timer and let second attempt complete
       await jest.runOnlyPendingTimersAsync();
       jest.advanceTimersByTime(10);
@@ -140,7 +142,7 @@ describe("pollUntil", () => {
       const operation = jest.fn()
         .mockResolvedValueOnce("fail")
         .mockResolvedValueOnce("success");
-      
+
       const predicate = jest.fn((result: any) => result === "success");
 
       const config = {
@@ -151,7 +153,7 @@ describe("pollUntil", () => {
       };
 
       const promise = (pollUntil as any)(operation, predicate, config);
-      
+
       // Let first attempt complete, then advance by custom delay
       await jest.runOnlyPendingTimersAsync();
       jest.advanceTimersByTime(20);
@@ -168,7 +170,7 @@ describe("pollUntil", () => {
         .mockResolvedValueOnce("fail1")
         .mockResolvedValueOnce("fail2")
         .mockResolvedValueOnce("success");
-      
+
       const predicate = jest.fn((result: any) => result === "success");
 
       const config = {
@@ -179,13 +181,13 @@ describe("pollUntil", () => {
       };
 
       const promise = (pollUntil as any)(operation, predicate, config);
-      
+
       // First attempt
       await jest.runOnlyPendingTimersAsync();
       // First delay: 10ms
       jest.advanceTimersByTime(10);
       await jest.runOnlyPendingTimersAsync();
-      
+
       // Second delay: 10 * 3 = 30ms, capped at 15ms
       jest.advanceTimersByTime(15);
       await jest.runOnlyPendingTimersAsync();
@@ -204,20 +206,19 @@ describe("pollUntil", () => {
 
       // Mock Date.now to work with fake timers
       const startTime = 1000;
-      const mockDate = jest.spyOn(global.Date, 'now');
+      const mockDate = jest.spyOn(globalThis.Date, "now");
       mockDate.mockReturnValueOnce(startTime); // Start time
       mockDate.mockReturnValueOnce(startTime + 50); // First check - still within timeout
       mockDate.mockReturnValueOnce(startTime + 150); // Second check - past timeout
 
       const promise = (pollUntil as any)(operation, predicate, { timeoutMs: 100, baseDelayMs: 10 });
-      
+
       // Advance timers to trigger the timeout logic
       jest.advanceTimersByTime(150);
       await Promise.all([
         jest.runOnlyPendingTimersAsync(),
-        expect(promise).rejects.toThrow("Polling timeout after 100ms")
+        expect(promise).rejects.toThrow("Polling timeout after 100ms"),
       ]);
-      
     });
 
     it("should propagate operation errors", async () => {
@@ -248,14 +249,14 @@ describe("pollUntil", () => {
       const predicate = jest.fn((result: any) => false);
 
       // Mock Date.now to ensure time has passed
-      const mockDate = jest.spyOn(global.Date, 'now');
+      const mockDate = jest.spyOn(globalThis.Date, "now");
       mockDate.mockReturnValueOnce(0); // Start time
       mockDate.mockReturnValueOnce(1); // Time check - 1ms passed > 0ms timeout
 
       const promise = (pollUntil as any)(operation, predicate, { timeoutMs: 0 });
 
       await expect(promise).rejects.toThrow("Polling timeout after 0ms");
-      
+
       mockDate.mockRestore();
     });
 
@@ -273,11 +274,11 @@ describe("pollUntil", () => {
       const operation = jest.fn()
         .mockResolvedValueOnce("fail")
         .mockResolvedValueOnce("success");
-      
+
       const predicate = jest.fn((result: any) => result === "success");
 
       const promise = (pollUntil as any)(operation, predicate, { baseDelayMs: 0 });
-      
+
       // With zero delay, second attempt should happen immediately
       await jest.runOnlyPendingTimersAsync();
 
@@ -290,11 +291,11 @@ describe("pollUntil", () => {
       const operation = jest.fn()
         .mockResolvedValueOnce("fail")
         .mockResolvedValueOnce("success");
-      
+
       const predicate = jest.fn((result: any) => result === "success");
 
       const promise = (pollUntil as any)(operation, predicate, {});
-      
+
       // First attempt
       await jest.runOnlyPendingTimersAsync();
       // Default baseDelayMs is 500
@@ -310,12 +311,12 @@ describe("pollUntil", () => {
       const operation = jest.fn()
         .mockResolvedValueOnce("fail")
         .mockResolvedValueOnce("success");
-      
+
       const predicate = jest.fn((result: any) => result === "success");
 
       // Call with only 2 parameters to hit the default parameter branch
       const promise = (pollUntil as any)(operation, predicate);
-      
+
       // First attempt
       await jest.runOnlyPendingTimersAsync();
       // Default baseDelayMs is 500
@@ -332,7 +333,7 @@ describe("pollUntil", () => {
         .mockResolvedValueOnce("fail1")
         .mockResolvedValueOnce("fail2")
         .mockResolvedValueOnce("success");
-      
+
       const predicate = jest.fn((result: any) => result === "success");
 
       const config = {
@@ -341,7 +342,7 @@ describe("pollUntil", () => {
       };
 
       const promise = (pollUntil as any)(operation, predicate, config);
-      
+
       // First attempt
       await jest.runOnlyPendingTimersAsync();
       // All delays should be 10ms
