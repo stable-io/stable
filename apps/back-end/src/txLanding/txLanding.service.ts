@@ -1,10 +1,27 @@
 import { Injectable } from "@nestjs/common";
-import { TxLandingClient } from "@stable-io/tx-landing-client";
-import { encoding } from "@stable-io/utils";
+import { v4 as uuid } from "uuid";
+import { TxLandingClient, TxStatus } from "@stable-io/tx-landing-client";
+import { encoding, pollUntil } from "@stable-io/utils";
 import { ConfigService } from "../config/config.service.js";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
+
+type GetTransactionStatusResponse = Awaited<
+  ReturnType<TxLandingClient["getTransactionStatus"]>
+>;
+type TransactionStatus = GetTransactionStatusResponse["statuses"][number];
+type ConfirmedTransactionStatus = TransactionStatus & {
+  status: TxStatus.TRANSACTION_STATUS_CONFIRMED;
+};
+
+// Ideally this would enforce that at least one item
+// is U, which it doesn't rn.
+type Some<T, U extends T> = [...(T | U)[]];
+
+type ConfirmedTransactionStatusResponse = GetTransactionStatusResponse & {
+  statuses: Some<TransactionStatus, ConfirmedTransactionStatus>;
+};
 
 @Injectable()
 export class TxLandingService {
@@ -55,8 +72,13 @@ export class TxLandingService {
     domain: keyof EvmDomains,
     txDetails: ContractTx,
   ): Promise<`0x${string}`> {
+    const traceId = uuid();
+
+    console.info(`Sending TX to landing service with trace-id ${traceId}`);
+
     try {
       const r = await this.client.signAndLandTransaction({
+        traceId,
         chain: this.toChain(domain),
         txRequests: [
           {
@@ -76,7 +98,24 @@ export class TxLandingService {
         );
       }
 
-      return cleanTxHash;
+      const isConfirmedTransactionResponse = (
+        result: GetTransactionStatusResponse,
+      ): result is ConfirmedTransactionStatusResponse => {
+        return result.statuses.some(
+          (status) => status.status === TxStatus.TRANSACTION_STATUS_CONFIRMED,
+        );
+      };
+
+      const confirmationResult = await pollUntil(
+        () => this.client.getTransactionStatus({ traceId }),
+        isConfirmedTransactionResponse,
+        { baseDelayMs: 100, maxDelayMs: 350 },
+      );
+
+      const finalTxHash = confirmationResult.statuses.at(-1)!
+        .txHash as `0x${string}`; // we polled until this property had a specific value.
+
+      return finalTxHash;
     } catch (error) {
       console.error("Failed to send transaction:", error);
       throw error;
