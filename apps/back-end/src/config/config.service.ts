@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService as NestConfigService } from "@nestjs/config";
 import type { EnvironmentVariables } from "./env.config";
+import type { SecretsVariables } from "./secrets.config";
+
+type ConfigVariables = EnvironmentVariables & SecretsVariables;
 
 /**
  * Custom config service to manage environment variables and static data
@@ -9,7 +12,7 @@ import type { EnvironmentVariables } from "./env.config";
 @Injectable()
 export class ConfigService {
   public constructor(
-    private readonly env: NestConfigService<EnvironmentVariables, true>,
+    private readonly env: NestConfigService<ConfigVariables, true>,
   ) {}
 
   public get port(): EnvironmentVariables["PORT"] {
@@ -20,15 +23,17 @@ export class ConfigService {
     return this.env.getOrThrow("NETWORK");
   }
 
-  public get jwtSecret(): EnvironmentVariables["JWT_SECRET"] {
-    return this.env.getOrThrow("JWT_SECRET");
-  }
-
   public get jwtExpiresInSeconds(): EnvironmentVariables["JWT_EXPIRES_IN_SECONDS"] {
     return this.env.getOrThrow("JWT_EXPIRES_IN_SECONDS");
   }
 
-  public get txLandingApiKey(): EnvironmentVariables["TX_LANDING_API_KEY"] {
-    return this.env.getOrThrow("TX_LANDING_API_KEY");
+  // SECRETS (loaded from configuration factory)
+
+  public get jwtSecret(): SecretsVariables["jwtSecret"] {
+    return this.env.getOrThrow("jwtSecret");
+  }
+
+  public get txLandingApiKey(): SecretsVariables["txLandingApiKey"] {
+    return this.env.getOrThrow("txLandingApiKey");
   }
 }
