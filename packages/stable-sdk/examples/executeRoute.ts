@@ -58,7 +58,7 @@ for (const route of selectedRoutes) {
 
   route.progress.on("error", (e) => {
     console.info(`Transfer failed on ${e.type.split("-")[0]} step.`);
-  })
+  });
 
   route.transactionListener.on("*", (e) => {
     console.info(`Transaction Event: ${e.name}.`);
