@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { RoPair, RoTuple, RoArray, HeadTail, Extends, Not } from "./metaprogramming.js";
+import type { RoPair, RoTuple, RoArray, HeadTail, Extends, IsAny } from "./metaprogramming.js";
 
 export type RoTuple2D<T = unknown> = RoTuple<RoTuple<T>>;
 export type RoArray2D<T = unknown> = RoArray<RoArray<T>>;
@@ -41,13 +41,17 @@ export const range = <const L extends number>(length: L) =>
 export type IndexEs = number;
 
 export type DeepReadonly<T> =
-  T extends RoTuple
+  IsAny<T> extends true //prevent DeepReadonly<any> from giving type instantiation too deep error
+  ? any
+  : T extends RoTuple
   ? T extends HeadTail<T, infer Head, infer Tail>
     ? readonly [DeepReadonly<Head>, ...DeepReadonly<Tail>]
     : readonly []
   : T extends object
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
   : T;
+
+type test = DeepReadonly<unknown>;
 
 export const deepReadonly = <const T>(value: T): DeepReadonly<T> => value as DeepReadonly<T>;
 
@@ -170,18 +174,29 @@ export const pickWithOrder =
   <const A extends RoArray, const I extends RoArray<number>>(arr: A, indexes: I) =>
     indexes.map(i => arr[i]) as PickWithOrder<A, I>;
 
-type FilterIndexesImpl<T extends RoTuple, I extends IndexEs, FilterIn extends boolean> =
+type FilterIndexesKeepImpl<T extends RoTuple, I extends IndexEs> =
   T extends HeadTail<T, infer Head, infer Tail>
   ? Head extends RoPair<infer J extends number, infer V>
-    ? Extends<J, I> extends FilterIn
-      ? [V, ...FilterIndexesImpl<Tail, I, FilterIn>]
-      : FilterIndexesImpl<Tail, I, FilterIn>
+    ? Extends<J, I> extends true
+      ? [V, ...FilterIndexesKeepImpl<Tail, I>]
+      : FilterIndexesKeepImpl<Tail, I>
+    : never
+  : [];
+
+type FilterIndexesRemoveImpl<T extends RoTuple, I extends IndexEs> =
+  T extends HeadTail<T, infer Head, infer Tail>
+  ? Head extends RoPair<infer J extends number, infer V>
+    ? Extends<J, I> extends true
+      ? FilterIndexesRemoveImpl<Tail, I>
+      : [V, ...FilterIndexesRemoveImpl<Tail, I>]
     : never
   : [];
 
 export type FilterIndexes<A extends RoArray, I extends IndexEs, FilterOut extends boolean = false> =
   A extends infer T extends RoTuple
-  ? FilterIndexesImpl<Entries<T>, I, Not<FilterOut>>
+  ? FilterOut extends true
+    ? FilterIndexesRemoveImpl<Entries<T>, I>
+    : FilterIndexesKeepImpl<Entries<T>, I>
   : A;
 
 export const filterIndexes = <
@@ -228,4 +243,69 @@ export function median<const T extends number[] | bigint[]>(
   return (typeof lower === "number")
     ? (lower + (upper as typeof lower)) / 2
     : (lower + (upper as typeof lower)) / 2n;
+}
+
+export type TupleFilter<T extends RoTuple, Include> =
+  T extends HeadTail<T, infer Head, infer Tail>
+  ? Head extends Include
+    ? [Head, ...TupleFilter<Tail, Include>]
+    : TupleFilter<Tail, Include>
+  : [];
+
+export type TupleFilterOut<T extends RoTuple, Exclude> =
+  T extends HeadTail<T, infer Head, infer Tail>
+  ? Head extends Exclude
+    ? TupleFilterOut<Tail, Exclude>
+    : [Head, ...TupleFilterOut<Tail, Exclude>]
+  : [];
+
+export type Intersect<T extends RoArray, U extends RoArray> =
+  [T, U] extends [infer TT extends RoTuple, infer UU extends RoTuple]
+  ? TupleFilter<TT, UU[number]>
+  : (T[number] & U[number])[];
+
+export function intersect<
+  const T extends RoTuple,
+  const U extends RoTuple
+>(lhs: T, rhs: U): Intersect<T, U>;
+export function intersect<
+  const T extends RoArray,
+  const U extends RoArray
+>(lhs: T, rhs: U): Intersect<T, U>;
+export function intersect(lhs: RoArray, rhs: RoArray) {
+  return lhs.filter(item => rhs.includes(item));
+}
+
+export type Union<T extends RoArray, U extends RoArray> =
+  [T, U] extends [infer TT extends RoTuple, infer UU extends RoTuple]
+  ? [...TT, ...TupleFilterOut<UU, TT[number]>]
+  : (T[number] | U[number])[];
+
+export function union<
+  const T extends RoTuple,
+  const U extends RoTuple
+>(lhs: T, rhs: U): Union<T, U>;
+export function union<
+  const T extends RoArray,
+  const U extends RoArray
+>(lhs: T, rhs: U): Union<T, U>;
+export function union(lhs: RoArray, rhs: RoArray) {
+  return [...lhs, ...rhs.filter(item => !lhs.includes(item))];
+}
+
+export type Difference<T extends RoArray, U extends RoArray> =
+  [T, U] extends [infer TT extends RoTuple, infer UU extends RoTuple]
+  ? TupleFilterOut<TT, UU[number]>
+  : Exclude<T[number], U[number]>[];
+
+export function difference<
+  const T extends RoTuple,
+  const U extends RoTuple
+>(lhs: T, rhs: U): TupleFilterOut<T, U[number]>;
+export function difference<
+  const T extends RoArray,
+  const U extends RoArray
+>(lhs: T, rhs: U): Difference<T, U>;
+export function difference(lhs: RoArray, rhs: RoArray) {
+  return lhs.filter(item => !rhs.includes(item));
 }

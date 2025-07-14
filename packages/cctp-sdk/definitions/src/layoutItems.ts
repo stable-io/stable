@@ -6,11 +6,13 @@
 import type { RoTuple, RoArray } from "@stable-io/map-utils";
 import type { Rationalish, Kind, KindWithAtomic, SymbolsOf } from "@stable-io/amount";
 import { Amount, Rational } from "@stable-io/amount";
-import type { Item, CustomConversion, FixedConversion } from "binary-layout";
+import type { Item, CustomConversion, FixedConversion, NumberSize } from "binary-layout";
+import { numberMaxSize } from "binary-layout";
 import { UniversalAddress } from "./address.js";
 import type { Domain, SimplifyDomain } from "./constants/chains/index.js";
 import { domains, domainOf, domainIdOf } from "./constants/chains/index.js";
 import { DistributiveAmount } from "./constants/kinds.js";
+import { encoding } from "@stable-io/utils";
 
 export const uint256Item = {
   binary: "uint", size: 32,
@@ -68,68 +70,97 @@ export const fixedDomainItem = <const D extends Domain>(domain: D) => ({
 
 // ----
 
-type NumberType<S extends number> = S extends 1 | 2 | 3 | 4 | 5 | 6 ? number : bigint;
+type NumericType<S extends number> = S extends NumberSize ? number : bigint;
 type AmountReturnItem<S extends number, K extends Kind> = {
   binary: "uint";
   size: S;
-  custom: {
-    to: (val: NumberType<S>) => DistributiveAmount<K>;
-    from: (amount: DistributiveAmount<K>) => NumberType<S>;
-  };
+  custom: CustomConversion<NumericType<S>, DistributiveAmount<K>>;
 };
 type TransformFunc<S extends number> = {
-  to: (val: NumberType<S>) => Rationalish;
-  from: (val: Rational) => number | bigint;
+  to: (val: NumericType<S>) => Rationalish;
+  from: (val: Rational) => NumericType<S>;
 };
+type SizedTransformFunc<S extends number> = (size: S) => TransformFunc<S>;
+
+function numericReturn<S extends number>(size: S): TransformFunc<S>["from"] {
+  return size > numberMaxSize
+    ? (val: Rational) => val.floor() as NumericType<S>
+    : (val: Rational) => encoding.bignum.toNumber(val.floor()) as NumericType<S>;
+}
 
 //conversion happens in 3 stages:
 // 1. raw value is read from layout
 // 2. then it is optionally transformed (e.g. scaled/multiplied/etc.)
 // 3. finally it is converted into an amount of the given kind and unit
 //and likewise but inverted for the opposite direction
-export function amountItem<
-  S extends number,
-  const K extends KindWithAtomic,
->(
+export function amountItem<S extends number, const K extends KindWithAtomic>(
   size: S,
   kind: K,
-  unitSymbol?: SymbolsOf<K>,
-  transform?: TransformFunc<S>,
+  unitSymbolOrTransform?: SymbolsOf<K> | TransformFunc<S> | SizedTransformFunc<S>,
 ): AmountReturnItem<S, K>;
 export function amountItem<S extends number, const K extends Kind>(
   size: S,
   kind: K,
   unitSymbol: SymbolsOf<K>,
-  transform?: TransformFunc<S>,
+  transform?: TransformFunc<S> | SizedTransformFunc<S>,
 ): AmountReturnItem<S, K>;
 export function amountItem<S extends number, const K extends Kind>(
   size: S,
   kind: K,
-  unitSymbol?: SymbolsOf<K>,
-  transform?: TransformFunc<S>,
+  unitSymbolOrTransform?: SymbolsOf<K> | TransformFunc<S> | SizedTransformFunc<S>,
+  transform?: TransformFunc<S> | SizedTransformFunc<S>,
 ): AmountReturnItem<S, K> {
-  const numMaxSize = 6;
+  let unitSymbol: SymbolsOf<K> | undefined;
+  if (transform)
+    unitSymbol = unitSymbolOrTransform as SymbolsOf<K>;
+  else if (typeof unitSymbolOrTransform === "string")
+    unitSymbol = unitSymbolOrTransform;
+  else if (unitSymbolOrTransform)
+    transform = unitSymbolOrTransform;
+
   if (unitSymbol === undefined || unitSymbol === "atomic")
     unitSymbol = kind.atomic as SymbolsOf<K>;
 
-  const to = transform === undefined
-    ? (val: any) => Amount.from(val, kind, unitSymbol) as DistributiveAmount<K>
-    : (val: any) => Amount.from(transform.to(val), kind, unitSymbol) as DistributiveAmount<K>;
+  if (typeof transform === "function")
+    transform = transform(size);
 
-  //sacrificing DRYness for directness
-  const from = (
-    transform === undefined
-    ? size > numMaxSize
-      ? (amount: DistributiveAmount<K>) =>
-        (amount.toUnit(unitSymbol) as Rational).floor()
-      : (amount: DistributiveAmount<K>) =>
-        Number((amount.toUnit(unitSymbol) as Rational).floor())
-    : size > numMaxSize
-      ? (amount: DistributiveAmount<K>) =>
-        BigInt(transform.from(amount.toUnit(unitSymbol) as Rational))
-      : (amount: DistributiveAmount<K>) =>
-        Number(transform.from(amount.toUnit(unitSymbol) as Rational))
-  ) as (_: DistributiveAmount<K>) => NumberType<S>;
+  const toFunc = (val: Rationalish): DistributiveAmount<K> =>
+    Amount.from(val, kind, unitSymbol) as DistributiveAmount<K>;
 
-  return { binary: "uint", size, custom: { to, from } };
+  const custom = transform === undefined
+    ? {
+      to: (val: NumericType<S>) =>
+        toFunc(val),
+      from: (amount: DistributiveAmount<K>): NumericType<S> =>
+        numericReturn(size)(amount.toUnit(unitSymbol) as Rational)
+    }
+    : {
+      to: (val: NumericType<S>) =>
+        toFunc(transform.to(val)),
+      from: (amount: DistributiveAmount<K>): NumericType<S> =>
+        transform.from(amount.toUnit(unitSymbol) as Rational)
+    };
+
+  return { binary: "uint", size, custom };
+}
+
+export function linearTransform<S extends number>(
+  direction: "to->from" | "from->to",
+  coefficient: Rationalish,
+  constant?: Rationalish,
+): SizedTransformFunc<S> {
+  coefficient = Rational.from(coefficient);
+  constant = Rational.from(constant ?? 0);
+  return (size: S) => {
+    const numRet = numericReturn(size);  
+    return direction === "to->from"
+      ? {
+        to: (val: NumericType<S>) => Rational.from(val).mul(coefficient).add(constant),
+        from: (val: Rational) => numRet(val.sub(constant).div(coefficient)),
+      }
+      : {
+        to: (val: NumericType<S>) => Rational.from(val).sub(constant).div(coefficient),
+        from: (val: Rational) => numRet(val.mul(coefficient).add(constant)),
+      };
+  }
 }

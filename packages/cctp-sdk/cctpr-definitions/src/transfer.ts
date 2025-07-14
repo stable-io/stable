@@ -12,27 +12,6 @@ import type {
   Percentage,
 } from "@stable-io/cctp-sdk-definitions";
 
-type CorridorStats<N extends Network, D extends SupportedDomain<N>> = {
-  cost: { relay: [usdcCost: Usdc, gasCost: GasTokenOf<D>]; fast?: Percentage };
-  transferTime: Duration;
-};
-
-export const getCorridors = <N extends Network>(network: N) => async function<
-  S extends SupportedDomain<N>,
-  D extends SupportedDomain<N>,
-  //... provider<S>,
-  //... circleApi
->(
-  sourceDomain: S,
-  destinationDomain: D,
-  gasDropoff?: GasTokenOf<D>,
-): Promise<CorridorStats<N, S>[]> {
-  //overloaded: requires amount but only if S is a v2 chain (and not Avalanche)
-  //TODO impl
-  //check if gas dropoff is supported and below max
-  return await Promise.resolve([]);
-};
-
 // export async function* transfer<
 //   const S extends SupportedDomain,
 //   const D extends SupportedDomain,

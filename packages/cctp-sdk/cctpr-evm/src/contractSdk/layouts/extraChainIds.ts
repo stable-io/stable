@@ -4,11 +4,18 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { Item } from "binary-layout";
-import type { RoArray } from "@stable-io/map-utils";
+import { type RoArray, difference } from "@stable-io/map-utils";
+import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { paddedSlotItem } from "@stable-io/cctp-sdk-evm";
+import { supportedPlatformDomains } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 //same reason for inverting as for feeAdjustments
 const reverseChainIds = (ci: RoArray<number>) => ci.toReversed();
+
+const bakedInDomains = [
+  "Ethereum", "Avalanche", "Optimism", "Arbitrum", "Noble", "Base",
+  "Solana", "Polygon", "Sui", "Aptos", "Unichain", "Linea",
+] as const;
 
 //only 12 chainIds per slot for uniform handling of 12 baked-in chainIds
 export const chainIdsPerSlot = 12;
@@ -22,3 +29,11 @@ export const chainIdsSlotItem = {
   }),
   custom: { to: reverseChainIds, from: reverseChainIds },
  } as const satisfies Item;
+
+export const extraDomains = <N extends Network>(network: N) =>
+  difference(bakedInDomains, supportedPlatformDomains(network, "Evm")
+    
+  );
+export type ExtraDomain<N extends Network> = ReturnType<typeof extraDomains<N>>[number];
+
+export type ExtraChainIds<N extends Network> = Partial<Record<ExtraDomain<N>, number>>;

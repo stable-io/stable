@@ -171,7 +171,7 @@ abstract contract CctpRUser is CctpRQuote {
     uint32 gasDropoffMicroGasToken,
     uint32 expirationTime,
     bool chargeInUsdc,
-    uint relayFee,
+    uint64 rawRelayFee,
     bytes32 r,
     bytes32 s,
     uint8 v
@@ -187,7 +187,7 @@ abstract contract CctpRUser is CctpRQuote {
       gasDropoffMicroGasToken,
       expirationTime,
       chargeInUsdc,
-      uint128(relayFee)
+      rawRelayFee
     ));
 
     require(ecrecover(hash, v, r, s) == offChainQuoter, "invalid quote signature");

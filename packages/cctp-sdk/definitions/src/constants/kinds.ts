@@ -9,8 +9,8 @@ import type { Domain } from "./chains/domains.js";
 import type { MapLevel, Column } from "@stable-io/map-utils";
 import { constMap } from "@stable-io/map-utils";
 
-export const unit = <const T, const U>(symbol: T, scale: U) => ({ symbol, scale } as const);
-export const oom = (order: number) => order < 0
+const unit = <const T, const U>(symbol: T, scale: U) => ({ symbol, scale } as const);
+const oom = (order: number) => order < 0
   ? Rational.from(1n, 10n**BigInt(-order))
   : 10n**BigInt(order);
 

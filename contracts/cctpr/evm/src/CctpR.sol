@@ -47,6 +47,10 @@ uint8 constant QUOTE_OFF_CHAIN     = 0x00;
 uint8 constant QUOTE_ON_CHAIN_USDC = 0x01;
 uint8 constant QUOTE_ON_CHAIN_GAS  = 0x02;
 
+//the off chain gas token quote amount is encoded in nano (gwei)
+//  thus needs to be converted to ato (wei)
+uint constant NANO_TO_ATO = 1e9;
+
 contract CctpR is CctpRBase, CctpROwner, CctpRQuote, CctpRUser, RawDispatcher {
   using BytesParsing for bytes;
   using {BytesParsing.checkBound, BytesParsing.checkLength} for uint;
@@ -254,7 +258,7 @@ contract CctpR is CctpRBase, CctpROwner, CctpRQuote, CctpRUser, RawDispatcher {
     if (quoteType == QUOTE_OFF_CHAIN) {
       ( uint32 expirationTime,
         bool chargeInUsdc,
-        uint relayFee,
+        uint64 rawRelayFee,
         bytes32 r,
         bytes32 s,
         uint8 v,
@@ -268,15 +272,16 @@ contract CctpR is CctpRBase, CctpROwner, CctpRQuote, CctpRUser, RawDispatcher {
         gasDropoffMicroGasToken,
         expirationTime,
         chargeInUsdc,
-        relayFee,
+        rawRelayFee,
         r, s, v
       );
 
       if (chargeInUsdc) {
         require(msg.value == 0, "msg.value > 0 but charging relayFee in usdc");
-        _transferSenderUsdcRelayFee(relayFee);
+        _transferSenderUsdcRelayFee(rawRelayFee); //already in usdc
       }
       else {
+        uint relayFee = uint(rawRelayFee) * NANO_TO_ATO;
         require(msg.value == relayFee, "msg.value != signed relayFee");
         _transferGasToken(_feeRecipient, relayFee);
       }
@@ -356,7 +361,7 @@ contract CctpR is CctpRBase, CctpROwner, CctpRQuote, CctpRUser, RawDispatcher {
         gasDropoffMicroGasToken,
         expirationTime,
         chargeInUsdc,
-        relayFeeUsdc,
+        uint64(relayFeeUsdc),
         r, s, v
       );
 
@@ -444,22 +449,20 @@ contract CctpR is CctpRBase, CctpROwner, CctpRQuote, CctpRUser, RawDispatcher {
   function _parseOffChainQuote(bytes calldata data, uint offset) private pure returns (
     uint32  expirationTime,
     bool    chargeInUsdc,
-    uint    relayFee,
+    uint64  rawRelayFee, //either in (micro/atomic)usdc or nano gas token
     bytes32 r,
     bytes32 s,
     uint8   v,
     uint    newOffset
-  ) {
+  ) { unchecked {
     (expirationTime, offset) = data.asUint32CdUnchecked(offset);
     (chargeInUsdc,   offset) = data.asBoolCdUnchecked(offset);
-    (relayFee,       offset) = chargeInUsdc
-      ? data.asUint64CdUnchecked(offset)
-      : data.asUint128CdUnchecked(offset);
+    (rawRelayFee,    offset) = data.asUint64CdUnchecked(offset);
     (r,              offset) = data.asBytes32CdUnchecked(offset);
     (s,              offset) = data.asBytes32CdUnchecked(offset);
     (v,              offset) = data.asUint8CdUnchecked(offset);
     newOffset = offset;
-  }
+  }}
 
   function _parseOnChainUsdcQuote(bytes calldata data, uint offset) private pure returns (
     uint maxRelayFeeUsdc,
