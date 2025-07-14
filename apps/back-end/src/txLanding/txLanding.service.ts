@@ -54,15 +54,10 @@ export class TxLandingService {
     },
   } satisfies { [K in Network]: { [key in keyof EvmDomains]: string } };
 
-  private readonly txLandingBaseUrls = {
-    Mainnet: "",
-    Testnet: "localhost:50051",
-  } as const;
-
   private readonly client!: TxLandingClient;
   constructor(private readonly configService: ConfigService) {
     this.client = new TxLandingClient(
-      this.txLandingBaseUrls[this.configService.network],
+      this.configService.txLandingUrl,
       this.configService.txLandingApiKey,
     );
   }

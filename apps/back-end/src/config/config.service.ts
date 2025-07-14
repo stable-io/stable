@@ -36,4 +36,8 @@ export class ConfigService {
   public get txLandingApiKey(): SecretsVariables["txLandingApiKey"] {
     return this.env.getOrThrow("txLandingApiKey");
   }
+
+  public get txLandingUrl(): EnvironmentVariables["TX_LANDING_URL"] {
+    return this.env.getOrThrow("TX_LANDING_URL");
+  }
 }
