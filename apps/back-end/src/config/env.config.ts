@@ -9,12 +9,13 @@ import {
   IsNumber,
   Min,
   validateSync,
+  IsString,
 } from "class-validator";
 
 export class EnvironmentVariables {
   @IsPort()
   @IsOptional()
-  public PORT: string = "3001";
+  public PORT: string = "4000";
 
   @IsNotEmpty()
   @IsIn(networks)
@@ -24,6 +25,10 @@ export class EnvironmentVariables {
   @Min(1)
   @IsOptional()
   public JWT_EXPIRES_IN_SECONDS: number = 3600; // @todo: Pick a good default
+
+  @IsNotEmpty()
+  @IsString()
+  public TX_LANDING_URL!: string;
 }
 
 export const validate = (
