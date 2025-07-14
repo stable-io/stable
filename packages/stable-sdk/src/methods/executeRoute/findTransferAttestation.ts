@@ -7,9 +7,7 @@ import { deserialize } from "binary-layout";
 import { Hex } from "viem";
 import { EvmDomains, UniversalAddress, v1, v2 } from "@stable-io/cctp-sdk-definitions";
 import type { Address, Network, TxHash } from "../../types/index.js";
-import { encoding } from "@stable-io/utils";
-import type { PollingConfig } from "../../utils.js";
-import { pollUntil } from "../../utils.js";
+import { encoding, pollUntil, type PollingConfig } from "@stable-io/utils";
 
 export async function findTransferAttestation<N extends Network>(
   network: N,
