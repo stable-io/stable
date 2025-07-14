@@ -7,8 +7,8 @@ import { TODO } from "@stable-io/utils";
 import { init as initDefinitions, usdc, Usdc, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
-import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { SupportedEvmDomain, CorridorStats } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Corridor, CorridorStats } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";

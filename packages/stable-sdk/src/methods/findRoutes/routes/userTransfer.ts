@@ -7,15 +7,12 @@ import { init as initDefinitions,
   EvmDomains,
   GasTokenOf,
   Usdc,
-  percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
-import type { SupportedDomain, Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type {
-  CorridorStats,
-  SupportedEvmDomain,
-} from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Corridor, CorridorStats, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { init as initCctprEvm } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
 
@@ -28,7 +25,6 @@ import type {
 } from "../../../types/index.js";
 import { Route } from "../../../types/index.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
-import { init as initCctprEvm } from "@stable-io/cctp-sdk-cctpr-evm";
 
 export async function buildUserTransferRoute<
   N extends Network,

@@ -8,7 +8,6 @@ import { getCorridors } from "./getCorridors.js";
 import { transfer } from "./transfer.js";
 
 export * from "./registry.js";
-export type { CorridorStats } from "./getCorridors.js";
 export * from "./contractSdk/index.js";
 
 export {
