@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/require-await */
 import { EvmAddress } from "./address.js";
+import { EvmClient } from "./client.js";
 import { composePermitMsg } from "./permit.js";
-import { EvmClient } from "./platform.js";
 import { Amount, KindWithAtomic } from "@stable-io/amount";
 
 describe("permit", () => {
