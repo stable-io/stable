@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { CorridorStats, Corridors, SensibleCorridor, SensibleV2Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import * as cctpr from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   GasTokenOf,
@@ -17,46 +17,8 @@ import type { EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Text, TODO } from "@stable-io/utils";
 import { assertDistinct, assertEqual } from "@stable-io/utils";
 import type { RoArray } from "@stable-io/map-utils";
-import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { QuoteRelay } from "./contractSdk/layouts/index.js";
 import { type SupportedEvmDomain, CctpR as CctpRContract } from "./contractSdk/index.js";
-
-type SensibleV2Corridor<
-  N extends Network,
-  S extends SupportedEvmDomain<N>,
-  D extends SupportedDomain<N>,
-> =
-  S extends "Avalanche"
-  ? never
-  : S extends v2.SupportedDomain<N>
-  ? D extends v2.SupportedDomain<N>
-    ? "v2Direct"
-    : "avaxHop"
-  : never;
-
-type SensibleCorridor<
-  N extends Network,
-  S extends SupportedEvmDomain<N>,
-  D extends SupportedDomain<N>,
-> = "v1" | SensibleV2Corridor<N, S, D>;
-
-export type CorridorStats<
-  N extends Network,
-  S extends SupportedEvmDomain<N>,
-  C extends Corridor,
-> = {
-  corridor: C;
-  cost: {
-    relay: readonly [usdcCost: Usdc, gasCost: GasTokenOf<S>];
-    fast?: Percentage;
-  };
-  transferTime: Duration;
-};
-
-type Corridors<N extends Network, S extends SupportedEvmDomain<N>, C extends Corridor> = {
-  fastBurnAllowance: Usdc;
-  stats: RoArray<CorridorStats<N, S, C>>;
-};
 
 async function getFastCost<
   N extends Network,
