@@ -18,7 +18,7 @@ import { column, entries, zip, spread, nest } from "@stable-io/map-utils";
 export const transform = <const L extends Layout, T>(
   layout: L,
   to: (derived: DeriveType<L>) => T,
-  from: (transformed: T) => DeriveType<L>
+  from: (transformed: T) => DeriveType<L>,
 ) => ({ binary: "bytes", layout, custom: { to, from } } as const satisfies Item);
 
 type NestedBytesItem = { name: string; binary: "bytes"; layout: ProperLayout };
