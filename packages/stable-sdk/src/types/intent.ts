@@ -32,5 +32,5 @@ export type Intent<
   usePermit: boolean;
   gasDropoffDesired: GasTokenOf<D>;
   paymentToken: PaymentTokenOptions;
-  relayFeeMaxChangeMargin: number;
+  relayFeeMaxChangeMargin: Percentage;
 };
