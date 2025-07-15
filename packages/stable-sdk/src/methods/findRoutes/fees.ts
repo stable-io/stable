@@ -41,7 +41,7 @@ export function getCorridorFees<
     ? corridorCost.relay[0]
     : corridorCost.relay[1];
 
-  const maxRelayFee = relayFee.mul(intent.relayFeeMaxChangeMargin);
+  const maxRelayFee = relayFee.mul(intent.relayFeeMaxChangeMargin.toUnit("scalar"));
 
   corridorFees.push(maxRelayFee);
   let fastFeeRate: Percentage = percentage(0);

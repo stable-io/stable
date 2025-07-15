@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { Eip712Data } from "@stable-io/cctp-sdk-evm";
 import { Hex, Intent, Network } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
-import { Redeem } from "./types/redeem.js";
+import { Receive } from "./types/receive.js";
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
@@ -43,11 +43,11 @@ export interface TransferProgressEvent {
 
   "transfer-confirmed": TransferConfirmedEventData;
 
-  "hop-redeemed": HopRedeemedEventData;
+  "hop-received": HopReceivedEventData;
 
   "hop-confirmed": HopConfirmedEventData;
 
-  "transfer-redeemed": TransferRedeemedEventData;
+  "transfer-received": TransferReceivedEventData;
 
   "error": TransferFailedEventData;
 
@@ -95,12 +95,12 @@ export type TransferSentEventData = {
 
 export type TransferConfirmedEventData = CctpAttestation;
 
-export type TransferRedeemedEventData = Redeem;
+export type TransferReceivedEventData = Receive;
 
 /**
  * Hop:
  */
-export type HopRedeemedEventData = Redeem;
+export type HopReceivedEventData = Receive;
 
 export type HopConfirmedEventData = CctpAttestation;
 

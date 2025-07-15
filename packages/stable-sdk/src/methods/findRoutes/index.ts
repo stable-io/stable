@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import { Amount } from "@stable-io/amount";
-import { gasTokenKindOf, isUsdc, type Usdc } from "@stable-io/cctp-sdk-definitions";
+import { gasTokenKindOf, isUsdc, percentage, Percentage, type Usdc } from "@stable-io/cctp-sdk-definitions";
 import { usdc,
   GasTokenOf,
   EvmDomains,
@@ -117,7 +117,7 @@ function parseIntent(userIntent: UserIntent): Intent<keyof EvmDomains, keyof Evm
     usePermit: userIntent.usePermit ?? true,
     gasDropoffDesired: parseGasDropoff(userIntent),
     paymentToken: userIntent.paymentToken ?? "usdc",
-    relayFeeMaxChangeMargin: userIntent.relayFeeMaxChangeMargin ?? RELAY_FEE_MAX_CHANGE_MARGIN,
+    relayFeeMaxChangeMargin: parseRelayFeeChangeMargin(userIntent),
   };
 }
 
@@ -134,10 +134,18 @@ function toEvmAddress(address: string | EvmAddress): EvmAddress {
 }
 
 function parseGasDropoff(intent: UserIntent): TODO {
+  if (intent.gasDropoffDesired instanceof Amount) return intent.gasDropoffDesired;
   return Amount.ofKind(gasTokenKindOf(intent.targetChain))(
     intent.gasDropoffDesired ?? 0,
     "atomic",
   );
+}
+
+function parseRelayFeeChangeMargin(intent: UserIntent) {
+  const { relayFeeMaxChangeMargin: rfcm } = intent;
+  if (rfcm instanceof Amount) return rfcm;
+  if (!rfcm) return percentage("0");
+  return percentage(rfcm.toString());
 }
 
 function findBestRoutes<
