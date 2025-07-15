@@ -39,6 +39,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "@stable-io/cctp-sdk-evm": "workspace:^",
     "@types/jest": "^29.5.14",
     "eslint": "^9.22.0",
     "eslint-config": "workspace:^",

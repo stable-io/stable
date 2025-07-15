@@ -32,7 +32,7 @@ export const usdcItem = amountItem(8, Usdc);
 //we only use a single byte for domains because Circle is using incremental domain ids anyway
 export const cctprDomainItem =
   <const DT extends RoTuple<Domain> = typeof domains>(domainTuple?: DT) =>
-    ({...domainItem(domainTuple), size: 1} as const satisfies Item);
+    ({ ...domainItem(domainTuple), size: 1 } as const satisfies Item);
 
 export const supportedDomainItem = <N extends Network>(network: N) =>
   cctprDomainItem(supportedDomains(network));
@@ -71,7 +71,7 @@ export const routerHookDataLayout = <N extends Network>(network: N) => [
   { name: "gasDropoff",        ...gasDropoffItem               },
 ] as const satisfies Layout;
 
-const relayFeeGasTokenItem = <const K extends GasTokenKind>(kind: K) => 
+const relayFeeGasTokenItem = <const K extends GasTokenKind>(kind: K) =>
   amountItem(8, kind, "human", linearTransform("from->to", 10n**9n)); //store in nano (gwei)
 
 //both variants store their amount using 8 bytes
@@ -127,7 +127,7 @@ export const quoteParamsLayout = <N extends Network>(network: N) => [
 export const offChainQuoteLayout = <
   N extends Network,
   P extends Platform,
-  K extends GasTokenKind
+  K extends GasTokenKind,
 >(network: N, platform: P, kind: K) => [
   { name: "sourceDomain",    ...cctprPlatformDomainItem(network, platform) },
   ...quoteParamsLayout(network),
