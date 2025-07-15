@@ -11,7 +11,7 @@ import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
 export const apiUrl = {
   Mainnet: "", // TODO
-  Testnet: "http://localhost:4000", // won't be easy to work with the local quote api =(.
+  Testnet: "https://api.stg.stableit.com", // won't be easy to work with the local quote api =(.
 } as const satisfies Record<Network, string>;
 
 export const apiEndpoint = <N extends Network>(network: N) => (
