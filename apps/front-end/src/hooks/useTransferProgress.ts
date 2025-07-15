@@ -118,9 +118,9 @@ type TransferAction =
   | { type: "APPROVAL_SENT" }
   | { type: "TRANSFER_SENT" }
   | { type: "TRANSFER_CONFIRMED" }
-  | { type: "HOP_REDEEMED" }
+  | { type: "HOP_RECEIVED" }
   | { type: "HOP_CONFIRMED" }
-  | { type: "TRANSFER_REDEEMED" }
+  | { type: "TRANSFER_RECEIVED" }
   | { type: "TRANSFER_COMPLETED" }
   | { type: "TRANSFER_FAILED" };
 
@@ -171,13 +171,13 @@ const transferReducer = (
         uiSteps: setStepInProgress("moving", state.uiSteps),
       };
 
-    case "HOP_REDEEMED":
+    case "HOP_RECEIVED":
       return state;
 
     case "HOP_CONFIRMED":
       return state;
 
-    case "TRANSFER_REDEEMED":
+    case "TRANSFER_RECEIVED":
       return {
         ...state,
         isTransferActive: false,
@@ -267,16 +267,16 @@ export const useTransferProgress = (
       dispatch({ type: "TRANSFER_CONFIRMED" });
     };
 
-    const handleHopRedeemed = (): void => {
-      dispatch({ type: "HOP_REDEEMED" });
+    const handleHopReceived = (): void => {
+      dispatch({ type: "HOP_RECEIVED" });
     };
 
     const handleHopConfirmed = (): void => {
       dispatch({ type: "HOP_CONFIRMED" });
     };
 
-    const handleTransferRedeemed = (): void => {
-      dispatch({ type: "TRANSFER_REDEEMED" });
+    const handleTransferReceived = (): void => {
+      dispatch({ type: "TRANSFER_RECEIVED" });
     };
 
     const handleTransferFailed = (): void => {
@@ -288,9 +288,9 @@ export const useTransferProgress = (
     route.progress.on("approval-sent", handleApprovalSent);
     route.progress.on("transfer-sent", handleTransferSent);
     route.progress.on("transfer-confirmed", handleTransferConfirmed);
-    route.progress.on("hop-redeemed", handleHopRedeemed);
+    route.progress.on("hop-received", handleHopReceived);
     route.progress.on("hop-confirmed", handleHopConfirmed);
-    route.progress.on("transfer-redeemed", handleTransferRedeemed);
+    route.progress.on("transfer-received", handleTransferReceived);
     route.progress.on("error", handleTransferFailed);
 
     return (): void => {
@@ -298,9 +298,9 @@ export const useTransferProgress = (
       route.progress.off("approval-sent", handleApprovalSent);
       route.progress.off("transfer-sent", handleTransferSent);
       route.progress.off("transfer-confirmed", handleTransferConfirmed);
-      route.progress.off("hop-redeemed", handleHopRedeemed);
+      route.progress.off("hop-received", handleHopReceived);
       route.progress.off("hop-confirmed", handleHopConfirmed);
-      route.progress.off("transfer-redeemed", handleTransferRedeemed);
+      route.progress.off("transfer-received", handleTransferReceived);
       route.progress.off("error", handleTransferFailed);
     };
   }, [route]);
