@@ -3,22 +3,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains, GasTokenOf, GenericGasToken, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, GasTokenOf, Percentage, Usdc } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { Address, Amount, Network } from "./general.js";
 import { PaymentTokenOptions } from "./sdk.js";
 
 export type UserIntent = {
   sourceChain: keyof EvmDomains;
   targetChain: keyof EvmDomains;
-  amount: string;
-  sender: string; // | EvmAddress; TODO
-  recipient: string; // | EvmAddress; TODO
+  amount: string | Usdc;
+  sender: string | EvmAddress;
+  recipient: string | EvmAddress;
 
   usePermit?: boolean;
-  gasDropoffDesired?: bigint; // | GasTokenOf<N>; TODO
+  gasDropoffDesired?: bigint | GasTokenOf<keyof EvmDomains>;
   paymentToken?: PaymentTokenOptions;
-  relayFeeMaxChangeMargin?: number; // | percentage?; TODO
+  relayFeeMaxChangeMargin?: number |  Percentage; // | percentage?; TODO
 };
 
 export type Intent<
