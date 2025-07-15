@@ -31,8 +31,8 @@ export const chainIdsSlotItem = {
  } as const satisfies Item;
 
 export const extraDomains = <N extends Network>(network: N) =>
-  difference(bakedInDomains, supportedPlatformDomains(network, "Evm")
-    
+  difference(bakedInDomains, supportedPlatformDomains(network, "Evm"),
+
   );
 export type ExtraDomain<N extends Network> = ReturnType<typeof extraDomains<N>>[number];
 

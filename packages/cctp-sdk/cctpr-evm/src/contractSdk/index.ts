@@ -57,8 +57,14 @@ import {
 import type {
   SupportedDomain,
   Corridor,
+  CorridorParams,
   CorridorVariant,
+  ErasedQuoteBase,
   FeeAdjustmentType,
+  InOrOut,
+  Quote,
+  UsdcQuote,
+  UsdcQuoteBase,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   corridors,
@@ -117,32 +123,6 @@ export const parseTransferTxCalldata = <N extends Network>(network: N) =>
 export const parseGovernanceTxCalldata = <N extends Network>(network: N) =>
   (calldata: CallData) => parseExecCalldata(calldata, governanceCommandArrayLayout(network));
 
-
-type QtOnChain = { readonly type: "onChain" };
-type QtOffChain = { readonly type: "offChain" };
-
-type ExtraFields<QT> =
-  QT extends QtOnChain
-  ? unknown
-  : Readonly<{
-    expirationTime: Date;
-    quoterSignature: Uint8Array;
-  }>;
-
-type RelayFieldName<T, U> = Readonly<T extends QtOnChain ? { maxRelayFee: U } : { relayFee: U }>;
-type QuoteTypeImpl<
-  WEF extends boolean, //with extra fields
-  GT = never,
-> = Simplify<
-  QtOnChain | QtOffChain extends infer QT
-  ? QT extends any
-    ? (QT & (WEF extends true ? ExtraFields<QT> : unknown)) extends infer Q
-      ? Q & RelayFieldName<Q, Usdc | GT>
-      : never
-    : never
-  : never
->;
-
 export type GaslessWitness = {
   parameters: {
     baseAmount:        bigint;
@@ -159,32 +139,12 @@ export type GaslessWitness = {
 
 export type Permit2GaslessData = Permit2WitnessTransferFromData<GaslessWitness>;
 
-export type Quote<SD extends DomainsOf<"Evm">> =
-                            QuoteTypeImpl<true, GasTokenOf<SD, DomainsOf<"Evm">>>;
-export type UsdcQuote     = QuoteTypeImpl<true>;
-export type UsdcQuoteBase = QuoteTypeImpl<false>;
-type ErasedQuoteBase      = QuoteTypeImpl<false, GasTokenOf<DomainsOf<"Evm">>>;
-
 export function quoteIsInUsdc(quote: ErasedQuoteBase): quote is UsdcQuote {
   return (
     (quote.type === "offChain" && quote.relayFee.kind.name === "Usdc") ||
     (quote.type === "onChain" && quote.maxRelayFee.kind.name === "Usdc")
   );
 }
-
-export type CorridorParams<
-  N extends Network,
-  SD extends SupportedEvmDomain<N>,
-  DD extends SupportedDomain<N>,
-> = Simplify<Readonly<
-  { type: "v1" } | (//eventually, we'll have to check if v1 is supported
-  SD extends Exclude<v2.SupportedDomain<N>, "Avalanche">
-  ? (DD extends v2.SupportedDomain<N> ? "v2Direct" : "avaxHop") extends
-      infer T extends "v2Direct" | "avaxHop"
-    ? { type: T; fastFeeRate: Percentage }
-    : never
-  : never)
->>;
 
 type ErasedCorridorParams =
   CorridorParams<Network, SupportedEvmDomain<Network>, SupportedDomain<Network>>;
@@ -208,16 +168,6 @@ export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
     };
   }
 }
-
-//"in" is guaranteed to be exact
-//"out" will _only_ be exact if:
-// * the relay quote is off-chain
-// * circle actually consumes the full fast fee
-//otherwise, out will always be a bit higher than the specified amount
-export type InOrOut = {
-  amount: Usdc;
-  type: "in" | "out";
-};
 
 export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends CctpRBase<N, SD> {
   //On-chain quotes should always allow for a safety margin of at least a few percent to make sure a
@@ -457,7 +407,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
         quote.type === "offChain"
         ? { type: "offChain",
             expirationTime: quote.expirationTime,
-            relayFee: { payIn: "usdc", amount: quote.relayFee as Usdc },
+            relayFee: { payIn: "usdc", amount: quote.relayFee },
             quoterSignature: quote.quoterSignature,
           }
         : { type: "onChainUsdc",

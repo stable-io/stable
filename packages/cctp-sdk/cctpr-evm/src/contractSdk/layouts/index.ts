@@ -4,6 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 export {
+  chainDataLayout,
   constructorLayout,
 } from "./constructor.js";
 export {
