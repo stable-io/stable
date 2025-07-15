@@ -50,7 +50,7 @@ export const secretsConfig = () => {
 
     let secret;
     try {
-      secret = readFileSync(`${secretsPath}/${secretName}`, "utf8").trim();
+      secret = readFileSync(`/${secretsPath}/${secretName}`, "utf8").trim();
     } catch {
       console.info("Secrets not found. Defaulting to env vars.");
     }
