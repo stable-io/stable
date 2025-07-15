@@ -72,16 +72,16 @@ for (const route of selectedRoutes) {
   //   console.info("transfer included!");
   // });
 
-  // route.progress.on("hop-redeemed", () => {
-  //   console.info("hop redeemed!");
+  // route.progress.on("hop-received", () => {
+  //   console.info("hop received!");
   // });
 
-  // route.progress.on("hop-confirmed", () => {
+  // route.progress.on("hop-received", () => {
   //   console.info("hop confirmed");
   // });
 
-  // route.progress.on("transfer-redeemed", (e) => {
-  //   console.info("transfer redeemed!");
+  // route.progress.on("transfer-received", (e) => {
+  //   console.info("transfer received!");
   // });
 
   /**

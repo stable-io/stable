@@ -10,7 +10,7 @@ import { UserIntent } from "./intent.js";
 import { Route, SupportedRoute } from "./route.js";
 import { EvmPlatformSigner } from "./signer.js";
 import { Url } from "@stable-io/utils";
-import { Redeem } from "./redeem.js";
+import { Receive } from "./receive.js";
 import { CctpAttestation } from "../methods/executeRoute/findTransferAttestation.js";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
@@ -36,9 +36,9 @@ export abstract class SDK<N extends Network> {
   public abstract executeRoute(route: SupportedRoute<N>): Promise<{
     transactions: TxHash[];
     attestations: CctpAttestation[];
-    redeems: Redeem[];
+    receiveTxs: Receive[];
     transferHash: TxHash;
-    redeemHash: TxHash;
+    receiveHash: TxHash;
   }>;
 
   public abstract getBalance(

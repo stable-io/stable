@@ -71,13 +71,13 @@ for (const route of selectedRoutes) {
   const {
     transactions,
     attestations,
-    redeems,
+    receiveTxs,
     transferHash,
-    redeemHash,
+    receiveHash,
   } = await sdk.executeRoute(route);
 
   console.info(`Transfer Sent:`, getTestnetScannerTxUrl(route.intent.sourceChain, transferHash));
-  console.info(`Transfer Redeemed:`, getTestnetScannerTxUrl(route.intent.targetChain, redeemHash));
+  console.info(`Transfer Received:`, getTestnetScannerTxUrl(route.intent.targetChain, receiveHash));
 }
 
 function logRouteInfo(route: Route<any, any>) {

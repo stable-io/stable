@@ -10,8 +10,8 @@ import { Route, SDK, Hex, SupportedRoute } from "../../types/index.js";
 
 import { executeRouteSteps } from "./executeRouteSteps.js";
 import { CctpAttestation, findTransferAttestation } from "./findTransferAttestation.js";
-import { findTransferRedeem } from "./findTransferRedeem.js";
-import { Redeem } from "src/types/redeem.js";
+import { findTransferReceive } from "./findTransferReceive.js";
+import { Receive } from "src/types/receive.js";
 
 export type ExecuteRouteDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl" | "getSigner">;
 
@@ -44,7 +44,7 @@ export const $executeRoute =
     const transferTx = transactions.at(-1)! as Hex; // there's always 1 or 2 hashes.
 
     const attestations = [] as CctpAttestation[];
-    const redeems = [] as Redeem[];
+    const receiveTxs = [] as Receive[];
 
     const attestation = await findTransferAttestation(
       network,
@@ -60,11 +60,11 @@ export const $executeRoute =
       attestation.targetDomain === "Avalanche";
 
     /**
-     * Note that we use attestation.targetChain to find the redeem
+     * Note that we use attestation.targetChain to find the receipt
      * because in the case of avax hop, there's an intermediate
-     * redeem on avalanche.
+     * receipt on avalanche.
      */
-    const redeem = await findTransferRedeem(
+    const receive = await findTransferReceive(
       network,
       getRpcUrl(attestation.targetDomain),
       attestation,
@@ -72,32 +72,32 @@ export const $executeRoute =
       route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
       throw error;
     });
-    redeems.push(redeem);
+    receiveTxs.push(receive);
 
     /**
-     * If it's avax hop, then we have redeemed the first
+     * If it's avax hop, then we have receipt the first
      * leg of the avax hop, and we need to find the second
      * transfer.
      *
      * Note that:
      * - "transfer-confirmed" is emitted when circle attests the first
      *   leg since this materializes the transfer.
-     * - "transfer-redeemed", in contrast, is emitted when the transfer
+     * - "transfer-received", in contrast, is emitted when the transfer
      *   makes it to the target user, which means after the second
      *   transaction in the avax-hop case.
      */
     if (isAvaxHop) {
-      route.progress.emit("hop-redeemed", redeem); // uses redeem
+      route.progress.emit("hop-received", receive);
 
       const secondHopAttestation = await findTransferAttestation(
         network,
         attestation.targetDomain,
-        redeem.transactionHash,
+        receive.transactionHash,
         { baseDelayMs: 50, maxDelayMs: 350 },
       ).catch((error: unknown) => {
         route.progress.emit("error", {
           type: "attestation-failed",
-          details: { txHash: redeem.transactionHash },
+          details: { txHash: receive.transactionHash },
         });
 
         throw error;
@@ -106,28 +106,28 @@ export const $executeRoute =
       attestations.push(secondHopAttestation);
       route.progress.emit("hop-confirmed", secondHopAttestation); // uses hop attestation
 
-      const secondHopRedeem = await findTransferRedeem(
+      const secondHopReceive = await findTransferReceive(
         network,
         getRpcUrl(secondHopAttestation.targetDomain),
         secondHopAttestation,
       ).catch((error: unknown) => {
-        route.progress.emit("error", { type: "receive-failed", details: { txHash: redeem.transactionHash } });
+        route.progress.emit("error", { type: "receive-failed", details: { txHash: receive.transactionHash } });
         throw error;
       });
 
-      redeems.push(secondHopRedeem);
-      route.progress.emit("transfer-redeemed", secondHopRedeem); // uses hopRedeem
+      receiveTxs.push(secondHopReceive);
+      route.progress.emit("transfer-received", secondHopReceive);
     }
 
     else {
-      route.progress.emit("transfer-redeemed", redeem); // uses redeem
+      route.progress.emit("transfer-received", receive);
     }
 
     return {
       transactions,
       attestations,
-      redeems,
+      receiveTxs,
       transferHash: transactions.at(-1)!,
-      redeemHash: redeems.at(-1)!.transactionHash,
+      receiveHash: receiveTxs.at(-1)!.transactionHash,
     };
   };
