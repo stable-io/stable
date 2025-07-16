@@ -2,18 +2,29 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-import { init as initDefinitions,
+import type {
   EvmDomains,
   GasTokenOf,
-  Usdc,
+  PlatformAddress,
+  RegisteredPlatform,
 } from "@stable-io/cctp-sdk-definitions";
-import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
-import type { Corridor, CorridorStats, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
-import { init as initCctprEvm } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
+import {
+  Usdc,
+  init as initDefinitions,
+  platformAddress,
+  platformClient,
+  platformOf,
+} from "@stable-io/cctp-sdk-definitions";
+import { getTokenAllowance } from "@stable-io/cctp-sdk-evm";
+import { init as initCctpr, platformCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type {
+  Corridor,
+  CorridorParams,
+  CorridorStats,
+  InOrOut,
+  LoadedCctprPlatformDomain,
+  SupportedDomain,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import { TODO } from "@stable-io/utils";
 
 import { TransferProgressEmitter } from "../../../progressEmitter.js";
@@ -28,20 +39,20 @@ import { calculateTotalCost, getCorridorFees } from "../fees.js";
 
 export async function buildUserTransferRoute<
   N extends Network,
-  S extends SupportedEvmDomain<N>,
-  D extends SupportedEvmDomain<N>,
+  P extends RegisteredPlatform,
+  S extends LoadedCctprPlatformDomain<N, P>,
+  D extends SupportedDomain<N>,
 >(
-  evmClient: ViemEvmClient<N, S>,
-  cctprEvm: ReturnType<typeof initCctprEvm<N>>,
+  network: N,
   intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
 ): Promise<Route<S, D>> {
+  const platform = platformOf(intent.sourceChain);
+  const cctprImpl = platformCctpr(platform);
   const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
     corridor.cost,
     intent,
   );
-
-  const takeFeesFromInput = true;
 
   const quote = intent.paymentToken === "usdc"
   ? {
@@ -53,7 +64,7 @@ export async function buildUserTransferRoute<
   const totalUsdcValue = usdcFees.reduce((acc, fee) => acc.add(fee), intent.amount);
 
   const allowanceRequired = await cctprRequiresAllowance(
-    evmClient,
+    network,
     intent.sourceChain,
     intent.sender,
     totalUsdcValue,
@@ -72,6 +83,11 @@ export async function buildUserTransferRoute<
     buildTransferStep(corridor.corridor, intent.sourceChain),
   ];
 
+  const inOrOut: InOrOut = {
+    amount: intent.amount,
+    type: "in",
+  };
+
   const corridorParams = corridor.corridor === "v1"
     ? { type: corridor.corridor }
     : { type: corridor.corridor, fastFeeRate };
@@ -89,39 +105,43 @@ export async function buildUserTransferRoute<
     ),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
-    workflow: cctprEvm.transfer(
-      evmClient,
+    workflow: cctprImpl.transfer(
+      network,
+      intent.sourceChain,
+      intent.targetChain,
       intent.sender,
-      intent.targetChain as SupportedDomain<N>,
       intent.recipient,
-      intent.amount,
+      inOrOut,
+      corridorParams as CorridorParams<N, S, D>, // @todo: remove cast
       { type: "onChain", ...quote },
       intent.gasDropoffDesired as TODO,
-      corridorParams as TODO,
-      takeFeesFromInput,
-      intent.usePermit,
+      { usePermit: intent.usePermit },
     ),
   };
 }
 
 async function cctprRequiresAllowance<
   N extends Network,
-  S extends SupportedEvmDomain<N>,
+  P extends RegisteredPlatform,
+  S extends LoadedCctprPlatformDomain<N, P>,
 >(
-  evmClient: ViemEvmClient<N, S>,
-  sourceChain: keyof EvmDomains,
-  sender: EvmAddress,
+  network: N,
+  sourceChain: S,
+  sender: PlatformAddress<P>,
   totalUsdcValue: Usdc,
 ): Promise<boolean> {
+  const client = platformClient(network, sourceChain);
   // TODO: This probably should also be dependency injected?
-  const definitions = initDefinitions(evmClient.network);
-  const cctpr = initCctpr(evmClient.network);
-  const evm = initEvm(evmClient.network);
+  const definitions = initDefinitions(network);
+  const cctpr = initCctpr(network);
 
-  const usdcAddress = new EvmAddress(
-    definitions.usdcContracts.contractAddressOf[sourceChain],
+  const usdcAddress = platformAddress(
+    sourceChain,
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    definitions.usdcContracts.contractAddressOf[network as Network][sourceChain],
   );
-  const cctprAddress = new EvmAddress(
+  const cctprAddress = platformAddress(
+    sourceChain,
     /**
      * @todo: type system thinks contractAddressOf is not callable,
      *        but at runtime it is. Figure out what's up.
@@ -130,8 +150,8 @@ async function cctprRequiresAllowance<
     (cctpr.contractAddressOf as any)(sourceChain),
   );
 
-  const allowance = await evm.getTokenAllowance(
-    evmClient as any,
+  const allowance = await getTokenAllowance(
+    client,
     usdcAddress,
     sender,
     cctprAddress,

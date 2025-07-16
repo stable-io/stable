@@ -3,23 +3,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import { Amount } from "@stable-io/amount";
-import { gasTokenKindOf, isUsdc, type Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdc,
-  GasTokenOf,
-  EvmDomains,
-} from "@stable-io/cctp-sdk-definitions";
-import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { EvmDomains, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { gasTokenKindOf, isUsdc, usdc } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import {
-  init as initCctprEvm,
-  type SupportedEvmDomain,
-
-} from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
-
-import { buildGaslessRoute, buildUserTransferRoute } from "./routes/index.js";
-
 import type {
   SDK,
   Route,
@@ -28,6 +17,7 @@ import type {
   UserIntent,
   SupportedRoute,
 } from "../../types/index.js";
+import { buildGaslessRoute, buildUserTransferRoute } from "./routes/index.js";
 
 export type FindRoutesDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
@@ -54,18 +44,18 @@ export const $findRoutes = <
       intent.sourceChain,
       rpcUrl,
     );
-    const cctprEvm = initCctprEvm(network);
+    const cctpr = initCctpr(network);
 
     const corridors  = await getCorridors(
-      viemEvmClient,
-      cctprEvm,
+      network,
+      cctpr,
       intent,
     );
 
     const routes: SupportedRoute<N>[] = [];
 
     for (const corridor of corridors) {
-      const userTransferRoute = buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor);
+      const userTransferRoute = buildUserTransferRoute(network, intent, corridor);
       const gaslessRoutes = intent.paymentToken === "usdc"
         ? [buildGaslessRoute(viemEvmClient, intent, corridor)]
         : [];
@@ -87,18 +77,16 @@ export const $findRoutes = <
     };
   };
 
-async function getCorridors<
-  N extends Network,
-  S extends SupportedEvmDomain<N>,
->(
-  viemEvmClient: ViemEvmClient<N, S>,
-  cctprEvm: ReturnType<typeof initCctprEvm<N>>,
+async function getCorridors<N extends Network>(
+  network: N,
+  cctpr: ReturnType<typeof initCctpr<N>>,
   intent: Intent<keyof EvmDomains, keyof EvmDomains>,
 ) {
-  const { stats: corridorStats, fastBurnAllowance } = await cctprEvm.getCorridors(
-    viemEvmClient,
+  const { stats: corridorStats, fastBurnAllowance } = await cctpr.getCorridors(
+    network,
+    intent.sourceChain,
     intent.targetChain,
-    intent.gasDropoffDesired as TODO,
+    intent.gasDropoffDesired,
   );
 
   return corridorStats.filter((c) => {
