@@ -132,13 +132,13 @@ export function amountItem<S extends number, const K extends Kind>(
       to: (val: NumericType<S>) =>
         toFunc(val),
       from: (amount: DistributiveAmount<K>): NumericType<S> =>
-        numericReturn(size)(amount.toUnit(unitSymbol) as Rational)
+        numericReturn(size)(amount.toUnit(unitSymbol) as Rational),
     }
     : {
       to: (val: NumericType<S>) =>
         toFunc(transform.to(val)),
       from: (amount: DistributiveAmount<K>): NumericType<S> =>
-        transform.from(amount.toUnit(unitSymbol) as Rational)
+        transform.from(amount.toUnit(unitSymbol) as Rational),
     };
 
   return { binary: "uint", size, custom };
@@ -152,7 +152,7 @@ export function linearTransform<S extends number>(
   coefficient = Rational.from(coefficient);
   constant = Rational.from(constant ?? 0);
   return (size: S) => {
-    const numRet = numericReturn(size);  
+    const numRet = numericReturn(size);
     return direction === "to->from"
       ? {
         to: (val: NumericType<S>) => Rational.from(val).mul(coefficient).add(constant),
@@ -162,5 +162,5 @@ export function linearTransform<S extends number>(
         to: (val: NumericType<S>) => Rational.from(val).sub(constant).div(coefficient),
         from: (val: Rational) => numRet(val.mul(coefficient).add(constant)),
       };
-  }
+  };
 }

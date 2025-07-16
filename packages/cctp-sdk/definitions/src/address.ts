@@ -5,7 +5,7 @@
 
 import type { Size } from "@stable-io/utils";
 import { encoding, isUint8Array } from "@stable-io/utils";
-import type { PlatformRegistry, RegisteredPlatform, LoadedDomain } from "./registry.js";
+import type { PlatformRegistry, RegisteredPlatform, LoadedDomain, ToPlatform } from "./registry.js";
 import type { Platform, PlatformOf } from "./constants/chains/index.js";
 import { platformOf, addressFormatOf } from "./constants/chains/platforms.js";
 
@@ -32,8 +32,6 @@ export interface Address {
 }
 
 export type PlatformAddress<P extends RegisteredPlatform> = PlatformRegistry[P]["Address"];
-type ToPlatform<T extends LoadedDomain | RegisteredPlatform> =
-  T extends LoadedDomain ? PlatformOf<T> : T;
 
 export class UniversalAddress implements Address {
   static readonly byteSize = 32 as Size;

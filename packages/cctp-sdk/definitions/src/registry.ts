@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { ApplyAliases, BaseObject } from "@stable-io/utils";
-import type { Platform, DomainsOf } from "./constants/index.js";
+import type { Platform, DomainsOf, PlatformOf } from "./constants/index.js";
 
 export interface ConfigRegistry extends BaseObject {
   //SelectedNetwork: <Network>
@@ -20,6 +20,7 @@ export interface ProtocolRegistry extends BaseObject {
 export interface PlatformRegistry extends BaseObject {
   //included platform packages register as:
   //[Platform name]: {
+  //  Client: ClientType;
   //  Address: AddressType;
   //  UnsignedTx: UnsignedTxType;
   //  UnsignedMsg: UnsignedMsgType;
@@ -41,6 +42,8 @@ export type PlatformTypesOf<P extends Platform> =
 
 export type RegisteredPlatform = keyof PlatformRegistry;
 export type LoadedDomain = DomainsOf<RegisteredPlatform>;
+export type ToPlatform<T extends LoadedDomain | RegisteredPlatform> =
+  T extends LoadedDomain ? PlatformOf<T> : T;
 
 export type PlatformImplsOf<R extends Protocol> =
   keyof ProtocolRegistry[R]["PlatformImplsOf"];

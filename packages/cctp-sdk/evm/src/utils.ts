@@ -8,7 +8,8 @@ import { type KindWithAtomic, Amount } from "@stable-io/amount";
 import { type Network, amountItem } from "@stable-io/cctp-sdk-definitions";
 import { keccak256 } from "@stable-io/utils";
 import { EvmAddress } from "./address.js";
-import type { ContractTx, EvmClient, CallData } from "./platform.js";
+import type { EvmClient } from "./client.js";
+import type { ContractTx, CallData } from "./platform.js";
 import { wordSize, selectorItem, evmAddressItem, paddedSlotItem } from "./layoutItems.js";
 
 export async function getTokenBalance<const K extends KindWithAtomic>(

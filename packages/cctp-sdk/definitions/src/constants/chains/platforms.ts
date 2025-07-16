@@ -6,6 +6,7 @@
 import type { SuppressExpansion } from "@stable-io/utils";
 import { deepReadonly, column, constMap, RoArray } from "@stable-io/map-utils";
 import type { Domain, ExpandedDomain, SimplifyDomain } from "./domains.js";
+import type { Network } from "./networks.js";
 
 export const platformDomainEntries = [[
   "Evm", [

@@ -14,6 +14,7 @@ export * from "./getCorridors.js";
 export * from "./registry.js";
 export * from "./transfer.js";
 export * from "./layouts.js";
+export * from "./types.js";
 
 export const init = <N extends Network>(network: N) => ({
   ...constants.init(network),

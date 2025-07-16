@@ -12,6 +12,7 @@
     "build": "tsc --build ./tsconfig.build.esm.json",
     "build:check": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "test": "jest --coverage",
     "test:watch": "yarn test --watchAll=true",
     "clean": "rm -rf ./dist"
