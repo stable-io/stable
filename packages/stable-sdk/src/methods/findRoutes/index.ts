@@ -3,12 +3,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import { Amount } from "@stable-io/amount";
-import { gasTokenKindOf, isUsdc, percentage, Percentage, type Usdc } from "@stable-io/cctp-sdk-definitions";
+import { gasTokenKindOf, isUsdc, percentage, type Usdc } from "@stable-io/cctp-sdk-definitions";
 import { usdc,
-  GasTokenOf,
   EvmDomains,
 } from "@stable-io/cctp-sdk-definitions";
-import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import {
   init as initCctprEvm,
@@ -144,8 +142,8 @@ function parseGasDropoff(intent: UserIntent): TODO {
 function parseRelayFeeChangeMargin(intent: UserIntent) {
   const { relayFeeMaxChangeMargin: rfcm } = intent;
   if (rfcm instanceof Amount) return rfcm;
-  if (!rfcm) return percentage("0");
-  return percentage(rfcm.toString());
+  if (!rfcm) return percentage(RELAY_FEE_MAX_CHANGE_MARGIN);
+  return percentage(rfcm);
 }
 
 function findBestRoutes<
