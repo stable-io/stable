@@ -9,4 +9,4 @@ import { OracleService } from "./oracle.service";
   providers: [OracleService],
   exports: [OracleService],
 })
-export class OracleModule {} 
+export class OracleModule {}

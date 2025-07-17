@@ -82,10 +82,7 @@ const rootQueryLayout = {
 } as const;
 type RootQuery = DeriveType<typeof rootQueryLayout>;
 
-const versionEnvelopeLayout = <
-  const N extends string,
-  const L extends Layout,
->(
+const versionEnvelopeLayout = <const N extends string, const L extends Layout>(
   name: N,
   layout: L,
 ) =>
@@ -97,10 +94,7 @@ const versionEnvelopeLayout = <
     layouts: [[0, [{ name, binary: "array", layout }]]],
   }) as const;
 
-const queryParamsLayout = versionEnvelopeLayout(
-  "queries",
-  rootQueryLayout,
-);
+const queryParamsLayout = versionEnvelopeLayout("queries", rootQueryLayout);
 
 type ArgsResult<A, R> = {
   [K in keyof A | "result"]: K extends "result" ? R : A[Exclude<K, "result">];
@@ -110,7 +104,6 @@ type FeeParamQuery<C extends Domain> = {
   query: "FeeParams";
   chain: { domain: C; network: Network };
 };
-type QueryParams = DeriveType<typeof queryParamsLayout>;
 
 const mweiToGwei = {
   to: (val: number): Rational => Rational.from(BigInt(val), 1000n),
@@ -258,7 +251,7 @@ export class OracleService {
     domains: DomainsOf<"Evm">[],
   ): Promise<{ gasTokenPrice: Usdc; gasPrice: EvmGasToken }[]> {
     const network = this.configService.network;
-    
+
     // TODO: RPC Urls? Create clients at startup?
     const client = ViemEvmClient.fromNetworkAndDomain(
       network,
@@ -351,4 +344,4 @@ export class OracleService {
 
     return decodedResults as QueryResults<Q>;
   }
-} 
+}

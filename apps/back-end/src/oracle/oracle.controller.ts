@@ -18,4 +18,4 @@ export class OracleController {
   public getStatus(): string {
     return this.oracleService.getStatus();
   }
-} 
+}

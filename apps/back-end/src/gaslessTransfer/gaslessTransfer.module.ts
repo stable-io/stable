@@ -9,7 +9,13 @@ import { GaslessTransferService } from "./gaslessTransfer.service";
 import { ValidatePermitSignatureConstraint } from "./validators";
 
 @Module({
-  imports: [CctpRModule, TxLandingModule, ConfigModule, AuthModule, OracleModule],
+  imports: [
+    CctpRModule,
+    TxLandingModule,
+    ConfigModule,
+    AuthModule,
+    OracleModule,
+  ],
   controllers: [GaslessTransferController],
   providers: [GaslessTransferService, ValidatePermitSignatureConstraint],
   exports: [GaslessTransferService],
