@@ -150,6 +150,7 @@ const { transferHash } = await stable.executeRoute(routes[0]);
 yarn build:packages     # Build all packages
 yarn build:front-end    # Build front-end app
 yarn build:back-end     # Build back-end app
+yarn build:common       # Build common layers
 yarn build:cctp-sdk     # Build CCTP SDK layers
 yarn build:sdk          # Build public SDK
 
