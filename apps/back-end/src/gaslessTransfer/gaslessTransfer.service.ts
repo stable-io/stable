@@ -17,9 +17,9 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
+import { OracleService } from "../oracle/oracle.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
-import { getPrices } from "../common/utils/oracle";
 
 @Injectable()
 export class GaslessTransferService {
@@ -28,6 +28,7 @@ export class GaslessTransferService {
     private readonly jwtService: JwtService,
     private readonly txLandingService: TxLandingService,
     private readonly cctpRService: CctpRService,
+    private readonly oracleService: OracleService,
   ) {}
 
   public async quoteGaslessTransfer(
@@ -89,10 +90,7 @@ export class GaslessTransferService {
   private async getPricesForRequest(
     request: QuoteRequestDto,
   ): Promise<{ gasTokenPrice: Usdc; gasPrice: EvmGasToken }> {
-    const prices = await getPrices(
-      [request.sourceDomain],
-      this.configService.network,
-    );
+    const prices = await this.oracleService.getPrices([request.sourceDomain]);
     return prices[0]!;
   }
 
