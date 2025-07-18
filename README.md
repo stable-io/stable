@@ -29,6 +29,16 @@ This is a **Yarn v4 monorepo** organized into distinct workspace categories, eac
 - Route finding and execution
 - Gasless transaction support
 
+### 🔧 Shared Utilities (`packages/common/`)
+Foundational utilities shared across the entire ecosystem:
+- **`packages/common/amount/`** - Type-safe amount handling and calculations
+- **`packages/common/utils/`** - General utility functions and helpers
+- **`packages/common/map-utils/`** - Map manipulation and utility functions
+- **`packages/common/eslint-config/`** - Shared ESLint configuration (unpublished, only for development)
+
+> ***Below is supporting infrastructure**
+> If integrating with stable you probably don't need to understand the layers below.
+
 ### 🏗️ Applications (`apps/`)
 Production-ready applications deployed to cloud infrastructure:
 
@@ -60,14 +70,6 @@ On-chain protocol implementations:
 - **Tree-shakeable**: Import only needed layers
 - **Blockchain-agnostic**: Add support for new chains without bloating existing implementations
 - **Client-flexible [TODO]**: Support multiple blockchain clients (currently only viem supported)
-
-### 🔧 Shared Utilities (`packages/common/`)
-Foundational utilities shared across the entire ecosystem:
-
-- **`packages/common/amount/`** - Type-safe amount handling and calculations
-- **`packages/common/utils/`** - General utility functions and helpers
-- **`packages/common/map-utils/`** - Map manipulation and utility functions
-- **`packages/common/eslint-config/`** - Shared ESLint configuration (unpublished, only for development)
 
 ### 🚀 Deployment (`deployment/`)
 Infrastructure and deployment configurations:
