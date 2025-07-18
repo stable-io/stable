@@ -44,6 +44,9 @@ export const BridgeWidget = ({
   isInProgress,
   onTransfer,
 }: BridgeWidgetProps): ReactElement => {
+  const transferEnabled =
+    !isInProgress && !!walletAddress && !!route && balance > amount;
+
   return (
     <div className="bridge-widget content-box">
       <div className="widget-title">
@@ -83,7 +86,7 @@ export const BridgeWidget = ({
         <TransferButton
           onTransfer={onTransfer}
           isInProgress={isInProgress}
-          disabled={!route || isInProgress}
+          disabled={!transferEnabled}
         />
       </div>
     </div>
