@@ -59,7 +59,7 @@ On-chain protocol implementations:
 **Architecture Benefits**:
 - **Tree-shakeable**: Import only needed layers
 - **Blockchain-agnostic**: Add support for new chains without bloating existing implementations
-- **Client-flexible**: Support multiple blockchain clients (viem, ethers, etc.)
+- **Client-flexible [TODO]**: Support multiple blockchain clients (currently only viem supported)
 
 ### 🔧 Shared Utilities (`packages/common/`)
 Foundational utilities shared across the entire ecosystem:
