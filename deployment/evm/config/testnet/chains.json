@@ -20,7 +20,7 @@
       "description": "Arbitrum Sepolia",
       "evmNetworkId": 421614,
       "chainId": 10003,
-      "rpc": "https://arbitrum-sepolia.drpc.org"
+      "rpc": "https://arbitrum-sepolia.therpc.io"
     },
     {
       "domain": "Base",
