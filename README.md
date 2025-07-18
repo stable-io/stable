@@ -6,9 +6,28 @@ Stable is a comprehensive infrastructure for fast, secure USDC transfers across 
 
 > **⚠️ Early Stage**: This project is in pre-MVP phase and represents an architectural outline of the planned system.
 
+## 🎯 Primary Entry Point
+
+**Most developers should start with [`@stable-io/sdk`](./packages/stable-sdk/)** - our high-level, developer-friendly SDK that provides simple APIs for USDC transfers across chains.
+
+```bash
+# Install the public SDK
+npm install @stable-io/sdk
+# or
+yarn add @stable-io/sdk
+```
+
 ## Architecture
 
 This is a **Yarn v4 monorepo** organized into distinct workspace categories, each serving specific architectural layers:
+
+### 🎯 Public SDK (`packages/stable-sdk/`) - **START HERE**
+**Developer-focused interface** - the main package most users should interact with:
+- High-level abstractions over the low-level CCTP SDK
+- Simplified API for common use cases
+- Developer ergonomics and ease of integration
+- Route finding and execution
+- Gasless transaction support
 
 ### 🏗️ Applications (`apps/`)
 Production-ready applications deployed to cloud infrastructure:
@@ -24,14 +43,6 @@ On-chain protocol implementations:
 
 - **`contracts/cctpr/`** - CCTPR (Cross-Chain Transfer Protocol Relayer) - An on-chain relaying protocol built on top of CCTPv1, CCTPv2, and Avalanche Bridge
 - **`contracts/price-oracle/`** - Price oracle contracts for cross-chain fee calculations
-
-### 🔧 Shared Utilities (`packages/common/`)
-Foundational utilities shared across the entire ecosystem:
-
-- **`packages/common/amount/`** - Type-safe amount handling and calculations
-- **`packages/common/utils/`** - General utility functions and helpers
-- **`packages/common/map-utils/`** - Map manipulation and utility functions
-- **`packages/common/eslint-config/`** - Shared ESLint configuration
 
 ### 🛠️ Low-Level SDK (`packages/cctp-sdk/`)
 **Modular, layered SDK** designed for optional loading to minimize bundle size:
@@ -50,13 +61,13 @@ Foundational utilities shared across the entire ecosystem:
 - **Blockchain-agnostic**: Add support for new chains without bloating existing implementations
 - **Client-flexible**: Support multiple blockchain clients (viem, ethers, etc.)
 
-### 🎯 Public SDK (`packages/stable-sdk/`)
-**Developer-focused interface** that provides:
-- High-level abstractions over the low-level CCTP SDK
-- Simplified API for common use cases
-- Developer ergonomics and ease of integration
-- Route finding and execution
-- Gasless transaction support
+### 🔧 Shared Utilities (`packages/common/`)
+Foundational utilities shared across the entire ecosystem:
+
+- **`packages/common/amount/`** - Type-safe amount handling and calculations
+- **`packages/common/utils/`** - General utility functions and helpers
+- **`packages/common/map-utils/`** - Map manipulation and utility functions
+- **`packages/common/eslint-config/`** - Shared ESLint configuration
 
 ### 🚀 Deployment (`deployment/`)
 Infrastructure and deployment configurations:
@@ -83,7 +94,56 @@ yarn install --immutable
 yarn build
 ```
 
-### Development Workflow
+## Examples
+
+The [`packages/stable-sdk/examples/`](./packages/stable-sdk/examples/) directory contains comprehensive examples showing how to use the SDK:
+
+### Available Examples
+
+```bash
+# 1. Find available routes between chains
+yarn workspace @stable-io/sdk tsx examples/findRoutes.ts
+
+# 2. Execute a complete transfer
+yarn workspace @stable-io/sdk tsx examples/executeRoute.ts
+
+# 3. Monitor transfer progress in real-time
+yarn workspace @stable-io/sdk tsx examples/logTransferProgress.ts
+
+# 4. Track transaction events
+yarn workspace @stable-io/sdk tsx examples/logTransactionEvents.ts
+
+# 5. Parse transfer call data
+yarn workspace @stable-io/sdk tsx examples/parseTransferCallData.ts
+
+# 6. Parse router hook data
+yarn workspace @stable-io/sdk tsx examples/parseRouterHookData.ts
+```
+
+### Example: Basic Usage
+
+```typescript
+import Stable from "@stable-io/sdk";
+
+// Initialize the SDK
+const stable = new Stable({ 
+  network: "Testnet", 
+  signer: yourSigner 
+});
+
+// Find routes
+const routes = await stable.findRoutes({
+  sourceChain: "Ethereum",
+  targetChain: "Polygon", 
+  amount: usdc(100),
+  // ... other options
+});
+
+// Execute transfer
+const { transferHash } = await stable.executeRoute(routes[0]);
+```
+
+## Development Workflow
 
 ```bash
 # Build specific workspace categories
@@ -97,9 +157,6 @@ yarn build:sdk          # Build public SDK
 yarn lint               # Lint all workspaces
 yarn test               # Test all workspaces
 yarn clean              # Clean all build artifacts
-
-# Run examples
-yarn workspace @stable-io/sdk tsx examples/executeRoute.ts
 ```
 
 ## Workspace Structure
