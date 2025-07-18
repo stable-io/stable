@@ -67,7 +67,7 @@ Foundational utilities shared across the entire ecosystem:
 - **`packages/common/amount/`** - Type-safe amount handling and calculations
 - **`packages/common/utils/`** - General utility functions and helpers
 - **`packages/common/map-utils/`** - Map manipulation and utility functions
-- **`packages/common/eslint-config/`** - Shared ESLint configuration
+- **`packages/common/eslint-config/`** - Shared ESLint configuration (unpublished, only for development)
 
 ### 🚀 Deployment (`deployment/`)
 Infrastructure and deployment configurations:
