@@ -234,3 +234,77 @@ export async function deployGasDropoff(chain: ChainInfo): Promise<Deployment> {
     return { chainId: chain.chainId, error };
   }
 }
+
+export type VerificationResult = {
+  domain: Domain;
+  contractName: string;
+  address: string;
+  forgeCommand: string;
+  constructorArgs: string;
+};
+
+export function generateForgeVerifyCommand(
+  chain: ChainInfo,
+  contractName: string,
+  constructorData: Uint8Array,
+): VerificationResult {
+  const address = loadAddress(contractName, chain.chainId);
+
+  if (!address) {
+    throw new Error(`Contract ${contractName} not deployed on chain ${chain.domain}`);
+  }
+
+  // Convert constructor args to hex string
+  const constructorArgs = encoding.hex.encode(constructorData, true);
+  // Generate Forge verify command with contract directory
+  const forgeCommand = `forge verify-contract ${address} ${contractName} \
+    --chain-id ${chain.evmNetworkId} --constructor-args ${constructorArgs} --watch`;
+
+  return {
+    domain: chain.domain,
+    contractName,
+    address,
+    forgeCommand,
+    constructorArgs,
+  };
+}
+
+export function generateCctpRVerifyCommand(
+  chain: ChainInfo,
+  configParameters: CctpRConfig,
+): VerificationResult {
+  const network = getNetwork();
+  const priceOracleAddress = loadAddress(priceOracleName, chain.chainId);
+
+  if (priceOracleAddress === undefined) {
+    throw new Error(`Price oracle deployment missing for chain ${chain.chainId}`);
+  }
+
+  const callData = CctpRGovernance.constructorCalldata(
+    network,
+    chain.domain,
+    new EvmAddress(configParameters.owner),
+    new EvmAddress(configParameters.feeAdjuster),
+    new EvmAddress(configParameters.feeRecipient),
+    new EvmAddress(configParameters.offChainQuoter),
+    new EvmAddress(priceOracleAddress),
+    loadFeeAdjustments(),
+  );
+
+  return generateForgeVerifyCommand(chain, cctprName, callData);
+}
+
+export function generateAvaxRouterVerifyCommand(): VerificationResult {
+  const network = getNetwork();
+  const chainId = wormholeChainIdOf(network, "Avalanche");
+  const chain = getChain(chainId);
+
+  const callData = CctpRGovernance.avaxRouterConstructorCalldata(network);
+  return generateForgeVerifyCommand(chain, avaxRouterName, callData);
+}
+
+export function generateGasDropoffVerifyCommand(chain: ChainInfo): VerificationResult {
+  const network = getNetwork();
+  const callData = CctpRGovernance.gasDropoffConstructorCalldata(network, chain.domain);
+  return generateForgeVerifyCommand(chain, cctpGasDropoffName, callData);
+}

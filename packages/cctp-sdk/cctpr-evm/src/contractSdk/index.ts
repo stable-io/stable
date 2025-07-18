@@ -646,7 +646,7 @@ export class CctpRGovernance<
       domain as v2.SupportedDomain<Network>,
       "tokenMessenger",
     );
-    return serialize(constructorLayout(network), {
+    const serialized = serialize(constructorLayout(network), {
       owner,
       feeAdjuster,
       feeRecipient,
@@ -662,6 +662,9 @@ export class CctpRGovernance<
         feeAdjustments: arrayFeeAdjustments,
       },
     });
+    // This padding should be added by serialize but it is not implemented in the layout yet
+    const chainDataPostPadding = new Uint8Array(30);
+    return encoding.bytes.concat(serialized, chainDataPostPadding);
   }
 
   static avaxRouterConstructorCalldata(
