@@ -1,9 +1,6 @@
 name: Build and test packages
-
 on:
   pull_request:
-    paths-ignore:
-      - "**.md"
 
 jobs:
   build-and-check:
