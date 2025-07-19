@@ -18,8 +18,8 @@ import { column, entries, zip, spread, nest } from "@stable-io/map-utils";
 export const transform = <const L extends Layout, T>(
   layout: L,
   to: (derived: DeriveType<L>) => T,
-  from: (transformed: T) => DeriveType<L>
-) => ({ binary: "bytes", layout, custom: { to, from } } as const satisfies Item);
+  from: (transformed: T) => DeriveType<L>,
+) => ({ binary: "bytes", layout, custom: { to, from } } as const);
 
 type NestedBytesItem = { name: string; binary: "bytes"; layout: ProperLayout };
 type Unwrap<L extends Layout, I extends NestedBytesItem> =
