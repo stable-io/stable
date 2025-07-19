@@ -3,10 +3,23 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { RoPair, RoTuple, RoArray, HeadTail, Extends, IsAny } from "./metaprogramming.js";
+import type {
+  RoPair,
+  Tuple,
+  RoTuple,
+  RoArray,
+  HeadTail,
+  Extends,
+  IsAny,
+} from "./metaprogramming.js";
 
 export type RoTuple2D<T = unknown> = RoTuple<RoTuple<T>>;
 export type RoArray2D<T = unknown> = RoArray<RoArray<T>>;
+
+export type PreserveReadonly<A extends RoArray, R extends RoArray> =
+  A extends Tuple | unknown[]
+  ? R
+  : Readonly<R>;
 
 type TupleRangeImpl<L extends number, A extends number[] = []> =
   A["length"] extends L
@@ -51,25 +64,21 @@ export type DeepReadonly<T> =
   ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
   : T;
 
-type test = DeepReadonly<unknown>;
-
 export const deepReadonly = <const T>(value: T): DeepReadonly<T> => value as DeepReadonly<T>;
 
 export type TupleEntries<T extends RoTuple> =
   [...{ [K in keyof T]: K extends `${infer N extends number}` ? [N, T[K]] : never }];
 
 //const aware version of Array.entries
-export type Entries<T extends RoArray> =
-  T extends RoTuple
-  ? TupleEntries<T>
-  : T extends RoArray<infer U>
+export type Entries<A extends RoArray> =
+  A extends RoTuple
+  ? TupleEntries<A>
+  : A extends RoArray<infer U>
   ? [number, U][]
   : never;
 
-export function entries<const T extends RoTuple>(arr: T): TupleEntries<T>;
-export function entries<const T extends RoArray>(arr: T): Entries<T>;
-export function entries(arr: readonly unknown[]): [number, unknown][] {
-  return [...arr.entries()];
+export function entries<const T extends RoArray>(arr: T): Entries<T> {
+  return [...arr.entries()] as Entries<T>;
 }
 
 export type ValueIndexTupleEntries<T extends RoTuple> =
@@ -83,10 +92,8 @@ export type ValueIndexEntries<T extends RoArray> =
   ? [U, number][]
   : never;
 
-export function valueIndexEntries<const T extends RoTuple>(arr: T): ValueIndexTupleEntries<T>;
-export function valueIndexEntries<const T extends RoArray>(arr: T): ValueIndexEntries<T>;
-export function valueIndexEntries(arr: readonly unknown[]): [unknown, number][] {
-  return arr.map((value, index) => [value, index]);
+export function valueIndexEntries<const T extends RoArray>(arr: T): ValueIndexEntries<T> {
+  return arr.map((value, index) => [value, index]) as ValueIndexEntries<T>;
 }
 
 export type IsArray<T> = T extends RoArray<unknown> ? true : false;
@@ -121,6 +128,32 @@ export type InnerFlatten<A extends RoArray> =
 export type Unflatten<A extends RoArray> =
   [...{ [K in keyof A]: K extends `${number}` ? [A[K]] : never }];
 
+export type TupleChunkImpl<T extends RoTuple, N extends number, PC extends RoTuple = []> =
+  PC["length"] extends N
+  ? [T, PC]
+  : T extends HeadTail<T, infer Head, infer Tail>
+  ? TupleChunkImpl<Tail, N, [...PC, Head]>
+  : [[], PC];
+
+export type TupleChunk<T extends RoTuple, N extends number> =
+  TupleChunkImpl<T, N> extends [infer R extends RoTuple, infer C]
+  ? C extends readonly []
+    ? []
+    : [C, ...TupleChunk<R, N>]
+  : never;
+
+type ArrayChunk<A extends RoArray> = A extends RoArray<infer U> ? RoArray<RoArray<U>> : never;
+
+export type Chunk<A extends RoArray, N extends number> =
+  A extends RoTuple
+  ? number extends N
+    ? ArrayChunk<A>
+    : TupleChunk<A, N>
+  : ArrayChunk<A>;
+
+export const chunk = <const A extends RoArray, N extends number>(arr: A, size: N): Chunk<A, N> =>
+  range(Math.ceil(arr.length / size)).map(i => arr.slice(i * size, (i+1) * size)) as Chunk<A, N>;
+
 export type IsRectangular<T extends RoTuple> =
   T extends RoTuple2D
   ? T extends HeadTail<T, infer Head extends RoTuple, infer Tail extends RoTuple2D>
@@ -150,6 +183,8 @@ export type TupleZip<T extends RoTuple2D> =
 export type Zip<A extends RoArray2D> =
   A extends RoTuple2D
   ? TupleZip<A>
+  : A extends infer T extends RoTuple
+  ? [...{ [K in keyof T]: T[K] extends RoArray ? T[K][number] : never }][]
   : Flatten<A>[number][][];
 
 export const zip = <const Args extends RoArray2D>(arr: Args) =>
@@ -215,35 +250,24 @@ export type Cartesian<L, R> =
   ? [...{ [K in keyof R]: K extends `${number}` ? [L, R[K]] : never }]
   : [L, R];
 
-export function sortInPlace<const T extends number[] | bigint[]>(
-  arr: T,
-  ascending: boolean = true,
-): T {
-  const [g, l] = ascending ? [1, -1] : [-1, 1];
-  return arr.sort((a: number | bigint, b: number | bigint) => a > b ? g : a < b ? l : 0) as T;
-}
+type MapToTuple<A extends RoArray, R> =
+  [...{ [K in keyof A]: K extends `${number}` ? R : never }];
+type MapToImpl<A extends RoArray, R> =
+  PreserveReadonly<A, A extends RoTuple ? MapToTuple<A, R> : R[]>;
+type MappingFunc<A extends RoArray, F> =
+  MapToImpl<A, F extends (value: A[number]) => infer R ? R : never>;
 
-export function median<const T extends number[] | bigint[]>(
-  arr: T,
-  isSorted: boolean = false,
-): T[number] {
-  if (arr.length === 0)
-    throw new Error("Can't calculate median of empty array");
-
-  //TODO inefficient, should be implemented using https://en.wikipedia.org/wiki/Median_of_medians
-  const sorted = isSorted ? arr : sortInPlace([...arr]);
-
-  const mid = Math.floor(sorted.length / 2);
-
-  if (sorted.length % 2 === 1)
-    return sorted[mid]!;
-
-  const lower = sorted[mid - 1]!;
-  const upper = sorted[mid]!;
-  return (typeof lower === "number")
-    ? (lower + (upper as typeof lower)) / 2
-    : (lower + (upper as typeof lower)) / 2n;
-}
+export type MapTo<A extends RoArray> =
+  <F extends (value: A[number]) => unknown>(f: F) =>
+    MappingFunc<A, F>;
+//normal tuple.map does not yield a tuple, but an array, i.e.
+// const test = [1, 2, 3] as const;
+// test.map(x => x * 2) // => number[]
+// mapTo(test)(x => x * 2) // => readonly [number, number, number]
+export const mapTo = <const A extends RoArray>(arr: A): MapTo<A> =>
+  <F extends (value: A[number]) => unknown>(f: F): MappingFunc<A, F> =>
+    //eslint-disable-next-line unicorn/no-array-callback-reference
+    arr.map(f) as any;
 
 export type TupleFilter<T extends RoTuple, Include> =
   T extends HeadTail<T, infer Head, infer Tail>
@@ -266,11 +290,11 @@ export type Intersect<T extends RoArray, U extends RoArray> =
 
 export function intersect<
   const T extends RoTuple,
-  const U extends RoTuple
+  const U extends RoTuple,
 >(lhs: T, rhs: U): Intersect<T, U>;
 export function intersect<
   const T extends RoArray,
-  const U extends RoArray
+  const U extends RoArray,
 >(lhs: T, rhs: U): Intersect<T, U>;
 export function intersect(lhs: RoArray, rhs: RoArray) {
   return lhs.filter(item => rhs.includes(item));
@@ -283,11 +307,11 @@ export type Union<T extends RoArray, U extends RoArray> =
 
 export function union<
   const T extends RoTuple,
-  const U extends RoTuple
+  const U extends RoTuple,
 >(lhs: T, rhs: U): Union<T, U>;
 export function union<
   const T extends RoArray,
-  const U extends RoArray
+  const U extends RoArray,
 >(lhs: T, rhs: U): Union<T, U>;
 export function union(lhs: RoArray, rhs: RoArray) {
   return [...lhs, ...rhs.filter(item => !lhs.includes(item))];
@@ -300,11 +324,11 @@ export type Difference<T extends RoArray, U extends RoArray> =
 
 export function difference<
   const T extends RoTuple,
-  const U extends RoTuple
+  const U extends RoTuple,
 >(lhs: T, rhs: U): TupleFilterOut<T, U[number]>;
 export function difference<
   const T extends RoArray,
-  const U extends RoArray
+  const U extends RoArray,
 >(lhs: T, rhs: U): Difference<T, U>;
 export function difference(lhs: RoArray, rhs: RoArray) {
   return lhs.filter(item => !rhs.includes(item));
