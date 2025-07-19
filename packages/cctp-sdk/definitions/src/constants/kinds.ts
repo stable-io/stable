@@ -14,6 +14,22 @@ const oom = (order: number) => order < 0
   ? Rational.from(1n, 10n**BigInt(-order))
   : 10n**BigInt(order);
 
+export const Percentage = {
+  name: "Percentage",
+  human: "%",
+  units: [
+    unit("scalar", 1),
+    unit("%", oom(-2)),
+    unit("bp", oom(-4)),
+  ],
+} as const satisfies Kind;
+export type Percentage = Amount<typeof Percentage>;
+export const percentage = Amount.ofKind(Percentage);
+
+export const mulPercentage =
+  <K extends Kind>(amount: Amount<K>, percentage: Percentage): Amount<K> =>
+    amount.mul(percentage.toUnit("scalar"));
+
 export const Duration = {
   name: "Duration",
   units: [
@@ -30,17 +46,42 @@ export const Duration = {
 export type Duration = Amount<typeof Duration>;
 export const duration = Amount.ofKind(Duration);
 
-export const Percentage = {
-  name: "Percentage",
-  human: "%",
+export const Gas = {
+  name: "Gas",
+  human: "gas",
+  atomic: "gas",
+  units: [unit("gas", 1n)],
+} as const satisfies Kind;
+export type Gas = Amount<typeof Gas>;
+export const gas = Amount.ofKind(Gas);
+
+export const ComputeUnit = {
+  name: "ComputeUnit",
+  human: "CU",
+  atomic: "CU",
+  units: [unit("CU", 1n)],
+} as const satisfies Kind;
+export type ComputeUnit = Amount<typeof ComputeUnit>;
+export const computeUnit = Amount.ofKind(ComputeUnit);
+
+export const Byte = {
+  name: "Byte",
+  //In a general use case, there probably shouldn't be a human unit type because specifying
+  //  e.g. HDD sizes in bytes is very much not human.
+  //But given our context, we are almost exclusively dealing with amounts < 1 kB and so this choice
+  //  ought to be reasonable.
+  human: "byte",
+  atomic: "byte",
   units: [
-    unit("scalar", 1),
-    unit("%", oom(-2)),
-    unit("bp", oom(-4)),
+    unit("byte", 1n),
+    unit("kB", oom(3)),
+    unit("MB", oom(6)),
+    unit("KiB", 1024n),
+    unit("MiB", 1024n**2n),
   ],
 } as const satisfies Kind;
-export type Percentage = Amount<typeof Percentage>;
-export const percentage = Amount.ofKind(Percentage);
+export type Byte = Amount<typeof Byte>;
+export const byte = Amount.ofKind(Byte);
 
 //for now, we don't make a distinction between usd and usdc
 const Usd = {
