@@ -142,7 +142,7 @@ export type TupleChunk<T extends RoTuple, N extends number> =
     : [C, ...TupleChunk<R, N>]
   : never;
 
-type ArrayChunk<A extends RoArray> = A extends RoArray<infer U> ? RoArray<RoArray<U>> : never;
+type ArrayChunk<A extends RoArray> = A extends RoArray<infer U> ? U[][] : never;
 
 export type Chunk<A extends RoArray, N extends number> =
   A extends RoTuple
