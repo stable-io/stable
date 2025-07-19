@@ -1,6 +1,7 @@
 import type { DeriveType, Layout } from "binary-layout";
 import { enumItem, optionItem, setEndianness } from "binary-layout";
-import { zip, fromEntries, difference, valueIndexEntries } from "@stable-io/map-utils";
+import { mapTo, zip, fromEntries, valueIndexEntries } from "@stable-io/map-utils";
+import type { Network } from "@stable-io/cctp-sdk-definitions";
 import {
   Usdc,
   Sol,
@@ -10,7 +11,6 @@ import {
   signatureItem,
   amountItem,
   transform,
-  domains,
   v1,
 } from "@stable-io/cctp-sdk-definitions";
 import {
@@ -29,13 +29,16 @@ import {
   solanaAddressItem,
   vecItem,
 } from "@stable-io/cctp-sdk-solana";
+import { oracleChainIdItem } from "./oracleLayouts.js";
+import { foreignDomains } from "./constants.js";
 
 const endianness = "little";
-const littleEndian = <const L extends Layout>(layout: L) => setEndianness(layout, endianness);
+export const littleEndian = <const L extends Layout>(layout: L) =>
+  setEndianness(layout, endianness);
 
-const foreignDomainItem = domainItem(difference(domains, ["Solana"]));
+export const foreignDomainItem = <N extends Network>(network: N) =>
+  domainItem(foreignDomains(network));
 const rawEvmAddressItem = { binary: "bytes", size: 20 } as const;
-const oracleChainIdItem = { binary: "uint", size: 2, endianness } as const;
 
 const feeAdjustmentLayout = littleEndian([
   { name: "absolute", ...amountItem(4, Usdc), binary: "int" },
@@ -72,24 +75,23 @@ const feeAdjustmentsArrayLayout = {
   binary: "array",
   length: feeAdjustmentTypes.length,
   layout: feeAdjustmentLayout,
-} as const;
-type FeeAdjustmentsArray = DeriveType<typeof feeAdjustmentsArrayLayout>;
+} as const satisfies Layout;
 
 const feeAdjustmentsItem = transform(
   feeAdjustmentsArrayLayout,
   derived => fromEntries(zip([feeAdjustmentTypes, derived])),
-  transformed => feeAdjustmentTypes.map(t => transformed[t]) as unknown as FeeAdjustmentsArray,
-);
+  transformed => mapTo(feeAdjustmentTypes)(t => transformed[t]),
+) satisfies Layout;
 export type FeeAdjustments = DeriveType<typeof feeAdjustmentsItem>;
 
-export const chainConfigLayout =
+export const chainConfigLayout = <N extends Network>(network: N) =>
   accountLayout("ChainConfig", littleEndian([
-    { name: "domain",         ...foreignDomainItem  },
-    { name: "oracleChainId",  ...oracleChainIdItem  },
-    { name: "feeAdjustments", ...feeAdjustmentsItem },
+    { name: "domain",         ...foreignDomainItem(network) },
+    { name: "oracleChainId",  ...oracleChainIdItem(network) },
+    { name: "feeAdjustments", ...feeAdjustmentsItem         },
   ]));
-export type ChainConfig =
-  DeriveType<typeof chainConfigLayout>;
+export type ChainConfig<N extends Network> =
+  DeriveType<ReturnType<typeof chainConfigLayout<N>>>;
 
 // ---- Transfer Instruction ----
 
@@ -116,11 +118,17 @@ export type TransferWithRelayParams =
 
 // ---- Operations Instructions ----
 
+//it's sorta silly to pass in the attestation as a vec because we know it's a 65 byte signature
+//  but this saves us from having to do a memcopy in the contract and if attestations ever change
+//  length then we haven't committed to anything (the way a [u8; 65] would) on-chain but only have
+//  to change the layout here
+const signatureVecLengthItem = { binary: "uint", size: 4, custom: 65, omit: true } as const;
 export const reclaimRentParamsLayout =
-  instructionLayout("reclaim_rent", [
-    { name: "attestation",          ...signatureItem },
-    { name: "v2DestinationMessage", ...vecItem()     },
-  ]);
+  instructionLayout("reclaim_rent", littleEndian([
+    { name: "_attestationLength",   ...signatureVecLengthItem },
+    { name: "attestation",          ...signatureItem          },
+    { name: "v2DestinationMessage", ...vecItem()              },
+  ]));
 export type ReclaimRentParams =
   DeriveType<typeof reclaimRentParamsLayout>;
 
@@ -141,13 +149,13 @@ export const initializeParamsLayout =
 export type InitializeParams =
   DeriveType<typeof initializeParamsLayout>;
 
-export const registerChainParamsLayout =
+export const registerChainParamsLayout = <N extends Network>(network: N) =>
   instructionLayout("register_chain", littleEndian([
-    { name: "domain",        ...foreignDomainItem },
-    { name: "oracleChainId", ...oracleChainIdItem },
+    { name: "domain",        ...foreignDomainItem(network) },
+    { name: "oracleChainId", ...oracleChainIdItem(network) },
   ]));
-export type RegisterChainParams =
-  DeriveType<typeof registerChainParamsLayout>;
+export type RegisterChainParams<N extends Network> =
+  DeriveType<ReturnType<typeof registerChainParamsLayout<N>>>;
 
 export const deregisterChainParamsLayout =
   instructionLayout("deregister_chain", []);

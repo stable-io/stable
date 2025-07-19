@@ -22,7 +22,6 @@ const DOMAIN_ID_SOLANA: u8 = 5;
 const CHAIN_ID_AVALANCHE: u16 = 6;
 
 //taken from EVM contract
-//TODO should we store these in an account and make them configurable instead?
 const AVAX_HOP_GAS_COST:              u32 = 281_200;
 
 const EVM_GAS_DROPOFF_GAS_COST:       u32 =  22_000;
@@ -215,8 +214,8 @@ pub struct AvaxHopMessage {
   pub destination_domain: u8,
   pub mint_recipient: [u8; 32],
   //gas dropoff is actually a u32 but since it has to be serialized in big endian and it is
-  //  literally the only field where byte order matters, so we stick to this minor hack and
-  //  manually use u32.to_be_bytes(), rather than dragging in an entire serialization crate
+  //  literally the only field where byte order matters we stick to this minor hack and
+  //  manually use u32.to_be_bytes(), rather than drag in an entire serialization crate
   pub gas_dropoff_micro_gas_token: [u8; 4],
 }
 

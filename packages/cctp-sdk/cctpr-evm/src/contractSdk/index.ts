@@ -117,7 +117,6 @@ export const parseTransferTxCalldata = <N extends Network>(network: N) =>
 export const parseGovernanceTxCalldata = <N extends Network>(network: N) =>
   (calldata: CallData) => parseExecCalldata(calldata, governanceCommandArrayLayout(network));
 
-
 type QtOnChain = { readonly type: "onChain" };
 type QtOffChain = { readonly type: "offChain" };
 

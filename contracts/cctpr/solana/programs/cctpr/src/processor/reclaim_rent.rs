@@ -21,7 +21,7 @@ pub struct ReclaimRent<'info> {
 
 pub fn reclaim_rent(
   ctx: Context<ReclaimRent>,
-  attestation: [u8; 65],
+  attestation: Vec<u8>,
   destination_message: Vec<u8>, // length > 0 ⇒ v2, otherwise ⇒ v1
 ) -> Result<()> {
   let bump = [ctx.accounts.config.bump];

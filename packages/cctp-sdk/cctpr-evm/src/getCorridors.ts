@@ -65,25 +65,26 @@ const calculateSpeed = <
   source: S,
   destination: D,
   corridor: SensibleCorridor<N, S, D>,
-): Duration => {
-  return duration(
-    (() => {
-      switch (corridor) {
-        case "v1":
-          return (v1.attestationTimeEstimates[network] as TODO)[source] as number;
-        case "v2Direct":
-          return (v2.attestationTimeEstimates[network] as TODO)[source] as number;
-        case "avaxHop":
-          return (v2.attestationTimeEstimates[network] as TODO)[source] as number
-            + cctpr.relayOverheadOf[network]["Avalanche"]
-            + v1.attestationTimeEstimates[network]["Avalanche"];
-        default:
-          throw new Error("Invalid corridor");
-      }
-    })() + ((cctpr.relayOverheadOf[network] as TODO)[destination] as number),
+): Duration =>
+  duration(hopDeliverySeconds(network, source, destination, corridor) +
+    corridor === "avaxHop"
+      ? hopDeliverySeconds(network, "Avalanche", "Avalanche", "v1")
+      : 0,
     "sec",
   );
-};
+
+const hopDeliverySeconds = <
+  N extends Network,
+  S extends SupportedEvmDomain<N>,
+  D extends SupportedDomain<N>,
+>(
+  network: N,
+  source: S,
+  destination: D,
+  corridor: SensibleCorridor<N, S, D>,
+) =>
+  ((corridor === "v1" ? v1 : v2)["attestationTimeEstimates"] as TODO)[network][source] as number +
+    cctpr.relayOverheadOf[network][destination];
 
 async function getCorridorStats<
   N extends Network,

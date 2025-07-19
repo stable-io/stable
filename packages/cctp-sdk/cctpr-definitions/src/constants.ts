@@ -16,7 +16,7 @@ export const contractAddressEntries = [[
     ["Optimism",   undefined],
     ["Arbitrum",   undefined],
     ["Base",       undefined],
-    // ["Solana",     undefined],
+    ["Solana",     ""],
     ["Polygon",    undefined],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
@@ -32,7 +32,7 @@ export const contractAddressEntries = [[
     ["Optimism",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
     ["Arbitrum",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
     ["Base",       "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
-    // ["Solana",     undefined],
+    ["Solana",     ""],
     ["Polygon",    "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
@@ -65,30 +65,36 @@ export const avaxRouterContractAddress = {
 
 export const relayOverheadOf = {
   Mainnet: {
-    Ethereum:  30, // TODO: Adjust
-    Avalanche: 30, // TODO: Adjust
-    Optimism:  30, // TODO: Adjust
-    Arbitrum:  30, // TODO: Adjust
-    Base:      30, // TODO: Adjust
-    Solana:    30, // TODO: Adjust
-    Polygon:   30, // TODO: Adjust
-    Sui:       30, // TODO: Adjust
-    Aptos:     30, // TODO: Adjust
-    Unichain:  30, // TODO: Adjust
-    Linea:     30, // TODO: Adjust
+    Ethereum:   30, // TODO: Adjust
+    Avalanche:  30, // TODO: Adjust
+    Optimism:   30, // TODO: Adjust
+    Arbitrum:   30, // TODO: Adjust
+    Base:       30, // TODO: Adjust
+    Solana:     30, // TODO: Adjust
+    Polygon:    30, // TODO: Adjust
+    Sui:        30, // TODO: Adjust
+    Aptos:      30, // TODO: Adjust
+    Unichain:   30, // TODO: Adjust
+    Linea:      30, // TODO: Adjust
+    Codex:      30, // TODO: Adjust
+    Sonic:      30, // TODO: Adjust
+    Worldchain: 30, // TODO: Adjust
   },
   Testnet: {
-    Ethereum:  6, // TODO: Adjust
-    Avalanche: 6, // TODO: Adjust
-    Optimism:  6, // TODO: Adjust
-    Arbitrum:  6, // TODO: Adjust
-    Base:      6, // TODO: Adjust
-    Solana:    6, // TODO: Adjust
-    Polygon:   6, // TODO: Adjust
-    Sui:       6, // TODO: Adjust
-    Aptos:     6, // TODO: Adjust
-    Unichain:  6, // TODO: Adjust
-    Linea:     6, // TODO: Adjust
+    Ethereum:   6, // TODO: Adjust
+    Avalanche:  6, // TODO: Adjust
+    Optimism:   6, // TODO: Adjust
+    Arbitrum:   6, // TODO: Adjust
+    Base:       6, // TODO: Adjust
+    Solana:     6, // TODO: Adjust
+    Polygon:    6, // TODO: Adjust
+    Sui:        6, // TODO: Adjust
+    Aptos:      6, // TODO: Adjust
+    Unichain:   6, // TODO: Adjust
+    Linea:      6, // TODO: Adjust
+    Codex:      6, // TODO: Adjust
+    Sonic:      6, // TODO: Adjust
+    Worldchain: 6, // TODO: Adjust
   },
 } as const satisfies Record<Network, Record<string, number>>;
 
@@ -99,7 +105,7 @@ export const gasDropoffLimitOf = {
     Optimism:   0.00151,
     Arbitrum:   0.00151,
     Base:       0.00151,
-    // Solana:     30,
+    Solana:     0.1,
     Polygon:    0.00151,
     // Sui:        30,
     // Aptos:      30,
@@ -115,7 +121,7 @@ export const gasDropoffLimitOf = {
     Optimism:   0.00151,
     Arbitrum:   0.00151,
     Base:       0.00151,
-    // Solana:     30,
+    Solana:     0.1,
     Polygon:    0.00151,
     // Sui:        30,
     // Aptos:      30,

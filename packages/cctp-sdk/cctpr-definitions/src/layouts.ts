@@ -32,7 +32,7 @@ export const usdcItem = amountItem(8, Usdc);
 //we only use a single byte for domains because Circle is using incremental domain ids anyway
 export const cctprDomainItem =
   <const DT extends RoTuple<Domain> = typeof domains>(domainTuple?: DT) =>
-    ({...domainItem(domainTuple), size: 1} as const satisfies Item);
+    ({ ...domainItem(domainTuple), size: 1 } as const satisfies Item);
 
 export const supportedDomainItem = <N extends Network>(network: N) =>
   cctprDomainItem(supportedDomains(network));
@@ -71,8 +71,8 @@ export const routerHookDataLayout = <N extends Network>(network: N) => [
   { name: "gasDropoff",        ...gasDropoffItem               },
 ] as const satisfies Layout;
 
-const relayFeeGasTokenItem = <const K extends GasTokenKind>(kind: K) => 
-  amountItem(8, kind, "human", linearTransform("from->to", 10n**9n)); //store in nano (gwei)
+const relayFeeGasTokenItem = <const K extends GasTokenKind>(kind: K) =>
+  amountItem(8, kind, linearTransform("to->from", 10n**9n)); //store in nano (gwei)
 
 //both variants store their amount using 8 bytes
 const relayFeeVariants = <const K extends GasTokenKind>(kind: K) => [
@@ -123,16 +123,17 @@ export const quoteParamsLayout = <N extends Network>(network: N) => [
   { name: "corridor",          ...corridorItem                 },
   { name: "gasDropoff",        ...gasDropoffItem               },
 ] as const satisfies Layout;
+export type QuoteParams<N extends Network> = DeriveType<ReturnType<typeof quoteParamsLayout<N>>>;
 
 export const offChainQuoteLayout = <
   N extends Network,
   P extends Platform,
-  K extends GasTokenKind
+  K extends GasTokenKind,
 >(network: N, platform: P, kind: K) => [
   { name: "sourceDomain",    ...cctprPlatformDomainItem(network, platform) },
   ...quoteParamsLayout(network),
-  { name: "expirationTime",  ...timestampItem                             },
-  { name: "relayFeeVariant", ...offChainRelayFeeVariantItem(kind)         },
+  { name: "expirationTime",  ...timestampItem                              },
+  { name: "relayFeeVariant", ...offChainRelayFeeVariantItem(kind)          },
 ] as const satisfies Layout;
 
 export type OffChainQuote<N extends Network, P extends Platform, K extends GasTokenKind> =
