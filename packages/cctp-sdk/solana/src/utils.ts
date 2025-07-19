@@ -13,13 +13,14 @@ export const discriminatorLength = 8;
 export const discriminatorOf = (type: DiscriminatorType, name: string) =>
   sha256(`${discriminatorTypeConverter[type]}:${name}`).subarray(0, discriminatorLength);
 
-export type Seeds = Uint8Array | RoArray<string | Uint8Array>;
-const bytifySeeds = (seeds: Seeds): Uint8Array =>
+export type Seed = string | Uint8Array
+const stringSeedToBytes = (seed: Seed) =>
+  typeof seed === "string" ? encoding.bytes.encode(seed) : seed;
+export type Seeds = Seed | RoArray<Seed>;
+const bytifySeeds = (seeds: Seeds) =>
   Array.isArray(seeds)
-  ? encoding.bytes.concat(
-      ...seeds.map(seed => typeof seed === "string" ? encoding.bytes.encode(seed) : seed)
-    )
-  : seeds as Uint8Array;
+  ? encoding.bytes.concat(...seeds.map(stringSeedToBytes))
+  : stringSeedToBytes(seeds as Seed);
 
 const pdaStrConst = encoding.bytes.encode("ProgramDerivedAddress");
 const calcRawPda = (seeds: Seeds, bump: number, programId: SolanaAddress) =>
@@ -35,7 +36,7 @@ export function calcPda(seeds: Seeds, bump: number, programId: SolanaAddress): S
 }
 
 const isOffCurve = (rawAddress: Uint8Array) =>
-  throws(() => ed25519.ExtendedPoint.fromHex(rawAddress));
+  throws(() => ed25519.Point.fromHex(rawAddress));
 
 export function findPda(seeds: Seeds, programId: SolanaAddress): [SolanaAddress, number] {
   let bump = 255;
