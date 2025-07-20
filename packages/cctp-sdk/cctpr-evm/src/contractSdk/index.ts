@@ -6,8 +6,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { Layout } from "binary-layout";
 import { serialize, deserialize } from "binary-layout";
-import type { RoArray, Simplify, TupleWithLength } from "@stable-io/map-utils";
-import { range } from "@stable-io/map-utils";
+import type { RoArray, Simplify } from "@stable-io/map-utils";
+import { range, mapTo, chunk, fromEntries } from "@stable-io/map-utils";
 import type { TODO } from "@stable-io/utils";
 import { keccak256, encoding, assertDistinct } from "@stable-io/utils";
 import { Rational } from "@stable-io/amount";
@@ -35,6 +35,7 @@ import {
   chainIdOf,
   domainIdOf,
   wormholeChainIdOf,
+  mulPercentage,
 } from "@stable-io/cctp-sdk-definitions";
 import type {
   RawAddress,
@@ -72,9 +73,9 @@ import type {
   Transfer,
   UserQuoteVariant,
   OffChainQuote,
+  ExtraDomain,
   ExtraChainIds,
   FeeAdjustment,
-  FeeAdjustmentsSlot,
   GaslessQuoteVariant,
 } from "./layouts/index.js";
 import {
@@ -456,7 +457,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
         quote.type === "offChain"
         ? { type: "offChain",
             expirationTime: quote.expirationTime,
-            relayFee: { payIn: "usdc", amount: quote.relayFee as Usdc },
+            relayFee: { payIn: "usdc", amount: quote.relayFee },
             quoterSignature: quote.quoterSignature,
           }
         : { type: "onChainUsdc",
@@ -561,12 +562,12 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     return burnAmount;
   }
 
-  private static calcFastFee(burnAmount: Usdc, fastFeeRate: Percentage): Usdc {
-    return CctpR.ceilToMicroUsdc(burnAmount.mul(fastFeeRate.toUnit("scalar")));
-  }
-
   private static ceilToMicroUsdc(amount: Usdc): Usdc {
     return usdc(amount.toUnit("µUSDC").ceil(), "µUSDC");
+  }
+
+  private static calcFastFee(burnAmount: Usdc, fastFeeRate: Percentage): Usdc {
+    return CctpR.ceilToMicroUsdc(mulPercentage(burnAmount, fastFeeRate));
   }
 }
 
@@ -578,35 +579,27 @@ export class CctpRGovernance<
 > extends CctpRBase<N, S> {
   static adjustmentSlots = Math.ceil(domains.length / feeAdjustmentsPerSlot);
 
+  //Since the implementation of CctpR has the assumption baked into the contract that new domain
+  //  ids will continue to be handed out incrementally (i.e. as last domainId + 1), we make the
+  //  same assumption here via:
+  static maxMappingIndex = Math.floor((domains.length - 1) / chainIdsPerSlot);
+
   static feeAdjustmentsAtIndex(
     feeAdjustments: Partial<FeeAdjustments>,
     mappingIndex: number,
   ) {
     const atCost = CctpRGovernance.relayAtCostFeeAdjustment;
-    return range(feeAdjustmentsPerSlot).map((subIndex) => {
+    return mapTo(range(feeAdjustmentsPerSlot))((subIndex) => {
       const maybeDomain = domainOf.get(mappingIndex * feeAdjustmentsPerSlot + subIndex);
       return maybeDomain ? feeAdjustments[maybeDomain] ?? atCost : atCost;
     });
   }
 
-  static feeAdjustmentsArray(
-    feeAdjustments: Record<FeeAdjustmentType, Partial<FeeAdjustments>>,
-  ) {
-    return range(CctpRGovernance.adjustmentSlots).map(mappingIndex =>
-      feeAdjustmentTypes.map(feeType => CctpRGovernance.feeAdjustmentsAtIndex(
-        feeAdjustments[feeType], mappingIndex,
-      )) as TupleWithLength<FeeAdjustmentsSlot, 4>,
-    );
-  }
-
   static extraChainsArray<N extends Network>(network: N) {
-    return range(Math.ceil(extraDomains.length / chainIdsPerSlot))
-    .map(slotIndex =>
-      range(chainIdsPerSlot).map((subIndex) => {
-        const maybeDomain = domainOf.get((slotIndex + 1) * chainIdsPerSlot + subIndex);
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        return maybeDomain ? wormholeChainIdOf(network, maybeDomain as TODO) ?? 0 : 0;
-      }),
+    return mapTo(chunk(extraDomains(network) as ExtraDomain<N>[], chainIdsPerSlot))(domains =>
+      mapTo(range(chainIdsPerSlot))(i =>
+        i < domains.length ? wormholeChainIdOf(network, domains[i]! as TODO) : 0,
+      ),
     );
   }
 
@@ -623,7 +616,11 @@ export class CctpRGovernance<
     const definedOrZero = (maybeAddress?: string) =>
       maybeAddress ? new EvmAddress(maybeAddress) : EvmAddress.zeroAddress;
 
-    const arrayFeeAdjustments = CctpRGovernance.feeAdjustmentsArray(feeAdjustments);
+    const arrayFeeAdjustments = mapTo(range(CctpRGovernance.adjustmentSlots))(mappingIndex =>
+      mapTo(feeAdjustmentTypes)(feeType => CctpRGovernance.feeAdjustmentsAtIndex(
+        feeAdjustments[feeType], mappingIndex,
+      )),
+    );
     const arrayExtraChains = CctpRGovernance.extraChainsArray(network);
     const tokenMessengerV1 = v1.contractAddressOf(
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -725,43 +722,35 @@ export class CctpRGovernance<
 
     const extraChainIdsSlot = CctpRGovernance.mappings.indexOf("extraChainIds");
 
-    //Since the implementation of CctpR has the assumption baked into the contract that new domain
-    //  ids will continue to be handed out incrementally (i.e. as last domainId + 1), we make the
-    //  same assumption here via:
-    const maxDomainId = domains.length - 1;
-    const maxMappingIndex = Math.floor(maxDomainId / chainIdsPerSlot);
-
-    const chainIdChunks = await Promise.all(range(maxMappingIndex - 1).map(i =>
+    const chainIdChunks = await Promise.all(range(CctpRGovernance.maxMappingIndex - 1).map(i =>
       this.getStorageAt(CctpRGovernance.slotOfKeyInMapping(extraChainIdsSlot, i + 1)).then(raw =>
         deserialize(chainIdsSlotItem, raw),
       ),
     ));
 
-    return Object.fromEntries(
+    return fromEntries(
       chainIdChunks
         .flat()
         .slice(domains.length - chainIdsPerSlot)
         .map((chainId, idx) => [domainOf((idx + chainIdsPerSlot) as DomainId), chainId]),
-    ) as ExtraChainIds<N>;
+    );
   }
 
   async getFeeAdjustments(type: FeeAdjustmentType): Promise<FeeAdjustments> {
     const feeTypeMappingSlot = CctpRGovernance.mappings.indexOf(type);
-    const maxDomainId = domains.length - 1;
-    const maxMappingIndex = Math.floor(maxDomainId / feeAdjustmentsPerSlot);
 
-    const feeAdjustmentChunks = await Promise.all(range(maxMappingIndex).map(i =>
+    const feeAdjustmentChunks = await Promise.all(range(CctpRGovernance.maxMappingIndex).map(i =>
       this.getStorageAt(CctpRGovernance.slotOfKeyInMapping(feeTypeMappingSlot, i)).then(raw =>
         deserialize(feeAdjustmentsSlotItem, raw),
       ),
     ));
 
-    return Object.fromEntries(
+    return fromEntries(
       feeAdjustmentChunks
         .flat()
         .slice(domains.length)
         .map((feeAdjustment, idx) => [domainOf(idx as DomainId), feeAdjustment]),
-    ) as FeeAdjustments;
+    );
   }
 
   private getStorageAt(slot: number | bigint): Promise<Uint8Array> {

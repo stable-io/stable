@@ -212,7 +212,7 @@ export const pickWithOrder =
 type FilterIndexesKeepImpl<T extends RoTuple, I extends IndexEs> =
   T extends HeadTail<T, infer Head, infer Tail>
   ? Head extends RoPair<infer J extends number, infer V>
-    ? Extends<J, I> extends true
+    ? J extends I
       ? [V, ...FilterIndexesKeepImpl<Tail, I>]
       : FilterIndexesKeepImpl<Tail, I>
     : never
@@ -221,7 +221,7 @@ type FilterIndexesKeepImpl<T extends RoTuple, I extends IndexEs> =
 type FilterIndexesRemoveImpl<T extends RoTuple, I extends IndexEs> =
   T extends HeadTail<T, infer Head, infer Tail>
   ? Head extends RoPair<infer J extends number, infer V>
-    ? Extends<J, I> extends true
+    ? J extends I
       ? FilterIndexesRemoveImpl<Tail, I>
       : [V, ...FilterIndexesRemoveImpl<Tail, I>]
     : never

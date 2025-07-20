@@ -195,9 +195,7 @@ export type DeepReplace<O, Path extends RoTuple<PropertyKey>, NewType>
 // ---- FromEntries ----
 
 export type TupleFromEntries<T extends RoTuple<RoPair<PropertyKey, unknown>>> =
-  Simplify<{ [E in T[number] as E extends RoPair<infer K, unknown> ? K : never]:
-      E extends RoPair<unknown, infer V> ? V : never;
-  }>;
+  { [E in T[number] as E[0]]: E[1]; };
 
 export type FromEntries<A extends RoArray<RoPair<PropertyKey, unknown>>> =
   A extends RoTuple<RoPair<PropertyKey, unknown>>

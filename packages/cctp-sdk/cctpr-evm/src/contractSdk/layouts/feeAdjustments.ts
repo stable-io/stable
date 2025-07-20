@@ -42,4 +42,3 @@ export const feeAdjustmentsSlotItem = {
   }),
   custom: { to: reverseAdjustments, from: reverseAdjustments },
 } as const satisfies Layout;
-export type FeeAdjustmentsSlot = DeriveType<typeof feeAdjustmentsSlotItem>;

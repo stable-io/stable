@@ -7,6 +7,7 @@ export {
   constructorLayout,
 } from "./constructor.js";
 export {
+  type ExtraDomain,
   type ExtraChainIds,
   chainIdsPerSlot,
   chainIdsSlotItem,
@@ -14,7 +15,6 @@ export {
 } from "./extraChainIds.js";
 export {
   type FeeAdjustment,
-  type FeeAdjustmentsSlot,
   feeAdjustmentsPerSlot,
   feeAdjustmentsSlotItem,
 } from "./feeAdjustments.js";

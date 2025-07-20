@@ -13,21 +13,16 @@ import {
   ComputeUnit,
   Byte,
   Percentage,
+  wormholeChainIdItem,
 } from "@stable-io/cctp-sdk-definitions";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { usdcItem } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { solanaAddressItem } from "@stable-io/cctp-sdk-solana";
-import { type ForeignDomain, domainToOracleChainId, oracleChainIdToDomain } from "./constants.js";
+import { foreignDomains } from "./constants.js";
 import { littleEndian } from "./layouts.js";
 
-export const oracleChainIdItem = <N extends Network>(network: N) => ({
-  binary: "uint",
-  size: 2,
-  custom: {
-    to: (val: number) => oracleChainIdToDomain(network, val as any) as ForeignDomain<N>,
-    from: (domain: ForeignDomain<N>) => domainToOracleChainId(network, domain as any) as number,
-  },
-} as const);
+export const oracleChainIdItem = <N extends Network>(network: N) =>
+  wormholeChainIdItem(network, foreignDomains(network));
 
 export const oracleConfigLayout = littleEndian([
   { name: "owner",        ...solanaAddressItem             },

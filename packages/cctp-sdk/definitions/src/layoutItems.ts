@@ -15,9 +15,15 @@ import { Amount, Conversion, Rational } from "@stable-io/amount";
 import type { Item, CustomConversion, FixedConversion, NumberSize } from "binary-layout";
 import { numberMaxSize } from "binary-layout";
 import { UniversalAddress } from "./address.js";
-import type { Domain, SimplifyDomain } from "./constants/chains/index.js";
-import { domains, domainOf, domainIdOf } from "./constants/chains/index.js";
-import { DistributiveAmount } from "./constants/kinds.js";
+import type { Domain, Network, SimplifyDomain } from "./constants/chains/index.js";
+import {
+  domains,
+  domainOf,
+  domainIdOf,
+  wormholeChainIdOf,
+  domainOfWormholeChainId,
+} from "./constants/chains/index.js";
+import type { DistributiveAmount } from "./constants/kinds.js";
 import { encoding } from "@stable-io/utils";
 
 export const uint256Item = {
@@ -43,6 +49,10 @@ export const signatureItem = {
 
 export const rawDomainItem = {
   binary: "uint", size: 4,
+} as const satisfies Item;
+
+export const rawWormholeChainIdItem = {
+  binary: "uint", size: 2,
 } as const satisfies Item;
 
 export const paddingItem = (size: number) => ({
@@ -76,6 +86,27 @@ export const fixedDomainItem = <const D extends Domain>(domain: D) => ({
     to: domain,
     from: domainIdOf(domain),
   } satisfies FixedConversion<number, D>,
+} as const);
+
+export const wormholeChainIdItem = <
+  N extends Network,
+  const DT extends RoTuple<Domain> = typeof domains,
+>(network: N, domainTuple?: DT) => ({
+  ...rawDomainItem,
+  custom: {
+    to: (val: number): SimplifyDomain<DT[number]> => {
+      const domain = domainOfWormholeChainId.get(network, val);
+      if (domain === undefined)
+        throw new Error(`unknown domainId ${val}`);
+
+      if (domainTuple && !(domainTuple as RoArray<Domain>).includes(domain))
+        throw new Error(`Domain ${domain} not in domains ${domainTuple}`);
+
+      return domain as SimplifyDomain<DT[number]>;
+    },
+    from: (val: SimplifyDomain<DT[number]>): number =>
+      wormholeChainIdOf(network, val as any) as number,
+  } satisfies CustomConversion<number, SimplifyDomain<DT[number]>>,
 } as const);
 
 // ----

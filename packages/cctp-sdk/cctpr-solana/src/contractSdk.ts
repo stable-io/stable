@@ -1,6 +1,7 @@
 import type { Rpc, GetAccountInfoApi, GetMultipleAccountsApi } from "@solana/kit";
 import { serialize, deserialize } from "binary-layout";
-import { type Text, definedOrThrow, encoding } from "@stable-io/utils";
+import type { TODO, Text } from "@stable-io/utils";
+import { definedOrThrow, encoding } from "@stable-io/utils";
 import type { RoPair, RoArray, Replace } from "@stable-io/map-utils";
 import { mapTo, zip, chunk, fromEntries } from "@stable-io/map-utils";
 import { Conversion } from "@stable-io/amount";
@@ -27,9 +28,7 @@ import { type ForeignDomain, oracleAddress, executionCosts } from "./constants.j
 import type { FeeAdjustment } from "./layouts.js";
 import {
   foreignDomainItem,
-  configLayout,
   chainConfigLayout,
-  transferWithRelayParamsLayout
 } from "./layouts.js";
 import type { PriceState } from "./oracleLayouts.js";
 import { oracleConfigLayout, oracleChainIdItem, priceStateLayout } from "./oracleLayouts.js";
@@ -84,8 +83,8 @@ export class CctpRBase<N extends Network> {
       return cached;
 
     const seeds = [
-      ["prices", serialize(oracleChainIdItem(this.network), domain)],
-      ["chain_config", serialize(foreignDomainItem(this.network), domain as any)],
+      ["prices", serialize(oracleChainIdItem(this.network), domain as TODO)],
+      ["chain_config", serialize(foreignDomainItem(this.network), domain as TODO)],
     ] as const;
     const res = mapTo(seeds)(s => findPda(s, this.address)[0]);
     this._priceAddresses.set(domain, res);
