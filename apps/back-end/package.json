@@ -29,7 +29,7 @@
     "@stable-io/cctp-sdk-definitions": "workspace:^",
     "@stable-io/cctp-sdk-evm": "workspace:^",
     "@stable-io/cctp-sdk-viem": "workspace:^",
-    "@stable-io/tx-landing-client": "git+ssh://git@github.com:stable-io/transaction-landing#workspace=@stable-io/tx-landing-client&commit=2bb6f3e98d827689137c5fd8820c0228304ab412",
+    "@stable-io/tx-landing-client": "git+ssh://git@github.com:stable-io/transaction-landing#workspace=@stable-io/tx-landing-client&commit=0c07bf311ab64f22653c670c93c0b87a80369ebc",
     "@stable-io/utils": "workspace:^",
     "axios": "^1.9.0",
     "binary-layout": "^1.2.2",

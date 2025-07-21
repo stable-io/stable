@@ -141,4 +141,8 @@ export class TxLandingService {
     }
     return chain;
   }
+
+  private mappedNetwork(): "testnet" | "mainnet" {
+    return this.configService.network === "Mainnet" ? "mainnet" : "mainnet";
+  }
 }
