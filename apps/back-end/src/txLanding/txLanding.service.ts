@@ -68,21 +68,21 @@ export class TxLandingService {
     txDetails: ContractTx,
   ): Promise<`0x${string}`> {
     const traceId = uuid();
+    const transactionParams = {
+      traceId,
+      chain: this.toChain(domain),
+      txRequests: [{
+        to: to.toString(),
+        value: txDetails.value?.toUnit("atomic") ?? 0n,
+        data: encoding.hex.encode(txDetails.data, true),
+      }],
+      network: this.mappedNetwork(),
+    };
 
     console.info(`Sending TX to landing service with trace-id ${traceId}`);
 
     try {
-      const r = await this.client.signAndLandTransaction({
-        traceId,
-        chain: this.toChain(domain),
-        txRequests: [
-          {
-            to: to.toString(),
-            value: txDetails.value?.toUnit("atomic") ?? 0n,
-            data: encoding.hex.encode(txDetails.data, true),
-          },
-        ],
-      });
+      const r = await this.client.signAndLandTransaction(transactionParams);
 
       const rawTxHash = r.txResults[0]!.txHash;
       const cleanTxHash = this.extractHexFromMalformedResponse(rawTxHash);
@@ -143,6 +143,6 @@ export class TxLandingService {
   }
 
   private mappedNetwork(): "testnet" | "mainnet" {
-    return this.configService.network === "Mainnet" ? "mainnet" : "mainnet";
+    return this.configService.network === "Mainnet" ? "mainnet" : "testnet";
   }
 }
