@@ -26,7 +26,8 @@
     "on:common": "yarn workspaces foreach --worktree --from \"packages/common/**/*\"",
     "on:back-end": "yarn workspaces foreach --worktree --from \"apps/back-end\"",
     "on:front-end": "yarn workspaces foreach --worktree --from \"apps/front-end\"",
-    "publish-all": "yarn workspaces foreach --worktree --from \"packages/**/*\" --no-private --topological npm publish --access public --tolerate-republish"
+    "publish-all": "yarn workspaces foreach --worktree --from \"packages/**/*\" --no-private --topological npm publish --access public --tolerate-republish",
+    "publish": "yarn build:packages && yarn npm login && yarn publish-all"
   },
   "workspaces": [
     "apps/*",

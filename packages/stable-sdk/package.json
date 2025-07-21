@@ -1,6 +1,6 @@
 {
   "name": "@stable-io/sdk",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "main": "./dist/esm/index.js",
   "type": "module",
   "license": "MPL-2.0",
