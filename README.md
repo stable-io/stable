@@ -8,14 +8,9 @@ Stable is a comprehensive infrastructure for fast, secure USDC transfers across 
 
 ## 🎯 Primary Entry Point
 
-**Most developers should start with [`@stable-io/sdk`](./packages/stable-sdk/)** - our high-level, developer-friendly SDK that provides simple APIs for USDC transfers across chains.
+**Most developers should start with [`@stable-io/sdk`](https://github.com/stable-io/stable/tree/main/packages/stable-sdk)** - our high-level, developer-friendly SDK that provides simple APIs for USDC transfers across chains.
 
-```bash
-# Install the public SDK
-npm install @stable-io/sdk
-# or
-yarn add @stable-io/sdk
-```
+For installation, usage examples, and API documentation, see the [**SDK README**](https://github.com/stable-io/stable/tree/main/packages/stable-sdk).
 
 ## Architecture
 
@@ -96,55 +91,6 @@ yarn install --immutable
 yarn build
 ```
 
-## Examples
-
-The [`packages/stable-sdk/examples/`](./packages/stable-sdk/examples/) directory contains comprehensive examples showing how to use the SDK:
-
-### Available Examples
-
-```bash
-# 1. Find available routes between chains
-yarn workspace @stable-io/sdk tsx examples/findRoutes.ts
-
-# 2. Execute a complete transfer
-yarn workspace @stable-io/sdk tsx examples/executeRoute.ts
-
-# 3. Monitor transfer progress in real-time
-yarn workspace @stable-io/sdk tsx examples/logTransferProgress.ts
-
-# 4. Track transaction events
-yarn workspace @stable-io/sdk tsx examples/logTransactionEvents.ts
-
-# 5. Parse transfer call data
-yarn workspace @stable-io/sdk tsx examples/parseTransferCallData.ts
-
-# 6. Parse router hook data
-yarn workspace @stable-io/sdk tsx examples/parseRouterHookData.ts
-```
-
-### Example: Basic Usage
-
-```typescript
-import Stable from "@stable-io/sdk";
-
-// Initialize the SDK
-const stable = new Stable({ 
-  network: "Testnet", 
-  signer: yourSigner 
-});
-
-// Find routes
-const routes = await stable.findRoutes({
-  sourceChain: "Ethereum",
-  targetChain: "Polygon", 
-  amount: usdc(100),
-  // ... other options
-});
-
-// Execute transfer
-const { transferHash } = await stable.executeRoute(routes[0]);
-```
-
 ## Development Workflow
 
 ```bash
@@ -163,28 +109,30 @@ yarn clean              # Clean all build artifacts
 ```
 
 ## Workspace Structure
+```
 stable/
-├── apps/ # Applications
-│ ├── front-end/ # Next.js web app
-│ └── back-end/ # Backend services
-├── contracts/ # Smart contracts
-│ ├── cctpr/ # CCTPR protocol
-│ └── price-oracle/ # Price oracle contracts
+├── apps/                         # Applications
+│   ├── front-end/                # Next.js web app
+│   └── back-end/                 # Backend services
+├── contracts/                    # Smart contracts
+│   ├── cctpr/                    # CCTPR protocol
+│   └── price-oracle/             # Price oracle contracts
 ├── packages/
-│ ├── common/ # Shared utilities
-│ │ ├── amount/ # Type-safe amounts
-│ │ ├── utils/ # General utilities
-│ │ ├── map-utils/ # Map utilities
-│ │ └── eslint-config/ # Shared linting
-│ ├── cctp-sdk/ # Low-level modular SDK
-│ │ ├── definitions/ # Core CCTP types
-│ │ ├── evm/ # EVM support
-│ │ ├── viem/ # Viem integration
-│ │ ├── cctpr-definitions/ # CCTPR types
-│ │ └── cctpr-evm/ # CCTPR EVM implementation
-│ └── stable-sdk/ # Public high-level SDK
-└── deployment/ # Infrastructure
-└── evm/ # EVM deployment configs
+│   ├── common/                   # Shared utilities
+│   │   ├── amount/               # Type-safe amounts
+│   │   ├── utils/                # General utilities
+│   │   ├── map-utils/            # Map utilities
+│   │   └── eslint-config/        # Shared linting
+│   ├── cctp-sdk/                 # Low-level modular SDK
+│   │   ├── definitions/          # Core CCTP types
+│   │   ├── evm/                  # EVM support
+│   │   ├── viem/                 # Viem integration
+│   │   ├── cctpr-definitions/    # CCTPR types
+│   │   └── cctpr-evm/            # CCTPR EVM implementation
+│   └── stable-sdk/               # Public high-level SDK
+└── deployment/                   # Infrastructure
+    └── evm/                      # EVM deployment configs
+```
 
 ## Package Dependencies
 
@@ -197,16 +145,6 @@ Public SDK (stable-sdk)
 Low-Level SDK (cctp-sdk/)
 ↓
 Shared Utilities (common/)
-```
-
-```bash
-# Publish all public packages
-yarn publish-all
-
-# Version management
-yarn upgrade:sdk        # Bump stable-sdk version
-yarn upgrade:cctp-sdk   # Bump cctp-sdk packages
-yarn upgrade:common     # Bump common packages
 ```
 
 ## Contributing
