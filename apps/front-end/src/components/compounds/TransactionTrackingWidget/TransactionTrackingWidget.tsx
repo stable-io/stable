@@ -14,7 +14,7 @@ interface TransactionTrackingWidgetProps {
   amount: number;
   /** seconds */
   timeRemaining: number;
-  isTransferActive: boolean;
+  isTransferInProgress: boolean;
   destinationWallet: string;
   routePath: string;
   estimatedCost: string;
@@ -26,7 +26,7 @@ export const TransactionTrackingWidget = ({
   targetChain,
   amount,
   timeRemaining,
-  isTransferActive,
+  isTransferInProgress,
   destinationWallet,
   routePath,
   estimatedCost,
@@ -35,7 +35,7 @@ export const TransactionTrackingWidget = ({
   <div className="overlay-modal content-box transaction-tracking-widget">
     <TransactionTrackingHeader
       timeRemaining={timeRemaining}
-      isTransferActive={isTransferActive}
+      isTransferInProgress={isTransferInProgress}
     />
     <div className="overlay-modal-content">
       <div className="steps">

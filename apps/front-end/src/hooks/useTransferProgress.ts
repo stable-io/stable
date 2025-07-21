@@ -18,8 +18,9 @@ interface UIStepsState {
 
 interface TransferState {
   uiSteps: UIStepsState;
-  isInProgress: boolean;
-  isTransferActive: boolean;
+  isCurrent: boolean;
+  isActive: boolean;
+  isTransferInProgress: boolean;
   timeRemaining: number;
 }
 
@@ -40,8 +41,9 @@ const initialUISteps: UIStepsState = {
 
 const initialTransferState: TransferState = {
   uiSteps: initialUISteps,
-  isInProgress: false,
-  isTransferActive: false,
+  isCurrent: false,
+  isActive: false,
+  isTransferInProgress: false,
   timeRemaining: 0,
 };
 
@@ -110,7 +112,7 @@ const setStepFailed = (state: UIStepsState): UIStepsState => {
 };
 
 type TransferAction =
-  | { type: "CLOSE_MODAL" }
+  | { type: "DISMISS" }
   | { type: "SET_TIME_REMAINING"; time: number }
   | { type: "RESET_TRANSFER"; estimatedDuration?: number }
   | { type: "TRANSFER_INITIATED" }
@@ -129,10 +131,10 @@ const transferReducer = (
   action: TransferAction,
 ): TransferState => {
   switch (action.type) {
-    case "CLOSE_MODAL":
+    case "DISMISS":
       return {
         ...state,
-        isInProgress: false,
+        isCurrent: false,
       };
 
     case "SET_TIME_REMAINING":
@@ -150,7 +152,8 @@ const transferReducer = (
     case "TRANSFER_INITIATED":
       return {
         ...state,
-        isInProgress: true,
+        isCurrent: true,
+        isActive: true,
         uiSteps: setStepInProgress("authorization", state.uiSteps),
       };
 
@@ -161,7 +164,7 @@ const transferReducer = (
     case "TRANSFER_SENT":
       return {
         ...state,
-        isTransferActive: true,
+        isTransferInProgress: true,
         uiSteps: setStepInProgress("sending", state.uiSteps),
       };
 
@@ -180,7 +183,8 @@ const transferReducer = (
     case "TRANSFER_RECEIVED":
       return {
         ...state,
-        isTransferActive: false,
+        isActive: false,
+        isTransferInProgress: false,
         timeRemaining: 0,
         uiSteps: setStepCompleted("moving", state.uiSteps),
       };
@@ -188,7 +192,8 @@ const transferReducer = (
     case "TRANSFER_FAILED":
       return {
         ...state,
-        isTransferActive: false,
+        isActive: false,
+        isTransferInProgress: false,
         timeRemaining: 0,
         uiSteps: setStepFailed(state.uiSteps),
       };
@@ -200,7 +205,7 @@ const transferReducer = (
 
 interface UseTransferProgressReturn extends Omit<TransferState, "uiSteps"> {
   resetTransfer: () => void;
-  closeModal: () => void;
+  dismiss: () => void;
   steps: readonly UIStep[];
 }
 
@@ -218,8 +223,8 @@ export const useTransferProgress = (
     });
   }, [route]);
 
-  const closeModal = useCallback(() => {
-    dispatch({ type: "CLOSE_MODAL" });
+  const dismiss = useCallback(() => {
+    dispatch({ type: "DISMISS" });
   }, []);
 
   useEffect(() => {
@@ -230,7 +235,7 @@ export const useTransferProgress = (
   }, [route?.estimatedDuration]);
 
   useEffect(() => {
-    if (!state.isTransferActive || state.timeRemaining <= 0) return;
+    if (!state.isTransferInProgress || state.timeRemaining <= 0) return;
 
     const interval = setInterval(() => {
       dispatch({
@@ -242,7 +247,7 @@ export const useTransferProgress = (
     return (): void => {
       clearInterval(interval);
     };
-  }, [state.isTransferActive, state.timeRemaining]);
+  }, [state.isTransferInProgress, state.timeRemaining]);
 
   useEffect(() => {
     if (!route) return;
@@ -310,7 +315,7 @@ export const useTransferProgress = (
   return {
     ...stateToExpose,
     resetTransfer,
-    closeModal,
+    dismiss,
     steps,
   };
 };

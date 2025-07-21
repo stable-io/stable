@@ -4,15 +4,15 @@ import type { ReactElement } from "react";
 interface TransactionTrackingHeaderProps {
   /** seconds */
   timeRemaining: number;
-  isTransferActive: boolean;
+  isTransferInProgress: boolean;
 }
 
 export const TransactionTrackingHeader = ({
   timeRemaining,
-  isTransferActive,
+  isTransferInProgress,
 }: TransactionTrackingHeaderProps): ReactElement => {
   const getDisplayText = (): string => {
-    if (isTransferActive && timeRemaining <= 0) {
+    if (isTransferInProgress && timeRemaining <= 0) {
       return "Finalizing transaction...";
     }
 

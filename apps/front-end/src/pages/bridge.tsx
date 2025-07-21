@@ -39,11 +39,12 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
   });
 
   const {
-    isInProgress,
-    isTransferActive,
+    isCurrent,
+    isActive,
+    isTransferInProgress,
     timeRemaining,
     resetTransfer,
-    closeModal,
+    dismiss,
     steps,
   } = useTransferProgress(route);
 
@@ -101,19 +102,19 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
           Stableit | Move USDC across networks with high speed and minimal costs
         </title>
       </Head>
-      {address && route && isInProgress && (
+      {address && route && isCurrent && (
         <Overlay
           onClose={() => {
-            closeModal();
+            dismiss();
           }}
-          disableClose={isTransferActive}
+          disableClose={isActive}
         >
           <TransactionTrackingWidget
             sourceChain={sourceChain}
             targetChain={targetChain}
             amount={amount}
             timeRemaining={timeRemaining}
-            isTransferActive={isTransferActive}
+            isTransferInProgress={isTransferInProgress}
             destinationWallet={address}
             routePath={route.corridor}
             estimatedCost={formatCost(route.estimatedTotalCost)}
@@ -135,7 +136,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
           walletAddress={address}
           balance={balance}
           route={route}
-          isInProgress={isInProgress}
+          isInProgress={isCurrent}
           onTransfer={handleTransfer}
         />
       </LeftSection>
