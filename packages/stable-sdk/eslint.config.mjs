@@ -13,7 +13,7 @@ const tsConfig = {
   languageOptions: {
     parserOptions: {
       projectService: {
-        allowDefaultProject: ["*.mjs", "examples/*", "jest.config.ts"],
+        allowDefaultProject: ["*.mjs", "jest.config.ts"],
       },
     },
   },
