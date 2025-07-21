@@ -3,7 +3,7 @@
 [![NPM Version](https://img.shields.io/npm/v/@stable-io/sdk)](https://www.npmjs.com/package/@stable-io/sdk)
 [![License](https://img.shields.io/github/license/stable-io/stable)](https://github.com/stable-io/stable)
 
-The official JavaScript/TypeScript SDK for **Stable** - enabling fast, secure cross-chain USDC transfers using Circle's Cross-Chain Transfer Protocol (CCTP).
+The official JavaScript/TypeScript SDK for **Stableit** - enabling fast, secure cross-chain USDC transfers using Circle's Cross-Chain Transfer Protocol (CCTP).
 
 ## Installation
 
