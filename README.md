@@ -8,9 +8,9 @@ Stable is a comprehensive infrastructure for fast, secure USDC transfers across 
 
 ## 🎯 Primary Entry Point
 
-**Most developers should start with [`@stable-io/sdk`](./packages/stable-sdk/)** - our high-level, developer-friendly SDK that provides simple APIs for USDC transfers across chains.
+**Most developers should start with [`@stable-io/sdk`](https://github.com/stable-io/stable/tree/main/packages/stable-sdk)** - our high-level, developer-friendly SDK that provides simple APIs for USDC transfers across chains.
 
-For installation, usage examples, and API documentation, see the [**SDK README**](./packages/stable-sdk/).
+For installation, usage examples, and API documentation, see the [**SDK README**](https://github.com/stable-io/stable/tree/main/packages/stable-sdk).
 
 ## Architecture
 
@@ -111,27 +111,27 @@ yarn clean              # Clean all build artifacts
 ## Workspace Structure
 ```
 stable/
-├── apps/                    # Applications
-│   ├── front-end/          # Next.js web app
-│   └── back-end/           # Backend services
-├── contracts/              # Smart contracts
-│   ├── cctpr/             # CCTPR protocol
-│   └── price-oracle/      # Price oracle contracts
+├── apps/                         # Applications
+│   ├── front-end/                # Next.js web app
+│   └── back-end/                 # Backend services
+├── contracts/                    # Smart contracts
+│   ├── cctpr/                    # CCTPR protocol
+│   └── price-oracle/             # Price oracle contracts
 ├── packages/
-│   ├── common/            # Shared utilities
-│   │   ├── amount/        # Type-safe amounts
-│   │   ├── utils/         # General utilities
-│   │   ├── map-utils/     # Map utilities
-│   │   └── eslint-config/ # Shared linting
-│   ├── cctp-sdk/          # Low-level modular SDK
-│   │   ├── definitions/   # Core CCTP types
-│   │   ├── evm/          # EVM support
-│   │   ├── viem/         # Viem integration
-│   │   ├── cctpr-definitions/ # CCTPR types
-│   │   └── cctpr-evm/    # CCTPR EVM implementation
-│   └── stable-sdk/        # Public high-level SDK
-└── deployment/            # Infrastructure
-    └── evm/              # EVM deployment configs
+│   ├── common/                   # Shared utilities
+│   │   ├── amount/               # Type-safe amounts
+│   │   ├── utils/                # General utilities
+│   │   ├── map-utils/            # Map utilities
+│   │   └── eslint-config/        # Shared linting
+│   ├── cctp-sdk/                 # Low-level modular SDK
+│   │   ├── definitions/          # Core CCTP types
+│   │   ├── evm/                  # EVM support
+│   │   ├── viem/                 # Viem integration
+│   │   ├── cctpr-definitions/    # CCTPR types
+│   │   └── cctpr-evm/            # CCTPR EVM implementation
+│   └── stable-sdk/               # Public high-level SDK
+└── deployment/                   # Infrastructure
+    └── evm/                      # EVM deployment configs
 ```
 
 ## Package Dependencies
