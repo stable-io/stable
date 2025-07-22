@@ -71,11 +71,13 @@ export class TxLandingService {
     const transactionParams = {
       traceId,
       chain: this.toChain(domain),
-      txRequests: [{
-        to: to.toString(),
-        value: txDetails.value?.toUnit("atomic") ?? 0n,
-        data: encoding.hex.encode(txDetails.data, true),
-      }],
+      txRequests: [
+        {
+          to: to.toString(),
+          value: txDetails.value?.toUnit("atomic") ?? 0n,
+          data: encoding.hex.encode(txDetails.data, true),
+        },
+      ],
       network: this.mappedNetwork(),
     };
 
