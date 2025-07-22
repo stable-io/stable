@@ -5,7 +5,7 @@
 
 import type { Intersect, MapLevels, RoTuple } from "@stable-io/map-utils";
 import { constMap, intersect } from "@stable-io/map-utils";
-import type { Domain, Network, Platform } from "@stable-io/cctp-sdk-definitions";
+import type { Domain, Network, Platform, DomainsOf } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 
 export const contractAddressEntries = [[
@@ -48,14 +48,24 @@ export const contractAddressOf = constMap(contractAddressEntries);
 export const supportedDomains = constMap(contractAddressEntries, [0, 1]);
 export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDomains<N>>[number];
 
+//used to tie the following two types together
+type SupportedPlatformDomainImpl<N extends Network, P extends Platform> =
+  SupportedDomain<N> & DomainsOf<P>;
+
 //to nip complaints about overly long inferred types in the bud
-export type SupportedPlatformDomain<N extends Network, P extends Platform> =
+export type SupportedPlatformDomainTuple<N extends Network, P extends Platform> =
   Intersect<ReturnType<typeof domainsOf<P>>, ReturnType<typeof supportedDomains<N>>> extends
-    infer DT extends RoTuple<Domain> ? DT : never;
+    infer DT extends RoTuple<SupportedPlatformDomainImpl<N, P>> ? DT : never;
+
+export type SupportedPlatformDomain<N extends Network, P extends Platform> =
+  SupportedPlatformDomainTuple<N, P>[number] extends infer R
+    extends SupportedPlatformDomainImpl<N, P>
+  ? R
+  : never;
 
 export const supportedPlatformDomains =
   <N extends Network, P extends Platform>(network: N, platform: P):
-    SupportedPlatformDomain<N, P> =>
+    SupportedPlatformDomainTuple<N, P> =>
       intersect(domainsOf(platform), supportedDomains(network)) as any;
 
 export const avaxRouterContractAddress = {

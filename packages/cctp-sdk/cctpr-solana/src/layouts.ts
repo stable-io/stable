@@ -98,11 +98,13 @@ export type ChainConfig<N extends Network> =
 const solanaUserQuoteVariantItem =
   userQuoteVariantItem(Sol, [{ name: "maxRelayFeeSol", ...amountItem(8, Sol) }]);
 
-const gaslessParamsItem = optionItem(littleEndian([
+const gaslessParamsLayout = [
   { name: "gaslessFeeUsdc", ...usdcItem      },
   { name: "expirationTime", ...timestampItem },
-]));
-export type GaslessParams = DeriveType<typeof gaslessParamsItem>;
+] as const satisfies Layout;
+export type GaslessParams = DeriveType<typeof gaslessParamsLayout>;
+
+const gaslessParamsItem = optionItem(littleEndian(gaslessParamsLayout));
 
 export const transferWithRelayParamsLayout =
   instructionLayout("transfer_with_relay", littleEndian([

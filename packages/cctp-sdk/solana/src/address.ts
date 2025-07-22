@@ -8,18 +8,21 @@ import { UniversalAddress } from "@stable-io/cctp-sdk-definitions";
 import type { Text } from "@stable-io/utils";
 import { encoding, isUint8Array } from "@stable-io/utils";
 import type { Address as SolanaNativeAddress } from "@solana/kit";
-import { isAddress } from "@solana/kit";
 
 type SolanaAddressish =
   string | SolanaNativeAddress | Uint8Array | UniversalAddress | SolanaAddress;
-
 
 export class SolanaAddress implements Address {
   static readonly byteSize = 32;
   static readonly zeroAddress = new SolanaAddress(new Uint8Array(SolanaAddress.byteSize));
 
-  static isValidAddress(address: string): boolean {
-    return isAddress(address);
+  static isValidAddress(address: string): address is SolanaNativeAddress {
+    try {
+      return address.length >= 32 && address.length <= 44 &&
+        encoding.base58.decode(address).length === SolanaAddress.byteSize;
+    } catch {
+      return false;
+    }
   }
 
   private readonly address: SolanaNativeAddress;
@@ -27,10 +30,10 @@ export class SolanaAddress implements Address {
   constructor(address: SolanaAddressish) {
     this.address = (() => {
       if (typeof address === "string") {
-        if (!isAddress(address))
+        if (!SolanaAddress.isValidAddress(address))
           throw SolanaAddress.invalid(
             address,
-            `expected ${SolanaAddress.byteSize}-byte hex string` as Text,
+            `expected ${SolanaAddress.byteSize} bytes base58-encoded address` as Text,
           );
 
         return address;

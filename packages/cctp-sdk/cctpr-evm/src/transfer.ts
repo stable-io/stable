@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { TODO } from "@stable-io/utils";
+import { Amount } from "@stable-io/amount";
 import type {
   GasTokenOf,
   LoadedDomain,
@@ -16,12 +17,11 @@ import {
   init as initDefinitions,
   Usdc,
 } from "@stable-io/cctp-sdk-definitions";
+import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { ContractTx, Eip2612Data, EvmClient, Permit } from "@stable-io/cctp-sdk-evm";
 import { EvmAddress, init as initEvm } from "@stable-io/cctp-sdk-evm";
-import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { Amount } from "@stable-io/amount";
-import { CctpR, quoteIsInUsdc } from "./contractSdk/index.js";
+import { CctpR } from "./contractSdk/index.js";
 import type {
   Quote as ContractQuote,
   CorridorParams,
@@ -29,7 +29,7 @@ import type {
 } from "./contractSdk/index.js";
 
 export type Quote<N extends Network, S extends SupportedEvmDomain<N>> =
-  Exclude<ContractQuote<S>, { type: "offChain" }>;
+  Exclude<ContractQuote<N, S>, { type: "offChain" }>;
 
 export const transfer = <N extends Network>(network: N) => {
   const cctpr = initCctpr(network);
@@ -84,7 +84,7 @@ export const transfer = <N extends Network>(network: N) => {
     if (usdcBalance.lt(requiredAllowance))
       throw new Error("Insufficient USDC balance");
 
-    if (!quoteIsInUsdc(quote) && gasTokenBalance.lt(quote.maxRelayFee as TODO))
+    if (!cctpr.quoteIsInUsdc(quote) && gasTokenBalance.lt(quote.maxRelayFee as TODO))
       throw new Error("Insufficient gas token balance");
 
     let permit: Permit | undefined;

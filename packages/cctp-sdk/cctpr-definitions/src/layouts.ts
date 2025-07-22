@@ -20,7 +20,7 @@ import {
   linearTransform,
   enumSwitchVariants,
 } from "@stable-io/cctp-sdk-definitions";
-import type { SupportedPlatformDomain } from "./constants.js";
+import type { SupportedPlatformDomainTuple } from "./constants.js";
 import { supportedDomains, supportedPlatformDomains } from "./constants.js";
 
 type ConstLayout = RoTuple<NamedItem>;
@@ -39,7 +39,7 @@ export const supportedDomainItem = <N extends Network>(network: N) =>
 
 //we need the explicit type to avoid tsc complaining about the inferred type being too long ts(7056)
 type CctprPlatformDomainItem<N extends Network, P extends Platform> =
-  ReturnType<typeof cctprDomainItem<SupportedPlatformDomain<N, P>>>;
+  ReturnType<typeof cctprDomainItem<SupportedPlatformDomainTuple<N, P>>>;
 
 export const cctprPlatformDomainItem =
   <N extends Network, const P extends Platform>(network: N, platform: P):

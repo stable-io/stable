@@ -5,8 +5,9 @@ import { definedOrThrow, encoding } from "@stable-io/utils";
 import type { RoPair, RoArray, Replace } from "@stable-io/map-utils";
 import { mapTo, zip, chunk, fromEntries } from "@stable-io/map-utils";
 import { Conversion } from "@stable-io/amount";
+import type { Network, GasTokenOf } from "@stable-io/cctp-sdk-definitions";
 import {
-  type Network,
+  UniversalAddress,
   Usdc,
   usdc,
   Sol,
@@ -22,10 +23,18 @@ import {
   mulPercentage,
   platformOf,
 } from "@stable-io/cctp-sdk-definitions";
-import { type QuoteParams, contractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type {
+  InOrOut,
+  QuoteParams,
+  QuoteBase,
+  UsdcQuote,
+  SupportedDomain,
+  CorridorParamsBase,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
+import { contractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SolanaAddress, findPda } from "@stable-io/cctp-sdk-solana";
 import { type ForeignDomain, oracleAddress, executionCosts } from "./constants.js";
-import type { FeeAdjustment } from "./layouts.js";
+import type { FeeAdjustment, GaslessParams } from "./layouts.js";
 import {
   foreignDomainItem,
   chainConfigLayout,
@@ -38,6 +47,11 @@ type RpcType = Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;
 
 export type QuoteRelay<N extends Network> =
   Replace<QuoteParams<N>, "destinationDomain", ForeignDomain<N>>;
+
+export type Quote<N extends Network> = QuoteBase<N, "Solana", "Solana">;
+
+export type CorridorParams<N extends Network, DD extends ForeignDomain<N>> =
+  CorridorParamsBase<N, "Solana", "Solana", DD>;
 
 type PriceAddresses = readonly [oraclePrices: SolanaAddress, chainConfig: SolanaAddress];
 const priceAccountsPerDomain = 2; //i.e. PriceAddresses["length"]
@@ -109,16 +123,29 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     );
   }
 
-  // async transferWithRelay<DD extends ForeignDomain<N>>(
-  //   destination: DD,
-  //   inOrOut: InOrOut, //meaningless distinction, if relay fee is paid in gas and corridor is v1
-  //   mintRecipient: UniversalAddress,
-  //   gasDropoff: GasTokenOf<DD, ForeignDomain<N>>,
-  //   corridor: CorridorParams<N, SD, DD>,
-  //   quote: Quote<SD>,
-  // ) {
+  async transferWithRelay<DD extends ForeignDomain<N>>(
+    destination: DD,
+    inOrOut: InOrOut, //meaningless distinction, if relay fee is paid in gas and corridor is v1
+    mintRecipient: UniversalAddress,
+    gasDropoff: GasTokenOf<DD, ForeignDomain<N>>,
+    corridor: CorridorParams<N, DD>,
+    quote: Quote<N>,
+  ) {
 
-  // }
+  }
+
+  async transferGasless<DD extends ForeignDomain<N>>(
+    destination: DD,
+    inOrOut: InOrOut,
+    mintRecipient: UniversalAddress,
+    gasDropoff: GasTokenOf<DD, ForeignDomain<N>>,
+    corridor: CorridorParams<N, DD>,
+    quote: UsdcQuote,
+    deadline: Date,
+    gaslessFee: Usdc,
+    relayer: SolanaAddress,
+    nonceAccount: SolanaAddress,
+  ) {}
 
   async quoteOnChainRelay(queries: RoArray<QuoteRelay<N>>): Promise<RoArray<RoPair<Usdc, Sol>>> {
     if (queries.length === 0)

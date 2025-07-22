@@ -9,7 +9,6 @@ import type {
   GasTokenOf,
   Duration,
   Network,
-  Usdc,
   Percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import { duration, v1, v2, genericGasToken } from "@stable-io/cctp-sdk-definitions";
@@ -56,23 +55,6 @@ function getSensibleCorridors<
     ];
 }
 
-const calculateSpeed = <
-  N extends Network,
-  S extends SupportedEvmDomain<N>,
-  D extends SupportedDomain<N>,
->(
-  network: N,
-  source: S,
-  destination: D,
-  corridor: SensibleCorridor<N, S, D>,
-): Duration =>
-  duration(hopDeliverySeconds(network, source, destination, corridor) +
-    corridor === "avaxHop"
-      ? hopDeliverySeconds(network, "Avalanche", "Avalanche", "v1")
-      : 0,
-    "sec",
-  );
-
 const hopDeliverySeconds = <
   N extends Network,
   S extends SupportedEvmDomain<N>,
@@ -85,6 +67,23 @@ const hopDeliverySeconds = <
 ) =>
   ((corridor === "v1" ? v1 : v2)["attestationTimeEstimates"] as TODO)[network][source] as number +
     cctpr.relayOverheadOf[network][destination];
+
+const calculateSpeed = <
+  N extends Network,
+  S extends SupportedEvmDomain<N>,
+  D extends SupportedDomain<N>,
+>(
+  network: N,
+  source: S,
+  destination: D,
+  corridor: SensibleCorridor<N, S, D>,
+): Duration =>
+  duration(hopDeliverySeconds(network, source, destination, corridor) +
+    (corridor === "avaxHop"
+      ? hopDeliverySeconds(network, "Avalanche", "Avalanche", "v1")
+      : 0),
+    "sec",
+  );
 
 async function getCorridorStats<
   N extends Network,

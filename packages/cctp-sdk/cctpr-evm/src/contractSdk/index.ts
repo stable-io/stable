@@ -20,7 +20,6 @@ import type {
   Domain,
   DomainId,
   Network,
-  Percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import {
   domains,
@@ -35,7 +34,6 @@ import {
   chainIdOf,
   domainIdOf,
   wormholeChainIdOf,
-  mulPercentage,
 } from "@stable-io/cctp-sdk-definitions";
 import type {
   RawAddress,
@@ -60,12 +58,22 @@ import type {
   Corridor,
   CorridorVariant,
   FeeAdjustmentType,
+  InOrOut,
+  QuoteBase,
+  CorridorParamsBase,
+  UsdcQuote,
+  UsdcQuoteBase,
+  SupportedPlatformDomain,
+  ErasedCorridorParams,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   corridors,
   avaxRouterContractAddress,
   feeAdjustmentTypes,
   contractAddressOf,
+  quoteIsInUsdc,
+  calcBurnAmount,
+  calcFastFee,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   GovernanceCommand,
@@ -95,7 +103,18 @@ import {
 //external consumers shouldn't really need these but exporting them just in case
 export * as layouts from "./layouts/index.js";
 
-export type SupportedEvmDomain<N extends Network> = SupportedDomain<N> & DomainsOf<"Evm">;
+export type SupportedEvmDomain<N extends Network> =
+  SupportedPlatformDomain<N, "Evm"> | (
+    //eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
+    SupportedPlatformDomain<"Mainnet", "Evm"> & SupportedPlatformDomain<"Testnet", "Evm">);
+
+export type Quote<N extends Network, SD extends SupportedEvmDomain<N>> = QuoteBase<N, "Evm", SD>;
+
+export type CorridorParams<
+  N extends Network,
+  SD extends SupportedEvmDomain<N>,
+  DD extends SupportedDomain<N>,
+> = CorridorParamsBase<N, "Evm", SD, DD>;
 
 //sign this with the offChainQuoter to produce a valid off-chain quote for a transfer
 export const offChainQuoteData = <N extends Network>(network: N) =>
@@ -118,31 +137,6 @@ export const parseTransferTxCalldata = <N extends Network>(network: N) =>
 export const parseGovernanceTxCalldata = <N extends Network>(network: N) =>
   (calldata: CallData) => parseExecCalldata(calldata, governanceCommandArrayLayout(network));
 
-type QtOnChain = { readonly type: "onChain" };
-type QtOffChain = { readonly type: "offChain" };
-
-type ExtraFields<QT> =
-  QT extends QtOnChain
-  ? unknown
-  : Readonly<{
-    expirationTime: Date;
-    quoterSignature: Uint8Array;
-  }>;
-
-type RelayFieldName<T, U> = Readonly<T extends QtOnChain ? { maxRelayFee: U } : { relayFee: U }>;
-type QuoteTypeImpl<
-  WEF extends boolean, //with extra fields
-  GT = never,
-> = Simplify<
-  QtOnChain | QtOffChain extends infer QT
-  ? QT extends any
-    ? (QT & (WEF extends true ? ExtraFields<QT> : unknown)) extends infer Q
-      ? Q & RelayFieldName<Q, Usdc | GT>
-      : never
-    : never
-  : never
->;
-
 export type GaslessWitness = {
   parameters: {
     baseAmount:        bigint;
@@ -158,36 +152,6 @@ export type GaslessWitness = {
 };
 
 export type Permit2GaslessData = Permit2WitnessTransferFromData<GaslessWitness>;
-
-export type Quote<SD extends DomainsOf<"Evm">> =
-                            QuoteTypeImpl<true, GasTokenOf<SD, DomainsOf<"Evm">>>;
-export type UsdcQuote     = QuoteTypeImpl<true>;
-export type UsdcQuoteBase = QuoteTypeImpl<false>;
-type ErasedQuoteBase      = QuoteTypeImpl<false, GasTokenOf<DomainsOf<"Evm">>>;
-
-export function quoteIsInUsdc(quote: ErasedQuoteBase): quote is UsdcQuote {
-  return (
-    (quote.type === "offChain" && quote.relayFee.kind.name === "Usdc") ||
-    (quote.type === "onChain" && quote.maxRelayFee.kind.name === "Usdc")
-  );
-}
-
-export type CorridorParams<
-  N extends Network,
-  SD extends SupportedEvmDomain<N>,
-  DD extends SupportedDomain<N>,
-> = Simplify<Readonly<
-  { type: "v1" } | (//eventually, we'll have to check if v1 is supported
-  SD extends Exclude<v2.SupportedDomain<N>, "Avalanche">
-  ? (DD extends v2.SupportedDomain<N> ? "v2Direct" : "avaxHop") extends
-      infer T extends "v2Direct" | "avaxHop"
-    ? { type: T; fastFeeRate: Percentage }
-    : never
-  : never)
->>;
-
-type ErasedCorridorParams =
-  CorridorParams<Network, SupportedEvmDomain<Network>, SupportedDomain<Network>>;
 
 export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
   public readonly client: EvmClient<N, SD>;
@@ -208,16 +172,6 @@ export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
     };
   }
 }
-
-//"in" is guaranteed to be exact
-//"out" will _only_ be exact if:
-// * the relay quote is off-chain
-// * circle actually consumes the full fast fee
-//otherwise, out will always be a bit higher than the specified amount
-export type InOrOut = {
-  amount: Usdc;
-  type: "in" | "out";
-};
 
 export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends CctpRBase<N, SD> {
   //On-chain quotes should always allow for a safety margin of at least a few percent to make sure a
@@ -258,7 +212,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
   checkCostAndCalcRequiredAllowance(
     inOrOut: InOrOut,
-    quote: Quote<SD>,
+    quote: Quote<N, SD>,
     corridor: CorridorParams<N, SD, SupportedDomain<N>>,
     gaslessFee?: Usdc,
   ): Usdc {
@@ -276,7 +230,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
         return inOrOut.amount;
       })()
-      : totalFeesUsdc.add(this.calcBurnAmount(inOrOut, corridor, quote, gaslessFee));
+      : totalFeesUsdc.add(calcBurnAmount(inOrOut, corridor, quote, gaslessFee));
   }
 
   transferWithRelay<DD extends SupportedDomain<N>>(
@@ -285,7 +239,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     mintRecipient: UniversalAddress,
     gasDropoff: GasTokenOf<DD, SupportedDomain<N>>,
     corridor: CorridorParams<N, SD, DD>,
-    quote: Quote<SD>,
+    quote: Quote<N, SD>,
     permit?: Permit,
   ): ContractTx {
     this.checkCorridorDestinationCoherence(destination, corridor.type);
@@ -313,7 +267,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       : { type: "onChainGas" }
     ) satisfies UserQuoteVariant;
 
-    const burnAmount = this.calcBurnAmount(inOrOut, corridor, quote, usdc(0));
+    const burnAmount = calcBurnAmount(inOrOut, corridor, quote, usdc(0));
 
     const inputAmountUsdc = inOrOut.type === "in"
       ? inOrOut.amount
@@ -412,7 +366,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           }[corridor.type],
           maxFastFee: erasedCorridor.type === "v1"
             ? 0n
-            : CctpR.calcFastFee(burnAmount, erasedCorridor.fastFeeRate).toUnit("atomic"),
+            : calcFastFee(burnAmount, erasedCorridor.fastFeeRate).toUnit("atomic"),
           gaslessFee: gaslessFee.toUnit("atomic"),
           maxRelayFee:
             (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee).toUnit("atomic"),
@@ -500,9 +454,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
   ): CorridorVariant {
     return corridor.type === "v1"
       ? corridor
-      : { type: corridor.type,
-          maxFastFeeUsdc: CctpR.calcFastFee(burnAmount, corridor.fastFeeRate),
-        };
+      : { type: corridor.type, maxFastFeeUsdc: calcFastFee(burnAmount, corridor.fastFeeRate) };
   }
 
   private calcGaslessAmounts<DD extends SupportedDomain<N>>(
@@ -511,7 +463,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     quote: UsdcQuoteBase,
     gaslessFee: Usdc,
   ): [amount: Usdc, baseAmount: Usdc, burnAmount: Usdc] {
-    const burnAmount = this.calcBurnAmount(inOrOut, corridor, quote, gaslessFee);
+    const burnAmount = calcBurnAmount(inOrOut, corridor, quote, gaslessFee);
     const [amount, baseAmount] = inOrOut.type === "in"
       ? [ inOrOut.amount,
           inOrOut.amount
@@ -529,54 +481,14 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
     return [amount, baseAmount, burnAmount];
   }
-
-  private calcBurnAmount(
-    inOrOut: InOrOut,
-    corridor: ErasedCorridorParams,
-    quote: ErasedQuoteBase,
-    gaslessFee: Usdc,
-  ): Usdc {
-    //example for inOrOut.type === "out":
-    //say desired output on the target chain is 99 µUSDC and the fastFeeRate is 2 %
-    //-> need to burn 101.020408163 µUSDC -> ceil to 102 µUSDC
-    //this in turn gives a fast fee of:
-    //-> 102 µUSDC * 0.02 = 2.04 µUSDC -> ceil to 3 µUSDC => (102 - 3 = 99)
-
-    let burnAmount = inOrOut.amount;
-    if (inOrOut.type === "in") {
-      burnAmount = burnAmount.sub(gaslessFee);
-
-      //we don't sub the maxRelayFee, because the actual fee might be lower and so we have to assume
-      //  the most extreme case, where the actual fee is 0 and hence the burnAmount is maximized
-      if (quoteIsInUsdc(quote) && quote.type === "offChain")
-        burnAmount = burnAmount.sub(quote.relayFee);
-    }
-    else if (corridor.type !== "v1")
-      burnAmount = CctpR.ceilToMicroUsdc(
-        burnAmount.div(Rational.from(1).sub(corridor.fastFeeRate.toUnit("scalar"))),
-      );
-
-    if (burnAmount.le(usdc(0)))
-      throw new Error("Transer Amount Less or Equal to 0 After Fees");
-
-    return burnAmount;
-  }
-
-  private static ceilToMicroUsdc(amount: Usdc): Usdc {
-    return usdc(amount.toUnit("µUSDC").ceil(), "µUSDC");
-  }
-
-  private static calcFastFee(burnAmount: Usdc, fastFeeRate: Percentage): Usdc {
-    return CctpR.ceilToMicroUsdc(mulPercentage(burnAmount, fastFeeRate));
-  }
 }
 
 export type FeeAdjustments = Record<Domain, FeeAdjustment>;
 
 export class CctpRGovernance<
   N extends Network,
-  S extends DomainsOf<"Evm">,
-> extends CctpRBase<N, S> {
+  SD extends SupportedEvmDomain<N>,
+> extends CctpRBase<N, SD> {
   static adjustmentSlots = Math.ceil(domains.length / feeAdjustmentsPerSlot);
 
   //Since the implementation of CctpR has the assumption baked into the contract that new domain
