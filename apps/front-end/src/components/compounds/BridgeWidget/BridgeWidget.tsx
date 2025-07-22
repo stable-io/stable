@@ -1,4 +1,4 @@
-import type { Duration } from "@stable-io/cctp-sdk-definitions";
+import type { Route } from "@stable-io/sdk";
 import type { ReactElement } from "react";
 
 import {
@@ -23,7 +23,7 @@ interface BridgeWidgetProps {
   availableChains: readonly AvailableChains[];
   walletAddress?: string;
   balance: number;
-  route?: { corridor: string; estimatedDuration: Duration } | undefined;
+  route?: Route<AvailableChains, AvailableChains>;
   isInProgress: boolean;
   onTransfer: () => void;
 }

@@ -1,4 +1,3 @@
-import type { Route } from "@stable-io/sdk";
 import Head from "next/head";
 import { useState } from "react";
 import type { ReactElement } from "react";
@@ -17,6 +16,7 @@ import { availableChains } from "@/constants";
 import { useBalance, useRoutes, useTransferProgress } from "@/hooks";
 import { useStableContext } from "@/providers";
 import type { NextPageWithLayout } from "@/utils";
+import { formatCost } from "@/utils";
 
 const Bridge: NextPageWithLayout = (): ReactElement => {
   const [amount, setAmount] = useState(0);
@@ -47,12 +47,6 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     dismiss,
     steps,
   } = useTransferProgress(route);
-
-  const formatCost = (
-    cost: Route<AvailableChains, AvailableChains>["estimatedTotalCost"],
-  ): string => {
-    return `$${cost.toUnit("human")}`;
-  };
 
   // @todo: Subtract expected fees
   // const maxAmount = balance;
