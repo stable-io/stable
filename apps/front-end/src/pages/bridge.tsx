@@ -31,7 +31,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
 
   const { address, stable } = useStableContext();
   const { balance, updateBalance } = useBalance({ sourceChain });
-  const { route } = useRoutes({
+  const { route, findRoutes } = useRoutes({
     sourceChain,
     targetChain,
     amount,
@@ -86,6 +86,9 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
       })
       .catch((error: unknown) => {
         console.error(error);
+      })
+      .finally(() => {
+        void findRoutes();
       });
   };
 
