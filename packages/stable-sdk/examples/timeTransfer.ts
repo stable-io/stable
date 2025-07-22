@@ -41,7 +41,8 @@ const intent = {
 };
 
 // Configuration for multiple executions
-const NUM_EXECUTIONS = 1; // Change this to desired number of executions
+const NUM_EXECUTIONS = 100; // Change this to desired number of executions
+const CORRIDOR_TO_EXECUTE = "v1" // v1, v2Direct
 const CSV_FILE = "transfer_timing_results.csv";
 
 // Format timing with color based on duration
@@ -135,7 +136,9 @@ async function executeRouteWithTiming(
   console.info(`\n=== Execution ${executionNumber} ===`);
 
   const routes = await sdk.findRoutes(intent);
-  const allRoutes = routes.all.reverse();
+  const allRoutes = routes.all.filter(
+    r => r.corridor === CORRIDOR_TO_EXECUTE,
+  );
 
   const executionResults: ExecutionResult[] = [];
 
