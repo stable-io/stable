@@ -1108,6 +1108,33 @@ footer .footer-links {
   .top-nav .nav {
     display: none;
   }
+  .top-nav .mobile-nav {
+    width: 100%;
+    background-color: white;
+    border-top: 1px solid #eee;
+    border-radius: var(--radius-medium);
+    clear: both;
+  }
+  .top-nav .mobile-nav li {
+    border-bottom: 1px solid #eee;
+  }
+  .top-nav .mobile-nav li:last-child {
+    border-bottom: none;
+  }
+  .top-nav .mobile-nav li a {
+    display: block;
+    padding: 16px 20px;
+    color: #333;
+    text-transform: none;
+  }
+  .top-nav .mobile-nav li a:hover {
+    background-color: #f5f5f5;
+  }
+  .top-nav .mobile-nav li.active a {
+    background-color: #8f8ae2;
+    color: white;
+    font-weight: var(--fw-semibold);
+  }
   .top-nav .hamburger-menu {
     display: block;
   }
