@@ -1,13 +1,15 @@
-import type { Duration } from "@stable-io/cctp-sdk-definitions";
+import type { Route } from "@stable-io/sdk";
 import Image from "next/image";
 import type { ReactElement } from "react";
 
 import { RouteMetaItem } from "./RouteMetaItem";
 
 import { SectionDivider, SplitLayout } from "@/components";
+import type { AvailableChains } from "@/constants";
+import { formatCost } from "@/utils";
 
 interface RouteInformationProps {
-  route?: { corridor: string; estimatedDuration: Duration } | undefined;
+  route?: Route<AvailableChains, AvailableChains>;
 }
 
 export const RouteInformation = ({
@@ -17,7 +19,7 @@ export const RouteInformation = ({
     return undefined;
   }
 
-  const { corridor, estimatedDuration } = route;
+  const { corridor, estimatedDuration, estimatedTotalCost } = route;
 
   const leftContent = (
     <>
@@ -38,7 +40,11 @@ export const RouteInformation = ({
 
   const rightContent = (
     <>
-      <RouteMetaItem iconSrc="/imgs/gas.svg" altText="Gas fees" value="$3.20" />
+      <RouteMetaItem
+        iconSrc="/imgs/gas.svg"
+        altText="Gas fees"
+        value={formatCost(estimatedTotalCost)}
+      />
       <RouteMetaItem
         iconSrc="/imgs/time.svg"
         altText="Duration"
