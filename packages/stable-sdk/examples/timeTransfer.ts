@@ -8,7 +8,7 @@ import { Address } from "viem";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../src/signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
-import StableSDK from "../src/index.js";
+import StableSDK, { Route } from "../src/index.js";
 import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 
 dotenv.config();
@@ -41,7 +41,7 @@ const intent = {
 };
 
 // Configuration for multiple executions
-const NUM_EXECUTIONS = 50; // Change this to desired number of executions
+const NUM_EXECUTIONS = 1; // Change this to desired number of executions
 const CSV_FILE = "transfer_timing_results.csv";
 
 // Format timing with color based on duration
@@ -62,19 +62,16 @@ function formatTimeDiff(timeMs: number): string {
 
 // Types for timing data
 interface StepTimings {
-  transferInitiated?: number;
-  approvalSent?: number;
-  messageSigned?: number;
+  approval?: number;
   transferSent?: number;
   transferConfirmed?: number;
-  hopReceived?: number;
-  hopConfirmed?: number;
   transferReceived?: number;
   error?: number;
 }
 
 interface ExecutionResult {
-  executionNumber: number;
+  routeType?: string;
+  approvalType?: string;
   transferHash?: string;
   receiveHash?: string;
   stepTimings: StepTimings;
@@ -87,20 +84,17 @@ interface ExecutionResult {
 // Initialize CSV file with headers
 function initializeCsvFile() {
   const headers = [
-    "execution_number",
-    "time_to_transfer_initiated_ms",
-    "time_to_approval_sent_ms",
-    "time_to_message_signed_ms",
+    "corridor",
+    "route_type",
+    "approval_type",
+    "error_occurred",
+    "total_duration_ms",
+    "time_to_approval_ms",
     "time_to_transfer_sent_ms",
     "time_to_transfer_confirmed_ms",
-    "time_to_hop_received_ms",
-    "time_to_hop_confirmed_ms",
     "time_to_transfer_received_ms",
-    "corridor",
     "transfer_hash",
     "receive_hash",
-    "total_duration_ms",
-    "error_occurred",
     "error_message",
   ].join(",");
 
@@ -116,20 +110,17 @@ function writeResultToCsv(result: ExecutionResult) {
   };
 
   const row = [
-    result.executionNumber,
-    result.stepTimings.transferInitiated?.toFixed(2) || "",
-    formatOptionalTiming(result.stepTimings.approvalSent),
-    formatOptionalTiming(result.stepTimings.messageSigned),
+    result.corridor,
+    result.routeType,
+    result.approvalType,
+    result.errorOccurred,
+    result.totalDuration.toFixed(2),
+    formatOptionalTiming(result.stepTimings.approval),
     result.stepTimings.transferSent?.toFixed(2) || "",
     result.stepTimings.transferConfirmed?.toFixed(2) || "",
-    formatOptionalTiming(result.stepTimings.hopReceived),
-    formatOptionalTiming(result.stepTimings.hopConfirmed),
     result.stepTimings.transferReceived?.toFixed(2) || "",
-    result.corridor,
     result.transferHash || "",
     result.receiveHash || "",
-    result.totalDuration.toFixed(2),
-    result.errorOccurred,
     `"${result.errorMessage || ""}"`,
   ].join(",");
 
@@ -140,132 +131,119 @@ function writeResultToCsv(result: ExecutionResult) {
 // Execute a single route with timing tracking
 async function executeRouteWithTiming(
   executionNumber: number,
-): Promise<ExecutionResult> {
+): Promise<ExecutionResult[]> {
   console.info(`\n=== Execution ${executionNumber} ===`);
 
-  const result: ExecutionResult = {
-    executionNumber,
-    corridor: "",
-    stepTimings: {},
-    totalDuration: 0,
-    errorOccurred: false,
-  };
+  const routes = await sdk.findRoutes(intent);
+  const allRoutes = routes.all.reverse();
 
-  const executionStartTime = performance.now();
+  const executionResults: ExecutionResult[] = [];
 
-  try {
-    const routes = await sdk.findRoutes(intent);
-    const selectedRoute = routes.all[1]; // change to select a different route.
+  for (let routeIndex = 0; routeIndex < allRoutes.length; routeIndex++) {
+    const selectedRoute = allRoutes[routeIndex];
+    const routeDescription = `${executionNumber}-${routeIndex + 1}`;
+    
+    console.info(`\n--- Route ${routeIndex + 1}/${allRoutes.length} (${
+      getRouteType(selectedRoute)} - ${selectedRoute.corridor}) ---`);
 
-    result.corridor = selectedRoute.corridor;
+    const result: ExecutionResult = {
+      corridor: selectedRoute.corridor,
+      stepTimings: {},
+      totalDuration: 0,
+      errorOccurred: false,
+      routeType: getRouteType(selectedRoute),
+      approvalType: getApprovalType(selectedRoute),
+    };
 
-    const hasBalance = await sdk.checkHasEnoughFunds(selectedRoute);
-    if (!hasBalance) {
-      throw new Error(
-        `${selectedRoute.intent.sender} doesn't have enough balance to pay for the transfer`,
-      );
+    const executionStartTime = performance.now();
+
+    try {
+      const hasBalance = await sdk.checkHasEnoughFunds(selectedRoute);
+      if (!hasBalance) {
+        throw new Error(
+          `${selectedRoute.intent.sender} doesn't have enough balance to pay for the transfer`,
+        );
+      }
+
+      const stepStartTime = performance.now();
+      let lastStepTime: number;
+
+      selectedRoute.progress.on("approval-sent", (e) => {
+        const now = performance.now();
+        result.stepTimings.approval = now - stepStartTime;
+        lastStepTime = now;
+        console.info(`✓ Approval sent: ${e.transactionHash} (${
+          formatTimeDiff(result.stepTimings.approval)})`);
+      });
+
+      selectedRoute.progress.on("message-signed", (e) => {
+        const now = performance.now();
+        result.stepTimings.approval = now - stepStartTime;
+        lastStepTime = now;
+        console.info(`✓ Message signed by ${e.signer}. Deadline: ${
+          e.messageSigned.message.deadline
+        } (${
+          formatTimeDiff(result.stepTimings.approval)})`);
+      });
+
+      selectedRoute.progress.on("transfer-sent", (e) => {
+        const now = performance.now();
+        result.stepTimings.transferSent = now - lastStepTime;
+        lastStepTime = now;
+        console.info(`✓ Transfer tx included in blockchain. tx: ${
+          e.transactionHash} (${formatTimeDiff(result.stepTimings.transferSent)})`);
+
+        result.transferHash = e.transactionHash;
+      });
+
+      selectedRoute.progress.on("transfer-confirmed", (e) => {
+        const now = performance.now();
+        result.stepTimings.transferConfirmed = now - lastStepTime;
+        lastStepTime = now;
+        console.info(`✓ Transfer confirmed - Circle attestation received (${
+          formatTimeDiff(result.stepTimings.transferConfirmed)})`);
+      });
+
+      selectedRoute.progress.on("transfer-received", (e) => {
+        const now = performance.now();
+        result.stepTimings.transferReceived = now - lastStepTime;
+        lastStepTime = now;
+        console.info(`✓ Transfer received: ${e.transactionHash} (${
+          formatTimeDiff(result.stepTimings.transferReceived)})`);
+
+        result.receiveHash = e.transactionHash;
+      });
+
+      selectedRoute.progress.on("error", (e) => {
+        const now = performance.now();
+        result.stepTimings.error = now - lastStepTime;
+        result.errorOccurred = true;
+        result.errorMessage = e.type;
+        console.error(`✗ Error: ${e.type} (${
+          formatTimeDiff(result.stepTimings.error)})`);
+      });
+
+      await sdk.executeRoute(selectedRoute);
+
+      console.info(`✅ Route ${routeDescription} completed successfully.\
+        \nSend: ${getTestnetScannerTxUrl(selectedRoute.intent.sourceChain, result.transferHash!)}\
+        \nReceive: ${getTestnetScannerTxUrl(selectedRoute.intent.targetChain, result.receiveHash!)}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      result.errorOccurred = true;
+      result.errorMessage = errorMessage;
+      console.error(`❌ Route ${routeDescription} failed:`, errorMessage);
     }
 
-    const stepStartTime = performance.now();
-    let lastStepTime: number;
+    const executionEndTime = performance.now();
+    result.totalDuration = executionEndTime - executionStartTime;
 
-    selectedRoute.progress.on("transfer-initiated", () => {
-      const now = performance.now();
-      result.stepTimings.transferInitiated = now - stepStartTime;
-      lastStepTime = now;
-      console.info(`✓ Transfer initiated (${
-        formatTimeDiff(result.stepTimings.transferInitiated)})`);
-    });
-
-    selectedRoute.progress.on("approval-sent", (e) => {
-      const now = performance.now();
-      result.stepTimings.approvalSent = now - lastStepTime;
-      lastStepTime = now;
-      console.info(`✓ Approval sent: ${e.transactionHash} (
-        ${formatTimeDiff(result.stepTimings.approvalSent)})`);
-    });
-
-    selectedRoute.progress.on("message-signed", (e) => {
-      const now = performance.now();
-      result.stepTimings.messageSigned = now - lastStepTime;
-      lastStepTime = now;
-      console.info(`✓ Message signed by ${e.signer} (${
-        formatTimeDiff(result.stepTimings.messageSigned)})`);
-    });
-
-    selectedRoute.progress.on("transfer-sent", (e) => {
-      const now = performance.now();
-      result.stepTimings.transferSent = now - lastStepTime;
-      lastStepTime = now;
-      console.info(`✓ Transfer tx included in blockchain. tx: ${
-        e.transactionHash} (${formatTimeDiff(result.stepTimings.transferSent)})`);
-    });
-
-    selectedRoute.progress.on("transfer-confirmed", (e) => {
-      const now = performance.now();
-      result.stepTimings.transferConfirmed = now - lastStepTime;
-      lastStepTime = now;
-      console.info(`✓ Transfer confirmed - Circle attestation received (${
-        formatTimeDiff(result.stepTimings.transferConfirmed)})`);
-    });
-
-    selectedRoute.progress.on("hop-received", (e) => {
-      const now = performance.now();
-      result.stepTimings.hopReceived = now - lastStepTime;
-      lastStepTime = now;
-      console.info(`✓ Hop received: ${e.transactionHash} (${
-        formatTimeDiff(result.stepTimings.hopReceived)})`);
-    });
-
-    selectedRoute.progress.on("hop-confirmed", (e) => {
-      const now = performance.now();
-      result.stepTimings.hopConfirmed = now - lastStepTime;
-      lastStepTime = now;
-      console.info(`✓ Hop confirmed (${
-        formatTimeDiff(result.stepTimings.hopConfirmed)})`);
-    });
-
-    selectedRoute.progress.on("transfer-received", (e) => {
-      const now = performance.now();
-      result.stepTimings.transferReceived = now - lastStepTime;
-      lastStepTime = now;
-      console.info(`✓ Transfer received: ${e.transactionHash} (${
-        formatTimeDiff(result.stepTimings.transferReceived)})`);
-    });
-
-    selectedRoute.progress.on("error", (e) => {
-      const now = performance.now();
-      result.stepTimings.error = now - lastStepTime;
-      result.errorOccurred = true;
-      result.errorMessage = e.type;
-      console.error(`✗ Error: ${e.type} (${
-        formatTimeDiff(result.stepTimings.error)})`);
-    });
-
-    const {
-      transferHash,
-      receiveHash,
-    } = await sdk.executeRoute(selectedRoute);
-
-    result.transferHash = transferHash;
-    result.receiveHash = receiveHash;
-
-    console.info(`✅ Execution ${executionNumber} completed successfully.\
-      \nSend: ${getTestnetScannerTxUrl(selectedRoute.intent.sourceChain, transferHash)}\
-      \nReceive: ${getTestnetScannerTxUrl(selectedRoute.intent.targetChain, receiveHash)}`);
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    result.errorOccurred = true;
-    result.errorMessage = errorMessage;
-    console.error(`❌ Execution ${executionNumber} failed:`, errorMessage);
+    console.info(`Route ${routeIndex + 1} execution time: ${formatTimeDiff(result.totalDuration)}`);
+    writeResultToCsv(result)
+    executionResults.push(result);
   }
 
-  const executionEndTime = performance.now();
-  result.totalDuration = executionEndTime - executionStartTime;
-
-  console.info(`Total execution time: ${formatTimeDiff(result.totalDuration)}`);
-
-  return result;
+  return executionResults;
 }
 
 async function runMultipleExecutions() {
@@ -281,10 +259,8 @@ async function runMultipleExecutions() {
   const allResults: ExecutionResult[] = [];
 
   for (let i = 1; i <= NUM_EXECUTIONS; i++) {
-    const result = await executeRouteWithTiming(i);
-    allResults.push(result);
-
-    writeResultToCsv(result);
+    const results = await executeRouteWithTiming(i);
+    allResults.push(...results);
   }
 
   // Summary
@@ -306,7 +282,7 @@ async function runMultipleExecutions() {
     console.info(`Average steps per execution: ${avgSteps.toFixed(1)}`);
 
     // Step timing averages (now showing time between steps)
-    const stepTimings = ["transferInitiated", "approvalSent", "messageSigned", "transferSent", "transferConfirmed", "hopReceived", "hopConfirmed", "transferReceived"] as const;
+    const stepTimings = ["approval", "transferSent", "transferConfirmed", "transferReceived"] as const;
 
     console.info(`\nAverage step durations (time between consecutive steps):`);
     for (const step of stepTimings) {
@@ -339,6 +315,14 @@ function getTestnetScannerTxUrl<D extends keyof EvmDomains>(
   if (!baseUrl) return "unknown scanner address";
 
   return `${baseUrl}${txHash}`;
+}
+
+function getRouteType(r: Route<any, any>) {
+  return r.steps.find(s => s.type === "gasless-transfer") ? "gasless"  : "normal";
+}
+
+function getApprovalType(r: Route<any, any>) {
+  return r.requiresMessageSignature ? "permit" : "approval"
 }
 
 // Run the script
