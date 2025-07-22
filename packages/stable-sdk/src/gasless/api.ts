@@ -11,12 +11,15 @@ import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
 export const apiUrl = {
   Mainnet: "", // TODO
-  Testnet: "https://api.stg.stableit.com", // won't be easy to work with the local quote api =(.
+  Testnet: "https://api.stg.stableit.com",
 } as const satisfies Record<Network, string>;
 
 export const apiEndpoint = <N extends Network>(network: N) => (
   path: string,
-): Url => `${apiUrl[network]}/gasless-transfer/${path}` as Url;
+): Url => {
+  const apiUrlBase = process.env.STABLE_SDK_GASLESS_API_URL || apiUrl[network];
+  return `${apiUrlBase}/gasless-transfer/${path}` as Url;
+};
 
 export const apiEndpointWithQuery = <N extends Network>(network: N) => (
   path: string,
