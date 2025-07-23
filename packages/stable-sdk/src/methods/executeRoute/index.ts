@@ -50,6 +50,7 @@ export const $executeRoute =
       network,
       sourceChain,
       transferTx,
+      { baseDelayMs: 50, maxDelayMs: 350, timeoutMs: 270000 },
     );
     attestations.push(attestation);
     route.progress.emit("transfer-confirmed", attestation);
