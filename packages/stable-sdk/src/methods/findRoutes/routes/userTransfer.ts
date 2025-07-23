@@ -86,7 +86,7 @@ export async function buildUserTransferRoute<
     fees: corridorFees,
     estimatedDuration: corridor.transferTime,
     corridor: corridor.corridor,
-    requiresMessageSignature: true,
+    requiresMessageSignature: intent.usePermit,
     steps: routeSteps,
     estimatedTotalCost: await calculateTotalCost(
       routeSteps,

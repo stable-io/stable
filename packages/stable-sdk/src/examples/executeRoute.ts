@@ -6,10 +6,10 @@
 import dotenv from "dotenv";
 import { Address } from "viem";
 import { eth, EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { ViemSigner } from "../src/signer/viemSigner.js";
+import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
-import StableSDK, { Route } from "../src/index.js";
-import { bigintReplacer } from "../src/utils";
+import StableSDK, { Route } from "../index.js";
+import { bigintReplacer } from "../utils.js";
 
 dotenv.config();
 const privateKey = process.env.EVM_PRIVATE_KEY as Address;

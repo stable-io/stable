@@ -5,7 +5,7 @@
 
 import { deserialize } from "binary-layout";
 import { Hex } from "viem";
-import { EvmDomains, UniversalAddress, v1, v2 } from "@stable-io/cctp-sdk-definitions";
+import { duration, EvmDomains, UniversalAddress, v1, v2 } from "@stable-io/cctp-sdk-definitions";
 import type { Address, Network, TxHash } from "../../types/index.js";
 import { encoding, pollUntil, type PollingConfig } from "@stable-io/utils";
 
@@ -17,7 +17,7 @@ export async function findTransferAttestation<N extends Network>(
 ): Promise<CctpAttestation> {
   const fetchMessages = v2.fetchMessagesFactory(network);
   const { messages: [message] } = await pollUntil(
-    () => fetchMessages(sourceChain, { transactionHash }),
+    () => fetchMessages(sourceChain, { transactionHash }, duration(0, "sec")),
     (result): result is Extract<v2.GetMessagesResponse, { status: "success" }> => result.status === "success",
     config,
   );

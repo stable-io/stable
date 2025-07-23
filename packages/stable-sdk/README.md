@@ -241,6 +241,7 @@ yarn tsx examples/logTransferProgress.ts
 yarn tsx examples/logTransactionEvents.ts
 yarn tsx examples/parseTransferCallData.ts
 yarn tsx examples/parseRouterHookData.ts
+yarn tsx examples/timeTransfer.ts
 ```
 
 ### Available Examples
@@ -251,6 +252,7 @@ yarn tsx examples/parseRouterHookData.ts
 - **`logTransactionEvents.ts`** - Track transaction lifecycle events
 - **`parseTransferCallData.ts`** - Parse and analyze transfer call data
 - **`parseRouterHookData.ts`** - Parse router hook data for integrations
+- **`timeTransfer.ts`** - Performance benchmark script that executes multiple transfers and measures timing for each step, saving detailed results to CSV
 
 ## Configuration
 
