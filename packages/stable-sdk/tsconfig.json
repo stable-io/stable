@@ -15,6 +15,6 @@
     "rootDir": "./src",
     "noImplicitAny": false
   },
-  "include": ["src/**/*", "examples/*.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

@@ -5,7 +5,7 @@
 
 import { CallData } from "@stable-io/cctp-sdk-evm";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
-import { bigintReplacer } from "../src/utils";
+import { bigintReplacer } from "../utils.js";
 import { encoding } from "@stable-io/utils";
 
 const cctprExecCallData =

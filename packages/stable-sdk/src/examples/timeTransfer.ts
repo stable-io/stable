@@ -6,9 +6,9 @@
 import dotenv from "dotenv";
 import { Address } from "viem";
 import { EvmDomains, eth } from "@stable-io/cctp-sdk-definitions";
-import { ViemSigner } from "../src/signer/viemSigner.js";
+import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
-import StableSDK, { Route } from "../src/index.js";
+import StableSDK, { Route } from "../index.js";
 import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 
 dotenv.config();
@@ -40,7 +40,7 @@ const intent = {
 
 // Configuration for multiple executions
 const NUM_EXECUTIONS = 1; // Change this to desired number of executions
-const CORRIDOR_TO_EXECUTE = "v2Direct" // v1, v2Direct
+const CORRIDOR_TO_EXECUTE = "v2Direct"; // v1, v2Direct
 const CSV_FILE = "transfer_timing_results.csv";
 
 // Format timing with color based on duration
@@ -137,7 +137,7 @@ async function executeRouteWithTiming(
   const allRoutes = routes.all
   .filter(
     r => r.corridor === CORRIDOR_TO_EXECUTE,
-  )
+  );
   // if you want only gasless:
   // .filter(
   //   r => r.steps[0].type === "gasless-transfer"
@@ -148,7 +148,7 @@ async function executeRouteWithTiming(
   for (let routeIndex = 0; routeIndex < allRoutes.length; routeIndex++) {
     const selectedRoute = allRoutes[routeIndex];
     const routeDescription = `${executionNumber}-${routeIndex + 1}`;
-    
+
     console.info(`\n--- Route ${routeIndex + 1}/${allRoutes.length} (${
       getRouteType(selectedRoute)} - ${selectedRoute.corridor}) ---`);
 
@@ -194,7 +194,7 @@ async function executeRouteWithTiming(
 
       selectedRoute.progress.on("transfer-sent", (e) => {
         const now = performance.now();
-        result.stepTimings.transferSent = now - (lastStepTime ?? stepStartTime);
+        result.stepTimings.transferSent = now - lastStepTime;
         lastStepTime = now;
         console.info(`✓ Transfer tx included in blockchain. tx: ${
           e.transactionHash} (${formatTimeDiff(result.stepTimings.transferSent)})`);
@@ -231,9 +231,11 @@ async function executeRouteWithTiming(
 
       await sdk.executeRoute(selectedRoute);
 
-      console.info(`✅ Route ${routeDescription} completed successfully.\
+      console.info(
+        `✅ Route ${routeDescription} completed successfully.\
         \nSend: ${getTestnetScannerTxUrl(selectedRoute.intent.sourceChain, result.transferHash!)}\
-        \nReceive: ${getTestnetScannerTxUrl(selectedRoute.intent.targetChain, result.receiveHash!)}`);
+        \nReceive: ${getTestnetScannerTxUrl(selectedRoute.intent.targetChain, result.receiveHash!)}`
+      );
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       result.errorOccurred = true;
@@ -245,7 +247,7 @@ async function executeRouteWithTiming(
     result.totalDuration = executionEndTime - executionStartTime;
 
     console.info(`Route ${routeIndex + 1} execution time: ${formatTimeDiff(result.totalDuration)}`);
-    writeResultToCsv(result)
+    writeResultToCsv(result);
     executionResults.push(result);
   }
 
@@ -324,11 +326,11 @@ function getTestnetScannerTxUrl<D extends keyof EvmDomains>(
 }
 
 function getRouteType(r: Route<any, any>) {
-  return r.steps.find(s => s.type === "gasless-transfer") ? "gasless"  : "normal";
+  return r.steps.some(s => s.type === "gasless-transfer") ? "gasless"  : "normal";
 }
 
 function getApprovalType(r: Route<any, any>) {
-  return r.requiresMessageSignature ? "permit" : "approval"
+  return r.requiresMessageSignature ? "permit" : "approval";
 }
 
 // Run the script
