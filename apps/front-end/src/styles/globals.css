@@ -592,6 +592,16 @@ footer .footer-links {
   opacity: 0.4;
   font-weight: normal;
 }
+.bridge-widget .amount-section input::-webkit-outer-spin-button,
+.bridge-widget .amount-section input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+.bridge-widget .amount-section input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 .bridge-widget .amount-section .max-button {
   background: none;
   border: none;

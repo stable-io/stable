@@ -22,7 +22,7 @@ export const AmountInput = ({
       />
       <input
         type="number"
-        value={amount}
+        value={amount || ""}
         onChange={onAmountChange}
         placeholder="Enter amount"
         min="0"
