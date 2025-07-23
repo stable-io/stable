@@ -6,14 +6,16 @@ import { chainLogos } from "@/constants";
 
 export interface ChainSelectItemProps {
   chain: AvailableChains;
+  isSelected: boolean;
   onSelect: (chain: AvailableChains) => void;
 }
 
 export const ChainSelectItem = ({
   chain,
+  isSelected,
   onSelect,
 }: ChainSelectItemProps): ReactElement => (
-  <li onClick={() => onSelect(chain)}>
+  <li onClick={() => onSelect(chain)} className={isSelected ? "selected" : ""}>
     <Image
       src={chainLogos[chain]}
       className="network-logo item-icon"
@@ -23,5 +25,15 @@ export const ChainSelectItem = ({
       width={24}
     />
     <span>{chain}</span>
+    {isSelected && (
+      <Image
+        src="/imgs/check.svg"
+        alt="Selected"
+        className="checkmark"
+        unoptimized
+        height={16}
+        width={16}
+      />
+    )}
   </li>
 );
