@@ -230,11 +230,10 @@ async function executeRouteWithTiming(
       });
 
       await sdk.executeRoute(selectedRoute);
-
       console.info(
         `✅ Route ${routeDescription} completed successfully.\
         \nSend: ${getTestnetScannerTxUrl(selectedRoute.intent.sourceChain, result.transferHash!)}\
-        \nReceive: ${getTestnetScannerTxUrl(selectedRoute.intent.targetChain, result.receiveHash!)}`
+        \rRcv: ${getTestnetScannerTxUrl(selectedRoute.intent.targetChain, result.receiveHash!)}`,
       );
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -326,7 +325,11 @@ function getTestnetScannerTxUrl<D extends keyof EvmDomains>(
 }
 
 function getRouteType(r: Route<any, any>) {
-  return r.steps.some(s => s.type === "gasless-transfer") ? "gasless"  : "normal";
+  return r.steps.some(
+    s => s.type === "gasless-transfer",
+  )
+? "gasless"
+: "normal";
 }
 
 function getApprovalType(r: Route<any, any>) {
