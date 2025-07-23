@@ -87,6 +87,7 @@ export const BridgeWidget = ({
           onTransfer={onTransfer}
           isInProgress={isInProgress}
           disabled={!transferEnabled}
+          walletAddress={walletAddress}
         />
       </div>
     </div>
