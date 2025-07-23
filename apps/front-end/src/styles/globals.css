@@ -784,6 +784,37 @@ footer .footer-links {
   color: #aaa;
   margin: 2px 0px 0px 7px;
   cursor: pointer;
+  position: relative;
+}
+.bridge-widget .gas-settings .tooltip .tooltip-text {
+  opacity: 0;
+  pointer-events: none;
+  width: 240px;
+  background: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  transition: opacity 0.3s;
+}
+.bridge-widget .gas-settings .tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid;
+  border-color: #333 transparent transparent;
+}
+.bridge-widget .gas-settings .tooltip:hover .tooltip-text {
+  opacity: 1;
+  pointer-events: auto;
 }
 .bridge-widget .gas-settings .options {
   float: left;
