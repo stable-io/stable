@@ -735,6 +735,10 @@ footer .footer-links {
 .bridge-widget .main-cta:active {
   transform: scale(0.99);
 }
+.bridge-widget .main-cta:disabled {
+  filter: saturate(70%);
+  opacity: 0.5;
+}
 .bridge-widget .summary {
   float: left;
   width: 100%;
