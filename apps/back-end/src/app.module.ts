@@ -8,6 +8,7 @@ import { GaslessTransferModule } from "./gaslessTransfer/gaslessTransfer.module"
 import { TxLandingModule } from "./txLanding/txLanding.module";
 import { CctpRModule } from "./cctpr/cctpr.module";
 import { StatusModule } from "./status/status.module";
+import { OracleModule } from "./oracle/oracle.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { StatusModule } from "./status/status.module";
     CctpRModule,
     GaslessTransferModule,
     StatusModule,
+    OracleModule,
   ],
 })
 export class AppModule implements NestModule {
