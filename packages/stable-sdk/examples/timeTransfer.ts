@@ -5,7 +5,7 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, eth } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../src/signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../src/index.js";
@@ -31,18 +31,16 @@ const sdk = new StableSDK({
 const intent = {
   sourceChain: "Ethereum" as const,
   targetChain: "Optimism" as const,
-  amount: "0.1",
+  amount: "5",
   sender,
   recipient,
   // To receive gas tokens on the target. Increases the cost of the transfer.
-  // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
-
-  paymentToken: "usdc" as const, // defaults to usdc
+  gasDropoffDesired: eth("0.0015").toUnit("atomic"),
 };
 
 // Configuration for multiple executions
-const NUM_EXECUTIONS = 100; // Change this to desired number of executions
-const CORRIDOR_TO_EXECUTE = "v1" // v1, v2Direct
+const NUM_EXECUTIONS = 1; // Change this to desired number of executions
+const CORRIDOR_TO_EXECUTE = "v2Direct" // v1, v2Direct
 const CSV_FILE = "transfer_timing_results.csv";
 
 // Format timing with color based on duration
@@ -52,11 +50,11 @@ function formatTimeDiff(timeMs: number): string {
   if (timeMs < 2000) {
     // Green for under 2 seconds
     return `\u001B[32m${timeStr}\u001B[0m`;
-  } else if (timeMs <= 5000) {
-    // Yellow for 2-5 seconds
+  } else if (timeMs <= 10000) {
+    // Yellow for 2-10 seconds
     return `\u001B[33m${timeStr}\u001B[0m`;
   } else {
-    // Red for over 5 seconds
+    // Red for over 10 seconds
     return `\u001B[31m${timeStr}\u001B[0m`;
   }
 }
@@ -136,9 +134,14 @@ async function executeRouteWithTiming(
   console.info(`\n=== Execution ${executionNumber} ===`);
 
   const routes = await sdk.findRoutes(intent);
-  const allRoutes = routes.all.filter(
+  const allRoutes = routes.all
+  .filter(
     r => r.corridor === CORRIDOR_TO_EXECUTE,
-  );
+  )
+  // if you want only gasless:
+  // .filter(
+  //   r => r.steps[0].type === "gasless-transfer"
+  // );
 
   const executionResults: ExecutionResult[] = [];
 
@@ -191,7 +194,7 @@ async function executeRouteWithTiming(
 
       selectedRoute.progress.on("transfer-sent", (e) => {
         const now = performance.now();
-        result.stepTimings.transferSent = now - lastStepTime;
+        result.stepTimings.transferSent = now - (lastStepTime ?? stepStartTime);
         lastStepTime = now;
         console.info(`✓ Transfer tx included in blockchain. tx: ${
           e.transactionHash} (${formatTimeDiff(result.stepTimings.transferSent)})`);
@@ -222,7 +225,7 @@ async function executeRouteWithTiming(
         result.stepTimings.error = now - lastStepTime;
         result.errorOccurred = true;
         result.errorMessage = e.type;
-        console.error(`✗ Error: ${e.type} (${
+        console.info(`✗ Error: ${e.type} (${
           formatTimeDiff(result.stepTimings.error)})`);
       });
 
@@ -235,7 +238,7 @@ async function executeRouteWithTiming(
       const errorMessage = error instanceof Error ? error.message : String(error);
       result.errorOccurred = true;
       result.errorMessage = errorMessage;
-      console.error(`❌ Route ${routeDescription} failed:`, errorMessage);
+      console.info(`❌ Route ${routeDescription} failed:`, errorMessage);
     }
 
     const executionEndTime = performance.now();
@@ -332,5 +335,5 @@ function getApprovalType(r: Route<any, any>) {
 try {
   await runMultipleExecutions();
 } catch (error) {
-  console.error("Error:", error);
+  console.info("Error:", error);
 }
