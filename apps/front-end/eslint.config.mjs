@@ -56,7 +56,7 @@ const tsxConfig = {
       "error",
       {
         case: "pascalCase",
-        },
+      },
     ],
   },
 };
@@ -73,7 +73,7 @@ const pagesConfig = {
     //     },
     // ],
   },
-}
+};
 
 const nextCoreWebVitalsConfig = compat.extends("next/core-web-vitals");
 const nextTypescriptConfig = compat.extends("next/typescript");
@@ -102,12 +102,13 @@ const importRestrictionsConfig = {
         patterns: [
           {
             group: ["src/*", "**/src/*", "../../../*"],
-            message: "Use @/* alias for cross-directory imports instead of literal 'src/' paths. Use relative imports (../) only up to 2 levels deep."
-          }
-        ]
-      }
-    ]
-  }
+            message:
+              "Use @/* alias for cross-directory imports instead of literal 'src/' paths. Use relative imports (../) only up to 2 levels deep.",
+          },
+        ],
+      },
+    ],
+  },
 };
 
 const flatConfig = [

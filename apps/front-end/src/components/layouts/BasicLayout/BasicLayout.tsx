@@ -7,9 +7,7 @@ import { Header } from "../../sections/Header";
 
 export type BasicLayoutProps = PropsWithChildren<object>;
 
-export const BasicLayout = ({
-  children,
-}: BasicLayoutProps): ReactElement => (
+export const BasicLayout = ({ children }: BasicLayoutProps): ReactElement => (
   <div className="basic-page main">
     <Background />
     <Announcement />
