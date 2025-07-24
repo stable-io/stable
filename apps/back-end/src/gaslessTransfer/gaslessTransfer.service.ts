@@ -96,11 +96,11 @@ export class GaslessTransferService {
 
   private async calculateGaslessFee(request: QuoteRequestDto): Promise<Usdc> {
     const prices = await this.getPricesForRequest(request);
-    // TODO: Calculate these properly
     const gasCosts = {
-      permit2Permit: 100000n,
-      v1: 100000n,
-      v2: 100000n,
+      permit: 20_081n,
+      multiCall: 74_321n,
+      v1: 160_505n,
+      v2: 170_148n,
     } as const;
     const costs = Object.entries(gasCosts).reduce(
       (acc, [key, value]) => {
@@ -118,13 +118,15 @@ export class GaslessTransferService {
         case "v2Direct":
           return costs.v2;
         case "avaxHop":
-          return costs.v2.add(costs.v1);
+          return costs.v2;
         default:
           throw new Error(`Invalid corridor: ${request.corridor}`);
       }
     })();
     if (request.permit2PermitRequired)
-      return corridorCost.add(costs.permit2Permit);
+      return corridorCost
+        .add(costs.permit)
+        .add(costs.multiCall);
     return corridorCost;
   }
 
