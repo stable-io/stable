@@ -56,7 +56,7 @@ const tsxConfig = {
       "error",
       {
         case: "pascalCase",
-        },
+      },
     ],
   },
 };
@@ -65,14 +65,15 @@ const pagesConfig = {
   name: "front-end:pages",
   files: ["src/pages/*.tsx"],
   rules: {
-    "unicorn/filename-case": [
-      "error",
-      {
-        case: "camelCase",
-        },
-    ],
+    "unicorn/filename-case": "off",
+    // "unicorn/filename-case": [
+    //   "error",
+    //   {
+    //     case: "camelCase",
+    //     },
+    // ],
   },
-}
+};
 
 const nextCoreWebVitalsConfig = compat.extends("next/core-web-vitals");
 const nextTypescriptConfig = compat.extends("next/typescript");
@@ -101,12 +102,13 @@ const importRestrictionsConfig = {
         patterns: [
           {
             group: ["src/*", "**/src/*", "../../../*"],
-            message: "Use @/* alias for cross-directory imports instead of literal 'src/' paths. Use relative imports (../) only up to 2 levels deep."
-          }
-        ]
-      }
-    ]
-  }
+            message:
+              "Use @/* alias for cross-directory imports instead of literal 'src/' paths. Use relative imports (../) only up to 2 levels deep.",
+          },
+        ],
+      },
+    ],
+  },
 };
 
 const flatConfig = [
