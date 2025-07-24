@@ -31,11 +31,15 @@ export const TransferSummary = ({
 
   return (
     <div className="summary">
-      <SummaryRow
-        label="Estimated time"
-        value={`~${estimatedDuration?.toString() ?? "???"} seconds`}
-      />
-      <SummaryRow label="Destination gas" value="$0.00" />
+      {estimatedDuration !== undefined && (
+        <>
+          <SummaryRow
+            label="Estimated time"
+            value={`~${estimatedDuration.toString()} seconds`}
+          />
+          <SummaryRow label="Destination gas" value="$0.00" />
+        </>
+      )}
       <SummaryRow label="You receive" value={receiveValue} isTotal={true} />
     </div>
   );

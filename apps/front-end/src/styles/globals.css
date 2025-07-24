@@ -525,13 +525,28 @@ footer .footer-links {
   width: 100%;
   padding: 0px var(--widget-padding);
 }
+.bridge-widget .select-section .network-settings {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+.bridge-widget .select-section .network-settings .left {
+  flex: 0 0 auto;
+}
+.bridge-widget .select-section .network-settings .right {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
 .bridge-widget .select-section .wallet-chip {
-  float: right;
+  display: flex;
   align-items: center;
   background: #f5f5f5;
   padding: 8px 10px;
   border-radius: var(--radius-medium);
-  clear: both;
   cursor: pointer;
   user-select: none;
 }
@@ -542,28 +557,23 @@ footer .footer-links {
   background-color: #ddd;
 }
 .bridge-widget .select-section .wallet-chip .address {
-  float: left;
   font-size: var(--font-xs);
   font-family: Arial, sans-serif;
   color: #777;
   margin: 0px 12px 0px 7px;
 }
 .bridge-widget .select-section .wallet-chip .wallet-icon {
-  float: left;
   width: 16px;
   height: 16px;
 }
 .bridge-widget .select-section .wallet-chip .edit-btn {
-  float: right;
   background: none;
   font-size: var(--font-xs);
   border: none;
   color: #999;
 }
 .bridge-widget .select-section .balance {
-  float: right;
-  clear: both;
-  margin-top: 12px;
+  text-align: right;
 }
 .bridge-widget .select-section .balance span {
   color: #777;
@@ -591,6 +601,16 @@ footer .footer-links {
 .bridge-widget .amount-section input::placeholder {
   opacity: 0.4;
   font-weight: normal;
+}
+.bridge-widget .amount-section input::-webkit-outer-spin-button,
+.bridge-widget .amount-section input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+.bridge-widget .amount-section input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 .bridge-widget .amount-section .max-button {
   background: none;
@@ -685,6 +705,12 @@ footer .footer-links {
 .bridge-widget .main-cta-container {
   padding: 0px var(--widget-padding);
 }
+.bridge-widget .full-width-connect-wrapper,
+.bridge-widget .full-width-connect-wrapper > *,
+.bridge-widget .full-width-connect-wrapper > * > * {
+  width: 100%;
+  display: block;
+}
 .bridge-widget .main-cta {
   float: left;
   width: 100%;
@@ -701,6 +727,10 @@ footer .footer-links {
 }
 .bridge-widget .main-cta:active {
   transform: scale(0.99);
+}
+.bridge-widget .main-cta:disabled {
+  filter: saturate(70%);
+  opacity: 0.5;
 }
 .bridge-widget .summary {
   float: left;
@@ -751,6 +781,37 @@ footer .footer-links {
   color: #aaa;
   margin: 2px 0px 0px 7px;
   cursor: pointer;
+  position: relative;
+}
+.bridge-widget .gas-settings .tooltip .tooltip-text {
+  opacity: 0;
+  pointer-events: none;
+  width: 240px;
+  background: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  transition: opacity 0.3s;
+}
+.bridge-widget .gas-settings .tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid;
+  border-color: #333 transparent transparent;
+}
+.bridge-widget .gas-settings .tooltip:hover .tooltip-text {
+  opacity: 1;
+  pointer-events: auto;
 }
 .bridge-widget .gas-settings .options {
   float: left;
@@ -1142,14 +1203,13 @@ footer .footer-links {
 @media only screen and (max-width: 760px) {
 }
 @media only screen and (max-width: 540px) {
-  .bridge-widget .select-section .right {
-    width: 100%;
-    float: left;
-    margin-top: 20px;
+  .bridge-widget .select-section .network-settings {
+    flex-direction: column;
+    align-items: stretch;
   }
-  .bridge-widget .select-section .wallet-chip,
-  .bridge-widget .select-section .balance {
-    float: left;
+  .bridge-widget .select-section .network-settings .right {
+    margin-top: 20px;
+    align-items: flex-start;
   }
   .bridge-widget .gas-settings .gas-settings-fees {
     margin-top: 0px;
