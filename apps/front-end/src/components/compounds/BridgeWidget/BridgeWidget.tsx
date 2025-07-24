@@ -15,6 +15,7 @@ interface BridgeWidgetProps {
   amount: number;
   onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onMaxClick: () => void;
+  receivedAmount: number;
   gasDropoffLevel: GasDropoffLevel;
   onGasDropoffLevelSelect: (level: GasDropoffLevel) => void;
   sourceChain: AvailableChains;
@@ -33,6 +34,7 @@ export const BridgeWidget = ({
   amount,
   onAmountChange,
   onMaxClick,
+  receivedAmount,
   gasDropoffLevel,
   onGasDropoffLevelSelect,
   sourceChain,
@@ -83,7 +85,7 @@ export const BridgeWidget = ({
 
         <TransferSummary
           estimatedDuration={route?.estimatedDuration}
-          amount={amount}
+          receivedAmount={receivedAmount}
         />
 
         <TransferButton

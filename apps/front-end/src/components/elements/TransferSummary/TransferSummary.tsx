@@ -8,12 +8,12 @@ import { formatNumber } from "@/utils";
 
 interface TransferSummaryProps {
   estimatedDuration?: Duration;
-  amount: number;
+  receivedAmount: number;
 }
 
 export const TransferSummary = ({
   estimatedDuration,
-  amount,
+  receivedAmount,
 }: TransferSummaryProps): ReactElement => {
   const receiveValue = (
     <>
@@ -25,7 +25,7 @@ export const TransferSummary = ({
         height={32}
         width={32}
       />
-      {formatNumber(amount)} USDC
+      {formatNumber(receivedAmount)} USDC
     </>
   );
 
