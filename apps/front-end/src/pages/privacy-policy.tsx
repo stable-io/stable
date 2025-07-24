@@ -10,7 +10,7 @@ const PrivacyPolicy: NextPageWithLayout = (): ReactElement => {
       <Head>
         <title>Privacy Policy | Stableit</title>
       </Head>
-      <div class="doc-page">
+      <div className="doc-page">
         <h1>Stableit Privacy Policy</h1>
         <p><span>Last updated: July 23, 2025</span></p>
         <p>Stable Technologies, Inc. (“Company,” “we” or “us”) is committed to protecting your privacy. We have prepared this Privacy Policy (the “Policy”) to describe to you our practices regarding the Personal Information (as defined below) we collect, why we collect it, and how we use and disclose it. This Policy should be read in conjunction with our Terms of Service (“Terms”) into which this Policy is incorporated by reference.</p>

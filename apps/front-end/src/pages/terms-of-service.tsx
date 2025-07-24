@@ -10,7 +10,7 @@ const TermsOfService: NextPageWithLayout = (): ReactElement => {
       <Head>
         <title>Terms of Service | Stableit</title>
       </Head>
-      <div class="doc-page">
+      <div className="doc-page">
         <h1>Terms of Service</h1>
         <p>
           Welcome to Stableit. By using our platform, you agree to the following
