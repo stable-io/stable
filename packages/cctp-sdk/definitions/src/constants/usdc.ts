@@ -19,9 +19,9 @@ export const contractAddressOf = {
     Aptos: "0xbae207659db88bea0cbead6da0ed00aac12edcdda169e591cd41c94180b46f3b",
     Unichain: "0x078D782b760474a361dDA0AF3839290b0EF57AD6",
     Linea: "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
-    Codex: "",
-    Sonic: "", //TODO
-    Worldchain: "", // TODO
+    Codex: "0xd996633a415985DBd7D6D12f4A4343E31f5037cf",
+    Sonic: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
+    Worldchain: "0x79A02482A880bCe3F13E09da970dC34dB4cD24D1",
   },
   Testnet: {
     Ethereum: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
@@ -36,9 +36,9 @@ export const contractAddressOf = {
     Aptos: "0x69091fbab5f7d635ee7ac5098cf0c1efbe31d68fec0f2cd565e8d168daf52832",
     Unichain: "0x31d0220469e10c4E71834a79b1f276d740d3768F",
     Linea: "0xFEce4462D57bD51A6A552365A011b95f0E16d9B7",
-    Codex: "",
-    Sonic: "", //TODO
-    Worldchain: "", // TODO
+    Codex: "0x6d7f141b6819C2c9CC2f818e6ad549E7Ca090F8f",
+    Sonic: "0xA4879Fed32Ecbef99399e5cbC247E533421C4eC6",
+    Worldchain: "0x66145f38cBAC35Ca6F1Dfb4914dF98F1614aeA88",
   },
 } as const satisfies Record<Network, Record<Domain, string>>;
 
