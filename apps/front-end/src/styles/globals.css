@@ -705,18 +705,11 @@ footer .footer-links {
 .bridge-widget .main-cta-container {
   padding: 0px var(--widget-padding);
 }
-.bridge-widget .main-cta-container > *,
-.bridge-widget .main-cta-container > * > *,
-.bridge-widget .main-cta-container > * > * > * {
-  width: 100% !important;
-  display: block !important;
-}
-.bridge-widget .main-cta-container button[class*="connect"],
-.bridge-widget .main-cta-container button[class*="Button"],
-.bridge-widget .main-cta-container div[class*="connect"],
-.bridge-widget .main-cta-container div[class*="Button"] {
-  width: 100% !important;
-  display: block !important;
+.bridge-widget .full-width-connect-wrapper,
+.bridge-widget .full-width-connect-wrapper > *,
+.bridge-widget .full-width-connect-wrapper > * > * {
+  width: 100%;
+  display: block;
 }
 .bridge-widget .main-cta {
   float: left;

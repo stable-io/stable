@@ -1,5 +1,6 @@
-import { DynamicConnectButton } from "@dynamic-labs/sdk-react-core";
 import type { ReactElement } from "react";
+
+import { FullWidthDynamicConnectButton } from "./FullWidthDynamicConnectButton";
 
 interface TransferButtonProps {
   onTransfer: () => void;
@@ -17,11 +18,7 @@ export const TransferButton = ({
   if (!walletAddress) {
     return (
       <div className="main-cta-container">
-        <DynamicConnectButton>
-          <div className="main-cta">
-            <span>Connect Wallet</span>
-          </div>
-        </DynamicConnectButton>
+        <FullWidthDynamicConnectButton />
       </div>
     );
   }
@@ -30,7 +27,7 @@ export const TransferButton = ({
     <div className="main-cta-container">
       <button className="main-cta" disabled={disabled} onClick={onTransfer}>
         {isInProgress && <div className="spinner"></div>}
-        <span>Confirm Transfer</span>
+        <span>{isInProgress ? "Transferring..." : "Confirm Transfer"}</span>
       </button>
     </div>
   );
