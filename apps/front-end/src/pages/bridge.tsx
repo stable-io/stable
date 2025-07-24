@@ -48,11 +48,9 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     steps,
   } = useTransferProgress(route);
 
-  // @todo: Subtract expected fees
-  // const maxAmount = balance;
-  // const handleMaxAmount = () => {
-  //   setAmount(maxAmount);
-  // };
+  const handleMaxAmount = (): void => {
+    setAmount(balance);
+  };
 
   const handleSelectSourceChain = (chain: AvailableChains): void => {
     setSourceChain(chain);
@@ -123,6 +121,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
         <BridgeWidget
           amount={amount}
           onAmountChange={handleAmountChange}
+          onMaxClick={handleMaxAmount}
           gasDropoffLevel={gasDropoffLevel}
           onGasDropoffLevelSelect={setGasDropoffLevel}
           sourceChain={sourceChain}
