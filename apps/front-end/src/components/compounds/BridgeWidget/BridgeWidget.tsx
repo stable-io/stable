@@ -14,6 +14,8 @@ import type { AvailableChains, GasDropoffLevel } from "@/constants";
 interface BridgeWidgetProps {
   amount: number;
   onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onMaxClick: () => void;
+  receivedAmount: number;
   gasDropoffLevel: GasDropoffLevel;
   onGasDropoffLevelSelect: (level: GasDropoffLevel) => void;
   sourceChain: AvailableChains;
@@ -31,6 +33,8 @@ interface BridgeWidgetProps {
 export const BridgeWidget = ({
   amount,
   onAmountChange,
+  onMaxClick,
+  receivedAmount,
   gasDropoffLevel,
   onGasDropoffLevelSelect,
   sourceChain,
@@ -45,7 +49,7 @@ export const BridgeWidget = ({
   onTransfer,
 }: BridgeWidgetProps): ReactElement => {
   const transferEnabled =
-    !isInProgress && !!walletAddress && !!route && balance > amount;
+    !isInProgress && !!walletAddress && !!route && balance >= amount;
 
   return (
     <div className="bridge-widget content-box">
@@ -59,6 +63,7 @@ export const BridgeWidget = ({
           availableChains={availableChains}
           amount={amount}
           onAmountChange={onAmountChange}
+          onMaxClick={onMaxClick}
           walletAddress={walletAddress}
           balance={balance}
         />
@@ -80,7 +85,7 @@ export const BridgeWidget = ({
 
         <TransferSummary
           estimatedDuration={route?.estimatedDuration}
-          amount={amount}
+          receivedAmount={receivedAmount}
         />
 
         <TransferButton

@@ -12,6 +12,7 @@ interface TransactionTrackingWidgetProps {
   sourceChain: AvailableChains;
   targetChain: AvailableChains;
   amount: number;
+  receivedAmount: number;
   /** seconds */
   timeRemaining: number;
   isTransferInProgress: boolean;
@@ -25,6 +26,7 @@ export const TransactionTrackingWidget = ({
   sourceChain,
   targetChain,
   amount,
+  receivedAmount,
   timeRemaining,
   isTransferInProgress,
   destinationWallet,
@@ -52,7 +54,7 @@ export const TransactionTrackingWidget = ({
           destinationWallet={destinationWallet}
           routePath={routePath}
           estimatedCost={estimatedCost}
-          amount={amount}
+          amount={receivedAmount}
           targetChain={targetChain}
         />
       </div>

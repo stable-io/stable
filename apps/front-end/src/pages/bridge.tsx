@@ -48,11 +48,19 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     steps,
   } = useTransferProgress(route);
 
-  // @todo: Subtract expected fees
-  // const maxAmount = balance;
-  // const handleMaxAmount = () => {
-  //   setAmount(maxAmount);
-  // };
+  const handleMaxAmount = (): void => {
+    setAmount(balance);
+  };
+
+  const receivedAmount = route
+    ? ((): number => {
+        const grossAmount = route.intent.amount.toUnit("human").toNumber();
+        const usdcFees = route.fees
+          .filter((fee) => fee.kind.name === "Usdc") // @todo: Handle gas token fees?
+          .reduce((total, fee) => total + fee.toUnit("human").toNumber(), 0);
+        return grossAmount - usdcFees;
+      })()
+    : 0;
 
   const handleSelectSourceChain = (chain: AvailableChains): void => {
     setSourceChain(chain);
@@ -110,6 +118,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
             sourceChain={sourceChain}
             targetChain={targetChain}
             amount={amount}
+            receivedAmount={receivedAmount}
             timeRemaining={timeRemaining}
             isTransferInProgress={isTransferInProgress}
             destinationWallet={address}
@@ -123,6 +132,8 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
         <BridgeWidget
           amount={amount}
           onAmountChange={handleAmountChange}
+          onMaxClick={handleMaxAmount}
+          receivedAmount={receivedAmount}
           gasDropoffLevel={gasDropoffLevel}
           onGasDropoffLevelSelect={setGasDropoffLevel}
           sourceChain={sourceChain}
