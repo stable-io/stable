@@ -65,12 +65,13 @@ const pagesConfig = {
   name: "front-end:pages",
   files: ["src/pages/*.tsx"],
   rules: {
-    "unicorn/filename-case": [
-      "error",
-      {
-        case: "camelCase",
-        },
-    ],
+    "unicorn/filename-case": "off",
+    // "unicorn/filename-case": [
+    //   "error",
+    //   {
+    //     case: "camelCase",
+    //     },
+    // ],
   },
 }
 

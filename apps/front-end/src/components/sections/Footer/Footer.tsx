@@ -33,6 +33,9 @@ export const Footer = (): ReactElement => (
           </Link>
         </li>
         <li>
+          <Link href="/privacy-policy">Privacy Policy</Link>
+        </li>
+        <li>
           <Link href="mailto:hello@stableit.com">Reach out</Link>
         </li>
       </ul>
