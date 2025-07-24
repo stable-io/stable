@@ -74,7 +74,7 @@ export async function buildUserTransferRoute<
 
   const routeSteps = [
     ...tokenAllowanceSteps,
-    buildTransferStep(corridor.corridor, intent.sourceChain),
+    buildTransferStep(corridor.corridor, intent.sourceChain, intent.usePermit),
   ];
 
   const corridorParams = corridor.corridor === "v1"
@@ -127,16 +127,12 @@ async function cctprRequiresAllowance<
     definitions.usdcContracts.contractAddressOf[sourceChain],
   );
   const cctprAddress = new EvmAddress(
-    /**
-     * @todo: type system thinks contractAddressOf is not callable,
-     *        but at runtime it is. Figure out what's up.
-     */
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    (cctpr.contractAddressOf as any)(sourceChain),
+    (cctpr.contractAddressOf as TODO)(sourceChain),
   );
 
   const allowance = await evm.getTokenAllowance(
-    evmClient as any,
+    evmClient,
     usdcAddress,
     sender,
     cctprAddress,

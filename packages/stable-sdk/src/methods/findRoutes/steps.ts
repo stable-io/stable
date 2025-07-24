@@ -164,7 +164,9 @@ export function isTransferTx(subject: unknown): subject is TransferTx {
 export function buildTransferStep(
   corridor: Corridor,
   sourceChain: keyof EvmDomains,
+  usesPermit: boolean,
 ): TransferStep {
+  const PERMIT_COST = 18604n
   const sharedTxData = {
     platform: "Evm" as const,
     chain: sourceChain,
@@ -177,19 +179,19 @@ export function buildTransferStep(
     case "v1":
       return {
         ...sharedTxData,
-        gasCostEstimation: 120_000n,
+        gasCostEstimation: 160_505n + (usesPermit ? PERMIT_COST : 0n),
       };
 
     case "v2Direct":
       return {
         ...sharedTxData,
-        gasCostEstimation: 200_000n,
+        gasCostEstimation: 170148n + (usesPermit ? PERMIT_COST : 0n),
       };
 
     case "avaxHop":
       return {
         ...sharedTxData,
-        gasCostEstimation: 300_000n,
+        gasCostEstimation: 330_653n + (usesPermit ? PERMIT_COST : 0n),
       };
 
     default:
@@ -205,7 +207,7 @@ export function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
     gasCostEstimation: 0n,
   };
 }
-const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 40000n;
+const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 55425n;
 export function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
   return {
     platform: "Evm",
