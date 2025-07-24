@@ -99,7 +99,9 @@ export class TxLandingService {
         result: GetTransactionStatusResponse,
       ): result is ConfirmedTransactionStatusResponse => {
         return result.statuses.some(
-          (status) => status.status === TxStatus.TRANSACTION_STATUS_CONFIRMED,
+          (status) =>
+            status.status === TxStatus.TRANSACTION_STATUS_CONFIRMED ||
+            status.status === TxStatus.TRANSACTION_STATUS_FINALIZED,
         );
       };
 
