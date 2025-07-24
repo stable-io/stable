@@ -49,7 +49,7 @@ export const BridgeWidget = ({
   onTransfer,
 }: BridgeWidgetProps): ReactElement => {
   const transferEnabled =
-    !isInProgress && !!walletAddress && !!route && balance > amount;
+    !isInProgress && !!walletAddress && !!route && balance >= amount;
 
   return (
     <div className="bridge-widget content-box">
