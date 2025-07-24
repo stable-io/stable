@@ -30,7 +30,9 @@ export const AmountInput = ({
         min="0"
         step="0.000001"
       />
-      <button className="max-button" onClick={onMaxClick}>MAX</button>
+      <button className="max-button" onClick={onMaxClick}>
+        MAX
+      </button>
     </div>
   );
 };

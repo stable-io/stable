@@ -56,7 +56,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
     ? ((): number => {
         const grossAmount = route.intent.amount.toUnit("human").toNumber();
         const usdcFees = route.fees
-          .filter(fee => fee.kind.name === "Usdc") // @todo: Handle gas token fees?
+          .filter((fee) => fee.kind.name === "Usdc") // @todo: Handle gas token fees?
           .reduce((total, fee) => total + fee.toUnit("human").toNumber(), 0);
         return grossAmount - usdcFees;
       })()

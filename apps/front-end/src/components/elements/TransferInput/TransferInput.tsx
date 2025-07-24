@@ -37,7 +37,11 @@ export const TransferInput = ({
         balance={balance}
       />
 
-      <AmountInput amount={amount} onAmountChange={onAmountChange} onMaxClick={onMaxClick} />
+      <AmountInput
+        amount={amount}
+        onAmountChange={onAmountChange}
+        onMaxClick={onMaxClick}
+      />
     </div>
   );
 };
