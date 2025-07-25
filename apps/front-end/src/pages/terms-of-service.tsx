@@ -158,8 +158,8 @@ const TermsOfService: NextPageWithLayout = (): ReactElement => {
                   sole discretion without notice. We will not be liable if, for
                   any reason, all or any part of the App and SDK is unavailable
                   at any time or for any period. From time to time, we may
-                  restrict users&apos; access to some parts of the App/SDK or the
-                  entire App/SDK.
+                  restrict users&apos; access to some parts of the App/SDK or
+                  the entire App/SDK.
                 </p>
               </li>
 
