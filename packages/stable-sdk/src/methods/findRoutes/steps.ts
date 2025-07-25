@@ -6,9 +6,10 @@
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Permit2TypedData, Eip2612MessageBody, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
 import { Corridor, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
-import { SupportedPlatform } from "../../types/signer.js";
 import { encoding } from "@stable-io/utils";
-
+import { SupportedPlatform } from "../../types/signer.js";
+import { Network } from "../../types/general.js";
+import { getPlatformExecutionCosts } from "../../api/executionCost.js";
 export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "transfer" | "gasless-transfer";
 
 interface BaseRouteExecutionStep {
@@ -161,12 +162,13 @@ export function isTransferTx(subject: unknown): subject is TransferTx {
   );
 }
 
-export function buildTransferStep(
+export async function buildTransferStep(
+  network: Network,
   corridor: Corridor,
   sourceChain: keyof EvmDomains,
   usesPermit: boolean,
-): TransferStep {
-  const PERMIT_COST = 18604n
+): Promise<TransferStep> {
+  const { v1, v2, permit } = await getPlatformExecutionCosts(network, "Evm");
   const sharedTxData = {
     platform: "Evm" as const,
     chain: sourceChain,
@@ -179,19 +181,19 @@ export function buildTransferStep(
     case "v1":
       return {
         ...sharedTxData,
-        gasCostEstimation: 160_505n + (usesPermit ? PERMIT_COST : 0n),
+        gasCostEstimation: v1 + (usesPermit ? permit : 0n),
       };
 
     case "v2Direct":
       return {
         ...sharedTxData,
-        gasCostEstimation: 170148n + (usesPermit ? PERMIT_COST : 0n),
+        gasCostEstimation: v2 + (usesPermit ? permit : 0n),
       };
 
     case "avaxHop":
       return {
         ...sharedTxData,
-        gasCostEstimation: 330_653n + (usesPermit ? PERMIT_COST : 0n),
+        gasCostEstimation: v1 + v2 + (usesPermit ? permit : 0n),
       };
 
     default:

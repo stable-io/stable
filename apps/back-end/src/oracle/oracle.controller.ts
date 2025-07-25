@@ -8,9 +8,6 @@ import { serializeBigints } from "@stable-io/utils";
 export class OracleController {
   constructor(private readonly oracleService: OracleService) {}
 
-  /**
-   * Get the current status of the oracle service
-   */
   @Get("/status")
   @ApiResponse({
     status: 200,

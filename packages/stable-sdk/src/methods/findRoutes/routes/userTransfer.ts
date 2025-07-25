@@ -74,7 +74,7 @@ export async function buildUserTransferRoute<
 
   const routeSteps = [
     ...tokenAllowanceSteps,
-    buildTransferStep(corridor.corridor, intent.sourceChain, intent.usePermit),
+    await buildTransferStep(evmClient.network, corridor.corridor, intent.sourceChain, intent.usePermit),
   ];
 
   const corridorParams = corridor.corridor === "v1"
