@@ -5,7 +5,7 @@
 
 import type { DeepReadonly } from "@stable-io/map-utils";
 import type { Brand, BrandedSubArray } from "@stable-io/utils";
-import type { DomainsOf, EvmGasToken, GasTokenOf, Network } from "@stable-io/cctp-sdk-definitions";
+import type { EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { type RawAddress, EvmAddress } from "./address.js";
 
 export type CallData    = Brand<BrandedSubArray<CallData>,    "CallData"   >;
@@ -47,20 +47,6 @@ export interface ContractValueTx extends BaseTx {
   data:  CallData;
 }
 
-export interface EvmClient<
-  N extends Network = Network,
-  D extends DomainsOf<"Evm"> = DomainsOf<"Evm">,
-> {
-  network: N;
-  domain:  D;
-
-  estimateGas:    (tx: BaseTx) => Promise<bigint>;
-  ethCall:        (tx: ContractTx) => Promise<Uint8Array>;
-  getStorageAt:   (contract: EvmAddress, slot: bigint) => Promise<Uint8Array>;
-  getBalance:     (address: EvmAddress) => Promise<GasTokenOf<D, DomainsOf<"Evm">>>;
-  getLatestBlock: () => Promise<bigint>;
-}
-
 export type Eip712Domain = Readonly<{
   name?:              string;
   version?:           string;
@@ -99,10 +85,10 @@ export type Permit2TransferFromMessage = Readonly<{
 
 export type Permit2TransferFromData = Eip712Data<Permit2TransferFromMessage>;
 
-export type Permit2WitnessTransferFromMessage<Witness> = 
+export type Permit2WitnessTransferFromMessage<Witness> =
   Permit2TransferFromMessage &
-  { readonly spender: RawAddress; } &
+  { readonly spender: RawAddress } &
   DeepReadonly<Witness>;
 
-export type Permit2WitnessTransferFromData<Witness> = 
+export type Permit2WitnessTransferFromData<Witness> =
   Eip712Data<Permit2WitnessTransferFromMessage<Witness>>;

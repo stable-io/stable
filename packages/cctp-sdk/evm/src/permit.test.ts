@@ -4,10 +4,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 /* eslint-disable @typescript-eslint/require-await */
-import { EvmAddress } from "./address.js";
-import { composePermitMsg } from "./permit.js";
-import { EvmClient } from "./platform.js";
 import { Amount, KindWithAtomic } from "@stable-io/amount";
+import { EvmAddress } from "./address.js";
+import { EvmClient } from "./client.js";
+import { composePermitMsg } from "./permit.js";
 
 describe("permit", () => {
   const token = new EvmAddress("0x0000000000000000000000000000000000000001");

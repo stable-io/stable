@@ -3,9 +3,31 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { BaseObject } from "@stable-io/utils";
+/* eslint-disable @typescript-eslint/no-duplicate-type-constituents */
+import type { RoArray } from "@stable-io/map-utils";
+import type { BaseObject, TODO } from "@stable-io/utils";
+import type {
+  DomainsOf,
+  PlatformOf,
+  GasTokenOf,
+  Network,
+  LoadedDomain,
+  PlatformAddress,
+  RegisteredPlatform,
+  UniversalOrNative,
+} from "@stable-io/cctp-sdk-definitions";
+import type { SupportedDomain } from "./constants.js";
+import type { InOrOut, QuoteBase, CorridorParamsBase } from "./common.js";
+import type { CorridorCost, SensibleCorridor } from "./getCorridors.js";
 
 export interface PlatformImplsOf extends BaseObject {
+  // Platform packages will extend this via declaration merging
+  // Each platform will add:
+  // [PlatformName]: {
+  //   TransferOptions: OptionsType
+  //   TransferGeneratorT: GeneratorTType
+  //   TransferGeneratorTReturn: GeneratorTReturnType
+  // }
 }
 
 export interface CctpR {
@@ -17,3 +39,69 @@ declare module "@stable-io/cctp-sdk-definitions" {
     CctpR: CctpR;
   }
 }
+
+export type RegisteredCctprPlatform = RegisteredPlatform & keyof PlatformImplsOf;
+export type LoadedCctprDomain<N extends Network> =
+  LoadedDomain
+  & DomainsOf<RegisteredCctprPlatform>
+  & SupportedDomain<N>;
+export type LoadedCctprPlatformDomain<N extends Network, P extends RegisteredCctprPlatform> =
+  LoadedCctprDomain<N> & DomainsOf<P>;
+
+export interface PlatformCctpr<
+  P extends RegisteredPlatform,
+> {
+  getCorridorCosts: <
+    N extends Network,
+    S extends LoadedCctprPlatformDomain<N, P>,
+    D extends SupportedDomain<N>,
+  >(
+    network: N,
+    source: S,
+    destination: D,
+    corridors: RoArray<SensibleCorridor<N, S, D>>,
+    gasDropoff?: GasTokenOf<D>,
+  ) => Promise<RoArray<CorridorCost<N, S>>>;
+
+  transfer: <
+    N extends Network,
+    S extends LoadedCctprPlatformDomain<N, P>,
+    D extends SupportedDomain<N>,
+  >(
+    network: N,
+    source: S,
+    destination: D,
+    sender: PlatformAddress<P>,
+    recipient: UniversalOrNative<SupportedDomain<N>>,
+    inOrOut: InOrOut,
+    corridor: CorridorParamsBase<N, PlatformOf<S>, S, D>,
+    quote: QuoteBase<N, PlatformOf<S>, S>,
+    gasDropoff: GasTokenOf<D>,
+    options: PlatformImplsOf[P]["TransferOptions"],
+  ) => AsyncGenerator<PlatformImplsOf[P]["TransferGeneratorT"], PlatformImplsOf[P]["TransferGeneratorTReturn"]>;
+}
+
+const platformCctprRegistry =
+  new Map<RegisteredCctprPlatform, PlatformCctpr<RegisteredCctprPlatform>>();
+
+/**
+ * Register a platform implementation.
+ * It is the responsibility of the CCTPR platform package to register itself.
+ */
+export const registerPlatformCctpr = <P extends RegisteredCctprPlatform>(
+  platform: P,
+  implementation: PlatformCctpr<P>,
+): void => {
+  platformCctprRegistry.set(platform, implementation as TODO);
+};
+
+export const platformCctpr = <P extends RegisteredCctprPlatform>(
+  platform: P,
+): PlatformCctpr<P> => {
+  const cctpr = platformCctprRegistry
+    .get(platform) as PlatformCctpr<P> | undefined; // @todo: avoid cast
+  if (!cctpr) {
+    throw new Error(`Platform implementation for ${platform} not registered`);
+  }
+  return cctpr;
+};
