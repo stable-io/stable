@@ -1,10 +1,13 @@
 import { Controller, Get, Param, HttpException, HttpStatus } from "@nestjs/common";
-import { ApiResponse as SwaggerApiResponse, ApiParam } from "@nestjs/swagger";
+import { ApiResponse as SwaggerApiResponse, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { Platform } from "@stable-io/cctp-sdk-definitions";
-import { serializeBigints } from "@stable-io/utils";
+import { serializeBigints, SerializedBigint } from "@stable-io/utils";
+import type { ApiResponseDto } from "../common/types";
 import { ExecutionCostService } from "./executionCost.service";
 import type { EvmExecutionCosts } from "./executionCost.service";
 
+
+type EvmExecutionCostDto = Record<keyof EvmExecutionCosts, SerializedBigint>;
 @Controller("execution-cost")
 export class ExecutionCostController {
   constructor(
@@ -64,7 +67,9 @@ export class ExecutionCostController {
     status: 400,
     description: "Invalid or unsupported platform parameter",
   })
-  public getExecutionCosts(@Param("platform") platform: string): Record<string, unknown> {
+  public getExecutionCosts(@Param("platform") platform: string): ApiResponseDto<
+    EvmExecutionCostDto
+  > {
     const supportedPlatforms = this.executionCostService.getSupportedPlatforms();
     if (!supportedPlatforms.includes(platform as Platform)) {
       throw new HttpException(
@@ -81,7 +86,6 @@ export class ExecutionCostController {
       );
     }
 
-    // Serialize bigint values to JSON-safe format
-    return serializeBigints(result);
+    return { data: serializeBigints(result) as Record<keyof EvmExecutionCosts, string> };
   }
 } 
