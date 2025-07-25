@@ -1182,14 +1182,24 @@ footer .footer-links {
   float: left;
   width: 100%;
   padding-left: 20px;
-  margin-bottom: 20px;
+  margin: 20px 0px;
+}
+.doc-page ul > ul,
+.doc-page ul > ol,
+.doc-page ol > ul,
+.doc-page ol > ol {
+  margin: 0px;
 }
 .doc-page li {
   float: left;
   width: 100%;
+  margin-bottom: 10px;
 }
 .doc-page ol li {
   list-style: decimal;
+}
+.doc-page ol.roman-list-style li {
+  list-style: lower-roman;
 }
 .doc-page ul li {
   list-style: disc;
