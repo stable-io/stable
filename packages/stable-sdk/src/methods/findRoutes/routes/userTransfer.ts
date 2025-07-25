@@ -89,6 +89,7 @@ export async function buildUserTransferRoute<
     requiresMessageSignature: intent.usePermit,
     steps: routeSteps,
     estimatedTotalCost: await calculateTotalCost(
+      evmClient.network,
       routeSteps,
       corridorFees,
     ),

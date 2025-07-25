@@ -26,6 +26,7 @@ import {
 
 import type { Fee, Network, Intent } from "../../types/index.js";
 import { RouteExecutionStep } from "./steps.js";
+import { getDomainPrices } from "src/api/oracle.js";
 
 export function getCorridorFees<
   N extends Network,
@@ -53,11 +54,18 @@ export function getCorridorFees<
   return { corridorFees, maxRelayFee, fastFeeRate };
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
 export async function calculateTotalCost(
+  network: Network,
   steps: RouteExecutionStep[],
   fees: Fee[],
 ): Promise<Usd> {
+  const domain = steps[0].chain;
+  const domainPrices = await getDomainPrices(network, {
+    domain,
+  });
+  const gasTokenKind = gasTokenKindOf(domain);
+  const gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
+
   // @todo: get the gas token price from the oracle
   const usdPerGasToken: Readonly<
     Record<GasTokenNameOf<keyof EvmDomains>, number>
@@ -70,20 +78,18 @@ export async function calculateTotalCost(
   // @todo: get the USDC price from the oracle
   const usdPerUsdc = 1;
   const usdcPrice = Conversion.from(usd(usdPerUsdc), Usdc);
-  // @todo: get the gas price from the oracle
-  const gasPrice = 10_300_000_000n;
-
+  
   const stepsCost = steps.reduce((subtotal, step) => {
-    const domain = step.chain;
-    const gasTokenKind = gasTokenKindOf(domain);
+
+    const gasTokenCost: Amount<typeof gasTokenKind> = gasTokenOf(domain)(
+      domainPrices.gasPriceAtomic,
+      "atomic",
+    ).mul(step.gasCostEstimation);
+
     const gasTokenPrice = Conversion.from<
       Usd["kind"],
       GasTokenKindOf<typeof domain>
-    >(usd(usdPerGasToken[gasTokenNameOf(domain)]), gasTokenKind);
-    const gasTokenCost: Amount<typeof gasTokenKind> = gasTokenOf(domain)(
-      gasPrice,
-      "atomic",
-    ).mul(step.gasCostEstimation);
+    >(usd(gasTokenPriceUsdc.toUnit("human")), gasTokenKind);
     const usdCost = gasTokenCost.convert(gasTokenPrice);
     return subtotal.add(usdCost);
   }, usd(0));
@@ -93,7 +99,7 @@ export async function calculateTotalCost(
       fee.kind.name === "Usdc"
         ? usdcPrice
         : Conversion.from<Usd["kind"], typeof fee.kind>(
-            usd(usdPerGasToken[fee.kind.name]),
+            usd(gasTokenPriceUsdc.toUnit("human")),
             fee.kind,
           );
     const usdCost: Usd = (fee as Amount<typeof fee.kind>).convert(conversion);

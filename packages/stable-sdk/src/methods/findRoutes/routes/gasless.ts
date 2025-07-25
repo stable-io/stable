@@ -85,7 +85,7 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost(routeSteps, totalFees),
+    estimatedTotalCost: await calculateTotalCost(evmClient.network, routeSteps, totalFees),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(
