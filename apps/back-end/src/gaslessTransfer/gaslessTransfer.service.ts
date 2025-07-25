@@ -18,6 +18,7 @@ import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
 import { OracleService } from "../oracle/oracle.service";
+import { ExecutionCostService } from "../executionCost/executionCost.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 
@@ -29,6 +30,7 @@ export class GaslessTransferService {
     private readonly txLandingService: TxLandingService,
     private readonly cctpRService: CctpRService,
     private readonly oracleService: OracleService,
+    private readonly executionCostService: ExecutionCostService,
   ) {}
 
   public async quoteGaslessTransfer(
@@ -96,29 +98,24 @@ export class GaslessTransferService {
 
   private async calculateGaslessFee(request: QuoteRequestDto): Promise<Usdc> {
     const prices = await this.getPricesForRequest(request);
-    const gasCosts = {
-      permit: 20_081n,
-      multiCall: 74_321n,
-      v1: 160_505n,
-      v2: 170_148n,
-    } as const;
-    const costs = Object.entries(gasCosts).reduce(
+    const evmGasCostEstimations = this.executionCostService.getKnownEstimates("Evm");
+    const costs = Object.entries(evmGasCostEstimations).reduce(
       (acc, [key, value]) => {
-        acc[key as keyof typeof gasCosts] = prices.gasTokenPrice.mul(
+        acc[key as keyof typeof evmGasCostEstimations] = prices.gasTokenPrice.mul(
           prices.gasPrice.mul(value).toUnit("EvmGasToken"),
         );
         return acc;
       },
-      {} as Record<keyof typeof gasCosts, Usdc>,
+      {} as Record<keyof typeof evmGasCostEstimations, Usdc>,
     );
     const corridorCost = ((): Usdc => {
       switch (request.corridor) {
         case "v1":
-          return costs.v1;
+          return costs.v1Gasless;
         case "v2Direct":
-          return costs.v2;
+          return costs.v2Gasless;
         case "avaxHop":
-          return costs.v2;
+          return costs.v2Gasless;
         default:
           throw new Error(`Invalid corridor: ${request.corridor}`);
       }
