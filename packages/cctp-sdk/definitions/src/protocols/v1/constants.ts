@@ -113,8 +113,8 @@ export const attestationTimeEstimates = {
     Unichain:  1140,
   },
   Testnet:{
-    Ethereum:    60,
-    Avalanche:   20,
+    Ethereum:    31.91,
+    Avalanche:   8.19,
     Optimism:    20,
     Arbitrum:    20,
     // Noble:       20,

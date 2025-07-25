@@ -68,16 +68,16 @@ export const relayOverheadOf = {
     Linea:     30, // TODO: Adjust
   },
   Testnet: {
-    Ethereum:  6, // TODO: Adjust
-    Avalanche: 6, // TODO: Adjust
-    Optimism:  6, // TODO: Adjust
-    Arbitrum:  6, // TODO: Adjust
-    Base:      6, // TODO: Adjust
+    Ethereum:  13.20,
+    Avalanche: 4.50,
+    Optimism:  3.05,
+    Arbitrum:  2.99,
+    Base:      3.09,
     Solana:    6, // TODO: Adjust
     Polygon:   6, // TODO: Adjust
     Sui:       6, // TODO: Adjust
     Aptos:     6, // TODO: Adjust
-    Unichain:  6, // TODO: Adjust
+    Unichain:  7.73,
     Linea:     6, // TODO: Adjust
   },
 } as const satisfies Record<Network, Record<string, number>>;
