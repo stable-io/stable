@@ -86,6 +86,6 @@ export class ExecutionCostController {
       );
     }
 
-    return { data: serializeBigints(result) as Record<keyof EvmExecutionCosts, string> };
+    return { data: serializeBigints(result) as Record<keyof EvmExecutionCosts, SerializedBigint> };
   }
 } 
