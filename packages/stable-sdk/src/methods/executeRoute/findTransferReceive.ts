@@ -21,8 +21,8 @@ const receiveScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
   Optimism: 20n,
   Arbitrum: 180n,
   Base: 20n,
-  Polygon: 210n,
-  Unichain: 180n,
+  Polygon: 20n,
+  Unichain: 20n,
   Linea: 20n,
   Codex: 20n, // couldn't find blocktime data. just guessing for this one.
   Sonic: 40n,
