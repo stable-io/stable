@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { EvmGasToken, Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdcContracts, evmGasToken } from "@stable-io/cctp-sdk-definitions";
+import { usdcContracts, evmGasToken, EvmGasToken, Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
 import {
   ContractTx,
   EvmAddress,
@@ -21,6 +20,7 @@ import { OracleService } from "../oracle/oracle.service";
 import { ExecutionCostService } from "../executionCost/executionCost.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
+import { Conversion } from "@stable-io/amount";
 
 @Injectable()
 export class GaslessTransferService {
@@ -101,14 +101,15 @@ export class GaslessTransferService {
     const evmGasCostEstimations = this.executionCostService.getKnownEstimates("Evm");
     const costs = Object.entries(evmGasCostEstimations).reduce(
       (acc, [key, value]) => {
-        acc[key as keyof typeof evmGasCostEstimations] = prices.gasTokenPrice.mul(
-          prices.gasPrice.mul(value).toUnit("EvmGasToken"),
-        );
+        const gasCostInNative = prices.gasPrice.mul(value);
+        const gasTokenPriceInUsdc = Conversion.from(prices.gasTokenPrice, EvmGasToken)
+        const usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc)
+        acc[key as keyof typeof evmGasCostEstimations] = usdcCost;
         return acc;
       },
       {} as Record<keyof typeof evmGasCostEstimations, Usdc>,
     );
-    const corridorCost = ((): Usdc => {
+    let corridorCost = ((): Usdc => {
       switch (request.corridor) {
         case "v1":
           return costs.v1Gasless;
@@ -121,10 +122,10 @@ export class GaslessTransferService {
       }
     })();
     if (request.permit2PermitRequired)
-      return corridorCost
+      corridorCost = corridorCost
         .add(costs.permit)
         .add(costs.multiCall);
-    return corridorCost;
+    return usdc(corridorCost.toUnit("atomic"), "atomic")
   }
 
   private multiCallWithPermit(
