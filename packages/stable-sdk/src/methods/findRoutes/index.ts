@@ -64,13 +64,13 @@ export const $findRoutes = <
 
     for (const corridor of corridors) {
       routes.push(
-        await buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor)
+        await buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor),
       );
 
       if (intent.paymentToken === "usdc") {
         const gaslessRoute = await buildGaslessRoute(viemEvmClient, intent, corridor);
 
-        if (gaslessRoute !== null) routes.push(gaslessRoute)
+        if (gaslessRoute !== undefined) routes.push(gaslessRoute);
       }
     }
 

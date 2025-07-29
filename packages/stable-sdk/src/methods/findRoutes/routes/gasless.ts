@@ -35,7 +35,7 @@ export async function buildGaslessRoute<
   evmClient: ViemEvmClient<N, S>,
   intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
-): Promise<Route<S, D> | null> {
+): Promise<Route<S, D> | undefined> {
   if (intent.paymentToken !== "usdc")
     throw new Error("Gasless Transfer can't be paid in native token");
 
@@ -67,7 +67,7 @@ export async function buildGaslessRoute<
     transferParams,
   );
 
-  if (quote === null) return quote;
+  if (quote === undefined) return quote;
 
   const tokenAllowanceSteps = permit2PermitRequired
     ? [signPermitStep(intent.sourceChain)]

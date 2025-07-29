@@ -35,14 +35,14 @@ const intent = {
   sender,
   recipient,
   // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
-  paymentToken: "native",
+  paymentToken: "native" as const,
 };
 
 // Configuration for multiple executions
 const NUM_EXECUTIONS = 30; // Change this to desired number of executions
 const CORRIDOR_TO_EXECUTE = "v1"; // v1, v2Direct
 const CSV_FILE = "opt-eth.csv";
-const gasless = false;
+const gasless = false as true | false;
 
 // Format timing with color based on duration
 function formatTimeDiff(timeMs: number): string {
@@ -141,11 +141,11 @@ async function executeRouteWithTiming(
   )
   // if you want only gasless:
   .filter(
-    r => r.steps.some(s => (gasless ? s.type === "gasless-transfer" : s.type === "transfer"))
+    r => r.steps.some(s => (gasless ? s.type === "gasless-transfer" : s.type === "transfer")),
   );
 
-  if (!allRoutes.length)
-    throw new Error("No Routes Resulting of Filter")
+  if (allRoutes.length === 0)
+    throw new Error("No Routes Resulting of Filter");
 
   const executionResults: ExecutionResult[] = [];
 

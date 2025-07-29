@@ -32,7 +32,7 @@ export type GetQuoteResponse = {
   permit2TypedData: Permit2TypedData;
   gaslessFee: Usdc;
   jwt: string;
-} | null;
+} | undefined;
 
 export async function getTransferQuote(
   network: Network,
@@ -50,7 +50,7 @@ export async function getTransferQuote(
 
   const responseData = extractResponseData(apiResponse.value);
 
-  if (responseData === null) return null;
+  if (responseData === undefined) return undefined;
 
   const jwt = extractJwtFromQuoteResponseData(responseData);
 
@@ -101,7 +101,7 @@ function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): 
     fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string || "0"),
   };
 }
-const extractResponseData = (quoteResponse: unknown): object | null => {
+const extractResponseData = (quoteResponse: unknown): object | undefined => {
   if (
     typeof quoteResponse !== "object" ||
     !quoteResponse ||
@@ -109,12 +109,11 @@ const extractResponseData = (quoteResponse: unknown): object | null => {
   ) {
     throw new Error("Invalid quote response structure");
   }
-  return quoteResponse.data as object | null;
-}
+  return quoteResponse.data as object | undefined;
+};
 const extractJwtFromQuoteResponseData = (quoteResponseData: object): string => {
   if (
     typeof quoteResponseData !== "object" ||
-    !quoteResponseData ||
     !("jwt" in quoteResponseData) ||
     typeof quoteResponseData.jwt !== "string"
   ) {

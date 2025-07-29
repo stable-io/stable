@@ -30,13 +30,16 @@ export class GaslessTransferController {
   public async quoteGaslessTransfer(
     @Query() request: QuoteRequestDto,
   ): Promise<QuoteResponseDto> {
-    let quote
+    let quote;
     try {
       quote = await this.gaslessTransferService.quoteGaslessTransfer(request);
     } catch (error) {
       if (!(error instanceof Error)) throw error;
-      if (error.message !== "Transfer Amount Less or Equal to 0 After Fees") quote = null;
-      else throw error;
+      if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
+        throw error;
+      } else {
+        quote = undefined;
+      }
     }
     return {
       data: quote,
