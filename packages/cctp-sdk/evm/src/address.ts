@@ -70,6 +70,10 @@ export class EvmAddress implements Address {
     return new UniversalAddress(this.address, "Evm");
   }
 
+  equals(other: EvmAddress): boolean {
+    return this.address === other.address;
+  }
+
   private static invalid(address: string, cause: Text) {
     return new Error(`Invalid Evm address ${address}: ${cause}`);
   }

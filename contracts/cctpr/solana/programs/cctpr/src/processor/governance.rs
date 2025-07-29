@@ -68,7 +68,6 @@ pub fn cancel_owner_transfer_request(ctx: Context<OwnerContext>) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct ConfirmOwnerTransfer<'info> {
-  #[account(mut)]
   pub pending_owner: Signer<'info>,
 
   #[account(mut, has_one = pending_owner @ CctprError::InvalidPendingOwner)]
@@ -80,38 +79,6 @@ pub fn confirm_owner_transfer_request(ctx: Context<ConfirmOwnerTransfer>) -> Res
   ctx.accounts.config.pending_owner = Pubkey::default();
   Ok(())
 }
-
-// // -- Cost parameter updates --
-
-// pub fn update_cost_params(
-//   ctx: Context<UpdateCostParameters>,
-//   avax_evm_transaction_gas:       u32,
-//   evm_gas_dropoff_gas_cost:       u32,
-//   evm_v1_billed_size:             u32,
-//   evm_v1_gas_cost:                u32,
-//   evm_v2_billed_size:             u32,
-//   evm_v2_gas_cost:                u32,
-//   sui_gas_dropoff_storage_bytes:  u32,
-//   sui_gas_dropoff_compute_budget: u32,
-//   sui_gas_dropoff_storage_rebate: u32,
-//   sui_compute_budget:             u32,
-//   sui_storage_bytes:              u32,
-//   sui_storage_rebate:             u32,
-// ) -> Result<()> {
-//   ctx.accounts.config.avax_evm_transaction_gas       = avax_evm_transaction_gas;
-//   ctx.accounts.config.evm_gas_dropoff_gas_cost       = evm_gas_dropoff_gas_cost;
-//   ctx.accounts.config.evm_v1_billed_size             = evm_v1_billed_size;
-//   ctx.accounts.config.evm_v1_gas_cost                = evm_v1_gas_cost;
-//   ctx.accounts.config.evm_v2_billed_size             = evm_v2_billed_size;
-//   ctx.accounts.config.evm_v2_gas_cost                = evm_v2_gas_cost;
-//   ctx.accounts.config.sui_gas_dropoff_storage_bytes  = sui_gas_dropoff_storage_bytes;
-//   ctx.accounts.config.sui_gas_dropoff_compute_budget = sui_gas_dropoff_compute_budget;
-//   ctx.accounts.config.sui_gas_dropoff_storage_rebate = sui_gas_dropoff_storage_rebate;
-//   ctx.accounts.config.sui_compute_budget             = sui_compute_budget;
-//   ctx.accounts.config.sui_storage_bytes              = sui_storage_bytes;
-//   ctx.accounts.config.sui_storage_rebate             = sui_storage_rebate;
-//   Ok(())
-// }
 
 // -- EVM chain config --
 
@@ -172,7 +139,6 @@ pub struct UpdateFeeAdjustment<'info> {
   )]
   pub signer: Signer<'info>,
 
-  #[account(mut)]
   pub config: Account<'info, Config>,
 
   #[account(mut)]
@@ -192,7 +158,6 @@ pub fn update_fee_adjustment(
 
 #[derive(Accounts)]
 pub struct RoleUpdate<'info> {
-  #[account(mut)]
   pub owner: Signer<'info>,
 
   #[account(mut, has_one = owner @ CctprError::NotAuthorized)]

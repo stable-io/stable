@@ -70,6 +70,10 @@ export class SolanaAddress implements Address {
     return new UniversalAddress(this.address, "Solana");
   }
 
+  equals(other: SolanaAddress): boolean {
+    return this.address === other.address;
+  }
+
   private static invalid(address: string, cause: Text) {
     return new Error(`Invalid Solana address ${address}: ${cause}`);
   }

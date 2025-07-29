@@ -1,11 +1,9 @@
-import type {
-  Rpc,
-  GetAccountInfoApi,
-  GetMultipleAccountsApi,
-  TransactionMessage,
-  Instruction,
-  Nonce,
-} from "@solana/kit";
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+import type { TransactionMessage, Nonce } from "@solana/kit";
 import {
   AccountRole,
   pipe,
@@ -14,12 +12,11 @@ import {
   appendTransactionMessageInstructions,
   setTransactionMessageLifetimeUsingDurableNonce,
 } from "@solana/kit";
-import type { Layout, DeriveType } from "binary-layout";
 import { serialize, deserialize } from "binary-layout";
-import type { TODO, Text } from "@stable-io/utils";
+import type { Text } from "@stable-io/utils";
 import { definedOrThrow, encoding } from "@stable-io/utils";
 import type { RoPair, RoArray, Replace } from "@stable-io/map-utils";
-import { mapTo, zip, chunk, fromEntries } from "@stable-io/map-utils";
+import { zip, chunk, fromEntries } from "@stable-io/map-utils";
 import { Conversion } from "@stable-io/amount";
 import type { Network, GasTokenOf } from "@stable-io/cctp-sdk-definitions";
 import {
@@ -50,7 +47,6 @@ import type {
   CorridorParamsBase,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
-  contractAddressOf,
   timestampItem,
   checkIsSensibleCorridor,
   routerHookDataSize,
@@ -71,25 +67,19 @@ import {
   minimumBalanceForRentExemption,
   durableNonceAccountLayout,
 } from "@stable-io/cctp-sdk-solana";
-import { type ForeignDomain, oracleAddress, executionCosts } from "./constants.js";
+import { type ForeignDomain, executionCosts } from "../constants.js";
 import type {
   FeeAdjustment,
-  TransferWithRelayParams,
   GaslessParams,
   UserQuoteVariant,
   EventDataSeed,
-} from "./layouts.js";
-import {
-  foreignDomainItem,
-  configLayout,
-  chainConfigLayout,
-  transferWithRelayParamsLayout,
-} from "./layouts.js";
-import type { PriceState } from "./oracleLayouts.js";
-import { oracleConfigLayout, oracleChainIdItem, priceStateLayout } from "./oracleLayouts.js";
+} from "../layouts.js";
+import { chainConfigLayout, transferWithRelayParamsLayout } from "../layouts.js";
+import type { PriceState } from "../oracleLayouts.js";
+import { oracleConfigLayout, priceStateLayout } from "../oracleLayouts.js";
+import { CctpRBase } from "./base.js";
 
-//we could include the network parameter here but it's likely not worth the hassle
-type RpcType = Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;
+const priceAccountsPerDomain = 2; //i.e. PriceAddresses["length"]
 
 export type QuoteRelay<N extends Network> =
   Replace<QuoteParams<N>, "destinationDomain", ForeignDomain<N>>;
@@ -99,12 +89,7 @@ export type Quote<N extends Network> = QuoteBase<N, "Solana", "Solana">;
 export type CorridorParams<N extends Network, DD extends ForeignDomain<N>> =
   CorridorParamsBase<N, "Solana", "Solana", DD>;
 
-export type TransferWithRelayInstruction = Required<Instruction>;
-
 export type OnChainRelayQueryResult = RoPair<RoArray<Usdc>, Conversion<typeof Usdc, typeof Sol>>;
-
-type PriceAddresses = readonly [oraclePrices: SolanaAddress, chainConfig: SolanaAddress];
-const priceAccountsPerDomain = 2; //i.e. PriceAddresses["length"]
 
 //TODO: remove this and all its mentions once Sui is actually a legitimate foreign domain
 //  (The code here already supports Sui, but Sui is not yet part of the supported domains of CctpR
@@ -117,70 +102,7 @@ const hackPlatformOf = <N extends Network>(domain: ForeignDomain<N>) =>
 //  (but make sure it goes into the definitions package to avoid cross-dependencies)
 const suiMinTransactionCost = sui(2000, "atomic");
 
-export class CctpRBase<N extends Network> {
-  public readonly network: N;
-  public readonly rpc: RpcType;
-  public readonly address: SolanaAddress;
-  public readonly oracleAddress: SolanaAddress;
-
-  //for caching of PDA derivations
-  private _configAddress: SolanaAddress | undefined;
-  private _oracleConfigAddress: SolanaAddress | undefined;
-  private _priceAddresses: Map<ForeignDomain<N>, PriceAddresses> = new Map();
-
-  constructor(network: N, rpc: RpcType, address: SolanaAddress, oracleAddress: SolanaAddress) {
-    this.network = network;
-    this.rpc = rpc;
-    this.address = address;
-    this.oracleAddress = oracleAddress;
-  }
-
-  protected configAddress() {
-    if (this._configAddress === undefined)
-      this._configAddress = findPda(["config"], this.address)[0];
-
-    return this._configAddress;
-  }
-
-  protected oracleConfigAddress() {
-    if (this._oracleConfigAddress === undefined)
-      this._oracleConfigAddress = findPda(["config"], this.oracleAddress)[0];
-
-    return this._oracleConfigAddress;
-  }
-
-  protected priceAddresses(domain: ForeignDomain<N>): PriceAddresses {
-    const cached = this._priceAddresses.get(domain);
-    if (cached)
-      return cached;
-
-    const seeds = [
-      ["prices", serialize(oracleChainIdItem(this.network), domain as TODO)],
-      ["chain_config", serialize(foreignDomainItem(this.network), domain as TODO)],
-    ] as const;
-    const res = mapTo(seeds)(s => findPda(s, this.address)[0]);
-    this._priceAddresses.set(domain, res);
-    return res;
-  }
-}
-
 export class CctpR<N extends Network> extends CctpRBase<N> {
-  private constructor(
-    network: N,
-    rpc: RpcType,
-    addresses?: {
-      cctpr?: SolanaAddress;
-      oracle?: SolanaAddress;
-    }
-  ) {
-    super(
-      network,
-      rpc,
-      new SolanaAddress(addresses?.cctpr ?? contractAddressOf(network as Network, "Solana")),
-      new SolanaAddress(addresses?.oracle ?? oracleAddress),
-    );
-  }
-
   async transferWithRelay<DD extends ForeignDomain<N>>(
     destination: DD,
     inOrOut: InOrOut, //meaningless distinction, if relay fee is paid in gas and corridor is v1
@@ -312,11 +234,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       ? this.priceAddresses("Avalanche")[1]
       : this.address;
 
-    const { feeRecipient } = definedOrThrow(
-      await this.fetchAndParseAccountData(config, configLayout),
-      `Failed to fetch cctpr config account` as Text,
-    );
-
+    const { feeRecipient } = await this.config();
     const feeRecipientUsdc = findAta(usdcMint, feeRecipient);
 
     const cctpAccs = cctpAccounts[this.network][corridor.type === "v1" ? "v1" : "v2"];
@@ -373,13 +291,9 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       gaslessParams,
       eventDataSeed,
       eventDataBump,
-    } as const satisfies TransferWithRelayParams;
+    } as const;
 
-    const transferIx = {
-      accounts: accounts.map(([solAddr, role]) => ({ address: solAddr.unwrap(), role })),
-      data: serialize(transferWithRelayParamsLayout, params),
-      programAddress: this.address.unwrap(),
-    } as const satisfies Instruction;
+    const transferIx = this.composeIx(accounts, transferWithRelayParamsLayout, params);
 
     return pipe(
       createTransactionMessage({ version: 0 }),
@@ -424,8 +338,8 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     const domainPriceAccounts = fromEntries(zip([involvedDomains, priceAccountsRawData])
       .map(([domain, [oraclePrices, chainConfig]]) => [
         domain,
-        [ deserialize(priceStateLayout(this.network)[hackPlatformOf<N>(domain)], oraclePrices!),
-          deserialize(chainConfigLayout(this.network), chainConfig!)
+        [ deserialize(chainConfigLayout(this.network), chainConfig!),
+          deserialize(priceStateLayout(this.network)[hackPlatformOf<N>(domain)], oraclePrices!),
         ],
       ] as const));
     
@@ -434,21 +348,21 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       ? this.calcEvmExecutionFee(
           gas(executionCosts.Evm.Gas.avaxHop),
           byte(0),
-          domainPriceAccounts["Avalanche"][0] as PriceState<N, "Evm">,
+          domainPriceAccounts["Avalanche"][1] as PriceState<N, "Evm">,
         )
       : undefined;
     
     //finally calculate the fees for each query
     const results = queries.map(query => {
       const { destinationDomain, corridor, gasDropoff } = query;
-      const { feeAdjustments } = domainPriceAccounts[destinationDomain][1];
+      const { feeAdjustments } = domainPriceAccounts[destinationDomain][0];
 
       const hasGasDropoff = gasDropoff.gt(genericGasToken(0));
       let gasDropoffFee: Usdc | undefined;
 
       //gasDropoff is calculated the same way regardless of the platform or corridor
       if (hasGasDropoff) {
-        const { gasTokenPrice } = domainPriceAccounts[destinationDomain][0];
+        const { gasTokenPrice } = domainPriceAccounts[destinationDomain][1];
         gasDropoffFee = CctpR.applyFeeAdjustment(
           feeAdjustments["gasDropoff"],
           gasDropoff.convert(
@@ -461,7 +375,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       let unadjustedFee = (() => {
         switch (hackPlatformOf<N>(destinationDomain)) {
           case "Evm": {
-            const oraclePrices = domainPriceAccounts[destinationDomain][0] as PriceState<N, "Evm">;
+            const oraclePrices = domainPriceAccounts[destinationDomain][1] as PriceState<N, "Evm">;
             const execCosts = executionCosts.Evm;
 
             let [gasCost, txBytes] = corridor === "v2Direct"
@@ -473,7 +387,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
             return this.calcEvmExecutionFee(gas(gasCost), byte(txBytes), oraclePrices);
           }
           case "Sui": {
-            const oraclePrices = domainPriceAccounts[destinationDomain][0] as PriceState<N, "Sui">;
+            const oraclePrices = domainPriceAccounts[destinationDomain][1] as PriceState<N, "Sui">;
             const execCosts = executionCosts.Sui;
 
             let executionCUs = execCosts.ComputeUnits.delivery;
@@ -540,22 +454,8 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     return executionCost.convert(gasTokenPrice);
   }
 
-  private async fetchAndParseAccountData<const L extends Layout>(
-    address: SolanaAddress,
-    layout: L,
-  ): Promise<DeriveType<L> | undefined> {
-    const data = (await this.rpc.getAccountInfo(address.unwrap(), { encoding: "base64" }).send())
-      .value?.data[0];
-    
-    return data ? deserialize(layout, encoding.base64.decode(data)) : undefined;
-  }
-
   private static applyFeeAdjustment(feeAdjustment: FeeAdjustment, fee: Usdc): Usdc {
     const { absolute, relative } = feeAdjustment;
     return mulPercentage(fee, relative).add(absolute);
   }
-}
-
-export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
-  //TODO: implement
 }

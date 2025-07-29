@@ -38,10 +38,6 @@ pub mod cctpr {
     )
   }
 
-  // pub fn get_quote(ctx: Context<QuoteQuery>, dropoff_amount_micro: u32) -> Result<u64> {
-  //   processor::get_quote(ctx, dropoff_amount_micro)
-  // }
-
   // -- Reclaim --
 
   pub fn reclaim_rent(
