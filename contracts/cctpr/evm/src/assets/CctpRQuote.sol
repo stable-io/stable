@@ -66,8 +66,20 @@ uint constant SUI_STORAGE_BYTES  = 2363;
 uint constant SUI_STORAGE_REBATE = 1979;
 
 //Solana gas dropoff cost is entirely negligible (costs 300 CUs)
-uint constant SOLANA_COMPUTE_BUDGET  = 200_000; //sampled consumption is 180k+
-uint constant SOLANA_STORAGE_BYTES   = 128 + 165; //size of an ATA (account overhead + data)
+//Solana v1 and v2 have essentially the same compute budget requirements
+uint constant SOLANA_COMPUTE_BUDGET    = 200_000; //sampled consumption is 180k+
+uint constant SOLANA_ATA_STORAGE_BYTES = 128 + 165; //size of an ATA (account overhead + data)
+//CCTP v1 uses a bitmap account for replay protection:
+//see here: https://github.com/circlefin/solana-cctp-contracts/blob/9f8cf26d059cf8927ae0a0b351f3a7a88c7bdade/programs/message-transmitter/src/state.rs#L51-L58
+//The account size in total is 128 + 4 + 8 + 8*100 = 940 bytes for 6400 nonces.
+//So the rent cost per nonce comes out or ~0.15 bytes (~= 1k lamports) per nonce i.e. negligible.
+uint constant SOLANA_V1_STORAGE_BYTES = SOLANA_ATA_STORAGE_BYTES;
+//CCTP v2 on the other hand uses individual nonce PDAs and for god knows what reason, they even
+//  pointlessly store a bool in it - see here:
+//    https://github.com/circlefin/solana-cctp-contracts/blob/9f8cf26d059cf8927ae0a0b351f3a7a88c7bdade/programs/v2/message-transmitter-v2/src/state.rs#L50-L52
+//  and here:
+//    https://github.com/circlefin/solana-cctp-contracts/blob/9f8cf26d059cf8927ae0a0b351f3a7a88c7bdade/programs/v2/message-transmitter-v2/src/instructions/receive_message.rs#L59-L70
+uint constant SOLANA_V2_STORAGE_BYTES = 128 + 1 + SOLANA_ATA_STORAGE_BYTES;
 uint constant SOLANA_SIGNATURE_COUNT = 1;
 
 //fork testing suggests gas costs of ~240k but Avalanche testnet gives 281k:
@@ -292,19 +304,19 @@ abstract contract CctpRQuote is CctpRBase {
       //gas dropoff costs are negligible and hence ignored on Solana
       SolanaFeeParams solanaFeeParams = SolanaFeeParams.wrap(targetFeeParams);
       targetExecutionCost =
-        SOLANA_COMPUTE_BUDGET * solanaFeeParams.computationPrice().from()
-        + SOLANA_STORAGE_BYTES * solanaFeeParams.pricePerAccountByte().from()
-        + SOLANA_SIGNATURE_COUNT * solanaFeeParams.signaturePrice().from();
+        SOLANA_COMPUTE_BUDGET     * solanaFeeParams.computationPrice().from()
+        + SOLANA_V1_STORAGE_BYTES * solanaFeeParams.pricePerAccountByte().from()
+        + SOLANA_SIGNATURE_COUNT  * solanaFeeParams.signaturePrice().from();
       targetGasTokenPrice = solanaFeeParams.gasTokenPrice().from();
     }
     else if (targetChainId == CHAIN_ID_SUI) {
       SuiFeeParams suiFeeParams = SuiFeeParams.wrap(targetFeeParams);
-      uint computeCost = SUI_COMPUTE_BUDGET;
-      uint storageBytes = SUI_STORAGE_BYTES;
+      uint computeCost   = SUI_COMPUTE_BUDGET;
+      uint storageBytes  = SUI_STORAGE_BYTES;
       uint storageRebate = SUI_STORAGE_REBATE;
       if (gasDropoffRequested) {
-        computeCost += SUI_GAS_DROPOFF_COMPUTE_BUDGET;
-        storageBytes += SUI_GAS_DROPOFF_STORAGE_BYTES;
+        computeCost   += SUI_GAS_DROPOFF_COMPUTE_BUDGET;
+        storageBytes  += SUI_GAS_DROPOFF_STORAGE_BYTES;
         storageRebate += SUI_GAS_DROPOFF_STORAGE_REBATE;
       }
       uint storagePrice = suiFeeParams.storagePrice().from();
@@ -336,21 +348,31 @@ abstract contract CctpRQuote is CctpRBase {
     uint256 targetFeeParams,
     bool gasDropoffRequested
   ) private pure returns (uint targetExecutionCost, uint targetGasTokenPrice) { unchecked {
-    bool isSolana = targetChainId == CHAIN_ID_SOLANA;
-    bool isSui = targetChainId == CHAIN_ID_SUI;
+    bool isNoble = targetChainId == CHAIN_ID_NOBLE;
+    bool isSui   = targetChainId == CHAIN_ID_SUI;
     bool isAptos = targetChainId == CHAIN_ID_APTOS;
-    //TODO implement Solana V2 execution cost calculation
-    require(!eagerOr(eagerOr(isSolana, isSui), isAptos), "v2Direct only supports EVM");
+    require(!eagerOr(eagerOr(isNoble, isSui), isAptos), "v2Direct supports EVM and Solana");
 
-    EvmFeeParams evmFeeParams = EvmFeeParams.wrap(targetFeeParams);
-    uint gasCost = EVM_V2_GAS_COST;
-    if (gasDropoffRequested)
-      gasCost += EVM_GAS_DROPOFF_GAS_COST;
+    if (targetChainId == CHAIN_ID_SOLANA) {
+      //gas dropoff costs are negligible and hence ignored on Solana
+      SolanaFeeParams solanaFeeParams = SolanaFeeParams.wrap(targetFeeParams);
+      targetExecutionCost =
+        SOLANA_COMPUTE_BUDGET     * solanaFeeParams.computationPrice().from()
+        + SOLANA_V2_STORAGE_BYTES * solanaFeeParams.pricePerAccountByte().from()
+        + SOLANA_SIGNATURE_COUNT  * solanaFeeParams.signaturePrice().from();
+      targetGasTokenPrice = solanaFeeParams.gasTokenPrice().from();
+    }
+    else {
+      EvmFeeParams evmFeeParams = EvmFeeParams.wrap(targetFeeParams);
+      uint gasCost = EVM_V2_GAS_COST;
+      if (gasDropoffRequested)
+        gasCost += EVM_GAS_DROPOFF_GAS_COST;
 
-    targetExecutionCost =
-      gasCost * evmFeeParams.gasPrice().from()
-      + EVM_V2_BILLED_SIZE * evmFeeParams.pricePerTxByte().from();
-    targetGasTokenPrice = evmFeeParams.gasTokenPrice().from();
+      targetExecutionCost =
+        gasCost * evmFeeParams.gasPrice().from()
+        + EVM_V2_BILLED_SIZE * evmFeeParams.pricePerTxByte().from();
+      targetGasTokenPrice = evmFeeParams.gasTokenPrice().from();
+    }
   }}
 
   function _calcHopUsd18(uint256 avalancheFeeParams) private pure returns (uint) { unchecked {
