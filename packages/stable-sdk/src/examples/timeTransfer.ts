@@ -29,19 +29,20 @@ const sdk = new StableSDK({
 });
 
 const intent = {
-  sourceChain: "Ethereum" as const,
-  targetChain: "Optimism" as const,
-  amount: "5",
+  sourceChain: "Optimism" as const,
+  targetChain: "Ethereum" as const,
+  amount: "0.1",
   sender,
   recipient,
-  // To receive gas tokens on the target. Increases the cost of the transfer.
-  gasDropoffDesired: eth("0.0015").toUnit("atomic"),
+  // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
+  paymentToken: "native",
 };
 
 // Configuration for multiple executions
-const NUM_EXECUTIONS = 1; // Change this to desired number of executions
-const CORRIDOR_TO_EXECUTE = "v2Direct"; // v1, v2Direct
-const CSV_FILE = "transfer_timing_results.csv";
+const NUM_EXECUTIONS = 30; // Change this to desired number of executions
+const CORRIDOR_TO_EXECUTE = "v1"; // v1, v2Direct
+const CSV_FILE = "opt-eth.csv";
+const gasless = false;
 
 // Format timing with color based on duration
 function formatTimeDiff(timeMs: number): string {
@@ -137,11 +138,14 @@ async function executeRouteWithTiming(
   const allRoutes = routes.all
   .filter(
     r => r.corridor === CORRIDOR_TO_EXECUTE,
-  );
+  )
   // if you want only gasless:
-  // .filter(
-  //   r => r.steps[0].type === "gasless-transfer"
-  // );
+  .filter(
+    r => r.steps.some(s => (gasless ? s.type === "gasless-transfer" : s.type === "transfer"))
+  );
+
+  if (!allRoutes.length)
+    throw new Error("No Routes Resulting of Filter")
 
   const executionResults: ExecutionResult[] = [];
 
@@ -245,7 +249,8 @@ async function executeRouteWithTiming(
     const executionEndTime = performance.now();
     result.totalDuration = executionEndTime - executionStartTime;
 
-    console.info(`Route ${routeIndex + 1} execution time: ${formatTimeDiff(result.totalDuration)}`);
+    console.info(`Estimated execution time: ${selectedRoute.estimatedDuration}`);
+    console.info(`Real execution time: ${formatTimeDiff(result.totalDuration)}`);
     writeResultToCsv(result);
     executionResults.push(result);
   }
