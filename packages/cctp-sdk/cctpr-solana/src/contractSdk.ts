@@ -1,4 +1,20 @@
-import type { Rpc, GetAccountInfoApi, GetMultipleAccountsApi } from "@solana/kit";
+import type {
+  Rpc,
+  GetAccountInfoApi,
+  GetMultipleAccountsApi,
+  TransactionMessage,
+  Instruction,
+  Nonce,
+} from "@solana/kit";
+import {
+  AccountRole,
+  pipe,
+  createTransactionMessage,
+  setTransactionMessageFeePayer,
+  appendTransactionMessageInstructions,
+  setTransactionMessageLifetimeUsingDurableNonce,
+} from "@solana/kit";
+import type { Layout, DeriveType } from "binary-layout";
 import { serialize, deserialize } from "binary-layout";
 import type { TODO, Text } from "@stable-io/utils";
 import { definedOrThrow, encoding } from "@stable-io/utils";
@@ -11,6 +27,7 @@ import {
   Usdc,
   usdc,
   Sol,
+  sol,
   Gas,
   gas,
   sui,
@@ -22,22 +39,51 @@ import {
   genericGasToken,
   mulPercentage,
   platformOf,
+  usdcContracts,
 } from "@stable-io/cctp-sdk-definitions";
 import type {
   InOrOut,
+  Corridor,
   QuoteParams,
   QuoteBase,
   UsdcQuote,
-  SupportedDomain,
   CorridorParamsBase,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { contractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { SolanaAddress, findPda } from "@stable-io/cctp-sdk-solana";
+import {
+  contractAddressOf,
+  timestampItem,
+  checkIsSensibleCorridor,
+  routerHookDataSize,
+  calcBurnAmount,
+  calcInputAmount,
+  toCorridorVariant,
+  quoteIsInUsdc,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
+import {
+  SolanaAddress,
+  findPda,
+  findAta,
+  systemProgramId,
+  tokenProgramId,
+  cctpAccounts,
+  v1SentEventDataSize,
+  v2SentEventDataSize,
+  minimumBalanceForRentExemption,
+  durableNonceAccountLayout,
+} from "@stable-io/cctp-sdk-solana";
 import { type ForeignDomain, oracleAddress, executionCosts } from "./constants.js";
-import type { FeeAdjustment, GaslessParams } from "./layouts.js";
+import type {
+  FeeAdjustment,
+  TransferWithRelayParams,
+  GaslessParams,
+  UserQuoteVariant,
+  EventDataSeed,
+} from "./layouts.js";
 import {
   foreignDomainItem,
+  configLayout,
   chainConfigLayout,
+  transferWithRelayParamsLayout,
 } from "./layouts.js";
 import type { PriceState } from "./oracleLayouts.js";
 import { oracleConfigLayout, oracleChainIdItem, priceStateLayout } from "./oracleLayouts.js";
@@ -52,6 +98,10 @@ export type Quote<N extends Network> = QuoteBase<N, "Solana", "Solana">;
 
 export type CorridorParams<N extends Network, DD extends ForeignDomain<N>> =
   CorridorParamsBase<N, "Solana", "Solana", DD>;
+
+export type TransferWithRelayInstruction = Required<Instruction>;
+
+export type OnChainRelayQueryResult = RoPair<RoArray<Usdc>, Conversion<typeof Usdc, typeof Sol>>;
 
 type PriceAddresses = readonly [oraclePrices: SolanaAddress, chainConfig: SolanaAddress];
 const priceAccountsPerDomain = 2; //i.e. PriceAddresses["length"]
@@ -74,6 +124,7 @@ export class CctpRBase<N extends Network> {
   public readonly oracleAddress: SolanaAddress;
 
   //for caching of PDA derivations
+  private _configAddress: SolanaAddress | undefined;
   private _oracleConfigAddress: SolanaAddress | undefined;
   private _priceAddresses: Map<ForeignDomain<N>, PriceAddresses> = new Map();
 
@@ -82,6 +133,13 @@ export class CctpRBase<N extends Network> {
     this.rpc = rpc;
     this.address = address;
     this.oracleAddress = oracleAddress;
+  }
+
+  protected configAddress() {
+    if (this._configAddress === undefined)
+      this._configAddress = findPda(["config"], this.address)[0];
+
+    return this._configAddress;
   }
 
   protected oracleConfigAddress() {
@@ -130,8 +188,43 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     gasDropoff: GasTokenOf<DD, ForeignDomain<N>>,
     corridor: CorridorParams<N, DD>,
     quote: Quote<N>,
-  ) {
+    user: SolanaAddress,
+    opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
+  ): Promise<TransactionMessage> {
+    checkIsSensibleCorridor(this.network, "Solana", destination, corridor.type);
 
+    const userQuote = (
+      quote.type === "offChain"
+      ? { type: "offChain",
+          expirationTime: quote.expirationTime,
+          quoterSignature: quote.quoterSignature,
+          relayFee: quote.relayFee.kind.name === "Usdc"
+            ? { payIn: "usdc",     amount: quote.relayFee as Usdc               }
+            : { payIn: "gasToken", amount: sol(quote.relayFee.toUnit("atomic")) },
+        }
+      : quoteIsInUsdc(quote)
+      ? { type: "onChainUsdc",
+          takeRelayFeeFromInput: inOrOut.type === "in",
+          maxRelayFeeUsdc: quote.maxRelayFee,
+        }
+      : { type: "onChainGas",
+          maxRelayFeeSol: quote.maxRelayFee as Sol,
+        }
+    ) satisfies UserQuoteVariant;
+
+    return this.composeTransfer(
+      destination,
+      inOrOut,
+      mintRecipient,
+      gasDropoff,
+      corridor,
+      quote,
+      userQuote,
+      user,
+      user,
+      undefined,
+      opts,
+    );
   }
 
   async transferGasless<DD extends ForeignDomain<N>>(
@@ -141,16 +234,163 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     gasDropoff: GasTokenOf<DD, ForeignDomain<N>>,
     corridor: CorridorParams<N, DD>,
     quote: UsdcQuote,
+    user: SolanaAddress,
     deadline: Date,
     gaslessFee: Usdc,
     relayer: SolanaAddress,
     nonceAccount: SolanaAddress,
-  ) {}
+    opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
+  ): Promise<TransactionMessage> {
+    checkIsSensibleCorridor(this.network, "Solana", destination, corridor.type);
 
-  async quoteOnChainRelay(queries: RoArray<QuoteRelay<N>>): Promise<RoArray<RoPair<Usdc, Sol>>> {
-    if (queries.length === 0)
-      return [];
+    const { blockhash } = definedOrThrow(
+      await this.fetchAndParseAccountData(nonceAccount, durableNonceAccountLayout),
+      `Failed to fetch blockhash from durable nonce account` as Text,
+    );
 
+    const gaslessQuote = (
+      quote.type === "offChain"
+      ? { type: "offChain",
+          expirationTime: quote.expirationTime,
+          quoterSignature: quote.quoterSignature,
+          relayFee: {
+            payIn: "usdc",
+            amount: quote.relayFee
+          }
+        }
+      : { type: "onChainUsdc",
+          takeRelayFeeFromInput: inOrOut.type === "in",
+          maxRelayFeeUsdc: quote.maxRelayFee,
+        }
+    ) satisfies UserQuoteVariant;
+
+    const tx = await this.composeTransfer(
+      destination,
+      inOrOut,
+      mintRecipient,
+      gasDropoff,
+      corridor,
+      quote as Quote<N>,
+      gaslessQuote,
+      relayer,
+      user,
+      { gaslessFeeUsdc: gaslessFee, expirationTime: deadline },
+      opts,
+    );
+
+    return setTransactionMessageLifetimeUsingDurableNonce(
+      { nonce: encoding.base58.encode(blockhash) as Nonce,
+        nonceAccountAddress: nonceAccount.unwrap(),
+        nonceAuthorityAddress: relayer.unwrap(),
+      },
+      tx, 
+    );
+  }
+
+  private async composeTransfer<DD extends ForeignDomain<N>>(
+    destination: DD,
+    inOrOut: InOrOut,
+    mintRecipient: UniversalAddress,
+    gasDropoff: GasTokenOf<DD, ForeignDomain<N>>,
+    corridor: CorridorParams<N, DD>,
+    quote: Quote<N>,
+    quoteVariant: UserQuoteVariant,
+    relayer: SolanaAddress,
+    user: SolanaAddress,
+    gaslessParams: GaslessParams | undefined,
+    opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
+  ): Promise<TransactionMessage> {
+    const usdcMint = new SolanaAddress(usdcContracts.contractAddressOf[this.network]["Solana"]);
+    const userUsdc = opts?.userUsdc ?? findAta(usdcMint, user);
+    const eventDataSeed = opts?.eventDataSeed ?? serialize(timestampItem, new Date());
+    const [messageSentEventData, eventDataBump] = findPda([user, eventDataSeed], this.address);
+
+    const config = this.configAddress();
+    const oracleConfig = this.oracleConfigAddress();
+    const [chainConfig, destinationPrices] = this.priceAddresses(destination);
+    const avalanchePrices = corridor.type === "avaxHop"
+      ? this.priceAddresses("Avalanche")[1]
+      : this.address;
+
+    const { feeRecipient } = definedOrThrow(
+      await this.fetchAndParseAccountData(config, configLayout),
+      `Failed to fetch cctpr config account` as Text,
+    );
+
+    const feeRecipientUsdc = findAta(usdcMint, feeRecipient);
+
+    const cctpAccs = cctpAccounts[this.network][corridor.type === "v1" ? "v1" : "v2"];
+    const {
+      messageTransmitter,
+      messageTransmitterConfig,
+      tokenMessenger,
+      tokenMessengerConfig,
+      tokenMinter,
+      senderAuthority,
+      remoteTokenMessengers,
+      localToken,
+      eventAuthority,
+    } = cctpAccs;
+    const remoteTokenMessenger = remoteTokenMessengers[destination];
+    const denylisted = corridor.type !== "v1"
+      ? (cctpAccs as Extract<typeof cctpAccs, { denylist: unknown }>).denylist(user)
+      : this.address;
+
+    const accounts = [
+      [relayer,                  AccountRole.WRITABLE_SIGNER],
+      [user,                     AccountRole.READONLY_SIGNER],
+      [config,                   AccountRole.READONLY       ],
+      [chainConfig,              AccountRole.READONLY       ],
+      [feeRecipient,             AccountRole.WRITABLE       ],
+      [feeRecipientUsdc,         AccountRole.WRITABLE       ],
+      [userUsdc,                 AccountRole.WRITABLE       ],
+      [oracleConfig,             AccountRole.READONLY       ],
+      [destinationPrices,        AccountRole.READONLY       ],
+      [avalanchePrices,          AccountRole.READONLY       ],
+      [messageSentEventData,     AccountRole.WRITABLE       ],
+      [usdcMint,                 AccountRole.WRITABLE       ],
+      [denylisted,               AccountRole.READONLY       ],
+      [senderAuthority,          AccountRole.READONLY       ],
+      [messageTransmitterConfig, AccountRole.WRITABLE       ],
+      [tokenMessengerConfig,     AccountRole.READONLY       ],
+      [remoteTokenMessenger,     AccountRole.READONLY       ],
+      [tokenMinter,              AccountRole.READONLY       ],
+      [localToken,               AccountRole.WRITABLE       ],
+      [tokenMessenger,           AccountRole.READONLY       ],
+      [messageTransmitter,       AccountRole.READONLY       ],
+      [eventAuthority,           AccountRole.READONLY       ],
+      [tokenProgramId,           AccountRole.READONLY       ],
+      [systemProgramId,          AccountRole.READONLY       ],
+    ] as const;
+
+    const burnAmount = calcBurnAmount(inOrOut, corridor, quote, usdc(0));
+    const params = {
+      inputAmount: calcInputAmount(inOrOut, quote, burnAmount),
+      mintRecipient,
+      gasDropoff: genericGasToken(gasDropoff.toUnit("human")),
+      corridorVariant: toCorridorVariant(corridor, burnAmount),
+      quoteVariant,
+      gaslessParams,
+      eventDataSeed,
+      eventDataBump,
+    } as const satisfies TransferWithRelayParams;
+
+    const transferIx = {
+      accounts: accounts.map(([solAddr, role]) => ({ address: solAddr.unwrap(), role })),
+      data: serialize(transferWithRelayParamsLayout, params),
+      programAddress: this.address.unwrap(),
+    } as const satisfies Instruction;
+
+    return pipe(
+      createTransactionMessage({ version: 0 }),
+      tx => setTransactionMessageFeePayer(relayer.unwrap(), tx),
+      tx => appendTransactionMessageInstructions([transferIx], tx),
+    );
+  }
+
+  //WARNING: does not include the rent rebate for user instantiated (i.e. not gasless) transfers
+  //use cctpMessageRentCost() and the returned solPrice to calculate the rebate as necessary
+  async quoteOnChainRelay(queries: RoArray<QuoteRelay<N>>): Promise<OnChainRelayQueryResult> {
     const hasAvaxHopQuery = queries.some((q) => q.corridor === "avaxHop");
 
     //collect all domains that are involved in any of the queries
@@ -199,7 +439,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       : undefined;
     
     //finally calculate the fees for each query
-    return queries.map(query => {
+    const results = queries.map(query => {
       const { destinationDomain, corridor, gasDropoff } = query;
       const { feeAdjustments } = domainPriceAccounts[destinationDomain][1];
 
@@ -209,7 +449,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       //gasDropoff is calculated the same way regardless of the platform or corridor
       if (hasGasDropoff) {
         const { gasTokenPrice } = domainPriceAccounts[destinationDomain][0];
-        gasDropoffFee = this.applyFeeAdjustment(
+        gasDropoffFee = CctpR.applyFeeAdjustment(
           feeAdjustments["gasDropoff"],
           gasDropoff.convert(
             Conversion.from(usdc((gasTokenPrice as any).toUnit("human", "human")), GenericGasToken) 
@@ -258,13 +498,23 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       if (corridor === "avaxHop")
         unadjustedFee = unadjustedFee.add(avaxHopExecutionFee!);
 
-      let usdcFee = this.applyFeeAdjustment(feeAdjustments[corridor], unadjustedFee);
+      let usdcFee = CctpR.applyFeeAdjustment(feeAdjustments[corridor], unadjustedFee);
 
       if (hasGasDropoff)
         usdcFee = usdcFee.add(gasDropoffFee!);
 
-      return [usdcFee, usdcFee.convert(solPrice.inv())];
+      return usdcFee;
     });
+
+    return [results, solPrice];
+  }
+
+  cctpMessageRentCost(corridor: Corridor): Sol {
+    return minimumBalanceForRentExemption(
+      corridor === "v1"
+      ? v1SentEventDataSize
+      : v2SentEventDataSize(corridor === "avaxHop" ? routerHookDataSize : byte(0))
+    );
   }
 
   private calcEvmExecutionFee(gas: Gas, bytes: Byte, oraclePrices: PriceState<N, "Evm">): Usdc {
@@ -290,12 +540,22 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     return executionCost.convert(gasTokenPrice);
   }
 
-  private applyFeeAdjustment(feeAdjustment: FeeAdjustment, fee: Usdc): Usdc {
+  private async fetchAndParseAccountData<const L extends Layout>(
+    address: SolanaAddress,
+    layout: L,
+  ): Promise<DeriveType<L> | undefined> {
+    const data = (await this.rpc.getAccountInfo(address.unwrap(), { encoding: "base64" }).send())
+      .value?.data[0];
+    
+    return data ? deserialize(layout, encoding.base64.decode(data)) : undefined;
+  }
+
+  private static applyFeeAdjustment(feeAdjustment: FeeAdjustment, fee: Usdc): Usdc {
     const { absolute, relative } = feeAdjustment;
     return mulPercentage(fee, relative).add(absolute);
   }
 }
 
 export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
-
+  //TODO: implement
 }

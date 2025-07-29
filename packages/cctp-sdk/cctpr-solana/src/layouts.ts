@@ -22,6 +22,7 @@ import {
   timestampItem,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
+  littleEndian,
   eventLayout,
   accountLayout,
   instructionLayout,
@@ -31,10 +32,6 @@ import {
 } from "@stable-io/cctp-sdk-solana";
 import { oracleChainIdItem } from "./oracleLayouts.js";
 import { foreignDomains } from "./constants.js";
-
-const endianness = "little";
-export const littleEndian = <const L extends Layout>(layout: L) =>
-  setEndianness(layout, endianness);
 
 export const foreignDomainItem = <N extends Network>(network: N) =>
   domainItem(foreignDomains(network));
@@ -97,6 +94,7 @@ export type ChainConfig<N extends Network> =
 
 const solanaUserQuoteVariantItem =
   userQuoteVariantItem(Sol, [{ name: "maxRelayFeeSol", ...amountItem(8, Sol) }]);
+export type UserQuoteVariant = DeriveType<typeof solanaUserQuoteVariantItem>;
 
 const gaslessParamsLayout = [
   { name: "gaslessFeeUsdc", ...usdcItem      },
@@ -105,6 +103,8 @@ const gaslessParamsLayout = [
 export type GaslessParams = DeriveType<typeof gaslessParamsLayout>;
 
 const gaslessParamsItem = optionItem(littleEndian(gaslessParamsLayout));
+export const eventDataSeedItem = { binary: "bytes", size: 4 } as const;
+export type EventDataSeed = DeriveType<typeof eventDataSeedItem>;
 
 export const transferWithRelayParamsLayout =
   instructionLayout("transfer_with_relay", littleEndian([
@@ -114,6 +114,8 @@ export const transferWithRelayParamsLayout =
     { name: "corridorVariant", ...corridorVariantItem        },
     { name: "quoteVariant",    ...solanaUserQuoteVariantItem },
     { name: "gaslessParams",   ...gaslessParamsItem          },
+    { name: "eventDataSeed",   ...eventDataSeedItem          },
+    { name: "eventDataBump",   ...bumpItem                   },
   ]));
 export type TransferWithRelayParams =
   DeriveType<typeof transferWithRelayParamsLayout>;

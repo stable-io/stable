@@ -148,3 +148,29 @@ export const getCorridors = async <
     stats,
   };
 };
+
+export function checkIsSensibleCorridor<N extends Network>(
+  network: N,
+  source: SupportedDomain<N>,
+  destination: SupportedDomain<N>,
+  corridorType: Corridor,
+): void {
+  assertDistinct(source, destination);
+  const isSupportedV2Domain = v2.isSupportedDomain(network);
+
+  if (corridorType === "avaxHop") {
+    if (([source, destination] as string[]).includes("Avalanche"))
+      throw new Error("Can't use avaxHop corridor with Avalanche being source or destination");
+
+    if (!isSupportedV2Domain(source))
+      throw new Error("Can't use avaxHop corridor with non-v2 source domain");
+
+    if (isSupportedV2Domain(destination))
+      throw new Error("Don't use avaxHop corridor when destination is also a v2 domain");
+  }
+
+  if (corridorType === "v2Direct" && (
+      !isSupportedV2Domain(source) || !isSupportedV2Domain(destination)
+  ))
+    throw new Error("Can't use v2 corridor for non-v2 domains");
+}

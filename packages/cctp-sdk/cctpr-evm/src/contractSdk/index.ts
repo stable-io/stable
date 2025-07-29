@@ -6,10 +6,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { Layout } from "binary-layout";
 import { serialize, deserialize } from "binary-layout";
-import type { RoArray, Simplify } from "@stable-io/map-utils";
+import type { RoArray } from "@stable-io/map-utils";
 import { range, mapTo, chunk, fromEntries } from "@stable-io/map-utils";
 import type { TODO } from "@stable-io/utils";
-import { keccak256, encoding, assertDistinct } from "@stable-io/utils";
+import { keccak256, encoding } from "@stable-io/utils";
 import { Rational } from "@stable-io/amount";
 import type {
   DomainsOf,
@@ -55,8 +55,6 @@ import {
 } from "@stable-io/cctp-sdk-evm";
 import type {
   SupportedDomain,
-  Corridor,
-  CorridorVariant,
   FeeAdjustmentType,
   InOrOut,
   QuoteBase,
@@ -73,7 +71,10 @@ import {
   contractAddressOf,
   quoteIsInUsdc,
   calcBurnAmount,
+  calcInputAmount,
   calcFastFee,
+  checkIsSensibleCorridor,
+  toCorridorVariant,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   GovernanceCommand,
@@ -242,7 +243,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     quote: Quote<N, SD>,
     permit?: Permit,
   ): ContractTx {
-    this.checkCorridorDestinationCoherence(destination, corridor.type);
+    checkIsSensibleCorridor(this.client.network, this.client.domain, destination, corridor.type);
 
     const value = evmGasToken(quoteIsInUsdc(quote)
       ? 0n
@@ -268,13 +269,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     ) satisfies UserQuoteVariant;
 
     const burnAmount = calcBurnAmount(inOrOut, corridor, quote, usdc(0));
-
-    const inputAmountUsdc = inOrOut.type === "in"
-      ? inOrOut.amount
-      : burnAmount.add(quoteIsInUsdc(quote) && quote.type === "offChain"
-        ? quote.relayFee
-        : usdc(0),
-      );
+    const inputAmountUsdc = calcInputAmount(inOrOut, quote, burnAmount);
 
     const transfer = {
       ...(permit ? { approvalType: "Permit", permit } : { approvalType: "Preapproval" }),
@@ -282,7 +277,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       destinationDomain: destination as unknown as Transfer<N>["destinationDomain"], //TODO brrr
       mintRecipient,
       gasDropoff: genericGasToken(gasDropoff.toUnit("human")),
-      corridorVariant:  CctpR.toCorridorVariant(corridor, burnAmount),
+      corridorVariant: toCorridorVariant(corridor, burnAmount),
       quoteVariant: userQuote,
     } as const satisfies Transfer<N>;
 
@@ -301,7 +296,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     deadline: Date,
     gaslessFee: Usdc,
   ): Permit2GaslessData {
-    this.checkCorridorDestinationCoherence(destination, corridor.type);
+    checkIsSensibleCorridor(this.client.network, this.client.domain, destination, corridor.type);
     if (nonce.length !== wordSize)
       throw new Error(`Nonce must be ${wordSize} bytes`);
 
@@ -406,7 +401,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       destinationDomain: destination as unknown as Transfer<N>["destinationDomain"], //TODO brrr
       mintRecipient,
       gasDropoff: genericGasToken(gasDropoff.toUnit("human")),
-      corridorVariant: CctpR.toCorridorVariant(corridor, burnAmount),
+      corridorVariant: toCorridorVariant(corridor, burnAmount),
       quoteVariant: (
         quote.type === "offChain"
         ? { type: "offChain",
@@ -425,36 +420,6 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       evmGasToken(0),
       serialize(transferLayout(this.client.network), transfer) as CallData,
     );
-  }
-
-  private checkCorridorDestinationCoherence(destination: Domain, corridorType: Corridor) {
-    assertDistinct(this.client.domain as SupportedDomain<N>, destination);
-    const isSupportedV2Domain = v2.isSupportedDomain(this.client.network);
-
-    if (corridorType === "avaxHop") {
-      if (([this.client.domain, destination] as string[]).includes("Avalanche"))
-        throw new Error("Can't use avaxHop corridor with Avalanche being source or destination");
-
-      if (!isSupportedV2Domain(this.client.domain))
-        throw new Error("Can't use avaxHop corridor with non-v2 source domain");
-
-      if (isSupportedV2Domain(destination))
-        throw new Error("Don't use avaxHop corridor when destination is also a v2 domain");
-    }
-
-    if (corridorType === "v2Direct" && (
-        !isSupportedV2Domain(this.client.domain) || !isSupportedV2Domain(destination)
-    ))
-      throw new Error("Can't use v2 corridor for non-v2 domains");
-  }
-
-  private static toCorridorVariant(
-    corridor: ErasedCorridorParams,
-    burnAmount: Usdc,
-  ): CorridorVariant {
-    return corridor.type === "v1"
-      ? corridor
-      : { type: corridor.type, maxFastFeeUsdc: calcFastFee(burnAmount, corridor.fastFeeRate) };
   }
 
   private calcGaslessAmounts<DD extends SupportedDomain<N>>(

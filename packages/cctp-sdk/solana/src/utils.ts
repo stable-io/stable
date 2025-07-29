@@ -1,6 +1,13 @@
-import { encoding, sha256, ed25519, throws } from "@stable-io/utils";
+import { encoding, sha256, ed25519, throws, isUint8Array } from "@stable-io/utils";
 import { type RoArray } from "@stable-io/map-utils";
+import type { Byte, Sol } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
+import {
+  associatedTokenProgramId,
+  tokenProgramId,
+  rentCost,
+  emptyAccountSize,
+} from "./constants.js";
 
 const discriminatorTypeConverter = {
   instruction: "global",
@@ -13,14 +20,19 @@ export const discriminatorLength = 8;
 export const discriminatorOf = (type: DiscriminatorType, name: string) =>
   sha256(`${discriminatorTypeConverter[type]}:${name}`).subarray(0, discriminatorLength);
 
-export type Seed = string | Uint8Array
-const stringSeedToBytes = (seed: Seed) =>
-  typeof seed === "string" ? encoding.bytes.encode(seed) : seed;
+export type Seed = string | Uint8Array | SolanaAddress;
+const seedToBytes = (seed: Seed) =>
+  typeof seed === "string"
+  ? encoding.bytes.encode(seed)
+  : isUint8Array(seed)
+  ? seed
+  : seed.toUint8Array();
+
 export type Seeds = Seed | RoArray<Seed>;
 const bytifySeeds = (seeds: Seeds) =>
   Array.isArray(seeds)
-  ? encoding.bytes.concat(...seeds.map(stringSeedToBytes))
-  : stringSeedToBytes(seeds as Seed);
+  ? encoding.bytes.concat(...seeds.map(seedToBytes))
+  : seedToBytes(seeds as Seed);
 
 const pdaStrConst = encoding.bytes.encode("ProgramDerivedAddress");
 const calcRawPda = (seeds: Seeds, bump: number, programId: SolanaAddress) =>
@@ -48,4 +60,16 @@ export function findPda(seeds: Seeds, programId: SolanaAddress): [SolanaAddress,
 
     --bump;
   }
+}
+
+export function findAta(
+  owner: SolanaAddress,
+  mint: SolanaAddress,
+  tokenProgram: SolanaAddress = tokenProgramId,
+): SolanaAddress {
+  return findPda([owner, tokenProgram, mint], associatedTokenProgramId)[0];
+}
+
+export function minimumBalanceForRentExemption(size: Byte): Sol {
+  return emptyAccountSize.add(size).convert(rentCost);
 }

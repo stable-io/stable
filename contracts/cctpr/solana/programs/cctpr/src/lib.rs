@@ -22,6 +22,8 @@ pub mod cctpr {
     corridor: Corridor,
     quote: RelayQuote,
     gasless: Option<GaslessParams>,
+    message_sent_event_data_seed: [u8; 4],
+    message_sent_event_data_bump: u8,
   ) -> Result<()> {
     processor::transfer_with_relay(
       ctx,
@@ -31,6 +33,8 @@ pub mod cctpr {
       corridor,
       quote,
       gasless,
+      message_sent_event_data_seed,
+      message_sent_event_data_bump,
     )
   }
 

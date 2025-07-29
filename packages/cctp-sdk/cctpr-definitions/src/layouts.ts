@@ -4,8 +4,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { DeriveType, Item, NamedItem, Layout } from "binary-layout";
-import { boolItem, enumItem } from "binary-layout";
-import { type RoTuple, zip, range } from "@stable-io/map-utils";
+import { boolItem, enumItem, calcStaticSize } from "binary-layout";
+import { type RoTuple, zip, range, mapTo } from "@stable-io/map-utils";
 import { type KindWithHuman, type KindWithAtomic, Rational } from "@stable-io/amount";
 import type { Network, Domain, Platform } from "@stable-io/cctp-sdk-definitions";
 import {
@@ -19,6 +19,7 @@ import {
   domains,
   linearTransform,
   enumSwitchVariants,
+  byte,
 } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedPlatformDomainTuple } from "./constants.js";
 import { supportedDomains, supportedPlatformDomains } from "./constants.js";
@@ -70,6 +71,15 @@ export const routerHookDataLayout = <N extends Network>(network: N) => [
   { name: "mintRecipient",     ...universalAddressItem         },
   { name: "gasDropoff",        ...gasDropoffItem               },
 ] as const satisfies Layout;
+export const routerHookDataSize = byte((() => {
+  const [mainnetSize, testnetSize] =
+    mapTo(["Mainnet", "Testnet"])(network => calcStaticSize(routerHookDataLayout(network))!);
+
+  if (mainnetSize !== testnetSize)
+    throw new Error("Unexpected router hook data size difference between mainnet and testnet");
+
+  return mainnetSize;
+})());
 
 const relayFeeGasTokenItem = <const K extends GasTokenKind>(kind: K) =>
   amountItem(8, kind, linearTransform("to->from", 10n**9n)); //store in nano (gwei)

@@ -50,6 +50,7 @@ pub mod v1 {
     pub token_program: AccountInfo<'info>,
     pub system_program: AccountInfo<'info>,
     //CCTP Token Messenger Minter program uses Anchor's event_cpi macro
+    //see: https://github.com/solana-foundation/anchor/blob/3dd2386d89123b4639995957ba67c35108f96ae5/lang/attribute/event/src/lib.rs#L197-L227
     pub event_authority: AccountInfo<'info>,
   }
 

@@ -17,9 +17,8 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { usdcItem } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { solanaAddressItem } from "@stable-io/cctp-sdk-solana";
+import { littleEndian,solanaAddressItem } from "@stable-io/cctp-sdk-solana";
 import { foreignDomains } from "./constants.js";
-import { littleEndian } from "./layouts.js";
 
 export const oracleChainIdItem = <N extends Network>(network: N) =>
   wormholeChainIdItem(network, foreignDomains(network));

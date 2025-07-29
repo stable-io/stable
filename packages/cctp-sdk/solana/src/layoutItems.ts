@@ -3,10 +3,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { CustomizableBytes, CustomConversion, Item, ProperLayout } from "binary-layout";
-import { customizableBytes } from "binary-layout";
+import type {
+  NumberSize,
+  CustomizableBytes,
+  CustomConversion,
+  Item,
+  Layout,
+  ProperLayout,
+  DeriveType,
+} from "binary-layout";
+import { customizableBytes, boolItem, enumItem, setEndianness } from "binary-layout";
+import { valueIndexEntries } from "@stable-io/map-utils";
+import { KindWithAtomic } from "@stable-io/amount";
+import { paddingItem, amountItem, hashItem, Sol, sol } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
 import { type DiscriminatorType, discriminatorOf } from "./utils.js";
+
+export const littleEndian = <const L extends Layout>(layout: L) =>
+  setEndianness(layout, "little");
 
 export const bumpItem = { binary: "uint", size: 1 } as const satisfies Item;
 
@@ -47,3 +61,59 @@ export const instructionLayout =
 export const eventLayout =
   <const L extends ProperLayout>(name: string, layout: L) =>
     discriminatedLayout("event", name, layout);
+
+export const cEnumItem = <const E extends readonly string[]>(names: E, size: NumberSize = 1) =>
+  enumItem(valueIndexEntries(names), { size });
+
+// named after https://docs.rs/solana-program-option/latest/solana_program_option/enum.COption.html
+const baseCOptionLayout = <const L extends Layout>(layout: L) => [
+  { name: "padding", ...paddingItem(3)       },
+  { name: "isSome",  ...boolItem()           },
+  { name: "value",   binary: "bytes", layout },
+] as const;
+type BaseCOptionLayout<L extends Layout> = DeriveType<ReturnType<typeof baseCOptionLayout<L>>>;
+
+export const cOptionItem = <const L extends Layout>(layout: L, defaultValue: DeriveType<L>) => ({
+  binary: "bytes",
+  layout: baseCOptionLayout(layout),
+  custom: {
+    to: (obj: BaseCOptionLayout<L>) =>
+      obj.isSome ? obj.value : undefined,
+    from: (value: DeriveType<L> | undefined) =>
+      value === undefined ? { isSome: false, value: defaultValue } : { isSome: true, value },
+  },
+} as const);
+
+export const cOptionAddressItem = cOptionItem(solanaAddressItem, SolanaAddress.zeroAddress);
+
+export const mintAccountLayout = <const K extends KindWithAtomic>(kind: K) => littleEndian([
+  { name: "mintAuthority",   ...cOptionAddressItem   },
+  { name: "supply",          ...amountItem(8, kind)  },
+  { name: "decimals",        binary: "uint", size: 1 },
+  { name: "isInitialized",   ...boolItem()           },
+  { name: "freezeAuthority", ...cOptionAddressItem   },
+]);
+
+const initStates = ["Uninitialized", "Initialized"] as const;
+
+const tokenStates = [...initStates, "Frozen"] as const;
+export const tokenAccountLayout = <const K extends KindWithAtomic>(kind: K) => littleEndian([
+  { name: "mint",            ...solanaAddressItem                       },
+  { name: "owner",           ...solanaAddressItem                       },
+  { name: "amount",          ...amountItem(8, kind)                     },
+  { name: "delegate",        ...cOptionAddressItem                      },
+  { name: "state",           ...cEnumItem(tokenStates)                  },
+  { name: "isNative",        ...cOptionItem(amountItem(8, Sol), sol(0)) },
+  { name: "delegatedAmount", ...amountItem(8, kind)                     },
+  { name: "closeAuthority",  ...cOptionAddressItem                      },
+]);
+
+//see https://github.com/solana-program/system/blob/main/clients/js/src/generated/accounts/nonce.ts
+const nonceVersion = ["Legacy", "Current"] as const;
+export const durableNonceAccountLayout = littleEndian([
+  { name: "version",         ...cEnumItem(nonceVersion, 4) },
+  { name: "state",           ...cEnumItem(initStates,   4) },
+  { name: "authority",       ...solanaAddressItem          },
+  { name: "blockhash",       ...hashItem                   },
+  { name: "solPerSignature", ...amountItem(8, Sol)         },
+]);

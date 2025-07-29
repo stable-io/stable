@@ -1,8 +1,16 @@
 import { Simplify } from "@stable-io/map-utils";
 import { Rational } from "@stable-io/amount";
-import type { DomainsOf, Network, Platform, Percentage, Usdc, GasTokenOf } from "@stable-io/cctp-sdk-definitions";
+import type {
+  DomainsOf,
+  Network,
+  Platform,
+  Percentage,
+  Usdc,
+  GasTokenOf,
+} from "@stable-io/cctp-sdk-definitions";
 import { usdc, mulPercentage, v2 } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain, SupportedPlatformDomain } from "./constants.js";
+import type { CorridorVariant } from "./layouts.js";
 
 //"in" is guaranteed to be exact
 //"out" will _only_ be exact if:
@@ -70,6 +78,15 @@ export type CorridorParamsBase<
 export type ErasedCorridorParams =
   CorridorParamsBase<Network, Platform, SupportedDomain<Network>, SupportedDomain<Network>>;
 
+export function toCorridorVariant(
+  corridor: ErasedCorridorParams,
+  burnAmount: Usdc,
+): CorridorVariant {
+  return corridor.type === "v1"
+    ? corridor
+    : { type: corridor.type, maxFastFeeUsdc: calcFastFee(burnAmount, corridor.fastFeeRate) };
+}
+
 export function quoteIsInUsdc(quote: ErasedQuoteBase): quote is UsdcQuote {
   return (
     (quote.type === "offChain" && quote.relayFee.kind.name === "Usdc") ||
@@ -111,6 +128,15 @@ export function calcBurnAmount(
     throw new Error("Transer Amount Less or Equal to 0 After Fees");
 
   return burnAmount;
+}
+
+export function calcInputAmount(inOrOut: InOrOut, quote: ErasedQuoteBase, burnAmount: Usdc): Usdc {
+  return inOrOut.type === "in"
+    ? inOrOut.amount
+    : burnAmount.add(quoteIsInUsdc(quote) && quote.type === "offChain"
+      ? quote.relayFee
+      : usdc(0),
+    );
 }
 
 function ceilToMicroUsdc(amount: Usdc): Usdc {

@@ -82,7 +82,7 @@ pub struct TransferWithRelay<'info> {
   // determines the destination chain
   pub chain_config: Account<'info, ChainConfig>,
 
-  /// CHECK: see has_one constraint (Anchor is absolutely retarded)
+  /// CHECK: see has_one constraint
   #[account(mut)]
   pub fee_recipient: AccountInfo<'info>,
 
@@ -104,9 +104,9 @@ pub struct TransferWithRelay<'info> {
   #[account(constraint = avalanche_prices.chain_id == CHAIN_ID_AVALANCHE)]
   pub avalanche_prices: Option<Account<'info, PricesState>>,
 
-  //Would be nice to make this a PDA but we don't have a unique seed to leverage to that end.
+  /// CHECK: PDA derived from the user's address and a unique 4 byte seed (e.g. the timestamp)
   #[account(mut)]
-  pub message_sent_event_data: Signer<'info>,
+  pub message_sent_event_data: AccountInfo<'info>,
 
   /// CHECK: leave Brittney alone
   #[account(mut)]
@@ -227,6 +227,8 @@ pub fn transfer_with_relay(
   corridor: Corridor,
   quote: RelayQuote,
   gasless: Option<GaslessParams>,
+  message_sent_event_data_seed: [u8; 4],
+  message_sent_event_data_bump: u8,
 ) -> Result<()> {
   let accs = &ctx.accounts;
 
@@ -323,7 +325,7 @@ pub fn transfer_with_relay(
     RelayQuote::OnChainGas  { max_relay_fee_sol } => {
       let relay_fee_usdc = calc_onchain_relay_fee_usdc()?;
       let relay_fee_sol = accs.oracle_config.micro_usd_to_sol(relay_fee_usdc)?.saturating_sub(
-        if gasless.is_none() { cctp_message_rent_cost_sol } else {0}
+        if gasless.is_none() { cctp_message_rent_cost_sol } else { 0 }
       );
       require!(relay_fee_sol <= max_relay_fee_sol, CctprError::ExceedsMaxFee);
       (false, relay_fee_sol, input_amount)
@@ -414,10 +416,18 @@ pub fn transfer_with_relay(
     )?;
   }
 
+  let user_key = accs.user.key();
+  let message_sent_event_data_seeds: &[&[u8]] = &[
+    user_key.as_ref(),
+    message_sent_event_data_seed.as_ref(),
+    &[message_sent_event_data_bump],
+  ];
+  let signer_seeds: &[&[&[u8]]] = &[message_sent_event_data_seeds];
+
   let cctp_nonce =
     if let Corridor::V1 = corridor {
       deposit::v1::deposit_for_burn(
-        CpiContext::new(
+        CpiContext::new_with_signer(
           ctx.accounts.token_messenger_minter_program.to_account_info(),
           deposit::v1::Deposit {
             burn_token_owner:                          ctx.accounts
@@ -453,6 +463,7 @@ pub fn transfer_with_relay(
             event_authority:                           ctx.accounts
               .token_messenger_event_authority         .to_account_info(),
           },
+          signer_seeds,
         ),
         deposit::v1::DepositForBurnParams {
           amount: transfer_amount,
@@ -470,7 +481,7 @@ pub fn transfer_with_relay(
         _ => unreachable!(),
       };
 
-      let burn_ctx = CpiContext::new(
+      let burn_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_messenger_minter_program.to_account_info(),
         deposit::v2::Deposit {
           burn_token_owner:                          ctx.accounts
@@ -508,6 +519,7 @@ pub fn transfer_with_relay(
           event_authority:                           ctx.accounts
             .token_messenger_event_authority         .to_account_info(),
         },
+        signer_seeds,
       );
       
       let burn_params = deposit::v2::DepositForBurnParams {
