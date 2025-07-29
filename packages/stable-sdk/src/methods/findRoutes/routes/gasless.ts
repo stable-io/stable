@@ -11,7 +11,7 @@ import { SupportedEvmDomain, Corridor, CorridorStats } from "@stable-io/cctp-sdk
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
-import { GetQuoteParams, getTransferQuote } from "../../../api/gasless.js";
+import { GetQuoteParams, GetQuoteResponse, getTransferQuote } from "../../../api/gasless.js";
 import { transferWithGaslessRelay } from "../../../gasless/transfer.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
@@ -35,7 +35,7 @@ export async function buildGaslessRoute<
   evmClient: ViemEvmClient<N, S>,
   intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
-): Promise<Route<S, D>> {
+): Promise<Route<S, D> | null> {
   if (intent.paymentToken !== "usdc")
     throw new Error("Gasless Transfer can't be paid in native token");
 
@@ -66,6 +66,8 @@ export async function buildGaslessRoute<
     evmClient.network,
     transferParams,
   );
+
+  if (quote === null) return quote;
 
   const tokenAllowanceSteps = permit2PermitRequired
     ? [signPermitStep(intent.sourceChain)]
