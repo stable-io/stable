@@ -19,10 +19,10 @@ import { mapTo } from "@stable-io/map-utils";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { contractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SolanaAddress, findPda } from "@stable-io/cctp-sdk-solana";
-import { type ForeignDomain, oracleAddress } from "../constants.js";
-import type { Config } from "../layouts.js";
-import { foreignDomainItem, configLayout } from "../layouts.js";
-import { oracleChainIdItem } from "../oracleLayouts.js";
+import { type ForeignDomain, oracleAddress } from "./constants.js";
+import type { Config } from "./layouts.js";
+import { foreignDomainItem, configLayout } from "./layouts.js";
+import { oracleChainIdItem } from "./oracleLayouts.js";
 
 //we could include the network parameter here but it's likely not worth the hassle
 type RpcType = Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;

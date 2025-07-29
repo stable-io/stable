@@ -67,16 +67,16 @@ import {
   minimumBalanceForRentExemption,
   durableNonceAccountLayout,
 } from "@stable-io/cctp-sdk-solana";
-import { type ForeignDomain, executionCosts } from "../constants.js";
+import { type ForeignDomain, executionCosts } from "./constants.js";
 import type {
   FeeAdjustment,
   GaslessParams,
   UserQuoteVariant,
   EventDataSeed,
-} from "../layouts.js";
-import { chainConfigLayout, transferWithRelayParamsLayout } from "../layouts.js";
-import type { PriceState } from "../oracleLayouts.js";
-import { oracleConfigLayout, priceStateLayout } from "../oracleLayouts.js";
+} from "./layouts.js";
+import { chainConfigLayout, transferWithRelayParamsLayout } from "./layouts.js";
+import type { PriceState } from "./oracleLayouts.js";
+import { oracleConfigLayout, priceStateLayout } from "./oracleLayouts.js";
 import { CctpRBase } from "./base.js";
 
 const priceAccountsPerDomain = 2; //i.e. PriceAddresses["length"]

@@ -8,7 +8,7 @@ import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { wormholeChainIdOf } from "@stable-io/cctp-sdk-definitions";
 import type { FeeAdjustmentType } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SolanaAddress, systemProgramId } from "@stable-io/cctp-sdk-solana";
-import type { ForeignDomain } from "../constants.js";
+import type { ForeignDomain } from "./constants.js";
 import {
   type FeeAdjustment,
   initializeParamsLayout,
@@ -21,7 +21,7 @@ import {
   submitOwnerTransferRequestParamsLayout,
   cancelOwnerTransferRequestParamsLayout,
   confirmOwnerTransferRequestParamsLayout,
-} from "../layouts.js";
+} from "./layouts.js";
 import { type Ix, CctpRBase } from "./base.js";
 
 type BasicEvmAddress = Uint8Array; //TODO: better type
