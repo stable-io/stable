@@ -79,7 +79,7 @@ uint constant SOLANA_V1_STORAGE_BYTES = SOLANA_ATA_STORAGE_BYTES;
 //    https://github.com/circlefin/solana-cctp-contracts/blob/9f8cf26d059cf8927ae0a0b351f3a7a88c7bdade/programs/v2/message-transmitter-v2/src/state.rs#L50-L52
 //  and here:
 //    https://github.com/circlefin/solana-cctp-contracts/blob/9f8cf26d059cf8927ae0a0b351f3a7a88c7bdade/programs/v2/message-transmitter-v2/src/instructions/receive_message.rs#L59-L70
-uint constant SOLANA_V2_STORAGE_BYTES = 128 + 1 + SOLANA_ATA_STORAGE_BYTES;
+uint constant SOLANA_V2_STORAGE_BYTES = 128 + 8 + 1 + SOLANA_ATA_STORAGE_BYTES;
 uint constant SOLANA_SIGNATURE_COUNT = 1;
 
 //fork testing suggests gas costs of ~240k but Avalanche testnet gives 281k:
