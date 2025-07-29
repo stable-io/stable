@@ -9,7 +9,7 @@ import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, p
 import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
 import { Network } from "../types/index.js";
-import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./index.js"
+import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./index.js";
 
 export type GetQuoteParams = {
   sourceChain: keyof EvmDomains;

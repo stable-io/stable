@@ -1,6 +1,6 @@
-import { SerializedBigint } from "@stable-io/utils"
+import { SerializedBigint } from "@stable-io/utils";
 
 export type PriceDto = {
-  gasTokenPriceAtomicUsdc: SerializedBigint,
-  gasPriceAtomic: SerializedBigint,
+  gasTokenPriceAtomicUsdc: SerializedBigint;
+  gasPriceAtomic: SerializedBigint;
 };

@@ -31,4 +31,4 @@ export class ExecutionCostService {
   public getSupportedPlatforms(): Platform[] {
     return ["Evm"];
   }
-} 
+}

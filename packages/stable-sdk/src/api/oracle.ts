@@ -1,7 +1,6 @@
-
 import { deserializeBigints, SerializedBigint } from "@stable-io/utils";
 import { Network } from "../types/index.js";
-import { apiRequest, apiEndpoint, APIResponse, apiEndpointWithQuery } from "./index.js"
+import { apiRequest, HTTPCode, APIResponse, apiEndpointWithQuery } from "./index.js";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 
 export type GetDomainPricesParams = {
@@ -9,13 +8,13 @@ export type GetDomainPricesParams = {
 };
 
 export type DomainPrices = {
-  gasTokenPriceAtomicUsdc: bigint,
-  gasPriceAtomic: bigint,
-}
+  gasTokenPriceAtomicUsdc: bigint;
+  gasPriceAtomic: bigint;
+};
 
 type SerializedDomainPrices = {
   [key in keyof DomainPrices]: SerializedBigint
-}
+};
 
 export async function getDomainPrices(
   network: Network,
@@ -23,9 +22,12 @@ export async function getDomainPrices(
 ): Promise<DomainPrices> {
   const endpoint = apiEndpointWithQuery(network)(`oracle/price`, params);
 
-  const apiResponse = await apiRequest<APIResponse<200, {data: SerializedDomainPrices}>>(endpoint, { method: "GET" });
+  const apiResponse = await apiRequest<
+    APIResponse<HTTPCode, { data: SerializedDomainPrices }>
+  >(endpoint, { method: "GET" });
 
-  if (apiResponse.status >=400) throw new Error("Failed to get Prices from Oracle API");
+  if (apiResponse.status >=400)
+      throw new Error(`Failed to get Prices from Oracle API. Status Code: ${apiResponse.status}`);
 
   const parsedResult = deserializeBigints(apiResponse.value.data);
 

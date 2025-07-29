@@ -66,4 +66,4 @@ export async function apiRequest<T extends APIResponse<HTTPCode, BaseObject>>(
   return { status, value } as T;
 }
 
-export * from "./gasless.js"
+export * from "./gasless.js";

@@ -7,4 +7,4 @@ import { ExecutionCostService } from "./executionCost.service";
   providers: [ExecutionCostService],
   exports: [ExecutionCostService],
 })
-export class ExecutionCostModule {} 
+export class ExecutionCostModule {}

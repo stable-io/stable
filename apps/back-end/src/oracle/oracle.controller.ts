@@ -21,7 +21,8 @@ export class OracleController {
   @Get("/price")
   @ApiResponse({
     status: 200,
-    description: "Current gas token price and gas price for the specified domain",
+    description:
+      "Current gas token price and gas price for the specified domain",
     type: PriceResponseDto,
   })
   @ApiResponse({
@@ -40,8 +41,8 @@ export class OracleController {
     return {
       data: serializeBigints({
         gasTokenPriceAtomicUsdc: priceData.gasTokenPrice.toUnit("atomic"),
-        gasPriceAtomic: priceData.gasPrice.toUnit("atomic")
+        gasPriceAtomic: priceData.gasPrice.toUnit("atomic"),
       }) as PriceDto,
-    }
+    };
   }
-} 
+}

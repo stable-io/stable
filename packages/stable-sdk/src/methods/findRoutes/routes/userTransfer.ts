@@ -7,7 +7,6 @@ import { init as initDefinitions,
   EvmDomains,
   GasTokenOf,
   Usdc,
-  percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
@@ -74,7 +73,12 @@ export async function buildUserTransferRoute<
 
   const routeSteps = [
     ...tokenAllowanceSteps,
-    await buildTransferStep(evmClient.network, corridor.corridor, intent.sourceChain, intent.usePermit),
+    await buildTransferStep(
+      evmClient.network,
+      corridor.corridor,
+      intent.sourceChain,
+      intent.usePermit,
+    ),
   ];
 
   const corridorParams = corridor.corridor === "v1"

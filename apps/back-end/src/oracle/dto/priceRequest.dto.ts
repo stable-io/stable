@@ -10,10 +10,10 @@ export class PriceRequestDto {
    * The blockchain domain to get price information for
    * @example "Ethereum"
    */
-  @ApiProperty({ 
+  @ApiProperty({
     enum: domains,
-    description: "The blockchain domain to get price information for"
+    description: "The blockchain domain to get price information for",
   })
   @IsIn(domains)
   domain!: Domain;
-} 
+}

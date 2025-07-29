@@ -1,5 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { usdcContracts, evmGasToken, EvmGasToken, Usdc, usdc } from "@stable-io/cctp-sdk-definitions";
+import {
+  usdcContracts,
+  evmGasToken,
+  EvmGasToken,
+  Usdc,
+  usdc,
+} from "@stable-io/cctp-sdk-definitions";
 import {
   ContractTx,
   EvmAddress,
@@ -98,12 +104,16 @@ export class GaslessTransferService {
 
   private async calculateGaslessFee(request: QuoteRequestDto): Promise<Usdc> {
     const prices = await this.getPricesForRequest(request);
-    const evmGasCostEstimations = this.executionCostService.getKnownEstimates("Evm");
+    const evmGasCostEstimations =
+      this.executionCostService.getKnownEstimates("Evm");
     const costs = Object.entries(evmGasCostEstimations).reduce(
       (acc, [key, value]) => {
         const gasCostInNative = prices.gasPrice.mul(value);
-        const gasTokenPriceInUsdc = Conversion.from(prices.gasTokenPrice, EvmGasToken)
-        const usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc)
+        const gasTokenPriceInUsdc = Conversion.from(
+          prices.gasTokenPrice,
+          EvmGasToken,
+        );
+        const usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc);
         acc[key as keyof typeof evmGasCostEstimations] = usdcCost;
         return acc;
       },
@@ -122,10 +132,8 @@ export class GaslessTransferService {
       }
     })();
     if (request.permit2PermitRequired)
-      corridorCost = corridorCost
-        .add(costs.permit)
-        .add(costs.multiCall);
-    return usdc(corridorCost.toUnit("atomic"), "atomic")
+      corridorCost = corridorCost.add(costs.permit).add(costs.multiCall);
+    return usdc(corridorCost.toUnit("atomic"), "atomic");
   }
 
   private multiCallWithPermit(

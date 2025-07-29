@@ -26,7 +26,7 @@ import {
 
 import type { Fee, Network, Intent } from "../../types/index.js";
 import { RouteExecutionStep } from "./steps.js";
-import { getDomainPrices } from "src/api/oracle.js";
+import { getDomainPrices } from "../../api/oracle.js";
 
 export function getCorridorFees<
   N extends Network,
@@ -65,22 +65,11 @@ export async function calculateTotalCost(
   });
   const gasTokenKind = gasTokenKindOf(domain);
   const gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
-
-  // @todo: get the gas token price from the oracle
-  const usdPerGasToken: Readonly<
-    Record<GasTokenNameOf<keyof EvmDomains>, number>
-  > = {
-    Eth: 2587.19,
-    Avax: 25.59,
-    Pol: 0.2533,
-    Sonic: 0.5861,
-  };
   // @todo: get the USDC price from the oracle
   const usdPerUsdc = 1;
   const usdcPrice = Conversion.from(usd(usdPerUsdc), Usdc);
-  
-  const stepsCost = steps.reduce((subtotal, step) => {
 
+  const stepsCost = steps.reduce((subtotal, step) => {
     const gasTokenCost: Amount<typeof gasTokenKind> = gasTokenOf(domain)(
       domainPrices.gasPriceAtomic,
       "atomic",

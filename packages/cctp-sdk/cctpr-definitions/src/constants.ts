@@ -68,8 +68,8 @@ export const relayOverheadOf = {
     Linea:     30, // TODO: Adjust
   },
   Testnet: {
-    Ethereum:  13.20,
-    Avalanche: 4.50,
+    Ethereum:  13.2,
+    Avalanche: 4.5,
     Optimism:  3.05,
     Arbitrum:  2.99,
     Base:      3.09,
