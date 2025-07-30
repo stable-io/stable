@@ -21,7 +21,7 @@ import {
   SUI_STORAGE_BYTES,
   SUI_STORAGE_REBATE,
   SOLANA_COMPUTE_BUDGET,
-  SOLANA_STORAGE_BYTES,
+  SOLANA_V1_STORAGE_BYTES,
   SOLANA_SIGNATURE_COUNT,
   AVAX_HOP_GAS_COST
 } from "cctpr/assets/CctpRQuote.sol";
@@ -73,9 +73,9 @@ contract Quote is CctpRTestBase {
 
   function _checkQuoteSolanaV1(int16 absAdjustment) public view {
     uint txCostInSol =
-      SOLANA_COMPUTE_BUDGET * SOLANA_COMPUTATION_COST * 1e3 +
-      SOLANA_STORAGE_BYTES * SOLANA_ACCOUNT_SIZE_COST * 1e9 +
-      SOLANA_SIGNATURE_COUNT * SOLANA_SIGNATURE_COST * 1e9;
+      SOLANA_COMPUTE_BUDGET   * SOLANA_COMPUTATION_COST * 1e3 +
+      SOLANA_V1_STORAGE_BYTES * SOLANA_ACCOUNT_SIZE_COST * 1e9 +
+      SOLANA_SIGNATURE_COUNT  * SOLANA_SIGNATURE_COST * 1e9;
     uint adjustedTxCostInSol =
       _applyRelativeFeeAdjustment(txCostInSol, AT_COST_RELATIVE_FEE_ADJUSTMENT);
     uint adjustedTxCostInUsd = adjustedTxCostInSol * SOLANA_GAS_TOKEN_PRICE;
