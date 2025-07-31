@@ -5,6 +5,8 @@
 
 pragma solidity ^0.8.28;
 
+import {IMessageTransmitterV2} from "./IMessageTransmitterV2.sol";
+
 interface ITokenMessengerV2 {
   function depositForBurn(
     uint256 amount,
@@ -26,4 +28,6 @@ interface ITokenMessengerV2 {
     uint32 minFinalityThreshold,
     bytes calldata hookData
   ) external;
+
+  function localMessageTransmitter() external view returns (IMessageTransmitterV2);
 }
