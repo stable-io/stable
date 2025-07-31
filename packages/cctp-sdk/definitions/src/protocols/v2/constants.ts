@@ -27,18 +27,30 @@ export const contractEntries = [[
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
     "Polygon", [
-      ["messageTransmitter", ""],
-      ["tokenMessenger",     ""],
+      ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
+      ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
     "Unichain", [
-      ["messageTransmitter", ""],
-      ["tokenMessenger",     ""],
+      ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
+      ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
     "Base", [
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
     "Linea", [
+      ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
+      ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
+    ]], [
+    "Sonic", [
+      ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
+      ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
+    ]], [
+    "Codex", [
+      ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
+      ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
+    ]], [
+    "Worldchain", [
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]],
@@ -73,6 +85,18 @@ export const contractEntries = [[
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
     "Linea", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Sonic", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Codex", [
+      ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
+      ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
+    ]], [
+    "Worldchain", [
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]],

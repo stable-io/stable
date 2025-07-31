@@ -27,7 +27,7 @@ export const contractEntries = [[
     "Base", [
       ["messageTransmitter", "0xAD09780d193884d503182aD4588450C416D6F9D4"],
       ["tokenMessenger",     "0x1682Ae6375C4E4A97e4B583BC394c861A46D8962"],
-    ]], [
+    ]],[
     "Solana", [
       ["messageTransmitter", "CCTPmbSD7gX1bxKPAmg77w8oFzNFpaQiQUWD43TKaecd"],
       ["tokenMessenger",     "CCTPiPYPc6AsJuwueEnWgSgucamXDZwBd53dQ11YiKX3"],
