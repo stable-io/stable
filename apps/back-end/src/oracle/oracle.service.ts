@@ -18,8 +18,14 @@ import {
   DomainsOf,
   EvmGasToken,
   Network,
+  percentage,
+  Percentage,
   Platform,
   PlatformOf,
+  sol,
+  Sol,
+  sui,
+  Sui,
   Usdc,
   wormholeChainIdOf,
 } from "@stable-io/cctp-sdk-definitions";
@@ -27,6 +33,8 @@ import { PublicClient } from "viem";
 import { Rational } from "@stable-io/amount";
 import { ConfigService } from "../config/config.service";
 import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
+import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
+import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 const avalancheOracleAddress: Record<Network, string> = {
   Mainnet: "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
@@ -327,19 +335,81 @@ export class OracleService {
         throw new Error("Query response too short");
     };
 
-    for (const rootQuery of queries)
-      for (const query of rootQuery.queries)
-        deserializeResult(
-          query,
-          query.chain.domain === "Solana"
-            ? solanaFeeParamsLayout
-            : query.chain.domain === "Sui"
-              ? suiFeeParamsLayout
-              : evmFeeParamsLayout,
-        );
-
-    if (offset < header.length) throw new Error("Query response too long");
-
     return decodedResults as QueryResults<Q>;
   }
+}
+
+// TODO: This should be done by the layout decoding
+// But honestly this file will be deleted eventually once we have proper pricing
+
+export type EvmPriceResult = {
+  gasTokenPrice: Usdc;
+  gasPrice: EvmGasToken;
+  pricePerTxByte: EvmGasToken;
+}
+
+export type SolanaPriceResult = {
+  gasTokenPrice: Usdc;
+  pricePerAccountByte: Sol;
+  signaturePrice: Sol;
+  computationPrice: Sol;
+}
+
+export type SuiPriceResult = {
+  gasTokenPrice: Usdc;
+  computationPrice: Sui;
+  storagePrice: Sui;
+  storageRebate: Percentage;
+}
+
+export type PriceResult = EvmPriceResult | SolanaPriceResult | SuiPriceResult;
+
+// TODO: For now we assume the domains are all EVM domains
+export async function getPrices(
+  domains: (SupportedDomain<Network> | "Sui")[],
+  network: Network,
+): Promise<PriceResult[]> {
+  // TODO: RPC Urls? Create clients at startup?
+  const client = ViemEvmClient.fromNetworkAndDomain(
+    network,
+    "Avalanche",
+  ).client;
+  const oracle = new EvmAddress(avalancheOracleAddress[network]);
+  const queries = [
+    {
+      query: "Price",
+      queries: domains.map((domain) => ({
+        query: "FeeParams",
+        chain: { domain, network },
+      })),
+    },
+  ] satisfies RoArray<RootQuery>;
+  const results = await query(client, oracle, queries);
+  return results.map((result) => {
+    if (result.chain.domain === "Solana") {
+      const price = result.result as SolanaFeeParams;
+      return {
+        gasTokenPrice: price.gasTokenPrice,
+        pricePerAccountByte: sol(price.pricePerAccountByte, "lamports"),
+        signaturePrice: sol(price.signaturePrice, "lamports"),
+        // TODO: Fix this division using units properly
+        computationPrice: sol(price.computationPrice / 1000, "lamports"),
+      };
+    } else if (result.chain.domain === "Sui") {
+      const price = result.result as SuiFeeParams;
+      return {
+        gasTokenPrice: result.result.gasTokenPrice,
+        computationPrice: sui(price.computationPrice, "MIST"),
+        storagePrice: sui(price.storagePrice, "MIST"),
+        storageRebate: percentage(price.storageRebate, "scalar"),
+      };
+    } else {
+      const price = result.result as EvmFeeParams;
+      return {
+        gasTokenPrice: price.gasTokenPrice,
+        gasPrice: price.gasPrice,
+        pricePerTxByte: price.pricePerTxByte,
+      };
+    }
+  });
 }

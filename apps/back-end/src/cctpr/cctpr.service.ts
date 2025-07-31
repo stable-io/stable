@@ -49,46 +49,55 @@ export class CctpRService {
     quoteRequest: QuoteRequestDto,
     gaslessFee: Usdc,
   ): Promise<Permit2GaslessData> {
-    const cctpr = this.contractInterface(quoteRequest.sourceDomain);
-    return cctpr.composeGaslessTransferMessage(
-      quoteRequest.targetDomain,
-      this.contractAddress(quoteRequest.sourceDomain),
-      { amount: quoteRequest.amount, type: "in" },
-      quoteRequest.recipient.toUniversalAddress(),
-      quoteRequest.gasDropoff as TODO,
-      this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
-      { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
-      encoding.bignum.toBytes(
-        await this.getNextNonce(quoteRequest),
-        32 as Size,
-      ),
-      this.getDeadline(),
-      gaslessFee,
-    );
+    if (quoteRequest.sourceDomain === "Solana") {
+      throw new Error("Solana is not supported");
+    } else {  
+      const sender = quoteRequest.sender as EvmAddress;
+      const cctpr = this.contractInterface(quoteRequest.sourceDomain);
+      return cctpr.composeGaslessTransferMessage(
+        quoteRequest.targetDomain,
+        this.contractAddress(quoteRequest.sourceDomain),
+        { amount: quoteRequest.amount, type: "in" },
+        quoteRequest.recipient.toUniversalAddress(),
+        quoteRequest.gasDropoff as TODO,
+        this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
+        { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
+        encoding.bignum.toBytes(
+          await this.getNextNonce(quoteRequest.sourceDomain, sender),
+          32 as Size,
+        ),
+        this.getDeadline(),
+        gaslessFee,
+      );
+    }
   }
 
   public gaslessTransferTx(
-    quoteRequest: QuoteRequestDto,
+    quoteRequest: QuoteRequestDto<SupportedEvmDomain>,
     permit2GaslessData: Permit2GaslessData,
     permit2Signature: ParsedSignature,
     gaslessFee: Usdc,
   ): ContractTx {
-    const cctpr = this.contractInterface(quoteRequest.sourceDomain);
-
-    return cctpr.transferGasless(
-      quoteRequest.targetDomain,
-      { amount: quoteRequest.amount, type: "in" },
-      quoteRequest.recipient.toUniversalAddress(),
-      quoteRequest.gasDropoff as TODO,
-      this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
-      { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
-      encoding.bignum.toBytes(permit2GaslessData.message.nonce, 32 as Size),
-      // deadline is expressed in unix timestamp (Seconds).
-      new Date(Number(permit2GaslessData.message.deadline.toString()) * 1000),
-      gaslessFee,
-      quoteRequest.sender,
-      serializeSignature(permit2Signature),
-    );
+    if (quoteRequest.sourceDomain === "Solana") {
+      throw new Error("Solana is not supported");
+    } else {  
+      const sender = quoteRequest.sender as EvmAddress;
+      const cctpr = this.contractInterface(quoteRequest.sourceDomain);
+      return cctpr.transferGasless(
+        quoteRequest.targetDomain,
+        { amount: quoteRequest.amount, type: "in" },
+        quoteRequest.recipient.toUniversalAddress(),
+        quoteRequest.gasDropoff as TODO,
+        this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
+        { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
+        encoding.bignum.toBytes(permit2GaslessData.message.nonce, 32 as Size),
+        // deadline is expressed in unix timestamp (Seconds).
+        new Date(Number(permit2GaslessData.message.deadline.toString()) * 1000),
+        gaslessFee,
+        sender,
+        serializeSignature(permit2Signature),
+      );
+    }
   }
 
   private contractInterface<D extends keyof EvmDomains>(
@@ -102,18 +111,16 @@ export class CctpRService {
     return new Date(Date.now() + this.configService.jwtExpiresInSeconds * 1000);
   }
 
-  private async getNextNonce(request: QuoteRequestDto): Promise<Permit2Nonce> {
-    const domain = request.sourceDomain;
-    const sender = request.sender.toString();
+  private async getNextNonce(domain: DomainsOf<"Evm">, sender: EvmAddress): Promise<Permit2Nonce> {
     const domainNonceCache = this.nonceCache[domain];
     const { client } = this.blockchainClientService.getClient(domain);
 
     const nonce = await fetchNextPermit2Nonce(
       client,
-      request.sender,
-      domainNonceCache[sender],
+      sender,
+      domainNonceCache[sender.toString()],
     );
-    domainNonceCache[sender] = nonce;
+    domainNonceCache[sender.toString()] = nonce;
     return nonce;
   }
 

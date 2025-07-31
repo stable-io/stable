@@ -4,8 +4,9 @@ import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { IsNotEmpty, IsObject, ValidateNested } from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";
 import { IsUsdcAmount } from "../../common/validators";
+import { Domain } from "../../common/types";
 
-export class JwtPayloadDto {
+export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   /**
    * Permit2 typed data for user signature
    */
@@ -19,8 +20,8 @@ export class JwtPayloadDto {
    * Original quote request parameters
    */
   @ValidateNested()
-  readonly quoteRequest!: QuoteRequestDto;
+  readonly quoteRequest!: QuoteRequestDto<SourceDomain>;
 
-  @IsUsdcAmount({ min: usdc(0.000001) })
+  @IsUsdcAmount({ min: "0.000001" })
   readonly gaslessFee!: Usdc;
 }

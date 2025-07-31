@@ -15,6 +15,7 @@ import {
   RelayResponseDto,
 } from "./dto";
 import { GaslessTransferService } from "./gaslessTransfer.service";
+import { SupportedEvmDomain } from "../common/types";
 
 @Controller("gasless-transfer")
 export class GaslessTransferController {
@@ -42,19 +43,14 @@ export class GaslessTransferController {
   public async quoteGaslessTransfer(
     @Query() request: QuoteRequestDto,
   ): Promise<QuoteResponseDto> {
-    let quote;
-    try {
-      quote = await this.gaslessTransferService.quoteGaslessTransfer(request);
-    } catch (error) {
-      if (!(error instanceof Error)) throw error;
-      if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
-        throw new BadRequestException(error.message);
-      }
-      throw new UnprocessableEntityException("Request could not be processed");
-    }
-    return {
-      data: quote,
-    };
+    const data = request.sourceDomain === "Solana"
+    ? await this.gaslessTransferService.quoteSolanaGaslessTransfer(
+        request as QuoteRequestDto<"Solana">
+      )
+    : await this.gaslessTransferService.quoteEvmGaslessTransfer(
+        request as QuoteRequestDto<SupportedEvmDomain>
+      );
+    return { data };
   }
 
   @Post("/relay")
@@ -74,13 +70,13 @@ export class GaslessTransferController {
   public async initiateGaslessTransfer(
     @Body() request: RelayRequestDto,
   ): Promise<RelayResponseDto> {
-    let response;
-    try {
-      response =
-        await this.gaslessTransferService.initiateGaslessTransfer(request);
-    } catch {
-      throw new UnprocessableEntityException("Request could not be processed");
-    }
-    return { data: response };
+    const data = request.jwt.quoteRequest.sourceDomain === "Solana"
+      ? await this.gaslessTransferService.initiateSolanaGaslessTransfer(
+          request as RelayRequestDto<"Solana">
+        )
+      : await this.gaslessTransferService.initiateEvmGaslessTransfer(
+          request as RelayRequestDto<SupportedEvmDomain>
+        );
+    return { data };
   }
 }

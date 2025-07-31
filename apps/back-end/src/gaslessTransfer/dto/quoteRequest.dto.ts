@@ -1,44 +1,44 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsIn, ValidateIf, Validate } from "class-validator";
-import {
-  Percentage,
-  domainsOf,
-  evmGasToken,
-  usdc,
-} from "@stable-io/cctp-sdk-definitions";
+import { Percentage } from "@stable-io/cctp-sdk-definitions";
 import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { Transform } from "class-transformer";
-import type { Domain } from "../../common/types";
-import { ADDRESS_PATTERNS, AMOUNT_PATTERNS } from "../../common/utils";
+import { AMOUNT_PATTERNS } from "../../common/utils";
+import { 
+  supportedDomains, 
+  type Domain, 
+  type SupportedAddress,
+  type SupportedAmount,
+} from "../../common/types";
 import {
   IsNotSameAsConstraint,
   IsUsdcAmount,
-  IsEvmGasTokenAmount,
-  IsEvmAddress,
+  IsPlatformAddress,
   IsBooleanString,
   IsPercentage,
+  IsPlatformAmount,
 } from "../../common/validators";
 
-const domains = domainsOf("Evm");
-
-export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
+export class QuoteRequestDto<
+  SourceDomain extends Domain = Domain,
+  TargetDomain extends Domain = Domain
+> {
   /**
    * The source blockchain for the transfer
    * @example "Ethereum"
    */
-  @ApiProperty({ enum: domains })
-  @IsIn(domains)
-  sourceDomain!: Domain;
+  @ApiProperty({ enum: supportedDomains })
+  @IsIn(supportedDomains)
+  sourceDomain!: SourceDomain;
 
   /**
    * The target blockchain for the transfer
    * @example "Arbitrum"
    */
-  @ApiProperty({ enum: domains })
-  @IsIn(domains)
+  @ApiProperty({ enum: supportedDomains })
+  @IsIn(supportedDomains)
   @Validate(IsNotSameAsConstraint, ["sourceDomain"])
   targetDomain!: TargetDomain;
 
@@ -52,41 +52,35 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     format: "amount",
     pattern: AMOUNT_PATTERNS.USDC,
   })
-  @IsUsdcAmount({ min: usdc(0.000001) })
+  @IsUsdcAmount({ min: "0.000001" })
   @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
     toPlainOnly: true,
   })
   amount!: Usdc;
 
   /**
-   * Sender's Ethereum address
+   * Sender's address
    * @example "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
    */
   @ApiProperty({
     type: String,
     format: "address",
-    pattern: ADDRESS_PATTERNS.EVM,
   })
-  @IsEvmAddress()
-  @Transform(({ value }: { value: EvmAddress }) => value.toString(), {
-    toPlainOnly: true,
-  })
-  sender!: EvmAddress;
+  @IsPlatformAddress("sourceDomain")
+  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
+  sender!: SupportedAddress;
 
   /**
-   * Recipient's Ethereum address on the target chain
+   * Recipient's address on the target chain
    * @example "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
    */
   @ApiProperty({
     type: String,
     format: "address",
-    pattern: ADDRESS_PATTERNS.EVM,
   })
-  @IsEvmAddress()
-  @Transform(({ value }: { value: EvmAddress }) => value.toString(), {
-    toPlainOnly: true,
-  })
-  recipient!: EvmAddress;
+  @IsPlatformAddress("targetDomain")
+  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
+  recipient!: SupportedAddress;
 
   @ApiProperty({ enum: corridors })
   @IsIn(corridors)
@@ -104,16 +98,16 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     pattern: AMOUNT_PATTERNS.EVM_GAS_TOKEN,
   })
   @ValidateIf(({ targetDomain }: { targetDomain?: any }) =>
-    domains.includes(targetDomain),
+    supportedDomains.includes(targetDomain),
   )
-  @IsEvmGasTokenAmount({ min: evmGasToken(0) })
+  @IsPlatformAmount("targetDomain", { min: 0 })
   @Transform(
     ({ value }: { value: EvmGasToken }) => value.toUnit("human").toFixed(18),
     {
       toPlainOnly: true,
     },
   )
-  gasDropoff!: EvmGasToken;
+  gasDropoff!: SupportedAmount;
 
   /**
    * Whether a permit2 permit is required for this transaction
@@ -134,7 +128,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     format: "amount",
     pattern: AMOUNT_PATTERNS.USDC,
   })
-  @IsUsdcAmount({ min: usdc(0.000001) })
+  @IsUsdcAmount({ min: "0.000001" })
   @Transform(({ value }: { value: Usdc }) => value.toUnit("USDC").toFixed(6), {
     toPlainOnly: true,
   })
@@ -149,7 +143,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
     format: "percentage",
     pattern: AMOUNT_PATTERNS.PERCENTAGE,
   })
-  @IsPercentage()
+  @IsPercentage({ min: "0" })
   @Transform(
     ({ value }: { value: Percentage }) => value.toUnit("human").toString(),
     {

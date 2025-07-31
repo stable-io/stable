@@ -1,24 +1,23 @@
 import type { EvmGasToken } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken } from "@stable-io/cctp-sdk-definitions";
 import type { ValidationOptions } from "class-validator";
-import { IsAmount } from "./isAmount.validator";
+import { AmountBounds, AmountProperties, IsAmount } from "./isAmount.validator";
+import { Rationalish } from "@stable-io/amount";
 
-interface EvmGasTokenAmountOptions {
-  min?: EvmGasToken;
-  max?: EvmGasToken;
+export const evmGasTokenAmountProperties: AmountProperties<EvmGasToken> = {
+  decimals: 18,
+  createAmount: (value: Rationalish | string) => evmGasToken(value),
+  typeName: "gas token",
 }
 
 export function IsEvmGasTokenAmount(
-  options: EvmGasTokenAmountOptions = {},
+  options: AmountBounds = {},
   validationOptions?: ValidationOptions,
 ) {
   return IsAmount(
     {
-      min: options.min,
-      max: options.max,
-      decimals: 18,
-      createAmount: (value: string) => evmGasToken(value),
-      typeName: "gas token",
+      ...options,
+      ...evmGasTokenAmountProperties,
     },
     validationOptions,
   );
