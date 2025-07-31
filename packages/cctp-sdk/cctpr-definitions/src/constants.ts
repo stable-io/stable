@@ -9,20 +9,20 @@ import type { Domain, Network } from "@stable-io/cctp-sdk-definitions";
 
 export const contractAddressEntries = [[
   "Mainnet", [
-    ["Ethereum",   "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66"],
-    ["Avalanche",  "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae"],
-    ["Optimism",   "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae"],
-    ["Arbitrum",   "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66"],
-    ["Base",       "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66"],
+    ["Ethereum",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Avalanche",  "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Optimism",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Arbitrum",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Base",       "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Solana",     undefined],
-    ["Polygon",    "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66"],
+    ["Polygon",    "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
-    ["Unichain",   "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66"],
-    ["Linea",      undefined],
+    ["Unichain",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Linea",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Codex",      undefined],
-    ["Sonic",      undefined],
-    ["Worldchain", undefined],
+    ["Sonic",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Worldchain", "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
   ]], [
   "Testnet", [
     ["Ethereum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
@@ -48,7 +48,7 @@ export const supportedDomains = constMap(contractAddressEntries, [0, 1]);
 export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDomains<N>>[number];
 
 export const avaxRouterContractAddress = {
-  Mainnet: "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66",
+  Mainnet: "0x80af48cb7e3c18da42d151f7c1aa215e63bfd8f0",
   Testnet: "0x4cfa05575695dc4383973e02af0c261dec65a948",
 } as const satisfies Record<Network, `0x${string}` | undefined>;
 
