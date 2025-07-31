@@ -19,7 +19,8 @@ import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
-import { getPrices } from "../common/utils/oracle";
+import { EvmPriceResult, getPrices, PriceResult } from "../common/utils/oracle";
+import { SupportedEvmDomain } from "../common/types";
 
 @Injectable()
 export class GaslessTransferService {
@@ -30,10 +31,10 @@ export class GaslessTransferService {
     private readonly cctpRService: CctpRService,
   ) {}
 
-  public async quoteGaslessTransfer(
-    request: QuoteRequestDto,
+  public async quoteEvmGaslessTransfer(
+    request: QuoteRequestDto<SupportedEvmDomain>,
   ): Promise<QuoteDto> {
-    const gaslessFee = await this.calculateGaslessFee(request);
+    const gaslessFee = await this.calculateEvmGaslessFee(request);
 
     const jwtPayload: JwtPayload = {
       permit2GaslessData: await this.cctpRService.composeGaslessTransferMessage(
@@ -48,15 +49,20 @@ export class GaslessTransferService {
     return { jwt };
   }
 
-  public async initiateGaslessTransfer(
-    request: RelayRequestDto,
+  public async quoteSolanaGaslessTransfer(
+    request: QuoteRequestDto<"Solana">,
+  ): Promise<QuoteDto> {
+    return { jwt: "0x1234567890abcdef" };
+  }
+
+  public async initiateEvmGaslessTransfer(
+    request: RelayRequestDto<SupportedEvmDomain>,
   ): Promise<RelayTx> {
     const {
       jwt: { quoteRequest, permit2GaslessData, gaslessFee },
       permit2Signature,
       permit,
     } = request;
-
     const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
       quoteRequest,
       permit2GaslessData,
@@ -86,17 +92,25 @@ export class GaslessTransferService {
     return { hash: txHash };
   }
 
+  public async initiateSolanaGaslessTransfer(
+    request: RelayRequestDto<"Solana">,
+  ): Promise<RelayTx> {
+    return { hash: "0x1234567890abcdef" };
+  }
+
   private async getPricesForRequest(
-    request: QuoteRequestDto,
-  ): Promise<{ gasTokenPrice: Usdc; gasPrice: EvmGasToken }> {
+    request: QuoteRequestDto<SupportedEvmDomain>,
+  ): Promise<EvmPriceResult> {
     const prices = await getPrices(
       [request.sourceDomain],
       this.configService.network,
     );
-    return prices[0]!;
+    return prices[0] as EvmPriceResult;
   }
 
-  private async calculateGaslessFee(request: QuoteRequestDto): Promise<Usdc> {
+  private async calculateEvmGaslessFee(
+    request: QuoteRequestDto<SupportedEvmDomain>
+  ): Promise<Usdc> {
     const prices = await this.getPricesForRequest(request);
     // TODO: Calculate these properly
     const gasCosts = {
@@ -135,6 +149,7 @@ export class GaslessTransferService {
     permit: PermitDto,
     quoteRequest: QuoteRequestDto,
   ): ContractTx {
+    const sender = quoteRequest.sender as EvmAddress;
     const usdcAddress = new EvmAddress(
       usdcContracts.contractAddressOf[this.configService.network][
         quoteRequest.sourceDomain
@@ -142,7 +157,7 @@ export class GaslessTransferService {
     );
 
     const permitData = encodePermitCall(
-      quoteRequest.sender,
+      sender,
       new EvmAddress(permit2Address),
       permit.value,
       permit.deadline,
