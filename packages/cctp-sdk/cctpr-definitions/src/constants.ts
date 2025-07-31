@@ -55,30 +55,30 @@ export const avaxRouterContractAddress = {
 
 export const relayOverheadOf = {
   Mainnet: {
-    Ethereum:  30, // TODO: Adjust
-    Avalanche: 30, // TODO: Adjust
-    Optimism:  30, // TODO: Adjust
-    Arbitrum:  30, // TODO: Adjust
-    Base:      30, // TODO: Adjust
-    Solana:    30, // TODO: Adjust
-    Polygon:   30, // TODO: Adjust
-    Sui:       30, // TODO: Adjust
-    Aptos:     30, // TODO: Adjust
-    Unichain:  30, // TODO: Adjust
-    Linea:     30, // TODO: Adjust
-  },
-  Testnet: {
-    Ethereum:  6, // TODO: Adjust
-    Avalanche: 6, // TODO: Adjust
-    Optimism:  6, // TODO: Adjust
-    Arbitrum:  6, // TODO: Adjust
-    Base:      6, // TODO: Adjust
+    Ethereum:  13.2,
+    Avalanche: 5.27,
+    Optimism:  3.05,
+    Arbitrum:  2.78,
+    Base:      3.11,
+    Polygon:   3.49,
     Solana:    6, // TODO: Adjust
-    Polygon:   6, // TODO: Adjust
     Sui:       6, // TODO: Adjust
     Aptos:     6, // TODO: Adjust
-    Unichain:  6, // TODO: Adjust
-    Linea:     6, // TODO: Adjust
+    Unichain:  7.73,
+    Linea:     6.06,
+  },
+  Testnet: {
+    Ethereum:  13.2,
+    Avalanche: 5.27,
+    Optimism:  3.05,
+    Arbitrum:  2.78,
+    Base:      3.11,
+    Polygon:   3.49,
+    Solana:    6, // TODO: Adjust
+    Sui:       6, // TODO: Adjust
+    Aptos:     6, // TODO: Adjust
+    Unichain:  7.73,
+    Linea:     6.06,
   },
 } as const satisfies Record<Network, Record<string, number>>;
 

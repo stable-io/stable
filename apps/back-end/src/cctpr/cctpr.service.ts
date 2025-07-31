@@ -105,7 +105,7 @@ export class CctpRService {
   }
 
   private async getNextNonce(request: QuoteRequestDto): Promise<Permit2Nonce> {
-    const domain = request.sourceDomain as DomainsOf<"Evm">;
+    const domain = request.sourceDomain;
     const sender = request.sender.toString();
     const domainNonceCache = this.nonceCache[domain];
     // TODO: RPC Urls? Create clients at startup?

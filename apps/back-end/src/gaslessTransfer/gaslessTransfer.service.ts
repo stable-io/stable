@@ -1,6 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import type { EvmGasToken, Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdcContracts, evmGasToken } from "@stable-io/cctp-sdk-definitions";
+import {
+  usdcContracts,
+  evmGasToken,
+  EvmGasToken,
+  Usdc,
+  usdc,
+} from "@stable-io/cctp-sdk-definitions";
 import {
   ContractTx,
   EvmAddress,
@@ -18,8 +23,10 @@ import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
 import { OracleService } from "../oracle/oracle.service";
+import { ExecutionCostService } from "../executionCost/executionCost.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
+import { Conversion } from "@stable-io/amount";
 
 @Injectable()
 export class GaslessTransferService {
@@ -29,6 +36,7 @@ export class GaslessTransferService {
     private readonly txLandingService: TxLandingService,
     private readonly cctpRService: CctpRService,
     private readonly oracleService: OracleService,
+    private readonly executionCostService: ExecutionCostService,
   ) {}
 
   public async quoteGaslessTransfer(
@@ -96,36 +104,36 @@ export class GaslessTransferService {
 
   private async calculateGaslessFee(request: QuoteRequestDto): Promise<Usdc> {
     const prices = await this.getPricesForRequest(request);
-    // TODO: Calculate these properly
-    const gasCosts = {
-      permit2Permit: 100000n,
-      v1: 100000n,
-      v2: 100000n,
-    } as const;
-    const costs = Object.entries(gasCosts).reduce(
+    const evmGasCostEstimations =
+      this.executionCostService.getKnownEstimates("Evm");
+    const costs = Object.entries(evmGasCostEstimations).reduce(
       (acc, [key, value]) => {
-        acc[key as keyof typeof gasCosts] = prices.gasTokenPrice.mul(
-          prices.gasPrice.mul(value).toUnit("EvmGasToken"),
+        const gasCostInNative = prices.gasPrice.mul(value);
+        const gasTokenPriceInUsdc = Conversion.from(
+          prices.gasTokenPrice,
+          EvmGasToken,
         );
+        const usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc);
+        acc[key as keyof typeof evmGasCostEstimations] = usdcCost;
         return acc;
       },
-      {} as Record<keyof typeof gasCosts, Usdc>,
+      {} as Record<keyof typeof evmGasCostEstimations, Usdc>,
     );
-    const corridorCost = ((): Usdc => {
+    let corridorCost = ((): Usdc => {
       switch (request.corridor) {
         case "v1":
-          return costs.v1;
+          return costs.v1Gasless;
         case "v2Direct":
-          return costs.v2;
+          return costs.v2Gasless;
         case "avaxHop":
-          return costs.v2.add(costs.v1);
+          return costs.v2Gasless;
         default:
           throw new Error(`Invalid corridor: ${request.corridor}`);
       }
     })();
     if (request.permit2PermitRequired)
-      return corridorCost.add(costs.permit2Permit);
-    return corridorCost;
+      corridorCost = corridorCost.add(costs.permit).add(costs.multiCall);
+    return usdc(corridorCost.toUnit("atomic"), "atomic");
   }
 
   private multiCallWithPermit(

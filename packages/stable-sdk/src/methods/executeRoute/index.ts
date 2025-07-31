@@ -69,6 +69,7 @@ export const $executeRoute =
       network,
       getRpcUrl(attestation.targetDomain),
       attestation,
+      { timeoutMs: 180000 },
     ).catch((error: unknown) => {
       route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
       throw error;
@@ -111,6 +112,7 @@ export const $executeRoute =
         network,
         getRpcUrl(secondHopAttestation.targetDomain),
         secondHopAttestation,
+        { timeoutMs: 180000 },
       ).catch((error: unknown) => {
         route.progress.emit("error", { type: "receive-failed", details: { txHash: receive.transactionHash } });
         throw error;

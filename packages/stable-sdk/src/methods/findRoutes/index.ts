@@ -63,17 +63,15 @@ export const $findRoutes = <
     const routes: SupportedRoute<N>[] = [];
 
     for (const corridor of corridors) {
-      const userTransferRoute = buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor);
-      const gaslessRoutes = intent.paymentToken === "usdc"
-        ? [buildGaslessRoute(viemEvmClient, intent, corridor)]
-        : [];
+      routes.push(
+        await buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor),
+      );
 
-      const corridorRoutes = await Promise.all([
-        ...gaslessRoutes,
-        userTransferRoute,
-      ]);
+      if (intent.paymentToken === "usdc") {
+        const gaslessRoute = await buildGaslessRoute(viemEvmClient, intent, corridor);
 
-      routes.push(...corridorRoutes);
+        if (gaslessRoute !== undefined) routes.push(gaslessRoute);
+      }
     }
 
     const { fastest, cheapest } = findBestRoutes(routes);

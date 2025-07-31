@@ -9,6 +9,7 @@
   "scripts": {
     "build": "yarn workspaces foreach --all --topological --parallel run build",
     "format:check": "yarn workspaces foreach --all --topological --parallel run format:check",
+    "format": "yarn workspaces foreach --all --topological --parallel run format",
     "lint": "yarn workspaces foreach --all --topological --parallel run lint",
     "test": "yarn workspaces foreach --all --topological --parallel run test",
     "clean": "yarn workspaces foreach --all --topological --parallel run clean",

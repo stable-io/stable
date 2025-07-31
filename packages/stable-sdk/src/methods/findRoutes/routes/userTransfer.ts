@@ -7,7 +7,6 @@ import { init as initDefinitions,
   EvmDomains,
   GasTokenOf,
   Usdc,
-  percentage,
 } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
@@ -74,7 +73,12 @@ export async function buildUserTransferRoute<
 
   const routeSteps = [
     ...tokenAllowanceSteps,
-    buildTransferStep(corridor.corridor, intent.sourceChain),
+    await buildTransferStep(
+      evmClient.network,
+      corridor.corridor,
+      intent.sourceChain,
+      intent.usePermit,
+    ),
   ];
 
   const corridorParams = corridor.corridor === "v1"
@@ -89,6 +93,7 @@ export async function buildUserTransferRoute<
     requiresMessageSignature: intent.usePermit,
     steps: routeSteps,
     estimatedTotalCost: await calculateTotalCost(
+      evmClient.network,
       routeSteps,
       corridorFees,
     ),
@@ -127,16 +132,12 @@ async function cctprRequiresAllowance<
     definitions.usdcContracts.contractAddressOf[sourceChain],
   );
   const cctprAddress = new EvmAddress(
-    /**
-     * @todo: type system thinks contractAddressOf is not callable,
-     *        but at runtime it is. Figure out what's up.
-     */
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    (cctpr.contractAddressOf as any)(sourceChain),
+    (cctpr.contractAddressOf as TODO)(sourceChain),
   );
 
   const allowance = await evm.getTokenAllowance(
-    evmClient as any,
+    evmClient,
     usdcAddress,
     sender,
     cctprAddress,

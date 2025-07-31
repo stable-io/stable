@@ -97,24 +97,24 @@ export const isFastDomain = (domain: Domain): domain is FastDomain =>
 // TODO: review numbers and add slow transfer numbers
 export const attestationTimeEstimates = {
   Mainnet: {
-    Ethereum:   8,
-    Avalanche:  8,
-    Arbitrum:   8,
-    Base:       8,
-    Linea:      8,
-    Optimism:   8,
-    Unichain:   8,
-    Polygon:    8,
+    Ethereum:   16.76,
+    Avalanche:  8.19,
+    Arbitrum:   3.18,
+    Base:       1.43,
+    Linea:      8,     // TODO
+    Optimism:   0.85,
+    Unichain:   8,    // TODO
+    Polygon:    9.04,
   },
   Testnet: {
-    Ethereum:   8,
-    Avalanche:  8,
-    Arbitrum:   8,
-    Base:       8,
-    Linea:      8,
-    Optimism:   8,
-    Unichain:   8,
-    Polygon:    8,
+    Ethereum:   16.76,
+    Avalanche:  8.19,
+    Arbitrum:   3.18,
+    Base:       1.43,
+    Linea:      8,     // TODO
+    Optimism:   0.85,
+    Unichain:   8,    // TODO
+    Polygon:    9.04,
   },
 } as const satisfies Record<Network, Record<string, number>>;
 

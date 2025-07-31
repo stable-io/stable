@@ -100,30 +100,30 @@ export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDoma
 // See https://developers.circle.com/stablecoins/required-block-confirmations
 export const attestationTimeEstimates = {
   Mainnet:{
-    Ethereum:  1140,
-    Avalanche:   20,
-    Optimism:  1140,
-    Arbitrum:  1140,
-    // Noble:       20,
-    Base:      1140,
-    Solana:      25,
-    Polygon:    480,
-    Sui:         20,
-    Aptos:       20,
-    Unichain:  1140,
+    Ethereum:    27.71,
+    Avalanche:   8.19,
+    Optimism:    4.99,
+    Arbitrum:    4.09,
+    Base:        4.27,
+    Polygon:     12.07, // TODO
+    Unichain:    20, // TODO
+    // Noble:       20, // TODO
+    Solana:      25, // TODO
+    Sui:         20, // TODO
+    Aptos:       20, // TODO
   },
   Testnet:{
-    Ethereum:    60,
-    Avalanche:   20,
-    Optimism:    20,
-    Arbitrum:    20,
-    // Noble:       20,
-    Base:        20,
-    Solana:      25,
-    Polygon:     20,
-    Sui:         20,
-    Aptos:       20,
-    Unichain:    20,
+    Ethereum:    27.71,
+    Avalanche:   8.19,
+    Optimism:    4.99,
+    Arbitrum:    4.09,
+    Base:        4.27,
+    Polygon:     12.07, // TODO
+    Unichain:    20, // TODO
+    // Noble:       20, // TODO
+    Solana:      25, // TODO
+    Sui:         20, // TODO
+    Aptos:       20, // TODO
   },
 } as const satisfies Record<Network, Record<string, number>>;
 

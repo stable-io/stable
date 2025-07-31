@@ -565,7 +565,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       );
 
     if (burnAmount.le(usdc(0)))
-      throw new Error("Transer Amount Less or Equal to 0 After Fees");
+      throw new Error("Transfer Amount Less or Equal to 0 After Fees");
 
     return burnAmount;
   }
