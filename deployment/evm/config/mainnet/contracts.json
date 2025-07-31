@@ -44,6 +44,26 @@
     {
       "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
       "chainId": 40
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 44
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 45
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 52
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 54
+    },
+    {
+      "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
+      "chainId": 41
     }
   ],
   "PriceOracleImplementation": [
@@ -85,6 +105,92 @@
     {
       "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
       "chainId": 40
+    },
+    {
+      "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
+      "chainId": 44
+    },
+    {
+      "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
+      "chainId": 45
+    },
+    {
+      "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
+      "chainId": 52
+    },
+    {
+      "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
+      "chainId": 54
+    },
+    {
+      "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
+      "chainId": 41
+    }
+  ],
+  "AvaxRouter": [
+    {
+      "address": "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66",
+      "chainId": 6
+    }
+  ],
+  "CctpR": [
+    {
+      "address": "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66",
+      "chainId": 2
+    },
+    {
+      "address": "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae",
+      "chainId": 6
+    },
+    {
+      "address": "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66",
+      "chainId": 5
+    },
+    {
+      "address": "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66",
+      "chainId": 23
+    },
+    {
+      "address": "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66",
+      "chainId": 30
+    },
+    {
+      "address": "0xb431afb0a1408bb832addfe6d443b8b0ed81cf66",
+      "chainId": 44
+    },
+    {
+      "address": "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae",
+      "chainId": 24
+    }
+  ],
+  "CctpGasDropoff": [
+    {
+      "address": "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae",
+      "chainId": 2
+    },
+    {
+      "address": "0xe65862ac3d77a69a7684e1189b865a9726e5ac1e",
+      "chainId": 6
+    },
+    {
+      "address": "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae",
+      "chainId": 5
+    },
+    {
+      "address": "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae",
+      "chainId": 23
+    },
+    {
+      "address": "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae",
+      "chainId": 30
+    },
+    {
+      "address": "0x88e4a723da9460de2886a5f978fb1e74c3a6f3ae",
+      "chainId": 44
+    },
+    {
+      "address": "0xe65862ac3d77a69a7684e1189b865a9726e5ac1e",
+      "chainId": 24
     }
   ]
 }

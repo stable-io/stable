@@ -1,0 +1,54 @@
+{
+  "v1Adjustments": {
+    "Ethereum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Avalanche":  { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Optimism":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Arbitrum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Base":       { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Polygon":    { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Unichain":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Linea":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Codex":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Sonic":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Worldchain": { "absoluteUsdc": 0, "relativePercent": 100 }
+  },
+  "v2DirectAdjustments": {
+    "Ethereum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Avalanche":  { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Optimism":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Arbitrum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Base":       { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Polygon":    { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Unichain":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Linea":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Codex":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Sonic":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Worldchain": { "absoluteUsdc": 0, "relativePercent": 100 }
+  },
+  "avaxHopAdjustments": {
+    "Ethereum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Avalanche":  { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Optimism":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Arbitrum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Base":       { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Polygon":    { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Unichain":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Linea":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Codex":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Sonic":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Worldchain": { "absoluteUsdc": 0, "relativePercent": 100 }
+  },
+  "gasDropoffAdjustments": {
+    "Ethereum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Avalanche":  { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Optimism":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Arbitrum":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Base":       { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Polygon":    { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Unichain":   { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Linea":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Codex":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Sonic":      { "absoluteUsdc": 0, "relativePercent": 100 },
+    "Worldchain": { "absoluteUsdc": 0, "relativePercent": 100 }
+  }
+}
