@@ -105,7 +105,8 @@ abstract contract CctpRUser is CctpRQuote {
       _usdc.approve(tokenMessengerV1, type(uint256).max);
     }
     if (tokenMessengerV2 != address(0)) {
-      _sourceDomain = uint8(_tokenMessengerV2.localMessageTransmitter().localDomain());
+      if (tokenMessengerV1 == address(0))
+        _sourceDomain = uint8(_tokenMessengerV2.localMessageTransmitter().localDomain());
       _usdc.approve(tokenMessengerV2, type(uint256).max);
     }
   }
