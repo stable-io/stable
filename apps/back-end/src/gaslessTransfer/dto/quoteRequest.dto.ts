@@ -90,7 +90,7 @@ export class QuoteRequestDto<TargetDomain extends Domain = Domain> {
 
   @ApiProperty({ enum: corridors })
   @IsIn(corridors)
-  corridor!: Corridor;
+  corridor!: Exclude<Corridor, "avaxHop">;
 
   /**
    * Amount of native gas token desired on target chain for gas dropoff

@@ -124,7 +124,7 @@ export class CctpRService {
   }
 
   getCorridorParams(
-    corridor: CorridorVariant["type"],
+    corridor: Exclude<CorridorVariant["type"], "avaxHop">,
     fastFeeRate: Percentage,
   ): CorridorParams<
     Network,

@@ -125,8 +125,8 @@ export class GaslessTransferService {
           return costs.v1Gasless;
         case "v2Direct":
           return costs.v2Gasless;
-        case "avaxHop":
-          return costs.v2Gasless;
+        // case "avaxHop":
+        // return costs.v2Gasless;
         default:
           throw new Error(`Invalid corridor: ${request.corridor}`);
       }

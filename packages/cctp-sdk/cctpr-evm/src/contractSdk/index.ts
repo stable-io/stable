@@ -180,6 +180,8 @@ export function quoteIsInUsdc(quote: ErasedQuoteBase): quote is UsdcQuote {
     (quote.type === "onChain" && quote.maxRelayFee.kind.name === "Usdc")
   );
 }
+const definedOrZero = (maybeAddress?: string) =>
+  maybeAddress ? new EvmAddress(maybeAddress) : EvmAddress.zeroAddress;
 
 export type CorridorParams<
   N extends Network,
@@ -629,9 +631,6 @@ export class CctpRGovernance<
     priceOracle: EvmAddress,
     feeAdjustments: Record<FeeAdjustmentType, Partial<FeeAdjustments>>,
   ): Uint8Array {
-    const definedOrZero = (maybeAddress?: string) =>
-      maybeAddress ? new EvmAddress(maybeAddress) : EvmAddress.zeroAddress;
-
     const arrayFeeAdjustments = CctpRGovernance.feeAdjustmentsArray(feeAdjustments);
     const arrayExtraChains = CctpRGovernance.extraChainsArray(network);
     const tokenMessengerV1 = v1.contractAddressOf(
@@ -688,16 +687,17 @@ export class CctpRGovernance<
     network: Network,
     domain: DomainsOf<"Evm">,
   ): Uint8Array {
-    const messageTransmitterV1 = v1.contractAddressOf(
+    const messageTransmitterV1 = definedOrZero(v1.contractAddressOf(
       network,
       domain as v1.SupportedDomain<Network>,
       "messageTransmitter",
-    );
-    const messageTransmitterV2 = v2.contractAddressOf(
+    ));
+    const messageTransmitterV2 = definedOrZero(v2.contractAddressOf(
       network,
       domain as v2.SupportedDomain<Network>,
       "messageTransmitter",
-    );
+    ));
+
     return serialize([
       { name: "messageTransmitterV1", ...paddedSlotItem(evmAddressItem) },
       { name: "messageTransmitterV2", ...paddedSlotItem(evmAddressItem) },

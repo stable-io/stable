@@ -13,10 +13,10 @@ const domainChainIdEntries = [[
     ["Ethereum",   1n],
     ["Avalanche",  43114n],
     ["Optimism",   10n],
-    ["Arbitrum",   421613n],
+    ["Arbitrum",   42161n],
     ["Noble",      "noble-1"],
     ["Solana",     "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d"],
-    ["Base",       84531n],
+    ["Base",       8453n],
     ["Polygon",    137n],
     ["Sui",        "35834a8a"],
     ["Aptos",      1n],
@@ -56,8 +56,8 @@ const domainWormholeChainIdEntries = [[
     ["Sui",        21],
     ["Aptos",      22],
     ["Unichain",   44],
-    ["Linea",      38],
-    // TODO: Add Codex when it is available
+    ["Linea",      41],
+    ["Codex",      54],
     ["Sonic",      52],
     ["Worldchain", 45],
   ]], [

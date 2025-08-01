@@ -8,22 +8,21 @@ import { constMap } from "@stable-io/map-utils";
 import type { Domain, Network } from "@stable-io/cctp-sdk-definitions";
 
 export const contractAddressEntries = [[
-  //TODO
   "Mainnet", [
-    ["Ethereum",   undefined],
-    ["Avalanche",  undefined],
-    ["Optimism",   undefined],
-    ["Arbitrum",   undefined],
-    ["Base",       undefined],
-    // ["Solana",     undefined],
-    ["Polygon",    undefined],
+    ["Ethereum",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Avalanche",  "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Optimism",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Arbitrum",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Base",       "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Solana",     undefined],
+    ["Polygon",    "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
-    ["Unichain",   undefined],
-    ["Linea",      undefined],
+    ["Unichain",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Linea",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Codex",      undefined],
-    ["Sonic",      undefined],
-    ["Worldchain", undefined],
+    ["Sonic",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Worldchain", "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
   ]], [
   "Testnet", [
     ["Ethereum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
@@ -49,7 +48,7 @@ export const supportedDomains = constMap(contractAddressEntries, [0, 1]);
 export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDomains<N>>[number];
 
 export const avaxRouterContractAddress = {
-  Mainnet: "0x", //TODO
+  Mainnet: "0x80af48cb7e3c18da42d151f7c1aa215e63bfd8f0",
   Testnet: "0x4cfa05575695dc4383973e02af0c261dec65a948",
 } as const satisfies Record<Network, `0x${string}` | undefined>;
 
@@ -89,7 +88,7 @@ export const gasDropoffLimitOf = {
     Optimism:   0.00151,
     Arbitrum:   0.00151,
     Base:       0.00151,
-    // Solana:     30,
+    Solana:     0.15,
     Polygon:    0.00151,
     // Sui:        30,
     // Aptos:      30,
@@ -100,12 +99,12 @@ export const gasDropoffLimitOf = {
     Worldchain: 0.00151,
   },
   Testnet: {
-    Ethereum:   0.01509,
+    Ethereum:   0.00151,
     Avalanche:  0.00151,
     Optimism:   0.00151,
     Arbitrum:   0.00151,
     Base:       0.00151,
-    // Solana:     30,
+    Solana:     0.15,
     Polygon:    0.00151,
     // Sui:        30,
     // Aptos:      30,
