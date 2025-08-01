@@ -21,7 +21,7 @@ export const contractAddressOf = {
     Linea: "0x176211869cA2b568f2A7D4EE941E073a821EE1ff",
     Codex: "0xd996633a415985DBd7D6D12f4A4343E31f5037cf",
     Sonic: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
-    Worldchain: "0x79A02482A880bCe3F13E09da970dC34dB4cD24D1",
+    Worldchain: "0x79a02482a880bce3f13e09da970dc34db4cd24d1",
   },
   Testnet: {
     Ethereum: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
