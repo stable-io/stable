@@ -5,12 +5,9 @@
 
 import { Url, BaseObject, encoding, deserializeBigints } from "@stable-io/utils";
 import { Network } from "../types/index.js";
-import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
-import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
 
 export const apiUrl = {
-  Mainnet: "", // TODO
+  Mainnet: "https://api.stableit.com",
   Testnet: "https://api.stg.stableit.com",
 } as const satisfies Record<Network, string>;
 
