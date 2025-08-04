@@ -56,7 +56,7 @@ const domainWormholeChainIdEntries = [[
     ["Sui",        21],
     ["Aptos",      22],
     ["Unichain",   44],
-    ["Linea",      41],
+    ["Linea",      38],
     ["Codex",      54],
     ["Sonic",      52],
     ["Worldchain", 45],
@@ -74,7 +74,7 @@ const domainWormholeChainIdEntries = [[
     ["Aptos",      22],
     ["Unichain",   44],
     ["Linea",      38],
-    // TODO: Add Codex when it is available
+    ["Codex",      54],
     ["Sonic",      52],
     ["Worldchain", 45],
   ]],
