@@ -54,17 +54,19 @@ export const avaxRouterContractAddress = {
 
 export const relayOverheadOf = {
   Mainnet: {
-    Ethereum:  13.2,
-    Avalanche: 5.27,
-    Optimism:  3.05,
-    Arbitrum:  2.78,
-    Base:      3.11,
-    Polygon:   3.49,
-    Solana:    6, // TODO: Adjust
-    Sui:       6, // TODO: Adjust
-    Aptos:     6, // TODO: Adjust
-    Unichain:  7.73,
-    Linea:     6.06,
+    Ethereum:   13.2,
+    Avalanche:  5.27,
+    Optimism:   3.05,
+    Arbitrum:   2.78,
+    Base:       3.11,
+    Polygon:    3.49,
+    Solana:     6, // TODO: Adjust
+    Sui:        6, // TODO: Adjust
+    Aptos:      6, // TODO: Adjust
+    Unichain:   7.73,
+    Linea:      6.06,
+    Sonic:      6,
+    Worldchain: 6,
   },
   Testnet: {
     Ethereum:  13.2,

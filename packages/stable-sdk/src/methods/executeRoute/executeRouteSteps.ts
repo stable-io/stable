@@ -123,6 +123,7 @@ function buildEvmTxParameters(
   const txValue = tx.value
     ? BigInt(tx.value.toUnit("atomic").toString())
     : undefined;
+
   return {
     from: tx.from?.unwrap() as Hex,
     value: txValue,
@@ -131,12 +132,11 @@ function buildEvmTxParameters(
     to: tx.to.unwrap(),
     data: callData,
     /**
-     * @todo: Proper gas calculation will be necessary at some point...
-     *        we could consider using the gasEstimation field of the corresponding step.
+     * @todo: Gas price data will be fetched from tx-landing gas price oracle.
      */
     gas: fromGwei(0.001),
     maxFeePerGas: fromGwei(40),
-    maxPriorityFeePerGas: fromGwei(20),
+    maxPriorityFeePerGas: fromGwei(30),
   };
 }
 
