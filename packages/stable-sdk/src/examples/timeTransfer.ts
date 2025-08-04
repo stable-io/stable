@@ -70,6 +70,9 @@ interface StepTimings {
 }
 
 interface ExecutionResult {
+  source: string;
+  target: string;
+  corridor: string;
   routeType?: string;
   approvalType?: string;
   transferHash?: string;
@@ -78,12 +81,13 @@ interface ExecutionResult {
   totalDuration: number;
   errorOccurred: boolean;
   errorMessage?: string;
-  corridor: string;
 }
 
 // Initialize CSV file with headers
 function initializeCsvFile() {
   const headers = [
+    "source",
+    "target",
     "corridor",
     "route_type",
     "approval_type",
@@ -110,6 +114,8 @@ function writeResultToCsv(result: ExecutionResult) {
   };
 
   const row = [
+    result.source,
+    result.target,
     result.corridor,
     result.routeType,
     result.approvalType,
@@ -151,12 +157,20 @@ async function executeRouteWithTiming(
 
   for (let routeIndex = 0; routeIndex < allRoutes.length; routeIndex++) {
     const selectedRoute = allRoutes[routeIndex];
+
+    console.info("Fees:");
+
+    for (const fee of selectedRoute.fees) {
+      console.info(`    ${fee}`);
+    }
     const routeDescription = `${executionNumber}-${routeIndex + 1}`;
 
     console.info(`\n--- Route ${routeIndex + 1}/${allRoutes.length} (${
       getRouteType(selectedRoute)} - ${selectedRoute.corridor}) ---`);
 
     const result: ExecutionResult = {
+      source: selectedRoute.intent.sourceChain,
+      target: selectedRoute.intent.targetChain,
       corridor: selectedRoute.corridor,
       stepTimings: {},
       totalDuration: 0,
