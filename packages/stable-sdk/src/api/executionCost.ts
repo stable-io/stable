@@ -1,6 +1,7 @@
 import { deserializeBigints, SerializedBigint } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { apiRequest, apiEndpoint, APIResponse } from "./index.js";
+import { HTTPCode } from "@stable-io/cctp-sdk-definitions";
 
 export type GetExecutionCostsParams = {
   platform: "Evm"; // | "Solana" ...
@@ -26,7 +27,7 @@ export async function getPlatformExecutionCosts<P extends "Evm">(
 ): Promise<ExecutionCostsResponse> {
   const endpoint = apiEndpoint(network)(`execution-cost/${platformName}`);
 
-  const apiResponse = await apiRequest<APIResponse<200, { data: SerializedEvmExecutionCosts }>>(endpoint, { method: "GET" });
+  const apiResponse = await apiRequest<APIResponse<HTTPCode, { data: SerializedEvmExecutionCosts }>>(endpoint, { method: "GET" });
 
   if (apiResponse.status >= 400) {
     throw new Error(`API Call To Get Execution Cost Failed With Status: ${apiResponse.status}`);

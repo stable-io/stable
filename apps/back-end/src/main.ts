@@ -1,4 +1,4 @@
-import { ValidationPipe , RequestMethod } from "@nestjs/common";
+import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import type { OpenAPIObject } from "@nestjs/swagger";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
@@ -33,18 +33,13 @@ async function bootstrap() {
 
   const port = process.env["PORT"] ?? DEFAULT_PORT;
   await app.listen(port);
-  console.log(`Main API listening on port ${port}`);
-  // Use the shared metrics service from the main app
   const metricsApp = await NestFactory.create(
-    MetricsAppModule.forRoot(app.get(MetricsService))
+    MetricsAppModule.forRoot(app.get(MetricsService)),
   );
-  
+
   const metricsPort = process.env["METRICS_PORT"] ?? DEFAULT_METRICS_PORT;
   await metricsApp.listen(metricsPort);
-  console.log(`Metrics server listening on port ${metricsPort}`);
-  
   return metricsApp;
- 
 }
 
 void bootstrap();
