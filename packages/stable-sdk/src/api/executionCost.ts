@@ -28,6 +28,10 @@ export async function getPlatformExecutionCosts<P extends "Evm">(
 
   const apiResponse = await apiRequest<APIResponse<200, { data: SerializedEvmExecutionCosts }>>(endpoint, { method: "GET" });
 
+  if (apiResponse.status >= 400) {
+    throw new Error(`API Call To Get Execution Cost Failed With Status: ${apiResponse.status}`);
+  }
+
   const parsedResult = deserializeBigints(apiResponse.value.data);
 
   return parsedResult as EvmExecutionCosts;
