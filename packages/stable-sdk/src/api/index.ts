@@ -7,8 +7,8 @@ import { Url, BaseObject, encoding, deserializeBigints } from "@stable-io/utils"
 import { Network } from "../types/index.js";
 
 export const apiUrl = {
-  Mainnet: "https://api.stableit.com",
-  Testnet: "https://api.stg.stableit.com",
+  Mainnet: "https://api.stableit.com/",
+  Testnet: "https://api.stg.stableit.com/",
 } as const satisfies Record<Network, string>;
 
 export const apiEndpoint = <N extends Network>(network: N) => (
