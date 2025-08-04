@@ -156,7 +156,7 @@ function initializeCsvFile() {
   ].join(",");
 
   if (!existsSync(scriptConfig.outputFile)) {
-    writeFileSync(scriptConfig, headers + "\n");
+    writeFileSync(scriptConfig.outputFile, headers + "\n");
   }
 }
 
@@ -187,11 +187,11 @@ function writeResultToCsv(result: ExecutionResult) {
 }
 
 function logScriptConfiguration() {
-  console.info(`🚀 Starting ${NUM_EXECUTIONS} sequential route executions`);
+  console.info(`🚀 Starting ${scriptConfig.numExecutions} sequential route executions`);
   console.info(`Transferring from ${intent.sourceChain} to ${intent.targetChain}`);
   console.info(`Amount: ${intent.amount} USDC`);
   console.info(`Sender/Recipient: ${sender}`);
-  console.info(`Results will be saved to: ${CSV_FILE}`);
+  console.info(`Results will be saved to: ${scriptConfig.outputFile}`);
   console.info(`⏱️  Step timings show duration between consecutive steps`);
 }
 
@@ -228,7 +228,7 @@ function logScriptSummary(results: ExecutionResult[]) {
     }
   }
 
-  console.info(`\n📁 Results saved to: ${CSV_FILE}`);
+  console.info(`\n📁 Results saved to: ${scriptConfig.outputFile}`);
 }
 
 function logFees(route: Route<any, any>) {
