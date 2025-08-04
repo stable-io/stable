@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { v4 as uuid } from "uuid";
 import { TxLandingClient, TxStatus } from "@stable-io/tx-landing-client";
 import { encoding, pollUntil } from "@stable-io/utils";
@@ -25,6 +25,7 @@ type ConfirmedTransactionStatusResponse = GetTransactionStatusResponse & {
 
 @Injectable()
 export class TxLandingService {
+  private readonly logger = new Logger(TxLandingService.name);
   private readonly cctpSdkDomainsToChains = {
     Testnet: {
       Ethereum: "Sepolia",
@@ -81,7 +82,7 @@ export class TxLandingService {
       network: this.mappedNetwork(),
     };
 
-    console.info(`Sending TX to landing service with trace-id ${traceId}`);
+    this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
 
     try {
       const r = await this.client.signAndLandTransaction(transactionParams);
@@ -116,7 +117,7 @@ export class TxLandingService {
 
       return finalTxHash;
     } catch (error) {
-      console.error("Failed to send transaction:", error);
+      this.logger.error("Failed to send transaction:", error);
       throw error;
     }
   }
