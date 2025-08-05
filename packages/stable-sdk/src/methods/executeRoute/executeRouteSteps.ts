@@ -38,7 +38,7 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         contractTx,
         signer.chain!,
         signer.account!,
-        buildGasOverrides(route.intent.sourceChain)
+        buildGasOverrides(route.intent.sourceChain),
       );
       const tx = await signer.sendTransaction(txParameters);
 
@@ -219,8 +219,8 @@ export function parseTxSentEventData(tx: Hex, parameters: EvmTxParameters): TxSe
 };
 
 export type GasOverrides = {
-  maxFeePerGas?: bigint,
-  maxPriorityFeePerGas?: bigint,
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
 };
 
 export function buildGasOverrides(
