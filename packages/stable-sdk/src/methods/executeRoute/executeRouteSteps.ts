@@ -34,7 +34,12 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
     case TRANSFER: {
       const contractTx = stepData as ContractTx;
 
-      const txParameters = buildEvmTxParameters(contractTx, signer.chain!, signer.account!);
+      const txParameters = buildEvmTxParameters(
+        contractTx,
+        signer.chain!,
+        signer.account!,
+        buildGasOverrides(route.intent.sourceChain),
+      );
       const tx = await signer.sendTransaction(txParameters);
 
       route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
@@ -44,7 +49,8 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
 
       route.transactionListener.emit("transaction-included", receipt);
 
-      if (receipt.status === "reverted") throw new Error("Execution Reverted");
+      if (receipt.status === "reverted")
+          throw new Error(`Execution Reverted. Tx: ${receipt.transactionHash}`);
 
       const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
       route.progress.emit(eventName, eventData);
@@ -112,12 +118,15 @@ export type EvmTxParameters = {
   to: Hex;
   data: Hex;
   gas: bigint;
-  maxFeePerGas: bigint;
-  maxPriorityFeePerGas: bigint;
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
 };
 
 function buildEvmTxParameters(
-  tx: ContractTx, chain: ViemChain, account: ViemAccount,
+  tx: ContractTx,
+  chain: ViemChain,
+  account: ViemAccount,
+  overrides: GasOverrides,
 ) {
   const callData = `0x${Buffer.from(tx.data).toString("hex")}` as const;
   const txValue = tx.value
@@ -135,8 +144,7 @@ function buildEvmTxParameters(
      * @todo: Gas price data will be fetched from tx-landing gas price oracle.
      */
     gas: fromGwei(0.001),
-    maxFeePerGas: fromGwei(40),
-    maxPriorityFeePerGas: fromGwei(30),
+    ...overrides,
   };
 }
 
@@ -209,3 +217,30 @@ export function parseTxSentEventData(tx: Hex, parameters: EvmTxParameters): TxSe
     },
   };
 };
+
+export type GasOverrides = {
+  maxFeePerGas?: bigint;
+  maxPriorityFeePerGas?: bigint;
+};
+
+export function buildGasOverrides(
+  chain: keyof EvmDomains,
+): GasOverrides {
+  switch (chain) {
+    case "Polygon": {
+      return { maxFeePerGas: fromGwei(30), maxPriorityFeePerGas: fromGwei(30) };
+    }
+
+    case "Arbitrum": {
+      return { maxFeePerGas: fromGwei(0.5), maxPriorityFeePerGas: fromGwei(0.1) };
+    }
+
+    case "Unichain": {
+      return { maxFeePerGas: fromGwei(0.001), maxPriorityFeePerGas: fromGwei(0.001) };
+    }
+
+    default: {
+      return {};
+    }
+  }
+}
