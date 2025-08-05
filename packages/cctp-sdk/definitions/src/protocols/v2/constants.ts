@@ -129,6 +129,10 @@ export const attestationTimeEstimates = {
     Optimism:   0.85,
     Unichain:   8,    // TODO
     Polygon:    9.04,
+    Worldchain: 10,
+    Sonic:      10,
+    Codex:      10,
+    Sei:        10,
   },
   Testnet: {
     Ethereum:   16.76,
