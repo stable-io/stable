@@ -35,8 +35,8 @@ export type TxSentEventData = {
     data: Hex;
     value: bigint;
     gas: bigint;
-    maxFeePerGas: bigint;
-    maxPriorityFeePerGas: bigint;
+    maxFeePerGas?: bigint;
+    maxPriorityFeePerGas?: bigint;
   };
 };
 
