@@ -4,11 +4,14 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import {
-  generateCctpRVerifyCommand,
-  generateAvaxRouterVerifyCommand,
-  generateGasDropoffVerifyCommand,
-  type VerificationResult,
+  fetchCctpRDeployment,
+  fetchAvaxRouterDeployment,
+  fetchGasDropoffDeployment,
+  type BytecodeVerificationResult,
   type CctpRConfig,
+  cctprName,
+  avaxRouterName,
+  cctpGasDropoffName,
 } from "./src/cctpr.js";
 import {
   getOperatingChains,
@@ -19,46 +22,123 @@ import {
 init();
 const operatingChains = getOperatingChains();
 
-function run() {
-  console.error("Generating Forge verification commands for CCTPR contracts...");
+async function run() {
+  console.error("Verifying bytecode using viem for CCTPR contracts...");
   console.error(`Operating chains: ${operatingChains.map(c => c.domain).join(", ")}`);
   console.error("");
 
-  const results: VerificationResult[] = [];
+  const results: BytecodeVerificationResult[] = [];
 
-  // Generate CctpR verification commands for all operating chains
   for (const chain of operatingChains) {
     const config = loadScriptConfig<CctpRConfig[]>("deployCctpR");
     const chainConfig = config.find(c => c.chainId === chain.chainId);
     if (!chainConfig) {
-      throw new Error(`No configuration found for chain ${chain.chainId}`);
+      console.error(`No configuration found for chain ${chain.chainId}`);
+      continue;
     }
-    results.push(generateCctpRVerifyCommand(chain, chainConfig));
+    
+    try {
+      const result = await fetchCctpRDeployment(chain, chainConfig);
+      results.push(result);
+    } catch (error) {
+      results.push({
+        domain: chain.domain,
+        contractName: cctprName,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
 
-  // Generate AvaxRouter verification command (only on Avalanche)
-  results.push(generateAvaxRouterVerifyCommand());
+  try {
+    const avaxResult = await fetchAvaxRouterDeployment();
+    results.push(avaxResult);
+  } catch (error) {
+    results.push({
+      domain: "Avalanche",
+      contractName: avaxRouterName,
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
 
-  // Generate GasDropoff verification commands for all operating chains
   for (const chain of operatingChains) {
-    results.push(generateGasDropoffVerifyCommand(chain));
+    try {
+      const result = await fetchGasDropoffDeployment(chain);
+      results.push(result);
+    } catch (error) {
+      results.push({
+        domain: chain.domain,
+        contractName: cctpGasDropoffName,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
 
-  // Summary
-  console.error("Verification Commands Summary:");
-  console.error(`Generated: ${results.length} verification commands`);
+  console.error("Bytecode Verification Summary:");
+  console.error(`Verified: ${results.length} contracts`);
 
-  console.error("\nForge Verification Commands:");
-  console.error("Run these commands from the contracts/cctpr/evm directory:");
+  console.error("\nVerification Results:");
   console.error("");
 
+  const senderAddresses = new Set<string>();
+  const ownerAddresses = new Set<string>();
+  const totalCount = results.length;
+  let verifiedCount = 0;
+  let ownerMatchesCount = 0;
   for (const result of results) {
-    console.error(`# ${result.contractName} on ${result.domain} (${result.address})`);
-    console.info(result.forgeCommand);
+    console.error(`# ${result.contractName} on ${result.domain}`);
+    if ("address" in result) {
+      console.error(`Address: ${result.address}`);
+      console.error(`Transaction: ${result.txId}`);
+    }
+    if ("error" in result) {
+      console.error(`ERROR: ${result.error}`);
+    } else {
+      const expectedAddress = result.expectedAddress.toString();
+      const actualAddress = result.actualAddress.toString();
+      if (actualAddress === expectedAddress) {
+        if (result.actualBytecode === result.expectedBytecode) {
+          verifiedCount++;
+          const bytecodeLength = result.actualBytecode.length / 2 - 1;
+          console.error(`Contract address: ${actualAddress}`);
+          console.error(`SUCCESS: BYTECODE MATCHES (${bytecodeLength} bytes)`);
+        } else {
+          console.error(`ERROR: BYTECODE MISMATCH`);
+          console.error(`Expected: ${result.expectedBytecode}`);
+          console.error(`Actual:   ${result.actualBytecode}`);
+        }
+      } else {
+        console.error(`ERROR: CONTRACT ADDRESS MISMATCH`);
+        console.error(`Expected: ${expectedAddress}`);
+        console.error(`Actual:   ${actualAddress}`);
+      }
+      const owner = result.owner?.toString();
+      const sender = result.sender.toString();
+      if (owner === sender) {
+        ownerMatchesCount++;
+        console.error(`OWNER MATCHES, POTENTIAL SECURITY ISSUE`);
+        console.error(`Owner/Sender: ${owner}`);
+      }
+      senderAddresses.add(sender);
+      if (owner) {
+        ownerAddresses.add(owner);
+      }
+    }
     console.error("");
   }
 
-  console.error("Note: Make sure you have the ETHERSCAN_API_KEY environment variable set before running the commands.");
+  console.error(`Sender addresses: ${Array.from(senderAddresses).join(", ")}`);
+  console.error(`Owner addresses: ${Array.from(ownerAddresses).join(", ")}`);
+  console.error(`Overall: ${verifiedCount}/${totalCount} contracts verified`);
+  
+  if (verifiedCount === totalCount) {
+    console.error("All contracts verified successfully!");
+  } else {
+    console.error("Some contracts FAILED verification");
+  }
+  if (ownerMatchesCount > 0) {
+    console.error(`WARNING: ${ownerMatchesCount} contracts have the same owner and sender address`);
+    console.error("This is a potential security issue if the sender was compromised");
+  }
 }
 
-run();
+run().catch(console.error); 
