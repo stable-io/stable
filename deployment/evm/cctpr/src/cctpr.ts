@@ -247,7 +247,7 @@ export type VerificationResult = {
 
 type BytecodeVerificationError = {
   error: string;
-}
+};
 
 export type BytecodeVerificationResult = {
   domain: Domain;
@@ -361,9 +361,9 @@ export async function fetchContractDeployment(
     contractName,
     address,
     txId: deployment.txId,
-  }
+  };
 
-  return viemClient.client.getTransaction({ hash: deployment.txId }).then(async transaction => {
+  return viemClient.client.getTransaction({ hash: deployment.txId }).then(async (transaction) => {
     const receipt = await viemClient.client.getTransactionReceipt({ hash: deployment.txId });
     if (!receipt.contractAddress) {
       throw new Error(`No contract address found for transaction ${deployment.txId}`);
@@ -376,12 +376,12 @@ export async function fetchContractDeployment(
       actualAddress: new EvmAddress(receipt.contractAddress),
       sender: new EvmAddress(transaction.from),
       owner,
-    }
-  }).catch(e => {
+    };
+  }).catch((error: unknown) => {
     return {
       ...result,
-      error: e instanceof Error ? e.message : String(e),
-    }
+      error: error instanceof Error ? error.message : String(error),
+    };
   });
 }
 
@@ -418,16 +418,16 @@ export async function fetchAvaxRouterDeployment(): Promise<BytecodeVerificationR
   return fetchContractDeployment(
     chain,
     avaxRouterName,
-    () => CctpRGovernance.avaxRouterConstructorCalldata(network)
+    () => CctpRGovernance.avaxRouterConstructorCalldata(network),
   );
 }
 
 export async function fetchGasDropoffDeployment(
-  chain: ChainInfo
+  chain: ChainInfo,
 ): Promise<BytecodeVerificationResult> {
   return fetchContractDeployment(
     chain,
     cctpGasDropoffName,
-    () => CctpRGovernance.gasDropoffConstructorCalldata(getNetwork(), chain.domain)
+    () => CctpRGovernance.gasDropoffConstructorCalldata(getNetwork(), chain.domain),
   );
 }
