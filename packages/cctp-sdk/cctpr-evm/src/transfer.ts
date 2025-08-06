@@ -3,19 +3,18 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import type { TODO } from "@stable-io/utils";
-import type {
-  GasTokenOf,
-  LoadedDomain,
-  Network,
-  UniversalOrNative,
-} from "@stable-io/cctp-sdk-definitions";
+import type { GasTokenOf, Network } from "@stable-io/cctp-sdk-definitions";
 import {
   Usdc,
   usdc,
   platformClient,
   usdcContracts,
 } from "@stable-io/cctp-sdk-definitions";
-import type { InOrOut, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type {
+  CctprRecipientAddress,
+  InOrOut,
+  SupportedDomain,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   contractAddressOf,
   quoteIsInUsdc,
@@ -47,7 +46,7 @@ export async function* transfer<
   source: S,
   destination: D,
   sender: EvmAddress,
-  recipient: UniversalOrNative<SupportedDomain<N> & LoadedDomain>,
+  recipient: CctprRecipientAddress<N, D>,
   inOrOut: InOrOut,
   corridor: CorridorParams<N, S, D>,
   quote: Quote<N, S>,

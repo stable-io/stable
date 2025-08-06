@@ -9,13 +9,16 @@ import type {
   Network,
   PlatformOf,
   PlatformAddress,
-  UniversalOrNative,
   GasTokenOf,
 } from "@stable-io/cctp-sdk-definitions";
 import { gasTokenKindOf, platformOf } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain } from "./constants.js";
 import { gasDropoffLimitOf } from "./constants.js";
-import type { RegisteredCctprPlatform, LoadedCctprPlatformDomain } from "./registry.js";
+import type {
+  RegisteredCctprPlatform,
+  LoadedCctprPlatformDomain,
+  CctprRecipientAddress,
+} from "./registry.js";
 import { platformCctpr } from "./registry.js";
 import type { InOrOut, QuoteBase, CorridorParamsBase } from "./common.js";
 
@@ -29,7 +32,7 @@ export const transfer = <
   source: S,
   destination: D,
   sender: PlatformAddress<P>,
-  recipient: UniversalOrNative<SupportedDomain<N>>,
+  recipient: CctprRecipientAddress<N, D>,
   inOrOut: InOrOut,
   corridor: CorridorParamsBase<N, PlatformOf<S>, S, D>,
   quote: QuoteBase<N, PlatformOf<S>, S>,
