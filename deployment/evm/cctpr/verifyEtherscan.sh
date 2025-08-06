@@ -19,7 +19,7 @@ fi
 echo "Using environment: $ENV"
 echo ""
 
-yarn tsx verifyBytecode.ts 2>/dev/null | while read -r line
+yarn tsx verifyEtherscan.ts 2>/dev/null | while read -r line
 do
    cd ../../../contracts/cctpr/evm
    echo "Executing: $line"
