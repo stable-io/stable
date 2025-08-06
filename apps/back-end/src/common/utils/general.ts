@@ -11,10 +11,6 @@ export const AMOUNT_PATTERNS = {
   PERCENTAGE: createAmountRegexPattern(2),
 } as const;
 
-export const ADDRESS_PATTERNS = {
-  EVM: "^0x[a-fA-F0-9]{40}$",
-};
-
 export const instanceToPlain = <T>(obj: T): PlainDto<T> =>
   ctInstanceToPlain(obj) as PlainDto<T>;
 

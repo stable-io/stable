@@ -7,6 +7,7 @@ import {
   RelayResponseDto,
 } from "./dto";
 import { GaslessTransferService } from "./gaslessTransfer.service";
+import { SupportedEvmDomain } from "../common/types";
 
 @Controller("gasless-transfer")
 export class GaslessTransferController {
@@ -30,9 +31,14 @@ export class GaslessTransferController {
   public async quoteGaslessTransfer(
     @Query() request: QuoteRequestDto,
   ): Promise<QuoteResponseDto> {
-    return {
-      data: await this.gaslessTransferService.quoteGaslessTransfer(request),
-    };
+    const data = request.sourceDomain === "Solana"
+    ? await this.gaslessTransferService.quoteSolanaGaslessTransfer(
+        request as QuoteRequestDto<"Solana">
+      )
+    : await this.gaslessTransferService.quoteEvmGaslessTransfer(
+        request as QuoteRequestDto<SupportedEvmDomain>
+      );
+    return { data };
   }
 
   @Post("/relay")
@@ -48,8 +54,13 @@ export class GaslessTransferController {
   public async initiateGaslessTransfer(
     @Body() request: RelayRequestDto,
   ): Promise<RelayResponseDto> {
-    return {
-      data: await this.gaslessTransferService.initiateGaslessTransfer(request),
-    };
+    const data = request.jwt.quoteRequest.sourceDomain === "Solana"
+      ? await this.gaslessTransferService.initiateSolanaGaslessTransfer(
+          request as RelayRequestDto<"Solana">
+        )
+      : await this.gaslessTransferService.initiateEvmGaslessTransfer(
+          request as RelayRequestDto<SupportedEvmDomain>
+        );
+    return { data };
   }
 }
