@@ -36,7 +36,7 @@ async function run() {
       console.error(`No configuration found for chain ${chain.chainId}`);
       continue;
     }
-    
+
     try {
       const result = await fetchCctpRDeployment(chain, chainConfig);
       results.push(result);
@@ -44,7 +44,7 @@ async function run() {
       results.push({
         domain: chain.domain,
         contractName: cctprName,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -56,7 +56,7 @@ async function run() {
     results.push({
       domain: "Avalanche",
       contractName: avaxRouterName,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 
@@ -68,7 +68,7 @@ async function run() {
       results.push({
         domain: chain.domain,
         contractName: cctpGasDropoffName,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -129,7 +129,7 @@ async function run() {
   console.error(`Sender addresses: ${Array.from(senderAddresses).join(", ")}`);
   console.error(`Owner addresses: ${Array.from(ownerAddresses).join(", ")}`);
   console.error(`Overall: ${verifiedCount}/${totalCount} contracts verified`);
-  
+
   if (verifiedCount === totalCount) {
     console.error("All contracts verified successfully!");
   } else {
@@ -141,4 +141,4 @@ async function run() {
   }
 }
 
-run().catch(console.error); 
+await run();
