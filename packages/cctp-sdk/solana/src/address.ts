@@ -9,7 +9,7 @@ import type { Text } from "@stable-io/utils";
 import { encoding, isUint8Array } from "@stable-io/utils";
 import type { Address as SolanaNativeAddress } from "@solana/kit";
 
-type SolanaAddressish =
+export type SolanaAddressish =
   string | SolanaNativeAddress | Uint8Array | UniversalAddress | SolanaAddress;
 
 export class SolanaAddress implements Address {

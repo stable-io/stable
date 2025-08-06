@@ -22,7 +22,7 @@ import { SolanaAddress, findPda } from "@stable-io/cctp-sdk-solana";
 import { type ForeignDomain, oracleAddress } from "./constants.js";
 import type { Config } from "./layouts.js";
 import { foreignDomainItem, configLayout } from "./layouts.js";
-import { oracleChainIdItem } from "./oracleLayouts.js";
+import { chainItem as oracleChainItem } from "./oracleLayouts.js";
 
 //we could include the network parameter here but it's likely not worth the hassle
 type RpcType = Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;
@@ -58,6 +58,18 @@ export class CctpRBase<N extends Network> {
       addresses?.oracle ?? new SolanaAddress(oracleAddress);
   }
 
+  async config(): Promise<Config> {
+    if (this._cachedConfig && Date.now() < this._cachedConfig[1].getTime() + CctpRBase.cacheTtl)
+      return this._cachedConfig[0];
+
+    const config = definedOrThrow(
+      await this.fetchAndParseAccountData(this.configAddress(), configLayout),
+      `Failed to fetch cctpr config account` as Text,
+    );
+    this._cachedConfig = [config, new Date()];
+    return config;
+  }
+
   protected configAddress(): SolanaAddress {
     if (this._configAddress === undefined)
       this._configAddress = findPda(["config"], this.address)[0];
@@ -77,25 +89,17 @@ export class CctpRBase<N extends Network> {
     if (cached)
       return cached;
 
-    const seeds = [
+    const chainConfigPda = findPda(
       ["chain_config", serialize(foreignDomainItem(this.network), domain as TODO)],
-      ["prices", serialize(oracleChainIdItem(this.network), domain as TODO)],
-    ] as const;
-    const res = mapTo(seeds)(s => findPda(s, this.address)[0]);
+      this.address
+    )[0];
+    const oraclePricesPda = findPda(
+      ["prices", serialize(oracleChainItem(this.network), domain as TODO)],
+      this.oracleAddress
+    )[0];
+    const res = [chainConfigPda, oraclePricesPda] as const;
     this._priceAddresses.set(domain, res);
     return res;
-  }
-
-  protected async config(): Promise<Config> {
-    if (this._cachedConfig && Date.now() < this._cachedConfig[1].getTime() + CctpRBase.cacheTtl)
-      return this._cachedConfig[0];
-
-    const config = definedOrThrow(
-      await this.fetchAndParseAccountData(this.configAddress(), configLayout),
-      `Failed to fetch cctpr config account` as Text,
-    );
-    this._cachedConfig = [config, new Date()];
-    return config;
   }
 
   protected invalidateCachedConfig() {
@@ -108,7 +112,7 @@ export class CctpRBase<N extends Network> {
   ): Promise<DeriveType<L> | undefined> {
     const data = (await this.rpc.getAccountInfo(address.unwrap(), { encoding: "base64" }).send())
       .value?.data[0];
-    
+
     return data ? deserialize(layout, encoding.base64.decode(data)) : undefined;
   }
 

@@ -88,11 +88,11 @@ export const fixedDomainItem = <const D extends Domain>(domain: D) => ({
   } satisfies FixedConversion<number, D>,
 } as const);
 
-export const wormholeChainIdItem = <
+export const wormholeChainItem = <
   N extends Network,
   const DT extends RoTuple<Domain> = typeof domains,
 >(network: N, domainTuple?: DT) => ({
-  ...rawDomainItem,
+  ...rawWormholeChainIdItem,
   custom: {
     to: (val: number): SimplifyDomain<DT[number]> => {
       const domain = domainOfWormholeChainId.get(network, val);

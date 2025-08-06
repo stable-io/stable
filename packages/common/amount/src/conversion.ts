@@ -51,8 +51,8 @@ export class Conversion<NK extends Kind, DK extends Kind> {
     const numUnit = getUnit(this.num);
     const denUnit = getUnit(this.den);
     const scaledRatio = this.ratio.mul(denUnit.scale).div(numUnit.scale);
-    const rat = this.num.stringify?.(scaledRatio) ?? scaledRatio.toString();
-    return `${rat} ${numUnit.symbol}/${denUnit.symbol}`;
+    const num = this.num.stringify?.(scaledRatio) ?? scaledRatio.toString() + " numUnit.symbol";
+    return `${num}/${denUnit.symbol}`;
   }
 
   toUnit<NS extends SymbolsOf<NK>, DS extends SymbolsOf<DK>>(numUnit: NS, denUnit: DS): Rational {
@@ -82,6 +82,8 @@ export class Conversion<NK extends Kind, DK extends Kind> {
 
     return Conversion.checkedNew(this.ratio.mul(other.ratio), this.num, other.den);
   }
+
+  //TODO impl comparison
 
   private static checkedNew<
     NK extends Kind,

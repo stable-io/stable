@@ -72,8 +72,8 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     const accounts = await this.chainRegistrationAccounts(domain);
 
     const params = {
-      domain:        domain as any,
-      oracleChainId: wormholeChainIdOf(this.network, domain as any),
+      domain:      domain as any,
+      oracleChain: domain as any,
     } as const;
 
     return this.composeIx(accounts, registerChainParamsLayout(this.network), params);

@@ -76,7 +76,7 @@ import type {
 } from "./layouts.js";
 import { chainConfigLayout, transferWithRelayParamsLayout } from "./layouts.js";
 import type { PriceState } from "./oracleLayouts.js";
-import { oracleConfigLayout, priceStateLayout } from "./oracleLayouts.js";
+import { configLayout as oracleConfigLayout, priceStateLayout } from "./oracleLayouts.js";
 import { CctpRBase } from "./base.js";
 
 const priceAccountsPerDomain = 2; //i.e. PriceAddresses["length"]
@@ -327,16 +327,17 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         ).send()
       ).value.map((account, i) => encoding.base64.decode(definedOrThrow(
         account?.data[0],
-        `Failed to fetch price accounts for domain ${involvedDomains[
-          Math.floor(i/priceAccountsPerDomain)
-        ]}` as Text
+        i === 0
+        ? `Failed to fetch oracle config account` as Text
+        : `Failed to fetch ${["cctpr", "oracle"][(i-1)%2]} price account for domain ` +
+          `${involvedDomains[Math.floor((i-1)/priceAccountsPerDomain)]}` as Text
       )));
     
     //group them by domain and deserialize them
     const { solPrice } = deserialize(oracleConfigLayout, oracleConfigRawData!);
     const priceAccountsRawData = chunk(flatPriceAccountsRawData, priceAccountsPerDomain);
     const domainPriceAccounts = fromEntries(zip([involvedDomains, priceAccountsRawData])
-      .map(([domain, [oraclePrices, chainConfig]]) => [
+      .map(([domain, [chainConfig, oraclePrices]]) => [
         domain,
         [ deserialize(chainConfigLayout(this.network), chainConfig!),
           deserialize(priceStateLayout(this.network)[hackPlatformOf<N>(domain)], oraclePrices!),

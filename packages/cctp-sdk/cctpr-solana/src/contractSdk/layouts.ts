@@ -35,11 +35,11 @@ import {
   solanaAddressItem,
   vecItem,
 } from "@stable-io/cctp-sdk-solana";
-import { oracleChainIdItem } from "./oracleLayouts.js";
+import { chainItem as oracleChainItem } from "./oracleLayouts.js";
 import { foreignDomains } from "./constants.js";
 
 export const foreignDomainItem = <N extends Network>(network: N) =>
-  domainItem(foreignDomains(network));
+  ({ ...domainItem(foreignDomains(network)), size: 1 } as const);
 const rawEvmAddressItem = { binary: "bytes", size: 20 } as const;
 
 const feeAdjustmentLayout = littleEndian([
@@ -89,7 +89,7 @@ export type FeeAdjustments = DeriveType<typeof feeAdjustmentsItem>;
 export const chainConfigLayout = <N extends Network>(network: N) =>
   accountLayout("ChainConfig", littleEndian([
     { name: "domain",         ...foreignDomainItem(network) },
-    { name: "oracleChainId",  ...oracleChainIdItem(network) },
+    { name: "oracleChain",    ...oracleChainItem(network)   },
     { name: "feeAdjustments", ...feeAdjustmentsItem         },
   ]));
 export type ChainConfig<N extends Network> =
@@ -160,8 +160,8 @@ export type InitializeParams =
 
 export const registerChainParamsLayout = <N extends Network>(network: N) =>
   instructionLayout("register_chain", littleEndian([
-    { name: "domain",        ...foreignDomainItem(network) },
-    { name: "oracleChainId", ...oracleChainIdItem(network) },
+    { name: "domain",      ...foreignDomainItem(network) },
+    { name: "oracleChain", ...oracleChainItem(network)   },
   ]));
 export type RegisterChainParams<N extends Network> =
   DeriveType<ReturnType<typeof registerChainParamsLayout<N>>>;

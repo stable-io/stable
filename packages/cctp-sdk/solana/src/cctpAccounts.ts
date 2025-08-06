@@ -48,12 +48,12 @@ const accounts = <V extends "v1" | "v2">(network: Network, version: V) => {
     messageTransmitter:       messageTransmitter,
     tokenMessenger:           tokenMessenger,
     messageTransmitterConfig: pda(["message_transmitter"], messageTransmitter),
-    tokenMessengerConfig:     pda(["token_messenger"], tokenMessenger),
-    tokenMinter:              pda(["token_minter"], tokenMessenger),
-    senderAuthority:          pda(["sender_authority"], tokenMessenger),
+    tokenMessengerConfig:     pda(["token_messenger"],     tokenMessenger),
+    tokenMinter:              pda(["token_minter"],        tokenMessenger),
+    senderAuthority:          pda(["sender_authority"],    tokenMessenger),
     remoteTokenMessengers:    remoteTokenMessengers(tokenMessenger),
-    eventAuthority:           pda(["__event_authority"], tokenMessenger),
-    localToken:               localUsdc(network, tokenMessenger),
+    eventAuthority:           pda(["__event_authority"],   tokenMessenger),
+    localToken:               localUsdc(network,           tokenMessenger),
     ...(version === "v2" ? denylist : {}) as V extends "v2" ? typeof denylist : {},
   } as const;
 }

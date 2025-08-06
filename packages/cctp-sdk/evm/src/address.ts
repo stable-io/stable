@@ -11,6 +11,8 @@ import { isAddress, getAddress } from "viem/utils"; // TODO: Remove this depende
 
 export type RawAddress = `0x${string}`;
 
+export type EvmAddressish = string | Uint8Array | UniversalAddress | EvmAddress;
+
 export class EvmAddress implements Address {
   static readonly byteSize = 20;
   static readonly zeroAddress = new EvmAddress(new Uint8Array(EvmAddress.byteSize));
@@ -21,7 +23,7 @@ export class EvmAddress implements Address {
 
   private readonly address: RawAddress; //stored as checksum address
 
-  constructor(address: string | Uint8Array | UniversalAddress | EvmAddress) {
+  constructor(address: EvmAddressish) {
     this.address = (() => {
       if (typeof address === "string") {
         if (!EvmAddress.isValidAddress(address))

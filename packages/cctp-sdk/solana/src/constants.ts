@@ -5,12 +5,14 @@ import { Conversion } from "../../../common/amount/dist/conversion.js";
 
 export const [
   systemProgramId,
+  bpfLoaderUpgradeableProgramId,
   computeBudgetProgramId,
   tokenProgramId,
   token2022ProgramId,
   associatedTokenProgramId,
 ] = mapTo([
   "11111111111111111111111111111111",
+  "BPFLoaderUpgradeab1e11111111111111111111111",
   "ComputeBudget111111111111111111111111111111",
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",

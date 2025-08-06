@@ -75,8 +75,18 @@ export type CorridorParamsBase<
     >>
   : never;
 
+//ErasedCorridorParams is intended as a super type of CorridorParamsBase (and its derivatives)
+//  the problem with just plucking in the general types like so:
+//    CorridorParamsBase<Network, Platform, SupportedDomain<Network>, SupportedDomain<Network>>
+//  is that tsc plucks in the concrete types and derives that given then current set of supported
+//  domains (Evm and Solana), avaxHop is (currently) not a legitimate choice anymore, because every
+//  for Evm and Solana, v2 chains are a proper superset of v1 chains and so v2Direct is the only
+//  valid choice.
+//On the other hand, when tsc deals with type parameters like DD for the destination domain, it
+//  fails to deduce that CorridorParams<..., DD> can't be "avaxHop" and so it fails to deduce that
+//  CorridorParams<..., DD> is a subtype of ErasedCorridorParams.
 export type ErasedCorridorParams =
-  CorridorParamsBase<Network, Platform, SupportedDomain<Network>, SupportedDomain<Network>>;
+  Readonly<{ type: "v1" } | { type: "v2Direct" | "avaxHop"; fastFeeRate: Percentage }>;
 
 export function toCorridorVariant(
   corridor: ErasedCorridorParams,

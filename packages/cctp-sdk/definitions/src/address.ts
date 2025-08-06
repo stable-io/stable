@@ -33,6 +33,8 @@ export interface Address {
 
 export type PlatformAddress<P extends RegisteredPlatform> = PlatformRegistry[P]["Address"];
 
+export type UniversalAddressish = string | Uint8Array | UniversalAddress;
+
 export class UniversalAddress implements Address {
   static readonly byteSize = 32 as Size;
   static readonly zeroAddress = new UniversalAddress(new Uint8Array(UniversalAddress.byteSize));
@@ -46,7 +48,7 @@ export class UniversalAddress implements Address {
 
   constructor(address: string, platform?: Platform);
   constructor(address: Uint8Array | UniversalAddress);
-  constructor(address: string | Uint8Array | UniversalAddress, platform?: Platform) {
+  constructor(address: UniversalAddressish, platform?: Platform) {
     this.address = (() => {
       if (typeof address === "string") {
         const [size, format] = platform ? addressFormatOf(platform) : [32, "hex"] as const;

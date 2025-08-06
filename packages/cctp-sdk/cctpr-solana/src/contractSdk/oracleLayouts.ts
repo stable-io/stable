@@ -18,21 +18,21 @@ import {
   ComputeUnit,
   Byte,
   Percentage,
-  wormholeChainIdItem,
+  wormholeChainItem,
 } from "@stable-io/cctp-sdk-definitions";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { usdcItem } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { littleEndian,solanaAddressItem } from "@stable-io/cctp-sdk-solana";
+import { accountLayout, littleEndian,solanaAddressItem } from "@stable-io/cctp-sdk-solana";
 import { foreignDomains } from "./constants.js";
 
-export const oracleChainIdItem = <N extends Network>(network: N) =>
-  wormholeChainIdItem(network, foreignDomains(network));
+export const chainItem = <N extends Network>(network: N) =>
+  wormholeChainItem(network, foreignDomains(network));
 
-export const oracleConfigLayout = littleEndian([
+export const configLayout = accountLayout("Config", littleEndian([
   { name: "owner",        ...solanaAddressItem             },
   { name: "pendingOwner", ...optionItem(solanaAddressItem) },
   { name: "solPrice",     ...conversionItem(usdcItem, Sol) },
-] as const);
+]));
 
 const platformPriceSpace = 16;
 const platformPriceLayout = <const L extends ProperLayout>(layout: L) => littleEndian([
@@ -59,11 +59,13 @@ export const priceStateLayoutTemplate = <
   N extends Network,
   const L extends ProperLayout,
   const K extends KindWithHuman,
->(network: N, layout: L, kind: K) => ([
-    { name: "oracleChainId", ...oracleChainIdItem(network) },
+>(network: N, layout: L, kind: K) => accountLayout("PricesState", [
+  ...littleEndian([
+    { name: "oracleChain",   ...chainItem(network) },
     { name: "gasTokenPrice", ...conversionItem(usdcItem, kind) },
-    ...layout,
-  ] as const);
+  ]),
+  ...layout,
+]);
 
 export const priceStateLayout = <N extends Network>(network: N) => ({
   Evm: priceStateLayoutTemplate(network, evmPricesLayout, EvmGasToken),

@@ -7,7 +7,3 @@ target
 node_modules
 test-ledger
 .yarn
-!target/
-target/*
-!target/idl/
-!target/types/
