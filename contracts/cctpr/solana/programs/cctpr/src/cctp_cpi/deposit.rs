@@ -97,6 +97,7 @@ pub mod v1 {
         self.token_program.clone(),
         self.system_program.clone(),
         self.event_authority.clone(),
+        self.token_messenger_minter_program.clone(),
       ]
     }
   }
@@ -222,6 +223,7 @@ pub mod v2 {
         self.token_program.clone(),
         self.system_program.clone(),
         self.event_authority.clone(),
+        self.token_messenger_minter_program.clone(),
       ]
     }
   }

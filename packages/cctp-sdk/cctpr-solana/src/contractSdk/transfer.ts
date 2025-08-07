@@ -3,7 +3,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { TransactionMessage, Nonce } from "@solana/kit";
+import type {
+  TransactionMessage,
+  Nonce,
+  TransactionMessageWithFeePayer,
+  TransactionMessageWithDurableNonceLifetime,
+} from "@solana/kit";
 import {
   AccountRole,
   pipe,
@@ -112,7 +117,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     quote: Quote<N>,
     user: SolanaAddress,
     opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
-  ): Promise<TransactionMessage> {
+  ): Promise<TransactionMessage & TransactionMessageWithFeePayer> {
     checkIsSensibleCorridor(this.network, "Solana", destination, corridor.type);
 
     const userQuote = (
@@ -162,7 +167,9 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     relayer: SolanaAddress,
     nonceAccount: SolanaAddress,
     opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
-  ): Promise<TransactionMessage> {
+  ): Promise<TransactionMessage &
+             TransactionMessageWithFeePayer &
+             TransactionMessageWithDurableNonceLifetime> {
     checkIsSensibleCorridor(this.network, "Solana", destination, corridor.type);
 
     const { blockhash } = definedOrThrow(
@@ -221,9 +228,9 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     user: SolanaAddress,
     gaslessParams: GaslessParams | undefined,
     opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
-  ): Promise<TransactionMessage> {
+  ): Promise<TransactionMessage & TransactionMessageWithFeePayer> {
     const usdcMint = new SolanaAddress(usdcContracts.contractAddressOf[this.network]["Solana"]);
-    const userUsdc = opts?.userUsdc ?? findAta(usdcMint, user);
+    const userUsdc = opts?.userUsdc ?? findAta(user, usdcMint);
     const eventDataSeed = opts?.eventDataSeed ?? serialize(timestampItem, new Date());
     const [messageSentEventData, eventDataBump] = findPda([user, eventDataSeed], this.address);
 
@@ -235,7 +242,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       : this.address;
 
     const { feeRecipient } = await this.config();
-    const feeRecipientUsdc = findAta(usdcMint, feeRecipient);
+    const feeRecipientUsdc = findAta(feeRecipient, usdcMint);
 
     const cctpAccs = cctpAccounts[this.network][corridor.type === "v1" ? "v1" : "v2"];
     const {
@@ -253,11 +260,12 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     const denylisted = corridor.type !== "v1"
       ? (cctpAccs as Extract<typeof cctpAccs, { denylist: unknown }>).denylist(user)
       : this.address;
+    const cctprEventAuthority = findPda(["__event_authority"], this.address)[0];
 
     const accounts = [
       [relayer,                  AccountRole.WRITABLE_SIGNER],
       [user,                     AccountRole.READONLY_SIGNER],
-      [config,                   AccountRole.READONLY       ],
+      [config,                   AccountRole.WRITABLE       ],
       [chainConfig,              AccountRole.READONLY       ],
       [feeRecipient,             AccountRole.WRITABLE       ],
       [feeRecipientUsdc,         AccountRole.WRITABLE       ],
@@ -279,6 +287,8 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       [eventAuthority,           AccountRole.READONLY       ],
       [tokenProgramId,           AccountRole.READONLY       ],
       [systemProgramId,          AccountRole.READONLY       ],
+      [cctprEventAuthority,      AccountRole.READONLY       ],
+      [this.address,             AccountRole.READONLY       ],
     ] as const;
 
     const burnAmount = calcBurnAmount(inOrOut, corridor, quote, usdc(0));

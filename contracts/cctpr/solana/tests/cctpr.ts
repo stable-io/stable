@@ -5,6 +5,8 @@ import type {
   KeyPairSigner,
   Blockhash,
   Instruction,
+  TransactionMessage,
+  TransactionMessageWithFeePayer,
 } from "@solana/kit";
 import {
   pipe,
@@ -15,14 +17,16 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
   compileTransaction,
   signTransaction,
+  AccountRole,
 } from "@solana/kit";
 // import { stringifyJsonWithBigints } from "@solana/rpc-spec-types";
 // import { createHttpTransport } from "@solana/rpc-transport-http";
-import { serialize } from "binary-layout";
+import { serialize, deserialize } from "binary-layout";
 
 import { Conversion } from "@stable-io/amount";
 import { range } from "@stable-io/map-utils";
 import {
+  UniversalAddress,
   Byte,
   byte,
   genericGasToken,
@@ -33,14 +37,20 @@ import {
   percentage,
   Sol,
   sol,
+  Usdc,
   usdc,
   mulPercentage,
+  eth,
+  usdcContracts
 } from "@stable-io/cctp-sdk-definitions";
 import type { Seeds, SolanaAddressish } from "@stable-io/cctp-sdk-solana";
 import {
   SolanaAddress,
   findPda,
+  findAta,
   minimumBalanceForRentExemption,
+  tokenAccountLayout,
+  tokenProgramId,
 } from "@stable-io/cctp-sdk-solana";
 import { feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { CctpRGovernance, CctpR, CctpRReclaim, oracle } from "@stable-io/cctp-sdk-cctpr-solana";
@@ -50,13 +60,18 @@ import {
   FailedTransactionMetadata,
   TransactionMetadata,
 } from "./forkSvm/liteSvm/internal.js";
+import { encoding } from "@stable-io/utils";
 
 type Ix = Required<Instruction>;
+type TxMsg = TransactionMessage & TransactionMessageWithFeePayer;
+type SignableTxMsg = Parameters<typeof compileTransaction>[0];
 
 const soPath = (name: string) => `target/sbpf-solana-solana/release/${name}.so`;
 const solAddr = (addr: SolanaAddressish) => new SolanaAddress(addr);
 
 const network = "Mainnet";
+const usdcMint = solAddr(usdcContracts.contractAddressOf[network]["Solana"]);
+
 const url = "https://api.mainnet-beta.solana.com";
 const oracleProgramId = solAddr("CefQJaxQTV28gCf4MMd1PgDHgCcRmuEHZgXZwjJReUY3");
 const oraclePath = `../../price-oracle/solana/${soPath("solana_price_oracle")}`;
@@ -65,13 +80,10 @@ const cctprProgramId = solAddr("CctpRNMoG3Xs4MF4i9hAfMQFBZ4zJDvhUA4k2EJd8XEW");
 const cctprPath = soPath("cctpr");
 
 const assertSuccess = (txResult: TransactionMetadata | FailedTransactionMetadata) => {
-  if (txResult instanceof FailedTransactionMetadata) {
-    console.log("tx failed:", txResult.toString());
-    assert(false);
-  }
-  else {
-    assert(true);
-  }
+  assert(
+    txResult instanceof TransactionMetadata,
+    "tx failed with error:\n" + (txResult as FailedTransactionMetadata)?.toString()
+  );
 };
 
 describe("CctpR", function() {
@@ -87,49 +99,78 @@ describe("CctpR", function() {
     gasDropoff: { absolute: usdc(0), relative: percentage(105) },
   } as const;
 
+  let keyPairs = [] as KeyPairSigner[];
+  let [cctprOwnerKp, feeAdjusterKp, feeRecipientKp, userKp] = [] as KeyPairSigner[];
+  let [cctprOwner, feeAdjuster, feeRecipient, user] = [] as SolanaAddress[];
+
   const createPdaAccount = (
     seeds: Seeds,
     data: Uint8Array,
     programId: SolanaAddress,
-  ) => forkSvm.setAccount(
-    findPda(seeds, programId)[0].unwrap(),
-    {
-      owner: programId.unwrap(),
-      executable: false,
-      lamports: minimumBalanceForRentExemption(byte(data.length)).toUnit("atomic"),
-      data,
-      rentEpoch: BigInt(0),
-      space: BigInt(data.length),
-    }
-  );
+  ) => createAccount(findPda(seeds, programId)[0], data, programId);
+
+  const createAccount = (
+    address: SolanaAddress,
+    data: Uint8Array,
+    programId: SolanaAddress,
+  ) => forkSvm.setAccount(address.unwrap(), {
+    owner: programId.unwrap(),
+    executable: false,
+    lamports: minimumBalanceForRentExemption(byte(data.length)).toUnit("atomic"),
+    data,
+    rentEpoch: BigInt(0),
+    space: BigInt(data.length),
+  });
+
+  const createUsdcAta = (owner: SolanaAddress, balance: Usdc) =>
+    createAccount(
+      findAta(owner, usdcMint),
+      serialize(
+        tokenAccountLayout(Usdc), {
+        mint: usdcMint,
+        owner,
+        amount: balance,
+        state: "Initialized",
+        isNative: undefined,
+        delegate: undefined,
+        delegatedAmount: usdc(0),
+        closeAuthority: undefined,
+      }),
+      tokenProgramId,
+    );
 
   const createAndSendTx = async (
     instructions: readonly Ix[],
     feePayer: KeyPairSigner,
     signers?: KeyPairSigner[],
-  ) => {
-    signers = signers ?? [feePayer];
+  ) => pipe(
+    createTransactionMessage({ version: "legacy" }),
+    tx => setTransactionMessageFeePayer(feePayer.address, tx),
+    tx => appendTransactionMessageInstructions(instructions, tx),
+    tx => addLifetimeAndSendTx(tx, signers ?? [feePayer]),
+  );
+
+  const addLifetimeAndSendTx = async (tx: TxMsg, signers?: KeyPairSigner[]) => {
+    signers = signers ?? keyPairs.filter(kp => kp.address === tx.feePayer.address);
     const blockhash = forkSvm.latestBlockhash() as Blockhash;
     const lastValidBlockHeight = forkSvm.getClock().slot + 10n;
-    const compiledTx = pipe(
-      createTransactionMessage({ version: "legacy" }),
-      tx => setTransactionMessageFeePayer(feePayer.address, tx),
-      tx => appendTransactionMessageInstructions(instructions, tx),
-      tx => setTransactionMessageLifetimeUsingBlockhash({ blockhash, lastValidBlockHeight }, tx),
-      tx => compileTransaction(tx),
+    const txWithLifetime = setTransactionMessageLifetimeUsingBlockhash({ blockhash, lastValidBlockHeight }, tx);
+    return sendTx(
+      txWithLifetime,
+      signers,
     );
-    const signedTx = await signTransaction(signers.map(kp => kp.keyPair), compiledTx);
+  }
 
+  const sendTx = async (tx: SignableTxMsg, signers: KeyPairSigner[]) => {
+    const compiledTx = compileTransaction(tx);
+    const signedTx = await signTransaction(signers.map(kp => kp.keyPair), compiledTx);
     return forkSvm.sendTransaction(signedTx);
-  };
-  
-  let [ownerKp, feeAdjusterKp, feeRecipientKp, userKp] = [] as KeyPairSigner[];
-  let [owner, feeAdjuster, feeRecipient, user] = [] as SolanaAddress[];
+  }
 
   const setupOracle = async () => {
     forkSvm.addProgramFromFile(oracleProgramId.unwrap(), oraclePath);
 
-    const oracleConfig = { owner, pendingOwner: undefined, solPrice } as const;
+    const oracleConfig = { owner: cctprOwner, pendingOwner: undefined, solPrice } as const;
     const oracleConfigData = serialize(oracle.configLayout, oracleConfig);
     createPdaAccount(["config"], oracleConfigData, oracleProgramId);
 
@@ -154,14 +195,14 @@ describe("CctpR", function() {
     });
     const offChainQuoter = new Uint8Array(20);
     const initIx = await cctprGovernance.composeInitializeIx(
-      owner,
-      owner,
+      cctprOwner,
+      cctprOwner,
       feeAdjuster,
       feeRecipient,
       offChainQuoter,
     );
 
-    assertSuccess(await createAndSendTx([initIx], ownerKp));
+    assertSuccess(await createAndSendTx([initIx], cctprOwnerKp));
 
     const registerChainIx = await cctprGovernance.composeRegisterChainIx("Ethereum");
     const updateFeeAdjustmentIxs = await Promise.all(
@@ -171,18 +212,20 @@ describe("CctpR", function() {
         )
     );
 
-    assertSuccess(await createAndSendTx([registerChainIx, ...updateFeeAdjustmentIxs], ownerKp));
+    assertSuccess(
+      await createAndSendTx([registerChainIx, ...updateFeeAdjustmentIxs], cctprOwnerKp)
+    );
   }
 
   before(async () => {
-    [ownerKp, feeAdjusterKp, feeRecipientKp, userKp] =
-      await Promise.all(range(4).map(generateKeyPairSigner));
-    [owner, feeAdjuster, feeRecipient, user] =
-      [ownerKp, feeAdjusterKp, feeRecipientKp, userKp].map(kp => solAddr(kp.address));
+    keyPairs = await Promise.all(range(4).map(generateKeyPairSigner));
+    [cctprOwnerKp, feeAdjusterKp, feeRecipientKp, userKp] = keyPairs;
+    [cctprOwner, feeAdjuster, feeRecipient, user] =
+      [cctprOwnerKp, feeAdjusterKp, feeRecipientKp, userKp].map(kp => solAddr(kp.address));
 
     await forkSvm.advanceToNow();
 
-    for (const addr of [owner, feeAdjuster, user])
+    for (const addr of [cctprOwner, feeAdjuster, user])
       forkSvm.airdrop(addr.unwrap(), sol(100).toUnit("atomic"));
 
     await setupOracle();
@@ -218,10 +261,58 @@ describe("CctpR", function() {
     });
 
     test("transfer", async function() {
+      createUsdcAta(user, usdc(100));
+      createUsdcAta(feeRecipient, usdc(0));
+      const tx = await cctpr.transferWithRelay(
+        "Ethereum",
+        { amount: usdc(100), type: "in" },
+        new UniversalAddress("15130512".repeat(5), "Evm"),
+        eth(0.1),
+        { type: "v1" },
+        { type: "onChain", maxRelayFee: sol(30) },
+        user,
+      );
+      console.log(tx.instructions[0].accounts?.length, tx.instructions[0].accounts);
+      const accs = await (forkSvm.getMultipleAccounts(
+        tx.instructions[0].accounts!.map(acc => acc.address),
+        { encoding: "base64" }
+      )).send();
+      console.log(accs.value.map(acc => acc?.space))
+      assertSuccess(await addLifetimeAndSendTx({ ...tx, version: "legacy" }));
+    });
 
+    test("captureTokenMessenger", async function() {
+      //just a test for liteSvm to see if it correctly handles bpf upgradeable programs
+      const tokenMessengerAddr = solAddr("CCTPiPYPc6AsJuwueEnWgSgucamXDZwBd53dQ11YiKX3");
+      const configAddr = solAddr("Afgq3BHEfCE7d78D2XE9Bfyu2ieDqvE24xX8KDwreBms");
+      const eventAuthorityAddr = solAddr("CNfZLeeL4RUxwfPnjA3tLiQt4y43jp4V7bMpga673jf9");
+      const accInfo =
+        (await forkSvm.getAccountInfo(configAddr.unwrap(), { encoding: "base64" }).send()).value!;
+      await forkSvm.getAccountInfo(tokenMessengerAddr.unwrap(), { encoding: "base64" }).send();
+      const conf = deserialize(
+        oracle.tokenMessengerConfigLayout,
+        encoding.base64.decode(accInfo.data[0])
+      );
+      const capturedConf = { ...conf, owner: cctprOwner };
+      const data = serialize(oracle.tokenMessengerConfigLayout, capturedConf);
+      forkSvm.setAccount(configAddr.unwrap(), { ...accInfo, data });
+      assertSuccess(await createAndSendTx([{
+        accounts: [
+          { address: cctprOwner.unwrap(), role: AccountRole.READONLY_SIGNER },
+          { address: configAddr.unwrap(), role: AccountRole.WRITABLE        },
+          { address: eventAuthorityAddr.unwrap(), role: AccountRole.READONLY },
+          { address: tokenMessengerAddr.unwrap(), role: AccountRole.READONLY },
+        ],
+        data: new Uint8Array([65,177,215,73,53,45,99,47, ...range(32)]),
+        programAddress: tokenMessengerAddr.unwrap(),
+      }], cctprOwnerKp));
+      const newConf = deserialize(oracle.tokenMessengerConfigLayout,
+        encoding.base64.decode((await forkSvm.getAccountInfo(configAddr.unwrap(), { encoding: "base64" }).send()).value!.data[0]),
+      );
+      const expectedConf = { ...capturedConf, pendingOwner: solAddr(new Uint8Array(range(32))) };
+      assert.deepEqual(newConf, expectedConf);
     });
   });
-
 });
 
 

@@ -37,7 +37,7 @@ export {
   TransactionReturnData,
 } from "./internal";
 
-import type { Transaction, Address } from "@solana/kit";
+import type { Address, Transaction, AccountInfoBase } from "@solana/kit";
 import { getTransactionEncoder, getAddressEncoder, getAddressDecoder } from "@solana/kit";
 
 const addressEncoder = getAddressEncoder();
@@ -45,14 +45,8 @@ const encodeAddress = (address: Address) => addressEncoder.encode(address) as Ui
 const addressDecoder = getAddressDecoder();
 const decodeAddress = (address: Uint8Array) => addressDecoder.decode(address);
 
-export type AccountInfo = {
-  executable: boolean;
-  owner:      Address;
-  lamports:   bigint;
-  data:       Uint8Array;
-  rentEpoch:  bigint;
-  space:      bigint;
-}
+export type AccountInfo =
+  Omit<AccountInfoBase, "lamports"> & { lamports: bigint; data: Uint8Array };
 
 function toAccountInfo(acc: Account): AccountInfo {
   return {
@@ -60,20 +54,18 @@ function toAccountInfo(acc: Account): AccountInfo {
     owner: decodeAddress(acc.owner()),
     lamports: acc.lamports(),
     data: acc.data(),
-    rentEpoch: acc.rentEpoch(),
+    rentEpoch: 0n,
     space: BigInt(acc.data().length),
   };
 }
 
 function fromAccountInfo(acc: AccountInfo): Account {
-  const maybeRentEpoch = acc.rentEpoch;
-  const rentEpoch = maybeRentEpoch || 0n;
   return new Account(
-    acc.lamports,
+    BigInt(acc.lamports),
     acc.data,
     encodeAddress(acc.owner),
     acc.executable,
-    rentEpoch,
+    0n,
   );
 }
 

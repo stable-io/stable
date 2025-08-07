@@ -422,7 +422,8 @@ pub fn transfer_with_relay(
     message_sent_event_data_seed.as_ref(),
     &[message_sent_event_data_bump],
   ];
-  let signer_seeds: &[&[&[u8]]] = &[message_sent_event_data_seeds];
+  let config_seeds: &[&[u8]] = &[Config::SEED_PREFIX, &[ctx.accounts.config.bump]];
+  let signer_seeds: &[&[&[u8]]] = &[message_sent_event_data_seeds, config_seeds];
 
   let cctp_nonce =
     if let Corridor::V1 = corridor {
@@ -437,7 +438,7 @@ pub fn transfer_with_relay(
             token_messenger_minter_sender_authority:   ctx.accounts
               .token_messenger_minter_sender_authority .to_account_info(),
             burn_token:                                ctx.accounts
-              .local_token.                            to_account_info(),
+              .user_usdc                               .to_account_info(),
             message_transmitter_config:                ctx.accounts
               .message_transmitter_config              .to_account_info(),
             token_messenger_config:                    ctx.accounts
@@ -450,7 +451,7 @@ pub fn transfer_with_relay(
               .local_token                             .to_account_info(),
             burn_token_mint:                           ctx.accounts
               .usdc_mint                               .to_account_info(),
-              message_sent_event_data:                 ctx.accounts
+            message_sent_event_data:                   ctx.accounts
               .message_sent_event_data                 .to_account_info(),
             message_transmitter_program:               ctx.accounts
               .message_transmitter_program             .to_account_info(),
@@ -491,7 +492,7 @@ pub fn transfer_with_relay(
           token_messenger_minter_sender_authority:   ctx.accounts
             .token_messenger_minter_sender_authority .to_account_info(),
           burn_token:                                ctx.accounts
-            .local_token.                            to_account_info(),
+            .user_usdc                               .to_account_info(),
           denylisted:                                ctx.accounts
             .denylisted.as_ref().unwrap()            .to_account_info(),
           message_transmitter_config:                ctx.accounts

@@ -3,6 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import { readFile, writeFile } from "fs/promises";
 import type {
   Address,
   Lamports,
@@ -25,6 +26,8 @@ import {
 import { createHttpTransport } from "@solana/rpc-transport-http";
 import { isJsonRpcPayload } from "@solana/rpc-spec";
 import { LiteSVM, AccountInfo as SvmAccountInfo } from "./liteSvm/index.js";
+
+const fileCachePath = "./tests/cachedAccs/";
 
 type CustomFuncs = {
   advanceToNow: () => Promise<void>;
@@ -63,11 +66,9 @@ export function createForkSvm(upstreamRpc: string): ForkSvm {
 
   // Manually copy known RPC methods
   const rpcMethods = ['getAccountInfo', 'getMultipleAccounts', 'getSlot', 'getBlockTime'];
-  for (const method of rpcMethods) {
-    if (typeof customRpc[method] === 'function') {
+  for (const method of rpcMethods)
+    if (typeof customRpc[method] === 'function')
       result[method] = customRpc[method].bind(customRpc);
-    }
-  }
 
   // Copy prototype methods from both liteSvm and customRpc
   const copyPrototypeMethods = (source: any) => {
@@ -117,8 +118,7 @@ function createForkTransport(
   const upstreamTransport = createHttpTransport({ url: upstreamRpc });
   const queryUpstream = async <R>(methodName: string, params: readonly unknown[]): Promise<R> =>
     upstreamTransport({ payload: createRpcMessage({ methodName, params }) })
-      .then(response => throwOnError(response as RpcResponseData<R>).result
-      );
+      .then(response => throwOnError(response as RpcResponseData<R>).result);
      
   const queryUpstreamAcc = async <T>(method: string, addr: unknown): Promise<T> =>
     queryUpstream<SolanaRpcResult<T>>(method, [addr, { encoding: "base64" }]).then(r => r.value);
@@ -170,28 +170,24 @@ function createForkTransport(
       if (!upstream)
         return null;
 
+      if (upstream.executable && upstream.owner === "BPFLoaderUpgradeab1e11111111111111111111111") {
+        //special handling for upgradable programs:
+        //  also fetches the program data account from upstream
+        //the programId account contains the address of the program data account
+        //  (it's a pda of bpfUpgradeableLoader using the programId as its seed)
+        const byteCodeAddress =
+          getAddressDecoder().decode(base64.encode(upstream.data[0]).slice(4, 36));
+        
+        if (!fetchedAccounts.has(byteCodeAddress)) {     
+          const byteCodeAccount = await upstreamGetAccountInfo(byteCodeAddress);
+          if (!byteCodeAccount)
+            throw new Error(`Couldn't find bytecode account for program ${address}`);
+
+          fetchedAccounts.add(byteCodeAddress);
+          liteSvm.setAccount(byteCodeAddress, kitAccountToLiteSvmAccount(byteCodeAccount));
+        }
+      }
       liteSvm.setAccount(address, kitAccountToLiteSvmAccount(upstream));
-
-      if (!upstream.executable || upstream.owner !== "BPFLoaderUpgradeab1e11111111111111111111111")
-        return upstream;
-
-      //special handling for upgradable programs:
-      //  also fetches the program data account from upstream
-      //the programId account contains the address of the program data account
-      //  (it's a pda of bpfUpgradeableLoader using the programId as its seed)
-      const byteCodeAddress =
-        getAddressDecoder().decode(base64.encode(upstream.data[0].slice(4, 36)));
-      
-      if (fetchedAccounts.has(byteCodeAddress))
-        return upstream;
-      
-      const byteCodeAccount = await upstreamGetAccountInfo(byteCodeAddress);
-      if (!byteCodeAccount)
-        throw new Error(`Couldn't find bytecode account for program ${address}`);
-
-      fetchedAccounts.add(byteCodeAddress);
-      liteSvm.setAccount(byteCodeAddress, kitAccountToLiteSvmAccount(byteCodeAccount));
-      
       return upstream;
     };
 
@@ -210,11 +206,11 @@ function createForkTransport(
   const getMultipleAccounts =
     async (addresses: Address[]): Promise<SolanaRpcResponse<(TransportAccountInfo | null)[]>> => {
       const unfetchedAddresses = addresses.filter(addr => shouldFetchFromUpstream(addr));
-      if (unfetchedAddresses.length > 0) {
-        await upstreamGetMultipleAccounts(unfetchedAddresses).then(accounts => accounts.map(
-          (acc, i) => setSvmAccountFromUpstream(unfetchedAddresses[i], acc)
-        ));
-      }
+      if (unfetchedAddresses.length > 0)
+        await upstreamGetMultipleAccounts(unfetchedAddresses).then(accounts =>
+          Promise.all(accounts.map(
+            (acc, i) => setSvmAccountFromUpstream(unfetchedAddresses[i], acc)
+          )));
 
       //wasteful because we're refetching the accounts from liteSvm, but at most once per account
       return toRpcResponse(addresses.map(addr => getKitFromSvm(addr)));
