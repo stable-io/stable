@@ -49,6 +49,27 @@
       "evmNetworkId": 130,
       "chainId": 44,
       "rpc": "https://unichain-rpc.publicnode.com"
+    },
+    {
+      "domain": "Linea",
+      "description": "Linea",
+      "evmNetworkId": 59144,
+      "chainId": 38,
+      "rpc": "https://rpc.linea.build"
+    },
+    {
+      "domain": "Sonic",
+      "description": "Sonic",
+      "evmNetworkId": 146,
+      "chainId": 52,
+      "rpc": "https://rpc.soniclabs.com"
+    },
+    {
+      "domain": "Worldchain",
+      "description": "Worldchain",
+      "evmNetworkId": 480,
+      "chainId": 45,
+      "rpc": "https://worldchain-mainnet.g.alchemy.com/public"
     }
   ]
 }

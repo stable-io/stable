@@ -3,7 +3,14 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "."
   },
-  "include": ["deployCctpr.ts", "deployAvaxRouter.ts", "setFees.ts", "verifyBytecode.ts", "src/**/*"],
+  "include": [
+    "deployCctpr.ts",
+    "deployAvaxRouter.ts",
+    "setFees.ts",
+    "verifyBytecode.ts",
+    "verifyEtherscan.ts",
+    "src/**/*"
+  ]
 }
