@@ -132,6 +132,9 @@ export class CctpRService {
   > {
     return corridor === "v1"
       ? { type: corridor }
-      : { type: corridor, fastFeeRate: fastFeeRate };
+      : {
+        type: corridor as "v2Direct", // @todo: figure out why this is needed
+        fastFeeRate: fastFeeRate,
+      };
   }
 }
