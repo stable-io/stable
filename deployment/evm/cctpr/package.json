@@ -9,7 +9,7 @@
     "lint:fix": "eslint --fix .",
     "clean": "make -C ../../../contracts/cctpr/evm/ clean && rm -rf dist build-contracts",
     "build-contracts": "make -C ../../../contracts/cctpr/evm/ && mkdir -p build-contracts && cp -r ../../../contracts/cctpr/evm/out/* ./build-contracts",
-    "build": "tsc",
+    "build": "tsc --build",
     "deploy-cctpr": "yarn tsx deployCctpr.ts",
     "deploy-avax-router": "yarn tsx deployAvaxRouter.ts",
     "verify-etherscan": "./verifyEtherscan.sh",
