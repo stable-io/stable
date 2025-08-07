@@ -4,7 +4,7 @@ import { Hex, Intent, Network, TxHash } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Redeem } from "./types/redeem.js";
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
-import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 export class TransferProgressEmitter extends (
   EventEmitter as { new(): TransferProgressEventEmitter }
@@ -59,8 +59,8 @@ export interface TransferProgressEvent {
  * Transfer Life Cycle Events
  */
 
-export type TransferInitiatedEventData = {
-  intent: Intent<SupportedEvmDomain<Network>, SupportedEvmDomain<Network>>;
+export type TransferInitiatedEventData<N extends Network = Network> = {
+  intent: Intent<N, LoadedCctprDomain<N>, SupportedDomain<N>>;
   // other info could be added here such as
   // quote, corridor, gasless or not, etc.
 };

@@ -3,9 +3,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import { Amount } from "@stable-io/amount";
-import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { EvmDomains, Usdc } from "@stable-io/cctp-sdk-definitions";
-import { gasTokenKindOf, isUsdc, usdc } from "@stable-io/cctp-sdk-definitions";
+import { init as initCctpr, Corridor, CorridorStats, LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { LoadedDomain, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { UniversalAddress, gasTokenKindOf, isUsdc, platformAddress, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
@@ -80,8 +80,8 @@ export const $findRoutes = <
 async function getCorridors<N extends Network>(
   network: N,
   cctpr: ReturnType<typeof initCctpr<N>>,
-  intent: Intent<keyof EvmDomains, keyof EvmDomains>,
-) {
+  intent: Intent<N, LoadedCctprDomain<N>, SupportedDomain<N>>,
+): Promise<CorridorStats<N, LoadedCctprDomain<N>, Corridor>[]> {
   const { stats: corridorStats, fastBurnAllowance } = await cctpr.getCorridors(
     network,
     intent.sourceChain,
@@ -95,12 +95,14 @@ async function getCorridors<N extends Network>(
   });
 }
 
-function parseIntent(userIntent: UserIntent): Intent<keyof EvmDomains, keyof EvmDomains> {
+function parseIntent<N extends Network>(
+  userIntent: UserIntent<N>,
+): Intent<N, LoadedCctprDomain<N>, SupportedDomain<N>> {
   return {
     sourceChain: userIntent.sourceChain,
     targetChain: userIntent.targetChain,
-    sender: toEvmAddress(userIntent.sender),
-    recipient: toEvmAddress(userIntent.recipient),
+    sender: platformAddress(userIntent.sourceChain, userIntent.sender),
+    recipient: new UniversalAddress(userIntent.recipient, platformOf(userIntent.targetChain)),
     amount: parseAmount(userIntent.amount),
     usePermit: userIntent.usePermit ?? true,
     gasDropoffDesired: parseGasDropoff(userIntent),
@@ -121,7 +123,7 @@ function toEvmAddress(address: string | EvmAddress): EvmAddress {
   throw new Error(`Unexpected value for evm address: ${typeof address}`);
 }
 
-function parseGasDropoff(intent: UserIntent): TODO {
+function parseGasDropoff(intent: UserIntent<Network>): TODO {
   return Amount.ofKind(gasTokenKindOf(intent.targetChain))(
     intent.gasDropoffDesired ?? 0,
     "atomic",
@@ -129,11 +131,12 @@ function parseGasDropoff(intent: UserIntent): TODO {
 }
 
 function findBestRoutes<
-  S extends keyof EvmDomains,
-  D extends keyof EvmDomains,
->(routes: Route<S, D>[]) {
-  let fastest: Route<S, D> | undefined;
-  let cheapest: Route<S, D> | undefined;
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+>(routes: Route<N, S, D>[]) {
+  let fastest: Route<N, S, D> | undefined;
+  let cheapest: Route<N, S, D> | undefined;
 
   for (const route of routes) {
     if (!fastest || route.estimatedDuration < fastest.estimatedDuration) {
