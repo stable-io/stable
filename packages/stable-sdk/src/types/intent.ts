@@ -3,14 +3,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains, GasTokenOf, GenericGasToken, Usdc } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { Address, Amount, Network } from "./general.js";
-import { PaymentTokenOptions } from "./sdk.js";
+import type {
+  GasTokenOf,
+  LoadedDomain,
+  Network,
+  PlatformAddress,
+  PlatformOf,
+  Usdc,
+} from "@stable-io/cctp-sdk-definitions";
+import type { CctprRecipientAddress, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
-export type UserIntent = {
-  sourceChain: keyof EvmDomains;
-  targetChain: keyof EvmDomains;
+export type PaymentTokenOptions = "usdc" | "native" | "gas";
+
+export type UserIntent<N extends Network> = {
+  sourceChain: LoadedDomain;
+  targetChain: SupportedDomain<N>;
   amount: string;
   sender: string; // | EvmAddress; TODO
   recipient: string; // | EvmAddress; TODO
@@ -22,14 +29,15 @@ export type UserIntent = {
 };
 
 export type Intent<
-  S extends keyof EvmDomains,
-  D extends keyof EvmDomains,
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
 > = {
   sourceChain: S;
   targetChain: D;
   amount: Usdc;
-  sender: EvmAddress; // eventually universal address
-  recipient: EvmAddress; // eventually universal address
+  sender: PlatformAddress<PlatformOf<S>>;
+  recipient: CctprRecipientAddress<N, D>;
   usePermit: boolean;
   gasDropoffDesired: GasTokenOf<D>;
   paymentToken: PaymentTokenOptions;

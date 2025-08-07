@@ -4,10 +4,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { TODO } from "@stable-io/utils";
-import { init as initDefinitions, usdc, Usdc, EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { init as initDefinitions, usdc, Usdc, EvmDomains, LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
-import type { Corridor, CorridorStats } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Corridor, CorridorStats, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
@@ -30,13 +30,13 @@ const PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD = 1_000_000_000;
 
 export async function buildGaslessRoute<
   N extends Network,
-  S extends SupportedEvmDomain<N>,
-  D extends SupportedEvmDomain<N>,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
 >(
   evmClient: ViemEvmClient<N, S>,
-  intent: Intent<S, D>,
-  corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
-): Promise<Route<S, D>> {
+  intent: Intent<N, S, D>,
+  corridor: CorridorStats<N, S, Corridor>,
+): Promise<Route<N, S, D>> {
   if (intent.paymentToken !== "usdc")
     throw new Error("Gasless Transfer can't be paid in native token");
 
@@ -49,7 +49,7 @@ export async function buildGaslessRoute<
 
   const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(corridor.cost, intent);
 
-  const transferParams: GetQuoteParams = {
+  const transferParams: GetQuoteParams<N, S, D> = {
     sourceChain: intent.sourceChain,
     targetChain: intent.targetChain,
     amount: intent.amount,
