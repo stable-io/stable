@@ -1,4 +1,4 @@
-import type { Route } from "@stable-io/sdk";
+import type { Network, Route } from "@stable-io/sdk";
 import { useCallback, useEffect, useState } from "react";
 
 import type { AvailableChains, GasDropoffLevel } from "@/constants";
@@ -12,22 +12,22 @@ interface UseRoutesProps {
   gasDropoffLevel: GasDropoffLevel;
 }
 
-interface UseRoutesReturn {
-  route: Route<AvailableChains, AvailableChains> | undefined;
+interface UseRoutesReturn<N extends Network> {
+  route: Route<N, AvailableChains, AvailableChains> | undefined;
   isLoading: boolean;
   error: string | undefined;
   findRoutes: () => Promise<void>;
 }
 
-export const useRoutes = ({
+export const useRoutes = <N extends Network>({
   sourceChain,
   targetChain,
   amount,
   gasDropoffLevel,
-}: UseRoutesProps): UseRoutesReturn => {
+}: UseRoutesProps): UseRoutesReturn<N> => {
   const { stable, address } = useStableContext();
   const [route, setRoute] = useState<
-    Route<AvailableChains, AvailableChains> | undefined
+    Route<N, AvailableChains, AvailableChains> | undefined
   >();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
@@ -54,7 +54,7 @@ export const useRoutes = ({
       });
       const route = result.fastest;
       // @todo: Parameterize findRoutes?
-      setRoute(route as Route<AvailableChains, AvailableChains>);
+      setRoute(route as Route<N, AvailableChains, AvailableChains>);
     } catch (error: unknown) {
       console.error("Failed to find routes:", error);
       setError(
