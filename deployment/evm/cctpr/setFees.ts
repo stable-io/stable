@@ -14,11 +14,10 @@ import {
   buildOverridesWithGas,
   getViemSigner,
 } from "./src/common.js";
+import { FeeAdjustmentType } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   CctpRGovernance,
-  FeeAdjustment,
-  FeeAdjustmentType,
-  GovernanceCommand,
+  layouts,
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import { encoding } from "@stable-io/utils";
 import { Hex, TransactionReceipt } from "viem";
@@ -27,38 +26,38 @@ const processName = "configureCCTPRFees";
 init();
 const operatingChains = getOperatingChains();
 
-async function run() {
-  console.info(`Start! ${processName}`);
+// async function run() {
+//   console.info(`Start! ${processName}`);
 
-  const updateTasks = operatingChains.map(chain =>
-    updateCctpRConfiguration(chain),
-  );
-  const results = await Promise.allSettled(updateTasks);
-  for (const result of results) {
-    if (result.status === "rejected") {
-      console.info(
-        `Updates processing failed: ${result.reason?.stack || result.reason}`,
-      );
-    } else {
-      // Print update details; this reflects the exact updates requested to the contract.
-      // Note that we assume that this update element was added because
-      // some modification was requested to the contract.
-      // This depends on the behaviour of the process functions.
-      printUpdate(result.value.commands, result.value.chain);
-    }
-  }
-}
+//   const updateTasks = operatingChains.map(chain =>
+//     updateCctpRConfiguration(chain),
+//   );
+//   const results = await Promise.allSettled(updateTasks);
+//   for (const result of results) {
+//     if (result.status === "rejected") {
+//       console.info(
+//         `Updates processing failed: ${result.reason?.stack || result.reason}`,
+//       );
+//     } else {
+//       // Print update details; this reflects the exact updates requested to the contract.
+//       // Note that we assume that this update element was added because
+//       // some modification was requested to the contract.
+//       // This depends on the behaviour of the process functions.
+//       printUpdate(result.value.commands, result.value.chain);
+//     }
+//   }
+// }
 
-function printUpdate<N extends Network>(commands: GovernanceCommand<N>[], { chainId }: ChainInfo) {
-  const messages: string[] = [];
+// function printUpdate<N extends Network>(commands: GovernanceCommand<N>[], { chainId }: ChainInfo) {
+//   const messages: string[] = [];
 
-  // TODO: implement command explanation
-  for (const command of commands) {
-    messages.push(`Chain: ${chainId}, ${JSON.stringify(command, undefined, 2)}`);
-  }
+//   // TODO: implement command explanation
+//   for (const command of commands) {
+//     messages.push(`Chain: ${chainId}, ${JSON.stringify(command, undefined, 2)}`);
+//   }
 
-  console.info(messages.join("\n"));
-}
+//   console.info(messages.join("\n"));
+// }
 
 async function updateCctpRConfiguration(chain: ChainInfo) {
   const network = getNetwork();
@@ -68,51 +67,51 @@ async function updateCctpRConfiguration(chain: ChainInfo) {
 
   const commands = await processFeeAdjustments(cctpr);
 
-  if (commands.length === 0) {
-    console.info(`No updates for operating chain ${chain.chainId}`);
-    return { commands, chain };
-  }
+  // if (commands.length === 0) {
+  //   console.info(`No updates for operating chain ${chain.chainId}`);
+  //   return { commands, chain };
+  // }
 
-  const partialTx = cctpr.execGovernance(commands);
+  // const partialTx = cctpr.execGovernance(commands);
 
-  console.info(`Sending update tx for operating chain ${chain.chainId}.`);
-  console.info(`Updates: ${JSON.stringify(commands)}`);
+  // console.info(`Sending update tx for operating chain ${chain.chainId}.`);
+  // console.info(`Updates: ${JSON.stringify(commands)}`);
 
-  let hash: Hex;
-  let receipt: TransactionReceipt;
-  try {
-    const overrides = await buildOverridesWithGas(
-      viemClient,
-      partialTx,
-      chain,
-    );
-    hash = await signer.sendTransaction({
-      data: encoding.hex.encode(partialTx.data, true),
-      to: partialTx.to.toString(),
-      value: partialTx.value?.toUnit("atomic"),
-      ...overrides,
-    });
-    receipt = await viemClient.client.waitForTransactionReceipt({ hash });
-  } catch (error: any) {
-    console.error(
-      `Updates failed on operating chain ${chain.chainId}. Error: ${error?.stack || error}`,
-    );
-    throw error;
-  }
+  // let hash: Hex;
+  // let receipt: TransactionReceipt;
+  // try {
+  //   const overrides = await buildOverridesWithGas(
+  //     viemClient,
+  //     partialTx,
+  //     chain,
+  //   );
+  //   hash = await signer.sendTransaction({
+  //     data: encoding.hex.encode(partialTx.data, true),
+  //     to: partialTx.to.toString(),
+  //     value: partialTx.value?.toUnit("atomic"),
+  //     ...overrides,
+  //   });
+  //   receipt = await viemClient.client.waitForTransactionReceipt({ hash });
+  // } catch (error: any) {
+  //   console.error(
+  //     `Updates failed on operating chain ${chain.chainId}. Error: ${error?.stack || error}`,
+  //   );
+  //   throw error;
+  // }
 
-  if (receipt.status !== "success") {
-    throw new Error(
-      `Updates failed on operating chain ${chain.chainId}. Tx id ${hash}`,
-    );
-  }
+  // if (receipt.status !== "success") {
+  //   throw new Error(
+  //     `Updates failed on operating chain ${chain.chainId}. Tx id ${hash}`,
+  //   );
+  // }
 
-  return { commands, chain };
+  // return { commands, chain };
 }
 
 async function processFeeAdjustments<N extends Network, S extends DomainsOf<"Evm">>(
   cctpr: CctpRGovernance<N, S>,
 ) {
-  const commands = [] as GovernanceCommand<N>[];
+  const commands = [] as layouts.GovernanceCommand<N>[];
   for (const [type, expectedAdjustments] of Object.entries(loadFeeAdjustments())) {
     const currentAdjustments = await cctpr.getFeeAdjustments(type as FeeAdjustmentType);
     for (let mappingIndex = 0; mappingIndex < CctpRGovernance.adjustmentSlots; ++mappingIndex) {
@@ -131,7 +130,10 @@ async function processFeeAdjustments<N extends Network, S extends DomainsOf<"Evm
   return commands;
 }
 
-function adjustmentDiffers(current: FeeAdjustment[], expected: FeeAdjustment[]): boolean {
+function adjustmentDiffers(
+  current: layouts.FeeAdjustment[],
+  expected: layouts.FeeAdjustment[],
+): boolean {
   if (current.length !== expected.length) {
     throw new Error("Unexpected different lengths of fee adjustments arrays.");
   }
@@ -146,5 +148,5 @@ function adjustmentDiffers(current: FeeAdjustment[], expected: FeeAdjustment[]):
   return false;
 }
 
-await run();
-console.info(`Done! ${processName}`);
+// await run();
+// console.info(`Done! ${processName}`);
