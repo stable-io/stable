@@ -23,7 +23,7 @@
   },
   "scripts": {
     "prepublishOnly": "eslint . && tsc",
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "echo \"No tests yet\" && exit 0",
