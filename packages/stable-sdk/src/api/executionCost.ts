@@ -1,7 +1,7 @@
+import { HTTPCode } from "@stable-io/cctp-sdk-definitions";
 import { deserializeBigints, SerializedBigint } from "@stable-io/utils";
 import { Network } from "../types/index.js";
-import { apiRequest, apiEndpoint, APIResponse } from "./index.js";
-import { HTTPCode } from "@stable-io/cctp-sdk-definitions";
+import { apiRequest, apiEndpoint, APIResponse } from "./base.js";
 
 export type GetExecutionCostsParams = {
   platform: "Evm"; // | "Solana" ...
