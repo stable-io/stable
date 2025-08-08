@@ -4,15 +4,15 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { WalletClient as ViemWalletClient } from "viem";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { Address, Amount, Chain, Network, TxHash } from "./general.js";
-import { UserIntent } from "./intent.js";
-import { Route, SupportedRoute } from "./route.js";
-import { EvmPlatformSigner } from "./signer.js";
-import { Url } from "@stable-io/utils";
-import { Redeem } from "./redeem.js";
-import { CctpAttestation } from "../methods/executeRoute/findTransferAttestation.js";
-import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import type { Address, Amount, Network, TxHash } from "./general.js";
+import type { UserIntent } from "./intent.js";
+import type { Route, SupportedRoute } from "./route.js";
+import type { EvmPlatformSigner } from "./signer.js";
+import type { Url } from "@stable-io/utils";
+import type { Redeem } from "./redeem.js";
+import type { CctpAttestation } from "../methods/executeRoute/findTransferAttestation.js";
+import type { LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 export type { WalletClient as ViemWalletClient } from "viem";
 
@@ -28,8 +28,8 @@ export abstract class SDK<N extends Network> {
   public abstract getNetwork(): N;
 
   public abstract findRoutes(
-    intent: UserIntent,
-  ): Promise<RoutesResult<N, SupportedEvmDomain<N>, SupportedEvmDomain<N>>>;
+    intent: UserIntent<N>,
+  ): Promise<RoutesResult<N, LoadedCctprDomain<N>, SupportedDomain<N>>>;
 
   public abstract checkHasEnoughFunds(route: SupportedRoute<N>): Promise<boolean>;
 
@@ -54,12 +54,10 @@ export abstract class SDK<N extends Network> {
 
 export interface RoutesResult <
   N extends Network,
-  S extends SupportedEvmDomain<N>,
-  D extends SupportedEvmDomain<N>,
+  S extends LoadedCctprDomain<N>,
+  D extends SupportedDomain<N>,
 > {
-  all: Route<S, D>[];
-  fastest: Route<S, D>;
-  cheapest: Route<S, D>;
+  all: Route<N, S, D>[];
+  fastest: Route<N, S, D>;
+  cheapest: Route<N, S, D>;
 }
-
-export type PaymentTokenOptions = "usdc" | "native";
