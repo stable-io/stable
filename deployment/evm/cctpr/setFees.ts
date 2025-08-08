@@ -65,7 +65,7 @@ async function updateCctpRConfiguration(chain: ChainInfo) {
   const viemClient = getViemClient(network, chain);
   const cctpr = getCctpRGovernance(viemClient, chain);
 
-  const commands = await processFeeAdjustments(cctpr);
+  // const commands = await processFeeAdjustments(cctpr);
 
   // if (commands.length === 0) {
   //   console.info(`No updates for operating chain ${chain.chainId}`);
