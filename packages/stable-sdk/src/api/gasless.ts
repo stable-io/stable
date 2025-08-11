@@ -44,17 +44,13 @@ export async function getTransferQuote(
 
   const apiResponse = await apiRequest(endpoint, { method: "GET" });
 
-  if (apiResponse.status >= 400) {
-    throw new Error(`Failed to get quote from API. Status Code: ${apiResponse.status}`);
-  }
-
-  const responseData = extractResponseData(apiResponse.value);
-
-  if (responseData === undefined) return undefined;
-
-  const jwt = extractJwtFromQuoteResponseData(responseData);
+  const jwt = extractJwtFromQuoteResponse(apiResponse.value);
 
   const payload = decodeAndDeserializeJwt(jwt);
+
+  if (payload.willRelay === false) {
+    return undefined
+  }
 
   const quoteRequest = deserializeQuoteRequest(payload.quoteRequest as Record<string, unknown>);
   const gaslessFee = usdc(payload.gaslessFee! as string);
@@ -101,26 +97,23 @@ function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): 
     fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string || "0"),
   };
 }
-const extractResponseData = (quoteResponse: unknown): object | undefined => {
+
+const extractJwtFromQuoteResponse = (quoteResponse: unknown): string => {
   if (
     typeof quoteResponse !== "object" ||
     !quoteResponse ||
-    !("data" in quoteResponse)
-  ) {
-    throw new Error("Invalid quote response structure");
-  }
-  return quoteResponse.data as object | undefined;
-};
-const extractJwtFromQuoteResponseData = (quoteResponseData: object): string => {
-  if (
-    typeof quoteResponseData !== "object" ||
-    !("jwt" in quoteResponseData) ||
-    typeof quoteResponseData.jwt !== "string"
+    !("data" in quoteResponse) ||
+    typeof quoteResponse.data !== "object" ||
+    !quoteResponse.data ||
+    !("jwt" in quoteResponse.data) ||
+    typeof quoteResponse.data.jwt !== "string"
   ) {
     throw new Error("Invalid quote response structure");
   }
 
-  return quoteResponseData.jwt;
+  const { jwt } = quoteResponse.data;
+
+  return jwt;
 };
 
 const decodeJwtPayload = (token: string): unknown => {
