@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  BadRequestException,
+  UnprocessableEntityException,
+} from "@nestjs/common";
 import { ApiResponse as SwaggerApiResponse } from "@nestjs/swagger";
 import {
   QuoteRequestDto,
@@ -27,6 +35,10 @@ export class GaslessTransferController {
     status: 400,
     description: "Invalid request parameters",
   })
+  @SwaggerApiResponse({
+    status: 422,
+    description: "Request could not be processed",
+  })
   public async quoteGaslessTransfer(
     @Query() request: QuoteRequestDto,
   ): Promise<QuoteResponseDto> {
@@ -36,10 +48,9 @@ export class GaslessTransferController {
     } catch (error) {
       if (!(error instanceof Error)) throw error;
       if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
-        throw error;
-      } else {
-        quote = undefined;
+        throw new BadRequestException(error.message);
       }
+      throw new UnprocessableEntityException("Request could not be processed");
     }
     return {
       data: quote,
@@ -56,11 +67,20 @@ export class GaslessTransferController {
     status: 400,
     description: "Invalid request parameters or JWT validation failed",
   })
+  @SwaggerApiResponse({
+    status: 422,
+    description: "Request could not be processed",
+  })
   public async initiateGaslessTransfer(
     @Body() request: RelayRequestDto,
   ): Promise<RelayResponseDto> {
-    return {
-      data: await this.gaslessTransferService.initiateGaslessTransfer(request),
-    };
+    let response;
+    try {
+      response =
+        await this.gaslessTransferService.initiateGaslessTransfer(request);
+    } catch {
+      throw new UnprocessableEntityException("Request could not be processed");
+    }
+    return { data: response };
   }
 }
