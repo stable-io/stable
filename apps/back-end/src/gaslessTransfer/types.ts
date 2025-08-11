@@ -8,7 +8,8 @@ export type RelayTx = {
 };
 
 export interface JwtPayload extends Record<string, unknown> {
-  readonly permit2TypedData: Permit2TypedData;
+  readonly willRelay: boolean;
+  readonly permit2TypedData: Permit2TypedData | undefined;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
   readonly gaslessFee: string; // Usdc =(
 }

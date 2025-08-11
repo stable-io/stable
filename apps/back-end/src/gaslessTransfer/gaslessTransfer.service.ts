@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   usdcContracts,
   evmGasToken,
@@ -10,6 +10,7 @@ import {
   ContractTx,
   EvmAddress,
   permit2Address,
+  Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
 import {
   instanceToPlain,
@@ -30,6 +31,7 @@ import { Conversion } from "@stable-io/amount";
 
 @Injectable()
 export class GaslessTransferService {
+  private readonly logger = new Logger(GaslessTransferService.name);
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
@@ -44,11 +46,29 @@ export class GaslessTransferService {
   ): Promise<QuoteDto> {
     const gaslessFee = await this.calculateGaslessFee(request);
 
-    const jwtPayload: JwtPayload = {
-      permit2TypedData: await this.cctpRService.composeGaslessTransferMessage(
+    let permit2TypedData: Permit2TypedData | undefined;
+
+    try {
+      permit2TypedData = await this.cctpRService.composeGaslessTransferMessage(
         request,
         gaslessFee,
-      ),
+      );
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) throw error;
+
+      if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
+        permit2TypedData = undefined;
+        this.logger.log(
+          `Transfer Amount Less or Equal to 0 After Fees. Amount: ${
+            request.amount
+          }. Gasless Fee: ${gaslessFee}. Request: ${JSON.stringify(request)}`,
+        );
+      } else throw error;
+    }
+
+    const jwtPayload: JwtPayload = {
+      willRelay: permit2TypedData !== undefined,
+      permit2TypedData,
       quoteRequest: instanceToPlain(request),
       gaslessFee: gaslessFee.toUnit("human").toString(),
     };
