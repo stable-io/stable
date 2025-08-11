@@ -49,7 +49,7 @@ export async function getTransferQuote(
   const payload = decodeAndDeserializeJwt(jwt);
 
   if (payload.willRelay === false) {
-    return undefined
+    return undefined;
   }
 
   const quoteRequest = deserializeQuoteRequest(payload.quoteRequest as Record<string, unknown>);

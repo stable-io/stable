@@ -59,12 +59,11 @@ export class GaslessTransferService {
       if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
         permit2TypedData = undefined;
         this.logger.log(
-          `Transfer Amount Less or Equal to 0 After Fees. Amount: ${request.amount
-          }. Gasless Fee: ${gaslessFee}`
-        )
-      }
-
-      else throw error;
+          `Transfer Amount Less or Equal to 0 After Fees. Amount: ${
+            request.amount
+          }. Gasless Fee: ${gaslessFee}. Request: ${JSON.stringify(request)}`,
+        );
+      } else throw error;
     }
 
     const jwtPayload: JwtPayload = {
