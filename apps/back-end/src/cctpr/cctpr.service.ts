@@ -14,13 +14,13 @@ import type {
   SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CctpR, GaslessQuoteVariant } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import {
   ContractTx,
   EvmAddress,
   Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
+import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
 import { QuoteRequestDto } from "../gaslessTransfer/dto/quoteRequest.dto";
 import { Network } from "../common/types";
 import type { ParsedSignature } from "../common/types";
@@ -36,7 +36,10 @@ export class CctpRService {
     domainsOf("Evm").map((domain) => [domain, {}]),
   ) as Record<DomainsOf<"Evm">, Record<`0x${string}`, Permit2Nonce>>;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly blockchainClientService: BlockchainClientService,
+  ) {}
 
   public contractAddress<D extends keyof EvmDomains>(domain: D): EvmAddress {
     const addr = cctprContractAddressOf(this.configService.network, domain);
@@ -93,10 +96,7 @@ export class CctpRService {
   private contractInterface<D extends keyof EvmDomains>(
     domain: D,
   ): CctpR<Network, D> {
-    const client = ViemEvmClient.fromNetworkAndDomain(
-      this.configService.network,
-      domain,
-    );
+    const client = this.blockchainClientService.getClient(domain);
     return new CctpR(client);
   }
 
@@ -108,11 +108,7 @@ export class CctpRService {
     const domain = request.sourceDomain;
     const sender = request.sender.toString();
     const domainNonceCache = this.nonceCache[domain];
-    // TODO: RPC Urls? Create clients at startup?
-    const client = ViemEvmClient.fromNetworkAndDomain(
-      this.configService.network,
-      domain,
-    ).client;
+    const { client } = this.blockchainClientService.getClient(domain);
 
     const nonce = await fetchNextPermit2Nonce(
       client,

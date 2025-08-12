@@ -25,8 +25,8 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import { PublicClient } from "viem";
 import { Rational } from "@stable-io/amount";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { ConfigService } from "../config/config.service";
+import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
 
 const avalancheOracleAddress: Record<Network, string> = {
   Mainnet: "0x418a0F8a9b4B4bbEC77b920983B96927406998D9",
@@ -241,7 +241,10 @@ type QueryResults<CA extends RoArray<RootQuery>> =
 
 @Injectable()
 export class OracleService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly blockchainClientService: BlockchainClientService,
+  ) {}
 
   public getStatus(): string {
     return "Oracle service is running";
@@ -250,13 +253,8 @@ export class OracleService {
   public async getPrices(
     domains: DomainsOf<"Evm">[],
   ): Promise<{ gasTokenPrice: Usdc; gasPrice: EvmGasToken }[]> {
-    const network = this.configService.network;
-
-    // TODO: RPC Urls? Create clients at startup?
-    const client = ViemEvmClient.fromNetworkAndDomain(
-      network,
-      "Avalanche",
-    ).client;
+    const { network } = this.configService;
+    const { client } = this.blockchainClientService.getClient("Avalanche");
     const oracle = new EvmAddress(avalancheOracleAddress[network]);
     const queries = [
       {
