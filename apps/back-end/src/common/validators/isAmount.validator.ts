@@ -1,4 +1,4 @@
-import type { Amount, Kind } from "@stable-io/amount";
+import type { Amount, Kind, Rationalish } from "@stable-io/amount";
 import {
   ValidationArguments,
   ValidatorConstraint,
@@ -8,13 +8,19 @@ import {
 } from "class-validator";
 import { createAmountRegexPattern } from "../utils";
 
-interface AmountOptions<T extends Amount<Kind>> {
-  min?: T;
-  max?: T;
+export interface AmountBounds {
+  min?: Rationalish | string;
+  max?: Rationalish | string;
+}
+
+export interface AmountProperties<T extends Amount<Kind>> {
   decimals: number;
-  createAmount: (value: string) => T;
+  createAmount: (value: Rationalish | string) => T;
   typeName: string;
 }
+
+export interface AmountOptions<T extends Amount<Kind>> 
+  extends AmountBounds, AmountProperties<T> {}
 
 @ValidatorConstraint({ name: "isAmount", async: false })
 export class IsAmountConstraint<T extends Amount<Kind>>
@@ -31,8 +37,8 @@ export class IsAmountConstraint<T extends Amount<Kind>>
     try {
       const amount = options.createAmount(value);
 
-      if (options.min && amount.lt(options.min)) return false;
-      if (options.max && amount.gt(options.max)) return false;
+      if (options.min && amount.lt(options.createAmount(options.min))) return false;
+      if (options.max && amount.gt(options.createAmount(options.max))) return false;
 
       // @note: This transforms the value
       (args.object as any)[args.property] = amount;
