@@ -10,11 +10,13 @@ import { CctpRModule } from "./cctpr/cctpr.module";
 import { StatusModule } from "./status/status.module";
 import { OracleModule } from "./oracle/oracle.module";
 import { ExecutionCostModule } from "./executionCost/executionCost.module";
+import { BlockchainClientModule } from "./blockchainClient/blockchainClient.module";
 
 @Module({
   imports: [
     NestConfigModule,
     ConfigModule,
+    BlockchainClientModule,
     MetricsModule,
     AuthModule,
     TxLandingModule,
