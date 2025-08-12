@@ -182,7 +182,7 @@ export async function postTransferRequest(
   if (apiResponse.status >= 400) {
     throw new Error(`Gasless Transfer Request Failed.\
       Status Code: ${apiResponse.status}.\
-      Error: ${apiResponse.value}`
+      Error: ${JSON.stringify(apiResponse.value)}`,
     );
   }
   return { txHash: apiResponse.value.data.hash as `0x${string}` };
