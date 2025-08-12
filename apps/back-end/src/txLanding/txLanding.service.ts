@@ -36,9 +36,9 @@ export class TxLandingService {
       Polygon: "PolygonSepolia",
       Unichain: "Unichain",
       Linea: "Linea",
-      Codex: "",
-      Sonic: "",
-      Worldchain: "WorldChain",
+      Codex: "Codex",
+      Sonic: "Sonic",
+      Worldchain: "Worldchain",
     },
     Mainnet: {
       Ethereum: "Ethereum",
@@ -49,9 +49,9 @@ export class TxLandingService {
       Polygon: "Polygon",
       Unichain: "Unichain",
       Linea: "Linea",
-      Codex: "",
-      Sonic: "",
-      Worldchain: "WorldChain",
+      Codex: "Codex",
+      Sonic: "Sonic",
+      Worldchain: "Worldchain",
     },
   } satisfies { [K in Network]: { [key in keyof EvmDomains]: string } };
 
