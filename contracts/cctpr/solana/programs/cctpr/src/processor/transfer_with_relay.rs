@@ -74,13 +74,21 @@ pub struct TransferWithRelay<'info> {
 
   pub user: Signer<'info>, //only distinct from payer when gasless (or when using a delegate)
 
-  //mut because we use the config as the rent payer for the cctp message account so it is the
-  //  designated rent payer so we can close it again later
-  #[account(mut, has_one = fee_recipient)]
+  #[account(has_one = fee_recipient)]
   pub config: Account<'info, Config>,
 
   // determines the destination chain
   pub chain_config: Account<'info, ChainConfig>,
+
+  //we can't use the config as the rent recipient because the system program does not allow
+  //  calling transfer on accounts with data, so we have to use a separate account for it
+  //it is used for paying the cctp message account rent and hence also receives it upon closure
+  //its derivation isn't checked since we use it for the transfer and hence the wrong account
+  //  won't work anyway (and there's also no malicious account to substitute either, even if bumps
+  //  were to coincide)
+  /// CHECK: leave Brittney alone
+  #[account(mut)]
+  pub rent_custodian: AccountInfo<'info>,
 
   /// CHECK: see has_one constraint
   #[account(mut)]
@@ -275,7 +283,7 @@ pub fn transfer_with_relay(
         )
       }
     )?;
-    
+
     let total_execution_fee_micro_usd = corridor_fee_adjustment.apply(
       int_to_u64(Int::Ok(avax_hop_execution_fee_micro_usd) + destination_execution_fee_micro_usd)?
     )?;
@@ -283,7 +291,7 @@ pub fn transfer_with_relay(
     let gas_dropoff_fee_micro_usd = conditional_fee(gas_dropoff_micro_gas_token > 0, || {
       let gas_dropoff_fee_adjustment =
         accs.chain_config.get_fee_adjustment(FeeAdjustmentType::GasDropoff);
-      
+
       let unadjusted_micro_usd = conditional_fee(
         gas_dropoff_fee_adjustment.relative_percent_bps != 0,
         || {
@@ -295,7 +303,7 @@ pub fn transfer_with_relay(
 
       gas_dropoff_fee_adjustment.apply(unadjusted_micro_usd)
     })?;
-    
+
     int_to_u64(Int::Ok(total_execution_fee_micro_usd) + gas_dropoff_fee_micro_usd)
   };
 
@@ -315,7 +323,7 @@ pub fn transfer_with_relay(
       accs.system_program.to_account_info(),
       system_program::Transfer {
         from: accs.payer.to_account_info(),
-        to: accs.config.to_account_info(),
+        to: accs.rent_custodian.to_account_info(),
       },
     ),
     cctp_message_rent_cost_sol,
@@ -330,7 +338,7 @@ pub fn transfer_with_relay(
       require!(relay_fee_sol <= max_relay_fee_sol, CctprError::ExceedsMaxFee);
       (false, relay_fee_sol, input_amount)
     }
-    RelayQuote::OnChainUsdc { max_relay_fee_usdc, take_fee_from_input } => {    
+    RelayQuote::OnChainUsdc { max_relay_fee_usdc, take_fee_from_input } => {
       let relay_fee_usdc = calc_onchain_relay_fee_usdc()?.saturating_sub(
         conditional_fee(gasless.is_none(), || {
           accs.oracle_config.sol_to_micro_usd(cctp_message_rent_cost_sol)
@@ -354,7 +362,7 @@ pub fn transfer_with_relay(
     } => {
       let now = Clock::get()?.unix_timestamp as u32;
       require!(now < expiration_time, CctprError::QuoteExpired);
-  
+
       let quote_data = OffChainQuoteData {
         source_domain: DOMAIN_ID_SOLANA,
         destination_domain,
@@ -363,7 +371,7 @@ pub fn transfer_with_relay(
         expiration_time,
         relay_fee,
       };
-  
+
       let quote_hash = hash(&quote_data.try_to_vec().unwrap().as_slice()).0;
       require!(
         secp256k1_recover(&quote_hash, quoter_signature[64], &quoter_signature[..64])
@@ -372,7 +380,7 @@ pub fn transfer_with_relay(
           .is_some(),
         CctprError::OffchainQuoterSignatureInvalid,
       );
-  
+
       (charge_in_usdc, relay_fee, input_amount)
     }
   };
@@ -422,8 +430,8 @@ pub fn transfer_with_relay(
     message_sent_event_data_seed.as_ref(),
     &[message_sent_event_data_bump],
   ];
-  let config_seeds: &[&[u8]] = &[Config::SEED_PREFIX, &[ctx.accounts.config.bump]];
-  let signer_seeds: &[&[&[u8]]] = &[message_sent_event_data_seeds, config_seeds];
+  let rent_seeds: &[&[u8]] = &[Config::RENT_SEED_PREFIX, &[ctx.accounts.config.rent_bump]];
+  let signer_seeds: &[&[&[u8]]] = &[message_sent_event_data_seeds, rent_seeds];
 
   let cctp_nonce =
     if let Corridor::V1 = corridor {
@@ -434,7 +442,7 @@ pub fn transfer_with_relay(
             burn_token_owner:                          ctx.accounts
               .user                                    .to_account_info(),
             payer:                                     ctx.accounts
-              .config                                  .to_account_info(),
+              .rent_custodian                          .to_account_info(),
             token_messenger_minter_sender_authority:   ctx.accounts
               .token_messenger_minter_sender_authority .to_account_info(),
             burn_token:                                ctx.accounts
@@ -475,7 +483,7 @@ pub fn transfer_with_relay(
     }
     else {
       require!(accs.denylisted.is_some(), CctprError::InvalidTransferArgs);
-      
+
       let (is_avax_hop, max_fee) = match corridor {
         Corridor::V2Direct { max_fast_fee_usdc } => (false, max_fast_fee_usdc),
         Corridor::AvaxHop  { max_fast_fee_usdc } => (true,  max_fast_fee_usdc),
@@ -488,7 +496,7 @@ pub fn transfer_with_relay(
           burn_token_owner:                          ctx.accounts
             .user                                    .to_account_info(),
           payer:                                     ctx.accounts
-            .config                                  .to_account_info(),
+            .rent_custodian                          .to_account_info(),
           token_messenger_minter_sender_authority:   ctx.accounts
             .token_messenger_minter_sender_authority .to_account_info(),
           burn_token:                                ctx.accounts
@@ -522,7 +530,7 @@ pub fn transfer_with_relay(
         },
         signer_seeds,
       );
-      
+
       let burn_params = deposit::v2::DepositForBurnParams {
         amount: transfer_amount,
         destination_domain: destination_domain as u32,

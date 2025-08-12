@@ -63,12 +63,12 @@ export type RelayRequestEvent =
 
 export const configLayout =
   accountLayout("Config", [
-    { name: "bump",           ...bumpItem          },
     { name: "owner",          ...solanaAddressItem },
     { name: "pendingOwner",   ...solanaAddressItem },
     { name: "feeAdjuster",    ...solanaAddressItem },
     { name: "feeRecipient",   ...solanaAddressItem },
     { name: "offchainQuoter", ...rawEvmAddressItem },
+    { name: "rent_bump",      ...bumpItem          },
   ]);
 export type Config =
   DeriveType<typeof configLayout>;

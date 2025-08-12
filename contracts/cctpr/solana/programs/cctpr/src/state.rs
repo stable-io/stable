@@ -4,16 +4,17 @@ use price_oracle::{int::Int, utils::int_to_u64};
 #[account]
 #[derive(InitSpace)]
 pub struct Config {
-  pub bump:            u8,
   pub owner:           Pubkey,
   pub pending_owner:   Pubkey,
   pub fee_adjuster:    Pubkey,
   pub fee_recipient:   Pubkey,
   pub offchain_quoter: [u8; 20],
+  pub rent_bump:       u8,
 }
 
 impl Config {
   pub const SEED_PREFIX: &[u8] = b"config";
+  pub const RENT_SEED_PREFIX: &[u8] = b"rent";
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]

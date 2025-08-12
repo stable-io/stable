@@ -40,9 +40,11 @@ export class CctpRBase<N extends Network> {
   public readonly oracleAddress: SolanaAddress;
 
   //for caching of PDA derivations
-  private _configAddress: SolanaAddress | undefined;
-  private _oracleConfigAddress: SolanaAddress | undefined;
-  private _priceAddresses: Map<ForeignDomain<N>, PriceAddresses> = new Map();
+  private _configAddress:        SolanaAddress | undefined;
+  private _rentCustodianAddress: SolanaAddress | undefined;
+  private _oracleConfigAddress:  SolanaAddress | undefined;
+  private _priceAddresses:       Map<ForeignDomain<N>, PriceAddresses>;
+
   private _cachedConfig: [Config, Date] | undefined;
 
   constructor(
@@ -56,6 +58,7 @@ export class CctpRBase<N extends Network> {
       addresses?.cctpr ?? new SolanaAddress(contractAddressOf(network as Network, "Solana"));
     this.oracleAddress =
       addresses?.oracle ?? new SolanaAddress(oracleAddress);
+    this._priceAddresses = new Map();
   }
 
   async config(): Promise<Config> {
@@ -75,6 +78,13 @@ export class CctpRBase<N extends Network> {
       this._configAddress = findPda(["config"], this.address)[0];
 
     return this._configAddress;
+  }
+
+  protected rentCustodianAddress(): SolanaAddress {
+    if (this._rentCustodianAddress === undefined)
+      this._rentCustodianAddress = findPda(["rent"], this.address)[0];
+
+    return this._rentCustodianAddress;
   }
 
   protected oracleConfigAddress(): SolanaAddress {

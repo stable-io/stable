@@ -18,6 +18,10 @@ pub struct Initialize<'info> {
   )]
   pub config: Account<'info, Config>,
 
+  /// CHECK: TODO why on earth does even this need a CHECK, if I am already deriving the PDA?
+  #[account(seeds = [Config::RENT_SEED_PREFIX], bump)]
+  pub rent_custodian: AccountInfo<'info>,
+
   pub system_program: Program<'info, System>,
 }
 
@@ -32,12 +36,12 @@ pub fn initialize(
   require!(fee_recipient != Pubkey::default(), CctprError::InvalidFeeRecipient);
 
   ctx.accounts.config.set_inner(Config {
-    bump: ctx.bumps.config,
     owner,
     pending_owner: Pubkey::default(),
     fee_adjuster,
     fee_recipient,
     offchain_quoter,
+    rent_bump: ctx.bumps.rent_custodian,
   });
 
   Ok(())

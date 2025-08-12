@@ -43,7 +43,7 @@ pub mod cctpr {
   pub fn reclaim_rent(
     ctx: Context<ReclaimRent>,
     attestation: Vec<u8>,
-    destination_message: Vec<u8>, 
+    destination_message: Vec<u8>,
   ) -> Result<()> {
     processor::reclaim_rent(ctx, attestation, destination_message)
   }

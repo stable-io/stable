@@ -5,7 +5,7 @@
 
 import { AccountRole } from "@solana/kit";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
-import { SolanaAddress, cctpAccounts } from "@stable-io/cctp-sdk-solana";
+import { SolanaAddress, cctpAccounts, systemProgramId } from "@stable-io/cctp-sdk-solana";
 import { reclaimRentParamsLayout, transferSurplusSolParamsLayout } from "./layouts.js";
 import { type Ix, CctpRBase } from "./base.js";
 
@@ -20,23 +20,26 @@ export class CctpRReclaim<N extends Network> extends CctpRBase<N> {
       cctpAccounts[this.network][destinationMessage === undefined ? "v1" : "v2"];
 
     const accounts = [
-      [this.configAddress(),     AccountRole.WRITABLE],
-      [messageTransmitterConfig, AccountRole.WRITABLE],
-      [eventDataAddress,         AccountRole.WRITABLE],
-      [messageTransmitter,       AccountRole.READONLY],
+      [this.configAddress(),        AccountRole.READONLY],
+      [this.rentCustodianAddress(), AccountRole.WRITABLE],
+      [messageTransmitterConfig,    AccountRole.WRITABLE],
+      [eventDataAddress,            AccountRole.WRITABLE],
+      [messageTransmitter,          AccountRole.READONLY],
     ] as const;
 
     const v2DestinationMessage = destinationMessage ?? new Uint8Array();
     const params = { attestation, v2DestinationMessage } as const;
-    
+
     return this.composeIx(accounts, reclaimRentParamsLayout, params);
   }
 
   async composeTransferSurplusSolIx(): Promise<Ix> {
     const { feeRecipient } = await this.config();
     const accounts = [
-      [this.configAddress(), AccountRole.WRITABLE],
-      [feeRecipient,         AccountRole.WRITABLE],
+      [this.configAddress(),        AccountRole.READONLY],
+      [this.rentCustodianAddress(), AccountRole.WRITABLE],
+      [feeRecipient,                AccountRole.WRITABLE],
+      [systemProgramId,             AccountRole.READONLY],
     ] as const;
 
     return this.composeIx(accounts, transferSurplusSolParamsLayout, {});

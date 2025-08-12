@@ -25,7 +25,7 @@ pub mod v1 {
   // * message header: https://github.com/circlefin/solana-cctp-contracts/blob/b37d577fc1dc317ce9bc0316c5063afe38744ce3/programs/message-transmitter/src/message.rs#L43
   // * burn message: https://github.com/circlefin/solana-cctp-contracts/blob/b37d577fc1dc317ce9bc0316c5063afe38744ce3/programs/token-messenger-minter/src/token_messenger/burn_message.rs#L39
   pub const MESSAGE_SENT_EVENT_DATA_SIZE: usize = 292;
-  
+
   pub struct Deposit<'info> {
     //#[account(signer)]
     pub burn_token_owner: AccountInfo<'info>,
@@ -177,7 +177,7 @@ pub mod v2 {
     //CCTP Token Messenger Minter program uses Anchor's event_cpi macro
     pub event_authority: AccountInfo<'info>,
   }
-  
+
   impl<'info> ToAccountMetas for Deposit<'info> {
     fn to_account_metas(&self, _is_signer: Option<bool>) -> Vec<AccountMeta> {
       vec![
@@ -202,7 +202,7 @@ pub mod v2 {
       ]
     }
   }
-  
+
   impl<'info> ToAccountInfos<'info> for Deposit<'info> {
     fn to_account_infos(&self) -> Vec<AccountInfo<'info>> {
       vec![

@@ -212,7 +212,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         nonceAccountAddress: nonceAccount.unwrap(),
         nonceAuthorityAddress: relayer.unwrap(),
       },
-      tx, 
+      tx,
     );
   }
 
@@ -235,6 +235,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     const [messageSentEventData, eventDataBump] = findPda([user, eventDataSeed], this.address);
 
     const config = this.configAddress();
+    const rentCustodian = this.rentCustodianAddress();
     const oracleConfig = this.oracleConfigAddress();
     const [chainConfig, destinationPrices] = this.priceAddresses(destination);
     const avalanchePrices = corridor.type === "avaxHop"
@@ -265,8 +266,9 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     const accounts = [
       [relayer,                  AccountRole.WRITABLE_SIGNER],
       [user,                     AccountRole.READONLY_SIGNER],
-      [config,                   AccountRole.WRITABLE       ],
+      [config,                   AccountRole.READONLY       ],
       [chainConfig,              AccountRole.READONLY       ],
+      [rentCustodian,            AccountRole.WRITABLE       ],
       [feeRecipient,             AccountRole.WRITABLE       ],
       [feeRecipientUsdc,         AccountRole.WRITABLE       ],
       [userUsdc,                 AccountRole.WRITABLE       ],
@@ -322,7 +324,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     if (hasAvaxHopQuery)
       involvedDomainsSet.add("Avalanche");
     const involvedDomains = [...involvedDomainsSet.values()];
-    
+
     //determine the addresses of their associated oracle and cctpr price accounts
     const priceAddresses = involvedDomains
       .flatMap((d) => this.priceAddresses(d))
@@ -330,7 +332,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
 
     //fetch all price accounts + the oracle config (which contains the sol price) in a single call,
     //  ensure that they all exist, and base64-decode them
-    const [oracleConfigRawData, ...flatPriceAccountsRawData] = 
+    const [oracleConfigRawData, ...flatPriceAccountsRawData] =
       (await this.rpc.getMultipleAccounts(
           [this.oracleConfigAddress().unwrap(), ...priceAddresses],
           { encoding: "base64" }
@@ -342,7 +344,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         : `Failed to fetch ${["cctpr", "oracle"][(i-1)%2]} price account for domain ` +
           `${involvedDomains[Math.floor((i-1)/priceAccountsPerDomain)]}` as Text
       )));
-    
+
     //group them by domain and deserialize them
     const { solPrice } = deserialize(oracleConfigLayout, oracleConfigRawData!);
     const priceAccountsRawData = chunk(flatPriceAccountsRawData, priceAccountsPerDomain);
@@ -353,7 +355,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
           deserialize(priceStateLayout(this.network)[hackPlatformOf<N>(domain)], oraclePrices!),
         ],
       ] as const));
-    
+
     //calculate avax hop execution fee in advance only once if necessary
     const avaxHopExecutionFee = hasAvaxHopQuery
       ? this.calcEvmExecutionFee(
@@ -362,7 +364,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
           domainPriceAccounts["Avalanche"][1] as PriceState<N, "Evm">,
         )
       : undefined;
-    
+
     //finally calculate the fees for each query
     const results = queries.map(query => {
       const { destinationDomain, corridor, gasDropoff } = query;
@@ -377,11 +379,11 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         gasDropoffFee = CctpR.applyFeeAdjustment(
           feeAdjustments["gasDropoff"],
           gasDropoff.convert(
-            Conversion.from(usdc((gasTokenPrice as any).toUnit("human", "human")), GenericGasToken) 
+            Conversion.from(usdc((gasTokenPrice as any).toUnit("human", "human")), GenericGasToken)
           ),
         );
       }
-      
+
       //calculate the execution fee of the relay to the destination domain depending on the platform
       let unadjustedFee = (() => {
         switch (hackPlatformOf<N>(destinationDomain)) {
@@ -458,10 +460,10 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     const { computeUnitPrice, bytePrice, rebateRatio, gasTokenPrice } = oraclePrices;
     let executionCost = executionCUs.convert(computeUnitPrice)
       .add(storageBytes.sub(mulPercentage(rebateBytes, rebateRatio)).convert(bytePrice));
-    
+
     if (executionCost.lt(suiMinTransactionCost))
       executionCost = suiMinTransactionCost;
-    
+
     return executionCost.convert(gasTokenPrice);
   }
 

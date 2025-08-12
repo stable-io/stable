@@ -35,9 +35,10 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     offchainQuoter: BasicEvmAddress,
   ): Promise<Ix> {
     const accounts = [
-      [payer,                AccountRole.WRITABLE_SIGNER],
-      [this.configAddress(), AccountRole.WRITABLE       ],
-      [systemProgramId,      AccountRole.READONLY       ],
+      [payer,                       AccountRole.WRITABLE_SIGNER],
+      [this.configAddress(),        AccountRole.WRITABLE       ],
+      [this.rentCustodianAddress(), AccountRole.READONLY       ],
+      [systemProgramId,             AccountRole.READONLY       ],
     ] as const;
 
     const params = { owner, feeAdjuster, feeRecipient, offchainQuoter } as const;
