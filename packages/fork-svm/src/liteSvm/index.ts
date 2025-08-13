@@ -77,10 +77,12 @@ export class SimulatedTransactionInfo {
   constructor(inner: SimulatedTransactionInfoInner) {
     this.inner = inner;
   }
+
   private inner: SimulatedTransactionInfoInner;
   meta(): TransactionMetadata {
     return this.inner.meta();
   }
+
   postAccounts(): [Address, Account][] {
     return this.inner.postAccounts().map(convertAddressAndAccount);
   }
@@ -97,6 +99,7 @@ export class LiteSVM {
     const inner = new LiteSVMInner();
     this.inner = inner;
   }
+
   private inner: LiteSVMInner;
 
   /** Create a new LiteSVM instance with minimal functionality enabled */
@@ -112,7 +115,7 @@ export class LiteSVM {
    * @param budget - The new compute budget
    * @returns The modified LiteSVM instance
    */
-  withComputeBudget(budget: ComputeBudget): LiteSVM {
+  withComputeBudget(budget: ComputeBudget): this {
     this.inner.setComputeBudget(budget);
     return this;
   }
@@ -122,7 +125,7 @@ export class LiteSVM {
    * @param sigverify - if false, transaction signatures will not be checked.
    * @returns The modified LiteSVM instance
    */
-  withSigverify(sigverify: boolean): LiteSVM {
+  withSigverify(sigverify: boolean): this {
     this.inner.setSigverify(sigverify);
     return this;
   }
@@ -132,7 +135,7 @@ export class LiteSVM {
    * @param check - If false, the blockhash check will be skipped
    * @returns The modified LiteSVM instance
    */
-  withBlockhashCheck(check: boolean): LiteSVM {
+  withBlockhashCheck(check: boolean): this {
     this.inner.setBlockhashCheck(check);
     return this;
   }
@@ -141,7 +144,7 @@ export class LiteSVM {
    * Sets up the standard sysvars.
    * @returns The modified LiteSVM instance
    */
-  withSysvars(): LiteSVM {
+  withSysvars(): this {
     this.inner.setSysvars();
     return this;
   }
@@ -151,7 +154,7 @@ export class LiteSVM {
    * @param featureSet The FeatureSet to use.
    * @returns The modified LiteSVM instance
    */
-  withFeatureSet(featureSet: FeatureSet): LiteSVM {
+  withFeatureSet(featureSet: FeatureSet): this {
     this.inner.setFeatureSet(featureSet);
     return this;
   }
@@ -160,7 +163,7 @@ export class LiteSVM {
    * Adds the standard builtin programs. Use `withFeatureSet` beforehand to change change what builtins are added.
    * @returns The modified LiteSVM instance
    */
-  withBuiltins(): LiteSVM {
+  withBuiltins(): this {
     this.inner.setBuiltins();
     return this;
   }
@@ -170,7 +173,7 @@ export class LiteSVM {
    * @param lamports - The number of lamports to set in the airdrop account
    * @returns The modified LiteSVM instance
    */
-  withLamports(lamports: bigint): LiteSVM {
+  withLamports(lamports: bigint): this {
     this.inner.setLamports(lamports);
     return this;
   }
@@ -179,7 +182,7 @@ export class LiteSVM {
    * Adds the standard SPL programs.
    * @returns The modified LiteSVM instance
    */
-  withSplPrograms(): LiteSVM {
+  withSplPrograms(): this {
     this.inner.setSplPrograms();
     return this;
   }
@@ -190,7 +193,7 @@ export class LiteSVM {
    * Set this to 0 to disable transaction history and allow duplicate transactions.
    * @returns The modified LiteSVM instance
    */
-  withTransactionHistory(capacity: bigint): LiteSVM {
+  withTransactionHistory(capacity: bigint): this {
     this.inner.setTransactionHistory(capacity);
     return this;
   }
@@ -200,7 +203,7 @@ export class LiteSVM {
    * @param limit - The limit in bytes. If null, no limit is enforced.
    * @returns The modified LiteSVM instance
    */
-  withLogBytesLimit(limit?: bigint): LiteSVM {
+  withLogBytesLimit(limit?: bigint): this {
     this.inner.setLogBytesLimit(limit);
     return this;
   }
@@ -209,7 +212,7 @@ export class LiteSVM {
    * Adds the standard precompiles. Use `withFeatureSet` beforehand to change change what builtins are added.
    * @returns The modified LiteSVM instance
    */
-  withPrecompiles(): LiteSVM {
+  withPrecompiles(): this {
     this.inner.setPrecompiles();
     return this;
   }

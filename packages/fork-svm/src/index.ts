@@ -28,8 +28,7 @@ import { LiteSVM, TransactionMetadata } from "./liteSvm/index.js";
 //TODO convert error types (and maybe success types too?)
 export type InnerInstruction = ReturnType<TransactionMetadata["innerInstructions"]>[number][number];
 export type CompiledInstruction = ReturnType<InnerInstruction["instruction"]>;
-export type TransactionReturnData = ReturnType<TransactionMetadata["returnData"]>
-export type { TransactionMetadata };
+export type TransactionReturnData = ReturnType<TransactionMetadata["returnData"]>;
 
 type Rpc = ReturnType<typeof createSolanaRpc>;
 type KitAccountInfo = AccountInfoBase & AccountInfoWithBase64EncodedData;
@@ -74,7 +73,7 @@ const liteSvmAccountToKitAccount = passThrough(
     data: [base64.decode(acc.data) as Base64EncodedBytes, "base64"],
     rentEpoch: acc.rentEpoch,
     space: acc.space,
-  })
+  }),
 );
 
 const kitAccountToLiteSvmAccount = passThrough(
@@ -86,7 +85,7 @@ const kitAccountToLiteSvmAccount = passThrough(
     data: base64.encode(acc.data[0]) as Uint8Array,
     rentEpoch: acc.rentEpoch,
     space: acc.space,
-  })
+  }),
 );
 
 //TODO only supports legacy tx atm
@@ -104,18 +103,18 @@ export class ForkSvm {
   async readFromDisc(filepath: string) {
     filepath += filepath.endsWith("/") ? "" : "/";
     const filenames = (await readdir(filepath)).filter(filename => filename.endsWith(".json"));
-    let executables = [] as ([Address, SvmAccountInfo | null])[];
-    await Promise.all(filenames.map(async filename => {
+    const executables = [] as ([Address, SvmAccountInfo | null])[];
+    await Promise.all(filenames.map(async (filename) => {
       const addr = filename.slice(0, -5) as Address;
       const base64AccOrNull: any = parseJsonWithBigInts(await readFile(
         filepath + filename,
-        { encoding: "utf-8" },
+        { encoding: "utf8" },
       ));
       if (base64AccOrNull?.data)
         base64AccOrNull.data = base64.encode(base64AccOrNull.data) as Uint8Array;
       const acc = base64AccOrNull as SvmAccountInfo | null;
       if (acc?.executable)
-        executables.push([addr, acc])
+        executables.push([addr, acc]);
       else
         this.setAccount(addr, acc);
     }));
@@ -128,19 +127,19 @@ export class ForkSvm {
   async writeToDisc(filepath: string) {
     //TODO store blockhash, height etc.?
     filepath += filepath.endsWith("/") ? "" : "/";
-    await Promise.all([...this.known.keys()].map(addr => {
+    await Promise.all([...this.known.keys()].map((addr) => {
       const acc = this.liteSvm.getAccount(addr);
       return writeFile(
         filepath + addr + ".json",
         stringifyJsonWithBigints(acc ? { ...acc, data: base64.decode(acc.data) } : null),
-        { encoding: "utf-8" },
+        { encoding: "utf8" },
       );
     }));
   }
 
   getSnapshot(): Snapshot {
     return Object.fromEntries([...this.known.keys()]
-      .map((addr) => [addr, this.liteSvm.getAccount(addr)]));
+      .map(addr => [addr, this.liteSvm.getAccount(addr)]));
   }
 
   restoreFromSnapshot(snapshot: Snapshot) {
@@ -152,10 +151,13 @@ export class ForkSvm {
 
   latestTimestamp = () =>
     this.liteSvm.getClock().unixTimestamp;
+
   latestBlockheight = () =>
     this.liteSvm.getClock().slot;
+
   latestBlockhash = () =>
     this.liteSvm.latestBlockhash();
+
   getTransaction = (signature: Uint8Array) =>
     this.liteSvm.getTransaction(signature);
 
@@ -204,7 +206,7 @@ export class ForkSvm {
     this.liteSvm.airdrop(address, lamports);
   }
 
-  addProgram (programId: Address, programBytes: Uint8Array): void {
+  addProgram(programId: Address, programBytes: Uint8Array): void {
     this.known.add(programId);
     this.liteSvm.addProgram(programId, programBytes);
   }
@@ -212,7 +214,7 @@ export class ForkSvm {
   addProgramFromFile = (programId: Address, path: string): void => {
     this.known.add(programId);
     this.liteSvm.addProgramFromFile(programId, path);
-  }
+  };
 
   setAccount(address: Address, acc: SvmAccountInfo | null): void {
     this.known.add(address);
@@ -244,7 +246,7 @@ export class ForkSvm {
 
   private async setAccountFromUpstream(
     address: Address,
-    upAcc: SvmAccountInfo | null
+    upAcc: SvmAccountInfo | null,
   ): Promise<SvmAccountInfo | null> {
     this.known.add(address);
     if (!upAcc)
@@ -286,7 +288,7 @@ export class ForkSvm {
         Array.isArray(addressEs)
         ? (await this.rpc.getMultipleAccounts(addressEs, enc).send())
         : (await this.rpc.getAccountInfo(addressEs as Address, enc).send())
-      ).value
+      ).value,
     );
   }
 
@@ -303,7 +305,7 @@ const createRpcResponse = <const T>(value: T, forkSvm: ForkSvm) => ({
     context: { apiVersion: "2.3.6", slot: Number(forkSvm.latestBlockheight()) },
     value,
   },
-  id: 1 as number
+  id: 1 as number,
 } as const);
 
 type SolanaRpcResponse<T> = ReturnType<typeof createRpcResponse<T>>;
@@ -321,7 +323,7 @@ export function createForkTransport(forkSvm: ForkSvm): RpcTransport {
       toRpcResponse((await forkSvm.getMultipleAccounts(addresses)).map(liteSvmAccountToKitAccount));
 
   return function forkTransport<TResponse>(
-    transportConfig: TransportConfig
+    transportConfig: TransportConfig,
   ): Promise<TResponse> {
     const { payload } = transportConfig;
 
@@ -346,3 +348,5 @@ export function createForkTransport(forkSvm: ForkSvm): RpcTransport {
 export function createForkRpc(forkSvm: ForkSvm) {
   return createSolanaRpcFromTransport(createForkTransport(forkSvm));
 }
+
+export { type TransactionMetadata } from "./liteSvm/index.js";
