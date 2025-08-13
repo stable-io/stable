@@ -130,7 +130,7 @@ export class ForkSvm {
     filepath += filepath.endsWith("/") ? "" : "/";
     await Promise.all([...this.known.keys()].map(addr => {
       const acc = this.liteSvm.getAccount(addr);
-      writeFile(
+      return writeFile(
         filepath + addr + ".json",
         stringifyJsonWithBigints(acc ? { ...acc, data: base64.decode(acc.data) } : null),
         { encoding: "utf-8" },
