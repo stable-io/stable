@@ -50,13 +50,13 @@ import {
   tokenProgramId,
 } from "@stable-io/cctp-sdk-solana";
 import { feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { CctpRGovernance, CctpR, CctpRReclaim, oracle } from "@stable-io/cctp-sdk-cctpr-solana";
-import type { Snapshot } from "./forkSvm/index.js";
-import { ForkSvm, createForkRpc } from "./forkSvm/index.js";
-import {
+import { CctpRGovernance, CctpR, oracle } from "@stable-io/cctp-sdk-cctpr-solana";
+import type {
   FailedTransactionMetadata,
   TransactionMetadata,
-} from "./forkSvm/liteSvm/internal.js";
+  Snapshot,
+} from "@stable-io/fork-svm";
+import { ForkSvm, createForkRpc } from "@stable-io/fork-svm";
 
 type Ix = Required<Instruction>;
 type TxMsg = TransactionMessage & TransactionMessageWithFeePayer;

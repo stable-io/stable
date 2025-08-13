@@ -2263,7 +2263,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@stable-io/fork-svm@workspace:packages/fork-svm":
+"@stable-io/fork-svm@workspace:^, @stable-io/fork-svm@workspace:packages/fork-svm":
   version: 0.0.0-use.local
   resolution: "@stable-io/fork-svm@workspace:packages/fork-svm"
   dependencies:
@@ -6998,6 +6998,7 @@ __metadata:
   dependencies:
     "@solana/kit": "npm:^2.3.0"
     "@stable-io/cctp-sdk-cctpr-solana": "workspace:^"
+    "@stable-io/fork-svm": "workspace:^"
     "@types/node": "npm:^24.1.0"
     tsx: "npm:^4.20.3"
     typescript: "npm:^5.8.3"
