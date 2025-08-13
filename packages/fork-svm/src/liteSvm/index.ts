@@ -1,4 +1,5 @@
-//copied from here https://github.com/LiteSVM/litesvm/blob/master/crates/node-litesvm/litesvm/index.ts and modified
+//copied from here https://github.com/LiteSVM/litesvm/blob/master/crates/node-litesvm/litesvm/index.ts
+//modified by @r8zon on 2025-08-06
 //License: Apache-2.0, see here https://github.com/LiteSVM/litesvm/blob/master/LICENSE
 
 import {
