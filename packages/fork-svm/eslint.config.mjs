@@ -21,6 +21,7 @@ const tsConfig = {
 
 const overridesConfig = {
   rules: {
+    "@stylistic/max-len": ["error", { code: 120 }],
     "@typescript-eslint/only-throw-error": "off",
     "unicorn/no-array-callback-reference": "off",
     "unicorn/no-await-expression-member": "off",
