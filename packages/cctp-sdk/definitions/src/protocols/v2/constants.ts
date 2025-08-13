@@ -121,18 +121,18 @@ export const isFastDomain = (domain: Domain): domain is FastDomain =>
 // TODO: review numbers and add slow transfer numbers
 export const attestationTimeEstimates = {
   Mainnet: {
-    Ethereum:   16.76,
-    Avalanche:  8.19,
-    Arbitrum:   3.18,
-    Base:       1.43,
+    Ethereum:   13.25,
+    Avalanche:  100, // v2 is not used in avalanche.
+    Arbitrum:   4.71,
+    Base:       4.99,
     Linea:      8,     // TODO
-    Optimism:   0.85,
-    Unichain:   8,    // TODO
-    Polygon:    9.04,
-    Worldchain: 10,
-    Sonic:      10,
-    Codex:      10,
-    Sei:        10,
+    Optimism:   3.29,
+    Unichain:   3.75,
+    Polygon:    31.59,
+    Worldchain: 2.22,
+    Sonic:      3.32,
+    Codex:      10,    // TODO
+    Sei:        10,    // TODO
   },
   Testnet: {
     Ethereum:   16.76,
