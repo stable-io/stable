@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@stable-io/fork-svm",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "commonjs",
+  "license": "MPL-2.0",
+  "author": "Stable Technologies",
+  "description": "Solana blockchain forking and testing utilities",
+  "keywords": [
+    "solana",
+    "blockchain",
+    "testing",
+    "forking",
+    "simulation"
+  ],
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js",
+    "default": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "!*.test.*",
+    "README.md"
+  ],
+  "scripts": {
+    "prepublishOnly": "eslint . && tsc",
+    "build": "yarn build:litesvm && tsc && cp src/liteSvm/litesvm.*.node dist/liteSvm/",
+    "build:litesvm": "cd litesvm-source/crates/node-litesvm && yarn install && yarn run build && cp -r litesvm/{internal.*,litesvm.*.node} ../../../src/liteSvm/",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "echo \"No tests yet\" && exit 0",
+    "clean": "rm -rf ./dist"
+  },
+  "dependencies": {
+    "@solana/kit": "^2.3.0",
+    "@solana/rpc-spec": "^2.3.0",
+    "@solana/rpc-spec-types": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "eslint": "^9.33.0",
+    "typescript": "^5.9.2"
+  }
+}
