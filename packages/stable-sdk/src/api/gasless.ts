@@ -44,6 +44,11 @@ export async function getTransferQuote(
 
   const apiResponse = await apiRequest(endpoint, { method: "GET" });
 
+  if (apiResponse.status >= 400) {
+    console.error(`GET Quote failed with status ${apiResponse.status}`);
+    return undefined;
+  }
+
   const jwt = extractJwtFromQuoteResponse(apiResponse.value);
 
   const payload = decodeAndDeserializeJwt(jwt);
