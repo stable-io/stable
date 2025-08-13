@@ -31,6 +31,8 @@
   "workspaces": [
     "packages/cctp-sdk/*",
     "packages/common/*",
+    "packages/fork-svm",
+    "packages/stable-sdk",
     "contracts/cctpr/solana"
   ]
 }
