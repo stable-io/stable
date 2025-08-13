@@ -2,6 +2,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { Amount } from "@stable-io/amount";
 import { gasTokenKindOf, isUsdc, percentage, type Usdc } from "@stable-io/cctp-sdk-definitions";
 import { usdc,
@@ -63,11 +64,17 @@ export const $findRoutes = <
     const routes: SupportedRoute<N>[] = [];
 
     for (const corridor of corridors) {
-      routes.push(
-        await buildUserTransferRoute(viemEvmClient, cctprEvm, intent, corridor),
+      const userTransferRoute = await buildUserTransferRoute(
+        viemEvmClient, cctprEvm, intent, corridor,
       );
 
+      if (userTransferRoute !== undefined) {
+        routes.push(userTransferRoute);
+      }
+
       if (intent.paymentToken === "usdc") {
+        // since gasless has to be paid in a non native token,
+        // we only create the gasless route when paymentToken === usdc
         const gaslessRoute = await buildGaslessRoute(viemEvmClient, intent, corridor);
 
         if (gaslessRoute !== undefined) routes.push(gaslessRoute);

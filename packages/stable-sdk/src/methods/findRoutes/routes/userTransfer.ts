@@ -7,6 +7,7 @@ import { init as initDefinitions,
   EvmDomains,
   GasTokenOf,
   Usdc,
+  usdc,
 } from "@stable-io/cctp-sdk-definitions";
 import { init as initCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { init as initEvm, EvmAddress } from "@stable-io/cctp-sdk-evm";
@@ -30,6 +31,9 @@ import { Route } from "../../../types/index.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 import { init as initCctprEvm } from "@stable-io/cctp-sdk-cctpr-evm";
 
+/**
+ * Can return undefined if the route can't be satisfied.
+ */
 export async function buildUserTransferRoute<
   N extends Network,
   S extends SupportedEvmDomain<N>,
@@ -39,7 +43,7 @@ export async function buildUserTransferRoute<
   cctprEvm: ReturnType<typeof initCctprEvm<N>>,
   intent: Intent<S, D>,
   corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
-): Promise<Route<S, D>> {
+): Promise<Route<S, D> | undefined> {
   const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
     corridor.cost,
     intent,
@@ -54,7 +58,16 @@ export async function buildUserTransferRoute<
   : { maxRelayFee: maxRelayFee as GasTokenOf<S, keyof EvmDomains> };
 
   const usdcFees = corridorFees.filter(fee => fee.kind.name === "Usdc") as Usdc[];
-  const totalUsdcValue = usdcFees.reduce((acc, fee) => acc.add(fee), intent.amount);
+  const totalUsdcValue = usdcFees.reduce((acc, fee) => acc.add(fee), usdc(0));
+
+  if (intent.amount.le(totalUsdcValue)) {
+    // the user is trying to transfer an amount lesser than the usdc fees to pay
+    // so we won't relay because they can't cover the cost.
+
+    // TODO: In the future it'd be nice to let the user know what's the minimum
+    //       amount we are willing to relay for.
+    return undefined;
+  }
 
   const allowanceRequired = await cctprRequiresAllowance(
     evmClient,

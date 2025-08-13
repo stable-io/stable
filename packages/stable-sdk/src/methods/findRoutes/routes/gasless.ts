@@ -27,6 +27,9 @@ import { TransferProgressEmitter } from "../../../progressEmitter.js";
  */
 const PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD = 1_000_000_000;
 
+/**
+ * Can return undefined if the route can't be satisfied
+ */
 export async function buildGaslessRoute<
   N extends Network,
   S extends SupportedEvmDomain<N>,
@@ -69,11 +72,18 @@ export async function buildGaslessRoute<
 
   if (quote === undefined) return quote;
 
+  // all gasless fees are in usdc.
+  const fees = [quote.gaslessFee, ...corridorFees] as Usdc[];
+
+  const totalFee = fees.reduce((acc, f) => acc.add(f), usdc(0));
+
+  // TODO: In the future it'd be nice to let the user know
+  //       what's the minimal amount we'll relay for.
+  if (intent.amount.le(totalFee)) return undefined;
+
   const tokenAllowanceSteps = permit2PermitRequired
     ? [signPermitStep(intent.sourceChain)]
     : [];
-
-  const totalFees = [quote.gaslessFee, ...corridorFees];
 
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
@@ -82,12 +92,12 @@ export async function buildGaslessRoute<
 
   return {
     intent,
-    fees: totalFees,
+    fees,
     estimatedDuration: corridor.transferTime,
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost(evmClient.network, routeSteps, totalFees),
+    estimatedTotalCost: await calculateTotalCost(evmClient.network, routeSteps, fees),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(
