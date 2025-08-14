@@ -16,9 +16,9 @@ export class MetricsMiddleware implements NestMiddleware {
 
     const startTime = Date.now();
     const method = req.method;
-    const route = this.normalizeRoute(req.originalUrl);
+    const path = this.normalizeRoute(req.originalUrl);
 
-    this.metricsService.gauge("http_requests_active", { method, route }, 1);
+    this.metricsService.gauge("http_requests_active", { method, path }, 1);
 
     res.on("finish", () => {
       const duration = (Date.now() - startTime) / 1000;
@@ -26,25 +26,25 @@ export class MetricsMiddleware implements NestMiddleware {
 
       this.metricsService.counter(
         "http_requests_total",
-        { method, route, status_code: statusCode },
+        { method, path, status_code: statusCode },
         1,
       );
 
       this.metricsService.histogram(
         "http_request_duration_seconds",
-        { method, route },
+        { method, path, status_code: statusCode },
         duration,
       );
 
       if (statusCode.startsWith("4") || statusCode.startsWith("5")) {
         this.metricsService.counter(
           "http_requests_errors_total",
-          { method, route, status_code: statusCode },
+          { method, path, status_code: statusCode },
           1,
         );
       }
 
-      this.metricsService.gauge("http_requests_active", { method, route }, -1);
+      this.metricsService.gauge("http_requests_active", { method, path }, -1);
     });
 
     next();

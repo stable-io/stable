@@ -50,7 +50,12 @@ export class MetricsService {
 
   public gauge(id: string, labels: LV, value: number): void {
     const gauge = this.getGauge(id, Object.keys(labels));
-    gauge.set(labels, value);
+    if (value > 0) {
+      gauge.inc(value)
+    }
+    if (value < 0) {
+      gauge.dec(1)
+    }
   }
 
   private getHistogram(id: string, labels: string[]): Histogram {
