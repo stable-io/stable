@@ -107,9 +107,6 @@ export const attestationTimeEstimates = {
     Base:        1086.82,
     Polygon:     69.08,
     Unichain:    1604.94,
-    // Linea:       20,
-    // Sonic:       20,
-    // Worldchain:  20,
     // Codex:       20,
     // Solana:      25, // TODO
     // Sui:         20, // TODO
