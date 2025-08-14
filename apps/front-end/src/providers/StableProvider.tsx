@@ -13,7 +13,7 @@ import type { WalletClient } from "viem";
 
 interface StableContextValue {
   address?: string;
-  stable?: Stable<"Testnet">;
+  stable?: Stable<"Mainnet">;
   isConnected: boolean;
 }
 
@@ -49,7 +49,7 @@ export const StableProvider = ({
     () =>
       signer
         ? new Stable({
-            network: "Testnet",
+            network: "Mainnet",
             signer,
           })
         : undefined,

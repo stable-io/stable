@@ -5,15 +5,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps, PropsWithChildren, ReactElement } from "react";
 import { http } from "viem";
 import {
-  sepolia as ethereumTestnet,
-  // avalancheFuji as avalancheTestnet,
-  optimismSepolia as optimismTestnet,
-  arbitrumSepolia as arbitrumTestnet,
-  baseSepolia as baseTestnet,
-  // polygonAmoy as polygonTestnet,
-  // unichainSepolia as unichainTestnet,
-  // lineaSepolia as lineaTestnet,
-  // sonicTestnet as sonicTestnet,
+  mainnet,
+  polygon,
+  avalanche,
+  arbitrum,
+  optimism,
+  base,
+  linea,
+  unichain,
+  worldchain,
+  sonic,
 } from "viem/chains";
 import type { Transport } from "wagmi";
 import { createConfig, WagmiProvider } from "wagmi";
@@ -21,16 +22,18 @@ import { createConfig, WagmiProvider } from "wagmi";
 import { env } from "@/env";
 
 const chains = [
-  ethereumTestnet,
-  // avalancheTestnet,
-  optimismTestnet,
-  arbitrumTestnet,
-  baseTestnet,
-  // polygonTestnet,
-  // unichainTestnet,
-  // lineaTestnet,
-  // sonicTestnet,
+  mainnet,
+  polygon,
+  avalanche,
+  arbitrum,
+  optimism,
+  base,
+  linea,
+  unichain,
+  worldchain,
+  sonic,
 ] as const;
+
 const transports = Object.fromEntries(
   chains.map(({ id }) => [id, http()]),
 ) as Record<(typeof chains)[number]["id"], Transport>;
