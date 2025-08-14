@@ -35,8 +35,9 @@ export const StableProvider = ({
               const walletClient = await primaryWallet.getWalletClient(
                 chain.id.toString(10),
               );
+
               if ((await walletClient.getChainId()) !== chain.id) {
-                await walletClient.switchChain(chain);
+                await walletClient.switchChain({ id: chain.id });
               }
               return walletClient;
             },

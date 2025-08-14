@@ -124,7 +124,7 @@ type TransferAction =
   | { type: "HOP_CONFIRMED" }
   | { type: "TRANSFER_RECEIVED" }
   | { type: "TRANSFER_COMPLETED" }
-  | { type: "TRANSFER_FAILED" };
+  | { type: "TRANSFER_FAILED", errorMessage: string };
 
 const transferReducer = (
   state: TransferState,
@@ -190,6 +190,7 @@ const transferReducer = (
       };
 
     case "TRANSFER_FAILED":
+      console.error("Transfer Failed With Error:", action.errorMessage)
       return {
         ...state,
         isActive: false,
@@ -284,8 +285,9 @@ export const useTransferProgress = (
       dispatch({ type: "TRANSFER_RECEIVED" });
     };
 
-    const handleTransferFailed = (): void => {
-      dispatch({ type: "TRANSFER_FAILED" });
+    const handleTransferFailed = (e: unknown): void => {
+      const errorMessage = e instanceof Error ? e.message : "unknown error";
+      dispatch({ type: "TRANSFER_FAILED", errorMessage });
     };
 
     route.progress.on("transfer-initiated", handleTransferInitiated);
