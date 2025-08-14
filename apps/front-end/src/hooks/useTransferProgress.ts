@@ -219,7 +219,7 @@ export const useTransferProgress = (
       throw new Error("resetTransfer can't be called without a route set");
     dispatch({
       type: "RESET_TRANSFER",
-      estimatedDuration: route.estimatedDuration.toUnit("sec").toNumber(),
+      estimatedDuration: Math.ceil(route.estimatedDuration.toUnit("sec").toNumber()),
     });
   }, [route]);
 
@@ -230,7 +230,7 @@ export const useTransferProgress = (
   useEffect(() => {
     dispatch({
       type: "SET_TIME_REMAINING",
-      time: route?.estimatedDuration.toUnit("sec").toNumber() ?? 0,
+      time: Math.ceil(route?.estimatedDuration.toUnit("sec").toNumber() ?? 0),
     });
   }, [route?.estimatedDuration]);
 
@@ -240,7 +240,7 @@ export const useTransferProgress = (
     const interval = setInterval(() => {
       dispatch({
         type: "SET_TIME_REMAINING",
-        time: Math.max(0, state.timeRemaining - 1),
+        time: Math.ceil(Math.max(0, state.timeRemaining - 1)),
       });
     }, 1000);
 
