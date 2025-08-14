@@ -125,7 +125,7 @@ export const attestationTimeEstimates = {
     Avalanche:  100, // v2 is not used in avalanche.
     Arbitrum:   4.71,
     Base:       4.99,
-    Linea:      8,     // TODO
+    Linea:      1.85,     // TODO
     Optimism:   3.29,
     Unichain:   3.75,
     Polygon:    31.59,
