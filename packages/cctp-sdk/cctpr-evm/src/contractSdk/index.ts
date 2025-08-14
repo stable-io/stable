@@ -89,6 +89,7 @@ import { Rational } from "@stable-io/amount";
 
 //external consumers shouldn't really need these but exporting them just in case
 export * as layouts from "./layouts/index.js";
+export { extraDomains } from "./layouts/common.js";
 
 export type SupportedEvmDomain<N extends Network> = SupportedDomain<N> & DomainsOf<"Evm">;
 

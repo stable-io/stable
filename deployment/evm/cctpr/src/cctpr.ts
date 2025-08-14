@@ -19,6 +19,7 @@ import {
 import { ChainConfig } from "./interfaces.js";
 import {
   CctpRGovernance,
+  FeeAdjustment,
   FeeAdjustments,
   FeeAdjustmentType,
 } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -94,6 +95,11 @@ export function loadFeeAdjustments(): Record<FeeAdjustmentType, Partial<FeeAdjus
     avaxHop: configToFeeAdjustments(config.avaxHopAdjustments),
     gasDropoff: configToFeeAdjustments(config.gasDropoffAdjustments),
   };
+}
+
+export function adjustmentEquals(current: FeeAdjustment, expected: FeeAdjustment): boolean {
+  return current.absoluteUsdc.eq(expected.absoluteUsdc) &&
+    current.relativePercent === expected.relativePercent;
 }
 
 export async function deployCctpR(
