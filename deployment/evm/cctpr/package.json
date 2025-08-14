@@ -15,7 +15,9 @@
     "verify-etherscan": "./verifyEtherscan.sh",
     "verify-bytecode": "tsx verifyBytecode.ts",
     "verify-storage": "tsx verifyStorage.ts",
-    "set-fees": "tsx setFees.ts"
+    "set-fees": "tsx setFees.ts",
+    "transfer-ownership": "tsx transferOwnership.ts",
+    "accept-ownership": "tsx acceptOwnership.ts"
   },
   "license": "MPL-2.0",
   "devDependencies": {
