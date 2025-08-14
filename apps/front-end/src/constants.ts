@@ -10,7 +10,7 @@ export const availableChains = [
   "Linea",
   "Unichain",
   "Worldchain",
-  "Sonic"
+  "Sonic",
 ] as const satisfies readonly EvmChains[];
 
 export type AvailableChains = (typeof availableChains)[number];

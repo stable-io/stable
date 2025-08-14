@@ -124,7 +124,7 @@ type TransferAction =
   | { type: "HOP_CONFIRMED" }
   | { type: "TRANSFER_RECEIVED" }
   | { type: "TRANSFER_COMPLETED" }
-  | { type: "TRANSFER_FAILED", errorMessage: string };
+  | { type: "TRANSFER_FAILED"; errorMessage: string };
 
 const transferReducer = (
   state: TransferState,
@@ -190,7 +190,7 @@ const transferReducer = (
       };
 
     case "TRANSFER_FAILED":
-      console.error("Transfer Failed With Error:", action.errorMessage)
+      console.error("Transfer Failed With Error:", action.errorMessage);
       return {
         ...state,
         isActive: false,
@@ -220,7 +220,9 @@ export const useTransferProgress = (
       throw new Error("resetTransfer can't be called without a route set");
     dispatch({
       type: "RESET_TRANSFER",
-      estimatedDuration: Math.ceil(route.estimatedDuration.toUnit("sec").toNumber()),
+      estimatedDuration: Math.ceil(
+        route.estimatedDuration.toUnit("sec").toNumber(),
+      ),
     });
   }, [route]);
 
