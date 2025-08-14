@@ -2,7 +2,7 @@ import Image from "next/image";
 import type { ReactElement, ChangeEvent } from "react";
 
 interface AmountInputProps {
-  amount: number;
+  amount: string;
   onAmountChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onMaxClick: () => void;
 }
@@ -24,7 +24,7 @@ export const AmountInput = ({
       />
       <input
         type="number"
-        value={amount || ""}
+        value={amount}
         onChange={onAmountChange}
         placeholder="Enter amount"
         min="0"
