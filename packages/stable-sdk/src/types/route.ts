@@ -3,28 +3,28 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import {
+import type {
   Usdc,
   Usd,
-  EvmDomains,
   GasTokenOf,
   Duration,
   Network,
+  LoadedDomain,
 } from "@stable-io/cctp-sdk-definitions";
-import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
-import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { SupportedEvmDomain, Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
-import { Intent } from "./intent.js";
-import { TransferProgressEventEmitter } from "../progressEmitter.js";
-import { TransactionEventEmitter } from "../transactionEmitter.js";
+import type { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
+import type { Corridor, LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { Intent } from "./intent.js";
+import type { TransferProgressEventEmitter } from "../progressEmitter.js";
+import type { TransactionEventEmitter } from "../transactionEmitter.js";
+import type { RouteExecutionStep, GaslessTransferData } from "../methods/findRoutes/steps.js";
 
-import { RouteExecutionStep, GaslessTransferData } from "../methods/findRoutes/steps.js";
-
-export type Fee = Usdc | GasTokenOf<keyof EvmDomains>;
+export type Fee = Usdc | GasTokenOf<LoadedDomain>;
 
 export interface Route<
-  S extends keyof EvmDomains,
-  D extends keyof EvmDomains,
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
 > {
   corridor: Corridor;
 
@@ -44,7 +44,7 @@ export interface Route<
   // Type details to be defined by implementer
   // rates: Rates[];
 
-  intent: Intent<S, D>;
+  intent: Intent<N, S, D>;
 
   // When using permit, the transactions require a an Eip2612
   // signature to be built, so they can not be built eagerly.
@@ -80,4 +80,4 @@ export interface Route<
 
 export type SupportedRoute<
   N extends Network,
-> = Route<SupportedEvmDomain<N>, SupportedEvmDomain<N>>;
+> = Route<N, LoadedCctprDomain<N>, SupportedDomain<N>>;

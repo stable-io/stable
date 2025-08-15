@@ -25,6 +25,7 @@ import type {
   InOrOut,
   LoadedCctprPlatformDomain,
   SupportedDomain,
+  QuoteBase,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { TODO } from "@stable-io/utils";
 
@@ -34,8 +35,8 @@ import { buildTransferStep, preApprovalStep, signPermitStep } from "../steps.js"
 import type {
   Network,
   Intent,
+  Route,
 } from "../../../types/index.js";
-import { Route } from "../../../types/index.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 
 export async function buildUserTransferRoute<
@@ -45,9 +46,9 @@ export async function buildUserTransferRoute<
   D extends SupportedDomain<N>,
 >(
   network: N,
-  intent: Intent<S, D>,
-  corridor: CorridorStats<Network, keyof EvmDomains, Corridor>,
-): Promise<Route<S, D>> {
+  intent: Intent<N, S, D>,
+  corridor: CorridorStats<N, keyof EvmDomains, Corridor>,
+): Promise<Route<N, S, D>> {
   const platform = platformOf(intent.sourceChain);
   const cctprImpl = platformCctpr(platform);
   const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
@@ -55,11 +56,10 @@ export async function buildUserTransferRoute<
     intent,
   );
 
-  const quote = intent.paymentToken === "usdc"
-  ? {
-      maxRelayFee: maxRelayFee as Usdc,
-    }
-  : { maxRelayFee: maxRelayFee as GasTokenOf<S, keyof EvmDomains> };
+  const quote = {
+    type: "onChain",
+    maxRelayFee: maxRelayFee,
+  } as QuoteBase<N, PlatformOf<S>, S>; // @todo: remove cast
 
   const usdcFees = corridorFees.filter(fee => fee.kind.name === "Usdc") as Usdc[];
   const totalUsdcValue = usdcFees.reduce((acc, fee) => acc.add(fee), intent.amount);
@@ -106,7 +106,7 @@ export async function buildUserTransferRoute<
     ),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
-    workflow: cctprImpl.transfer(
+    workflow: cctprImpl.transfer<N, S, D>(
       network,
       intent.sourceChain,
       intent.targetChain,
@@ -114,7 +114,7 @@ export async function buildUserTransferRoute<
       intent.recipient,
       inOrOut,
       corridorParams as CorridorParamsBase<N, PlatformOf<S>, S, D>, // @todo: remove cast
-      { type: "onChain", ...quote },
+      quote,
       intent.gasDropoffDesired as TODO,
       { usePermit: intent.usePermit },
     ),

@@ -4,7 +4,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Amount, Conversion } from "@stable-io/amount";
-import type { Corridor, CorridorStats } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type {
+  Corridor,
+  CorridorStats,
+  LoadedCctprPlatformDomain,
+  SupportedDomain,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   EvmDomains,
   GasTokenKindOf,
@@ -17,6 +22,7 @@ import {
   gasTokenOf,
   Percentage,
   percentage,
+  RegisteredPlatform,
 } from "@stable-io/cctp-sdk-definitions";
 
 import type { Fee, Network, Intent } from "../../types/index.js";
@@ -24,11 +30,12 @@ import { RouteExecutionStep } from "./steps.js";
 
 export function getCorridorFees<
   N extends Network,
-  S extends keyof EvmDomains,
-  D extends keyof EvmDomains,
+  P extends RegisteredPlatform,
+  S extends LoadedCctprPlatformDomain<N, P>,
+  D extends SupportedDomain<N>,
 >(
   corridorCost: CorridorStats<N, keyof EvmDomains, Corridor>["cost"],
-  intent: Intent<S, D>,
+  intent: Intent<N, S, D>,
 ): { corridorFees: Fee[]; maxRelayFee: Fee; fastFeeRate: Percentage } {
   const corridorFees = [] as Fee[];
 
