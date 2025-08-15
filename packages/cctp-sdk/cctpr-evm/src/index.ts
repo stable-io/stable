@@ -16,6 +16,7 @@ export * from "./contractSdk/index.js";
 /**
  * @todo: this import looks weird.
  */
+export { extraDomains, feeAdjustmentTypes } from "./contractSdk/layouts/common.js";
 export type { Corridor, GovernanceCommand, FeeAdjustment, FeeAdjustmentType } from "./contractSdk/layouts/index.js";
 export type { SupportedEvmDomain } from "./contractSdk/index.js";
 

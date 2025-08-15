@@ -9,7 +9,15 @@
     "lint:fix": "eslint --fix .",
     "clean": "make -C ../../../contracts/cctpr/evm/ clean && rm -rf dist build-contracts",
     "build-contracts": "make -C ../../../contracts/cctpr/evm/ && mkdir -p build-contracts && cp -r ../../../contracts/cctpr/evm/out/* ./build-contracts",
-    "build": "tsc"
+    "build": "tsc --build",
+    "deploy-cctpr": "tsx deployCctpr.ts",
+    "deploy-avax-router": "tsx deployAvaxRouter.ts",
+    "verify-etherscan": "./verifyEtherscan.sh",
+    "verify-bytecode": "tsx verifyBytecode.ts",
+    "verify-storage": "tsx verifyStorage.ts",
+    "set-fees": "tsx setFees.ts",
+    "transfer-ownership": "tsx transferOwnership.ts",
+    "accept-ownership": "tsx acceptOwnership.ts"
   },
   "license": "MPL-2.0",
   "devDependencies": {

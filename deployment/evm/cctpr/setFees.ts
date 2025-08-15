@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { DomainsOf, Network } from "@stable-io/cctp-sdk-definitions";
-import { getCctpRGovernance, loadFeeAdjustments } from "./src/cctpr.js";
+import { getCctpRGovernance, loadFeeAdjustments, adjustmentEquals } from "./src/cctpr.js";
 import {
   init,
   ChainInfo,
@@ -109,6 +109,18 @@ async function updateCctpRConfiguration(chain: ChainInfo) {
   return { commands, chain };
 }
 
+export function adjustmentDiffers(current: FeeAdjustment[], expected: FeeAdjustment[]): boolean {
+  if (current.length !== expected.length) {
+    throw new Error("Unexpected different lengths of fee adjustments arrays.");
+  }
+  for (const [i, currentAdjustment] of current.entries()) {
+    if (!adjustmentEquals(currentAdjustment, expected[i]!)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 async function processFeeAdjustments<N extends Network, S extends DomainsOf<"Evm">>(
   cctpr: CctpRGovernance<N, S>,
 ) {
@@ -129,21 +141,6 @@ async function processFeeAdjustments<N extends Network, S extends DomainsOf<"Evm
     }
   }
   return commands;
-}
-
-function adjustmentDiffers(current: FeeAdjustment[], expected: FeeAdjustment[]): boolean {
-  if (current.length !== expected.length) {
-    throw new Error("Unexpected different lengths of fee adjustments arrays.");
-  }
-  for (const [i, currentAdjustment] of current.entries()) {
-    if (
-      currentAdjustment.absoluteUsdc.ne(expected[i]!.absoluteUsdc) ||
-      currentAdjustment.relativePercent !== expected[i]!.relativePercent
-    ) {
-      return true;
-    }
-  }
-  return false;
 }
 
 await run();

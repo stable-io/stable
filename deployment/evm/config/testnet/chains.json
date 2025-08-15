@@ -49,6 +49,27 @@
       "evmNetworkId": 1301,
       "chainId": 44,
       "rpc": "https://unichain-sepolia-rpc.publicnode.com"
+    },
+    {
+      "domain": "Linea",
+      "description": "Linea Sepolia",
+      "evmNetworkId": 59141,
+      "chainId": 38,
+      "rpc": "https://rpc.sepolia.linea.build"
+    },
+    {
+      "domain": "Sonic",
+      "description": "Sonic Testnet",
+      "evmNetworkId": 57054,
+      "chainId": 52,
+      "rpc": "https://rpc.testnet.soniclabs.com"
+    },
+    {
+      "domain": "Worldchain",
+      "description": "Worldchain Sepolia",
+      "evmNetworkId": 4801,
+      "chainId": 45,
+      "rpc": "https://worldchain-sepolia.g.alchemy.com/public"
     }
   ]
 }
