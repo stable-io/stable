@@ -11,6 +11,9 @@
     "setFees.ts",
     "verifyBytecode.ts",
     "verifyEtherscan.ts",
+    "verifyStorage.ts",
+    "transferOwnership.ts",
+    "acceptOwnership.ts",
     "src/**/*"
   ]
 }

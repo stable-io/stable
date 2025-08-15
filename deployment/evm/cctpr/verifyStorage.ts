@@ -25,7 +25,7 @@ import {
   type FeeAdjustments,
   type FeeAdjustmentType,
 } from "@stable-io/cctp-sdk-cctpr-evm";
-import { wormholeChainIdOf } from "@stable-io/cctp-sdk-definitions";
+import { Usdc, wormholeChainIdOf, type Domain } from "@stable-io/cctp-sdk-definitions";
 
 init();
 const operatingChains = getOperatingChains();
@@ -94,7 +94,7 @@ async function run() {
 
   for (const result of results) {
     console.error(`# CCTPR on ${result.domain}`);
-    
+
     if ("error" in result) {
       console.error(`ERROR: ${result.error}`);
     } else {
@@ -108,7 +108,7 @@ async function run() {
       }
 
       // Check if all roles match expected values
-      const rolesMatch = 
+      const rolesMatch =
         result.owner.toString() === result.expectedOwner.toString() &&
         result.feeAdjuster.toString() === result.expectedFeeAdjuster.toString() &&
         result.feeRecipient.toString() === result.expectedFeeRecipient.toString() &&
@@ -146,16 +146,15 @@ async function run() {
           const actualAdjustments = result.feeAdjustments[type as FeeAdjustmentType];
           console.error(`  ${type}:`);
           for (const [domain, expected] of Object.entries(adjustments)) {
-            const actual = actualAdjustments?.[domain];
+            const actual = actualAdjustments[domain as Domain];
             if (actual === undefined) {
               console.error(`    ${domain}: No adjustment found`);
             } else if (!adjustmentEquals(expected, actual)) {
-              const feeError = (domain: string, actual: FeeAdjustment, expected: FeeAdjustment) => {
-                console.error(`    ${domain}:`);
-                console.error(`      Expected: ${expected.relativePercent}% + ${expected.absoluteUsdc} USDC`);
-                console.error(`      Actual: ${actual.relativePercent}% + ${actual.absoluteUsdc} USDC`);
-              }
-              feeError(domain, actual, expected);
+              console.error(`    ${domain}:`);
+              const feeError = (side: string, percent: number, absolute: Usdc) =>
+                console.error(`      ${side}: ${percent}% + ${absolute.toString()}`);
+              feeError("Expected", expected.relativePercent, expected.absoluteUsdc);
+              feeError("Actual", actual.relativePercent, actual.absoluteUsdc);
             }
           }
         }
@@ -170,7 +169,7 @@ async function run() {
       } else {
         console.error(`REGISTERED CHAIN IDS MISMATCH`);
         console.error("Expected vs Actual:");
-        
+
         for (const [domain, expectedChainId] of Object.entries(result.expectedChainIds)) {
           const actualChainId = result.chainIds[domain];
           if (expectedChainId !== actualChainId) {
@@ -225,10 +224,10 @@ async function fetchCctpRStorage(
   ];
 
   const actualFeeAdjustmentsArray = await Promise.all(
-    feeAdjustmentTypes.map(type => cctpR.getFeeAdjustments(type))
+    feeAdjustmentTypes.map(type => cctpR.getFeeAdjustments(type)),
   );
   const feeAdjustments = Object.fromEntries(
-    feeAdjustmentTypes.map((type, index) => [type, actualFeeAdjustmentsArray[index]])
+    feeAdjustmentTypes.map((type, index) => [type, actualFeeAdjustmentsArray[index]]),
   ) as Record<FeeAdjustmentType, Partial<FeeAdjustments>>;
   const expectedFeeAdjustments = loadFeeAdjustments();
 
@@ -236,9 +235,7 @@ async function fetchCctpRStorage(
   const expectedChainIds: Record<string, number> = {};
   for (const domain of extraDomains(network)) {
     const chainId = wormholeChainIdOf(network, domain);
-    if (chainId !== undefined) {
-      expectedChainIds[domain] = chainId;
-    }
+    expectedChainIds[domain] = chainId;
   }
 
   return {
@@ -267,7 +264,7 @@ function compareFeeAdjustments(
   for (const [type, expectedAdjustments] of Object.entries(expected)) {
     const actualAdjustments = actual[type as FeeAdjustmentType];
     for (const [domain, expectedAdjustment] of Object.entries(expectedAdjustments)) {
-      const actualAdjustment = actualAdjustments?.[domain];
+      const actualAdjustment = actualAdjustments[domain as Domain];
       if (!actualAdjustment) {
         return false;
       }
@@ -292,4 +289,4 @@ function compareChainIds(
   return true;
 }
 
-await run(); 
+await run();

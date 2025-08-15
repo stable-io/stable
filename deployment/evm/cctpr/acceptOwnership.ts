@@ -11,7 +11,7 @@ import { encoding } from "@stable-io/utils";
 
 init();
 
-async function run() {
+function run() {
   console.info("Generating calldata for accepting ownership transfer...");
   const network = getNetwork();
   const avalancheChain = getChain(wormholeChainIdOf(network, "Avalanche"));
@@ -27,4 +27,4 @@ async function run() {
   console.info("This calldata can be used on any chain to accept ownership transfer.");
 }
 
-await run();
+run();

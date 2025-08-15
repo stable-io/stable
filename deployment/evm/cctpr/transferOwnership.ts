@@ -25,19 +25,19 @@ const operatingChains = getOperatingChains();
 
 const waitForInput = async () => {
   process.stdin.setRawMode(true);
-  return new Promise(resolve => process.stdin.once('data', () => {
+  return new Promise(resolve => process.stdin.once("data", () => {
     process.stdin.setRawMode(false);
     process.stdin.pause();
-    resolve(undefined);
+    resolve({});
   }));
-}
+};
 
 async function run() {
-  const newOwnerAddressValue = process.env.NEW_OWNER_ADDRESS;
+  const newOwnerAddressValue = process.env["NEW_OWNER_ADDRESS"];
   if (newOwnerAddressValue === undefined) {
     throw new Error("NEW_OWNER_ADDRESS environment variable needs to be set");
   }
-  if (process.env.WALLET_KEY === undefined) {
+  if (process.env["WALLET_KEY"] === undefined) {
     throw new Error("WALLET_KEY environment variable needs to be set");
   }
   const newOwnerAddress = new EvmAddress(newOwnerAddressValue);
@@ -53,19 +53,22 @@ async function run() {
   const failedDomains: string[] = [];
   for (const [index, result] of results.entries()) {
     if (result.status === "rejected") {
-      failedDomains.push(operatingChains[index].domain);
-      console.info(`\n==== ${operatingChains[index].domain} ====\n`);
+      failedDomains.push(operatingChains[index]!.domain);
+      console.info(`\n==== ${operatingChains[index]!.domain} ====\n`);
       console.info(
         `Ownership transfer failed: ${result.reason?.stack || result.reason}`,
       );
     } else {
-      console.info(`\nOwnership transfer successful on ${result.value.chain.domain}.\n`);
+      console.info(`\nOwnership transfer successful on ${result.value.chain.domain}.`);
+      console.info(`Transaction hash: ${result.value.hash}`);
     }
   }
   if (failedDomains.length > 0) {
     console.error(`\nOwnership transfer failed on ${failedDomains.join(", ")}`);
   } else {
     console.info(`\nOwnership transfer successful on all domains.`);
+    console.info(`IMPORTANT: The new owner (${newOwnerAddressValue})`);
+    console.info(`must now call acceptOwnershipTransfer on all domains to complete the transfer.`);
   }
 }
 
@@ -106,11 +109,7 @@ async function transferOwnership(chain: ChainInfo, newOwnerAddress: EvmAddress) 
       `Ownership transfer failed on ${chain.domain}. Tx id ${hash}`,
     );
   }
-
-  console.info(`Ownership transfer transaction successful on ${chain.domain}. Tx hash: ${hash}`);
-  console.info(`  IMPORTANT: The new owner (${newOwnerAddress.toString()}) must now call acceptOwnershipTransfer to complete the transfer.`);
-
-  return { commands, chain };
+  return { commands, chain, hash };
 }
 
 await run();
