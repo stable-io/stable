@@ -62,10 +62,9 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
   }
 
   private async ownershipUpdateAccounts(who: "owner" | "pendingOwner") {
-    this.invalidateCachedConfig();
     return [
-      [(await this.config())[who], AccountRole.READONLY_SIGNER],
-      [this.configAddress(),       AccountRole.READONLY       ],
+      [(await this.defensiveGetConfig())[who], AccountRole.READONLY_SIGNER],
+      [this.configAddress(),                   AccountRole.WRITABLE       ],
     ] as const;
   }
 
@@ -143,11 +142,17 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
   }
 
   private async roleUpdateAccounts() {
-    this.invalidateCachedConfig();
-    const { owner } = await this.config();
+    const { owner } = await this.defensiveGetConfig();
     return [
       [owner,                AccountRole.READONLY_SIGNER],
-      [this.configAddress(), AccountRole.READONLY       ],
+      [this.configAddress(), AccountRole.WRITABLE       ],
     ] as const;
+  }
+
+  private async defensiveGetConfig() {
+    this.invalidateCachedConfig();
+    const config = await this.config();
+    this.invalidateCachedConfig();
+    return config;
   }
 }

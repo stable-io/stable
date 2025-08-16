@@ -22,8 +22,9 @@ import type { Text } from "@stable-io/utils";
 import { definedOrThrow, encoding } from "@stable-io/utils";
 import type { RoPair, RoArray, Replace } from "@stable-io/map-utils";
 import { zip, chunk, fromEntries } from "@stable-io/map-utils";
+import type { KindWithAtomic, Amount } from "@stable-io/amount";
 import { Conversion } from "@stable-io/amount";
-import type { Network, GasTokenOf } from "@stable-io/cctp-sdk-definitions";
+import type { Network, GasTokenOf, Percentage } from "@stable-io/cctp-sdk-definitions";
 import {
   UniversalAddress,
   Usdc,
@@ -55,8 +56,7 @@ import {
   timestampItem,
   checkIsSensibleCorridor,
   routerHookDataSize,
-  calcBurnAmount,
-  calcInputAmount,
+  calcUsdcAmounts,
   toCorridorVariant,
   quoteIsInUsdc,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
@@ -127,7 +127,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
           quoterSignature: quote.quoterSignature,
           relayFee: quote.relayFee.kind.name === "Usdc"
             ? { payIn: "usdc",     amount: quote.relayFee as Usdc               }
-            : { payIn: "gasToken", amount: sol(quote.relayFee.toUnit("atomic")) },
+            : { payIn: "gasToken", amount: sol(quote.relayFee.toUnit("human")) },
         }
       : quoteIsInUsdc(quote)
       ? { type: "onChainUsdc",
@@ -195,7 +195,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
 
     const tx = await this.composeTransfer(
       destination,
-      inOrOut,
+      inOrOut.type === "in" ? { type: "in", amount: inOrOut.amount.sub(gaslessFee) } : inOrOut,
       mintRecipient,
       gasDropoff,
       corridor,
@@ -257,7 +257,8 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       localToken,
       eventAuthority,
     } = cctpAccs;
-    const remoteTokenMessenger = remoteTokenMessengers[destination];
+    const remoteTokenMessenger =
+      remoteTokenMessengers[corridor.type === "avaxHop" ? "Avalanche" : destination];
     const denylisted = corridor.type !== "v1"
       ? (cctpAccs as Extract<typeof cctpAccs, { denylist: unknown }>).denylist(user)
       : this.address;
@@ -293,9 +294,9 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       [this.address,             AccountRole.READONLY       ],
     ] as const;
 
-    const burnAmount = calcBurnAmount(inOrOut, corridor, quote, usdc(0));
+    const [, inputAmount, burnAmount] = calcUsdcAmounts(inOrOut, corridor, quote, usdc(0));
     const params = {
-      inputAmount: calcInputAmount(inOrOut, quote, burnAmount),
+      inputAmount,
       mintRecipient,
       gasDropoff: genericGasToken(gasDropoff.toUnit("human")),
       corridorVariant: toCorridorVariant(corridor, burnAmount),
@@ -426,7 +427,6 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         unadjustedFee = unadjustedFee.add(avaxHopExecutionFee!);
 
       let usdcFee = CctpR.applyFeeAdjustment(feeAdjustments[corridor], unadjustedFee);
-
       if (hasGasDropoff)
         usdcFee = usdcFee.add(gasDropoffFee!);
 
@@ -446,9 +446,10 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
 
   private calcEvmExecutionFee(gas: Gas, bytes: Byte, oraclePrices: PriceState<N, "Evm">): Usdc {
     const { gasPrice, pricePerTxByte, gasTokenPrice } = oraclePrices;
-    return gas.convert(gasPrice)
-      .add(bytes.convert(pricePerTxByte))
-      .convert(gasTokenPrice);
+    return CctpR.convert(
+      CctpR.convert(gas, gasPrice).add(CctpR.convert(bytes, pricePerTxByte)),
+      gasTokenPrice
+    );
   }
 
   private calcSuiExecutionFee(
@@ -458,17 +459,32 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     oraclePrices: PriceState<N, "Sui">,
   ): Usdc {
     const { computeUnitPrice, bytePrice, rebateRatio, gasTokenPrice } = oraclePrices;
-    let executionCost = executionCUs.convert(computeUnitPrice)
-      .add(storageBytes.sub(mulPercentage(rebateBytes, rebateRatio)).convert(bytePrice));
+    const rebatedBytes = storageBytes.sub(CctpR.mulPercentage(rebateBytes, rebateRatio));
+    let executionCost = CctpR.convert(executionCUs, computeUnitPrice)
+      .add(CctpR.convert(rebatedBytes, bytePrice));
 
     if (executionCost.lt(suiMinTransactionCost))
       executionCost = suiMinTransactionCost;
 
-    return executionCost.convert(gasTokenPrice);
+    return CctpR.convert(executionCost, gasTokenPrice);
   }
 
   private static applyFeeAdjustment(feeAdjustment: FeeAdjustment, fee: Usdc): Usdc {
     const { absolute, relative } = feeAdjustment;
-    return mulPercentage(fee, relative).add(absolute);
+    return CctpR.mulPercentage(fee, relative).add(absolute);
+  }
+
+  private static convert<NK extends KindWithAtomic, DK extends KindWithAtomic>(
+    amount: Amount<DK>,
+    conversion: Conversion<NK, DK>,
+  ): Amount<NK> {
+    return amount.convert(conversion).floorTo("atomic");
+  }
+
+  private static mulPercentage<K extends KindWithAtomic>(
+    amount: Amount<K>,
+    percentage: Percentage,
+  ): Amount<K> {
+    return mulPercentage(amount, percentage).floorTo("atomic");
   }
 }

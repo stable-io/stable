@@ -16,11 +16,8 @@ import {
   loadScriptConfig,
 } from "./common.js";
 import { ChainConfig } from "./interfaces.js";
-import {
-  CctpRGovernance,
-  FeeAdjustments,
-  FeeAdjustmentType,
-} from "@stable-io/cctp-sdk-cctpr-evm";
+import { FeeAdjustmentType } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { CctpRGovernance, FeeAdjustments } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CallData, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import {
   Domain,

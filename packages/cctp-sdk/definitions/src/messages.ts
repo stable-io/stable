@@ -53,7 +53,7 @@ export const messageLayoutTemplate = <
 
 export const burnMessageLayoutTemplate = <
   const V extends number,
-  const O extends boolean,
+  const O extends boolean = true,
 >(version: V, omitVersion?: O) => [
   { name: "messageBodyVersion", ...versionItem(version, omitVersion) },
   { name: "burnToken",          ...universalAddressItem              },

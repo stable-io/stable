@@ -13,12 +13,18 @@ const discriminatorTypeConverter = {
   instruction: "global",
   account: "account",
   event: "event",
+  anchor: "anchor",
 } as const;
 export type DiscriminatorType = keyof typeof discriminatorTypeConverter;
 
 export const discriminatorLength = 8;
 export const discriminatorOf = (type: DiscriminatorType, name: string) =>
   sha256(`${discriminatorTypeConverter[type]}:${name}`).subarray(0, discriminatorLength);
+
+//see here: https://github.com/solana-foundation/anchor/blob/master/lang/src/event.rs
+//Why they chose to use little endian here, when all other discriminators are big endian is
+//  entirely beyond me.
+export const anchorEmitCpiDiscriminator = discriminatorOf("anchor", "event").reverse();
 
 export type Seed = string | Uint8Array | SolanaAddress;
 const seedToBytes = (seed: Seed) =>

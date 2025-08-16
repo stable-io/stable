@@ -13,7 +13,6 @@ import {
   Percentage,
   domainItem,
   universalAddressItem,
-  signatureItem,
   amountItem,
   transform,
   v1,
@@ -33,7 +32,7 @@ import {
   instructionLayout,
   bumpItem,
   solanaAddressItem,
-  vecItem,
+  vecBytesItem,
 } from "@stable-io/cctp-sdk-solana";
 import { chainItem as oracleChainItem } from "./oracleLayouts.js";
 import { foreignDomains } from "./constants.js";
@@ -52,7 +51,7 @@ export type FeeAdjustment =
 // ---- Event ----
 
 export const relayRequestEventLayout =
-  eventLayout("relay_request", littleEndian([
+  eventLayout("RelayRequest", littleEndian([
     { name: "v1Nonce",    ...v1.nonceItem   },
     { name: "gasDropoff", ...gasDropoffItem },
   ]));
@@ -68,7 +67,7 @@ export const configLayout =
     { name: "feeAdjuster",    ...solanaAddressItem },
     { name: "feeRecipient",   ...solanaAddressItem },
     { name: "offchainQuoter", ...rawEvmAddressItem },
-    { name: "rent_bump",      ...bumpItem          },
+    { name: "rentBump",       ...bumpItem          },
   ]);
 export type Config =
   DeriveType<typeof configLayout>;
@@ -127,16 +126,10 @@ export type TransferWithRelayParams =
 
 // ---- Operations Instructions ----
 
-//it's sorta silly to pass in the attestation as a vec because we know it's a 65 byte signature
-//  but this saves us from having to do a memcopy in the contract and if attestations ever change
-//  length then we haven't committed to anything (the way a [u8; 65] would) on-chain but only have
-//  to change the layout here
-const signatureVecLengthItem = { binary: "uint", size: 4, custom: 65, omit: true } as const;
 export const reclaimRentParamsLayout =
   instructionLayout("reclaim_rent", littleEndian([
-    { name: "_attestationLength",   ...signatureVecLengthItem },
-    { name: "attestation",          ...signatureItem          },
-    { name: "v2DestinationMessage", ...vecItem()              },
+    { name: "attestation",          ...vecBytesItem() }, //65 * cctp signatureThreshold bytes
+    { name: "v2DestinationMessage", ...vecBytesItem() },
   ]));
 export type ReclaimRentParams =
   DeriveType<typeof reclaimRentParamsLayout>;

@@ -5,6 +5,7 @@
     "test": "tsx tests/cctpr.ts"
   },
   "devDependencies": {
+    "@solana-program/system": "^0.7.0",
     "@solana/kit": "^2.3.0",
     "@stable-io/cctp-sdk-cctpr-solana": "workspace:^",
     "@types/node": "^24.1.0",

@@ -11,6 +11,7 @@ import type {
   Layout,
   ProperLayout,
   DeriveType,
+  Endianness,
 } from "binary-layout";
 import { customizableBytes, boolItem, enumItem, setEndianness } from "binary-layout";
 import { valueIndexEntries } from "@stable-io/map-utils";
@@ -18,6 +19,17 @@ import { KindWithAtomic } from "@stable-io/amount";
 import { paddingItem, amountItem, hashItem, Sol, sol } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
 import { type DiscriminatorType, discriminatorOf } from "./utils.js";
+
+//explicitly tell tsc that setEndianness turns ProperLayouts into ProperLayouts
+//  (we need this invariant/guarantee elsewhere)
+type SetEndianness<L extends Layout, E extends Endianness> =
+  ReturnType<typeof setEndianness<L, E>> extends infer R
+  ? L extends ProperLayout
+    ? R extends ProperLayout
+      ? R
+      : never
+    : R
+  : never;
 
 export const littleEndian = <const L extends Layout>(layout: L) =>
   setEndianness(layout, "little");
@@ -33,8 +45,11 @@ export const solanaAddressItem = {
   } satisfies CustomConversion<Uint8Array, SolanaAddress>,
 } as const satisfies Item;
 
-export const vecItem = <const P extends CustomizableBytes>(spec?: P) =>
+export const vecBytesItem = <const P extends CustomizableBytes>(spec?: P) =>
   customizableBytes({ lengthSize: 4, lengthEndianness: "little" }, spec);
+
+export const vecArrayItem = <const L extends Layout>(layout: L) =>
+  ({ binary: "array", lengthSize: 4, lengthEndianness: "little", layout } as const);
 
 const discriminatorItem = (type: DiscriminatorType, name: string) => ({
   name: "discriminator",

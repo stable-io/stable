@@ -31,13 +31,6 @@ export const supportedDomainItem = <N extends Network>(network: N) => ({
   ...domainItem(supportedDomains(network)), size: 1, //TODO
 } as const satisfies Item);
 
-export const timestampItem = {
-  binary: "uint", size: 4, custom: {
-    to: (value: number) => new Date(value * 1000),
-    from: (value: Date) => Math.floor(value.getTime() / 1000),
-  },
-} as const satisfies Item;
-
 export const corridors = ["v1", "v2Direct", "avaxHop"] as const;
 export type Corridor = typeof corridors[number];
 export const corridorItem = enumItem(zip([corridors, range(corridors.length)]));

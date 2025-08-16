@@ -80,7 +80,7 @@ export const domainItem = <
   } satisfies CustomConversion<number, SimplifyDomain<DT[number]>>,
 } as const);
 
-export const fixedDomainItem = <const D extends Domain>(domain: D) => ({
+export const fixedDomainItem = <D extends Domain>(domain: D) => ({
   ...rawDomainItem,
   custom: {
     to: domain,

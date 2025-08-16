@@ -5,7 +5,7 @@
 
 import type { Address } from "@stable-io/cctp-sdk-definitions";
 import { UniversalAddress } from "@stable-io/cctp-sdk-definitions";
-import type { Text } from "@stable-io/utils";
+import type { Text, Size } from "@stable-io/utils";
 import { encoding, isUint8Array } from "@stable-io/utils";
 import { isAddress, getAddress } from "viem/utils"; // TODO: Remove this dependency?
 
@@ -14,7 +14,7 @@ export type RawAddress = `0x${string}`;
 export type EvmAddressish = string | Uint8Array | UniversalAddress | EvmAddress;
 
 export class EvmAddress implements Address {
-  static readonly byteSize = 20;
+  static readonly byteSize = 20 as Size;
   static readonly zeroAddress = new EvmAddress(new Uint8Array(EvmAddress.byteSize));
 
   static isValidAddress(address: string): boolean {

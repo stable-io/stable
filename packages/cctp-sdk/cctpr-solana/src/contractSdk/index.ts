@@ -6,4 +6,5 @@
 export * from "./transfer.js";
 export * from "./reclaim.js";
 export * from "./governance.js";
+export { relayRequestEventLayout } from "./layouts.js";
 export * as oracle from "./oracleLayouts.js";

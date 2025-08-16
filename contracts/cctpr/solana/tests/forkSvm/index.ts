@@ -48,6 +48,7 @@ const builtin = new Set<Address>([
   "Sysvar1nstructions1111111111111111111111111",
   "SysvarC1ock11111111111111111111111111111111",
   "SysvarRent111111111111111111111111111111111",
+  "SysvarRecentB1ockHashes11111111111111111111",
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
@@ -145,19 +146,22 @@ export class ForkSvm {
 
   restoreFromSnapshot(snapshot: Snapshot) {
     this.liteSvm = (new LiteSVM()).withBuiltins().withSysvars().withSplPrograms();
+    this.known = new Set();
     for (const [addr, acc] of Object.entries(snapshot))
       if (acc)
         this.setAccount(addr as Address, acc);
   }
 
   latestTimestamp = () =>
-    this.liteSvm.getClock().unixTimestamp;
+    new Date(Number(this.liteSvm.getClock().unixTimestamp) / 1000);
   latestBlockheight = () =>
     this.liteSvm.getClock().slot;
   latestBlockhash = () =>
     this.liteSvm.latestBlockhash();
   getTransaction = (signature: Uint8Array) =>
     this.liteSvm.getTransaction(signature);
+  expireBlockhash = () =>
+    this.liteSvm.expireBlockhash();
 
   async advanceToNow() {
     if (this.rpc) {
@@ -167,6 +171,15 @@ export class ForkSvm {
       //again only setting the essentials, skipping all the epoch and leader schedule stuff
       this.liteSvm.setClock(clock);
     }
+    //expire genesis blockhash
+    this.expireBlockhash();
+  }
+
+  async setClock(timestamp?: Date, slot?: bigint) {
+    const clock = this.liteSvm.getClock();
+    clock.slot = slot ?? clock.slot;
+    clock.unixTimestamp = timestamp ? BigInt(timestamp.getTime() * 1000) : clock.unixTimestamp;
+    this.liteSvm.setClock(clock);
   }
 
   async sendTransaction(tx: Transaction): Promise<TransactionMetadata> {

@@ -32,7 +32,7 @@ export type PriceAddresses = readonly [chainConfig: SolanaAddress, oraclePrices:
 export type Ix = Required<Instruction>;
 
 export class CctpRBase<N extends Network> {
-  private static readonly cacheTtl = 60 * 1000; //1 minute
+  private static readonly cacheTtl = 60 * 1000; //60 seconds
 
   public readonly network: N;
   public readonly rpc: RpcType;

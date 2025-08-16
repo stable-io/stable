@@ -108,7 +108,7 @@ export function calcFastFee(burnAmount: Usdc, fastFeeRate: Percentage): Usdc {
   return ceilToMicroUsdc(mulPercentage(burnAmount, fastFeeRate));
 }
 
-export function calcBurnAmount(
+function calcBurnAmount(
   inOrOut: InOrOut,
   corridor: ErasedCorridorParams,
   quote: ErasedQuoteBase,
@@ -128,25 +128,47 @@ export function calcBurnAmount(
     //  the most extreme case, where the actual fee is 0 and hence the burnAmount is maximized
     if (quoteIsInUsdc(quote) && quote.type === "offChain")
       burnAmount = burnAmount.sub(quote.relayFee);
+
+    if (burnAmount.le(usdc(0)))
+      throw new Error("Transfer amount <= 0 after fees");
   }
   else if (corridor.type !== "v1")
     burnAmount = ceilToMicroUsdc(
       burnAmount.div(Rational.from(1).sub(corridor.fastFeeRate.toUnit("scalar"))),
     );
 
-  if (burnAmount.le(usdc(0)))
-    throw new Error("Transer Amount Less or Equal to 0 After Fees");
-
   return burnAmount;
 }
 
-export function calcInputAmount(inOrOut: InOrOut, quote: ErasedQuoteBase, burnAmount: Usdc): Usdc {
-  return inOrOut.type === "in"
-    ? inOrOut.amount
-    : burnAmount.add(quoteIsInUsdc(quote) && quote.type === "offChain"
-      ? quote.relayFee
-      : usdc(0),
-    );
+export function calcUsdcAmounts(
+  inOrOut: InOrOut,
+  corridor: ErasedCorridorParams,
+  quote: ErasedQuoteBase,
+  gaslessFee: Usdc,
+): [totalAmount: Usdc, inputAmount: Usdc, burnAmount: Usdc] {
+  if (!quoteIsInUsdc(quote) && gaslessFee.ne(usdc(0)))
+    throw new Error("Gasless fee must be 0 if quote is not in USDC");
+
+  const burnAmount = calcBurnAmount(inOrOut, corridor, quote, gaslessFee);
+  const [totalAmount, inputAmount] = inOrOut.type === "in"
+    ? [ inOrOut.amount,
+        inOrOut.amount
+          .sub(gaslessFee)
+          .sub(quoteIsInUsdc(quote) && quote.type === "offChain" ? quote.relayFee : usdc(0)),
+      ]
+    : [ burnAmount
+          .add(gaslessFee)
+          .add(quoteIsInUsdc(quote)
+            ? (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee)
+            : usdc(0),
+          ),
+        burnAmount,
+      ];
+
+  if (inputAmount.le(usdc(0)))
+    throw new Error("Input amount <= 0");
+
+  return [totalAmount, inputAmount, burnAmount];
 }
 
 function ceilToMicroUsdc(amount: Usdc): Usdc {

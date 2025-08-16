@@ -73,12 +73,3 @@ export const priceStateLayout = <N extends Network>(network: N) => ({
 } as const);
 export type PriceState<N extends Network, P extends keyof ReturnType<typeof priceStateLayout<N>>> =
   DeriveType<ReturnType<typeof priceStateLayout<N>>[P]>;
-
-//TODO remove, just adding here because it is easy
-export const tokenMessengerConfigLayout = accountLayout("TokenMessenger", littleEndian([
-  { name: "owner",                   ...solanaAddressItem    },
-  { name: "pendingOwner",            ...solanaAddressItem    },
-  { name: "localMessageTransmitter", ...solanaAddressItem    },
-  { name: "messageBodyVersion",      binary: "uint", size: 4 },
-  { name: "authorityBump",           binary: "uint", size: 1 },
-]));
