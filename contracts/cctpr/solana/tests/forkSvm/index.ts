@@ -19,13 +19,11 @@ import {
   getAddressDecoder,
   createSolanaRpcFromTransport,
 } from "@solana/kit";
-//TODO report inconsisent typing
 import { stringifyJsonWithBigints, parseJsonWithBigInts } from "@solana/rpc-spec-types";
 import { isJsonRpcPayload } from "@solana/rpc-spec";
 import type { AccountInfo as SvmAccountInfo } from "./liteSvm/index.js";
 import { LiteSVM, TransactionMetadata } from "./liteSvm/index.js";
 
-//TODO convert error types (and maybe success types too?)
 export type InnerInstruction = ReturnType<TransactionMetadata["innerInstructions"]>[number][number];
 export type CompiledInstruction = ReturnType<InnerInstruction["instruction"]>;
 export type TransactionReturnData = ReturnType<TransactionMetadata["returnData"]>
