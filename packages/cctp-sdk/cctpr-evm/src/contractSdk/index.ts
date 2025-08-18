@@ -744,7 +744,7 @@ export class CctpRGovernance<
     const maxDomainId = domains.length - 1;
     const maxMappingIndex = Math.floor(maxDomainId / chainIdsPerSlot);
 
-    const chainIdChunks = await Promise.all(range(maxMappingIndex - 1).map(i =>
+    const chainIdChunks = await Promise.all(range(maxMappingIndex).map(i =>
       this.getStorageAt(CctpRGovernance.slotOfKeyInMapping(extraChainIdsSlot, i + 1)).then(raw =>
         deserialize(chainIdsSlotItem, raw),
       ),
@@ -753,7 +753,7 @@ export class CctpRGovernance<
     return Object.fromEntries(
       chainIdChunks
         .flat()
-        .slice(domains.length - chainIdsPerSlot)
+        .slice(0, domains.length - chainIdsPerSlot)
         .map((chainId, idx) => [domainOf((idx + chainIdsPerSlot) as DomainId), chainId]),
     ) as ExtraChainIds<N>;
   }
@@ -763,7 +763,7 @@ export class CctpRGovernance<
     const maxDomainId = domains.length - 1;
     const maxMappingIndex = Math.floor(maxDomainId / feeAdjustmentsPerSlot);
 
-    const feeAdjustmentChunks = await Promise.all(range(maxMappingIndex).map(i =>
+    const feeAdjustmentChunks = await Promise.all(range(maxMappingIndex + 1).map(i =>
       this.getStorageAt(CctpRGovernance.slotOfKeyInMapping(feeTypeMappingSlot, i)).then(raw =>
         deserialize(feeAdjustmentsSlotItem, raw),
       ),
@@ -772,7 +772,7 @@ export class CctpRGovernance<
     return Object.fromEntries(
       feeAdjustmentChunks
         .flat()
-        .slice(domains.length)
+        .slice(0, domains.length)
         .map((feeAdjustment, idx) => [domainOf(idx as DomainId), feeAdjustment]),
     ) as FeeAdjustments;
   }
