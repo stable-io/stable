@@ -5,7 +5,7 @@
 
 import { deserialize } from "binary-layout";
 import { encoding } from "@stable-io/utils";
-import { routerHookDataLayout } from "@stable-io/cctp-sdk-cctpr-evm";
+import { routerHookDataLayout } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { v2 } from "@stable-io/cctp-sdk-definitions";
 
 const message = "000000010000000000000001673c5a5ab84f2ff04474f6d5c7d8768d3bffd4e6" +
