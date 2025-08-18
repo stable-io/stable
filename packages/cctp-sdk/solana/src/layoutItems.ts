@@ -61,7 +61,7 @@ const discriminatorItem = (type: DiscriminatorType, name: string) => ({
 const discriminatedLayout = <const L extends ProperLayout>(
   type: DiscriminatorType,
   name: string,
-  layout: L
+  layout: L,
 ) => [discriminatorItem(type, name), ...layout] as const;
 
 //can't use bind here because it doesn't preserve the const generic
