@@ -51,10 +51,10 @@ export class MetricsService {
   public gauge(id: string, labels: LV, value: number): void {
     const gauge = this.getGauge(id, Object.keys(labels));
     if (value > 0) {
-      gauge.inc(value)
+      gauge.inc(value);
     }
     if (value < 0) {
-      gauge.dec(1)
+      gauge.dec(1);
     }
   }
 
