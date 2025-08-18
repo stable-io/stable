@@ -37,7 +37,7 @@ const localToken = (tokenMessenger: SolanaAddress) =>
 
 const localUsdc = (network: Network, tokenMessenger: SolanaAddress) =>
   localToken(tokenMessenger)(
-    new SolanaAddress(usdcContracts.contractAddressOf[network]["Solana"])
+    new SolanaAddress(usdcContracts.contractAddressOf[network]["Solana"]),
   );
 
 const remoteTokenMessengers = (tokenMessenger: SolanaAddress) =>
@@ -52,14 +52,15 @@ const getAddress = (
   version: "v1" | "v2",
   contract: "tokenMessenger" | "messageTransmitter",
 ) => new SolanaAddress(
-  ((version === "v1" ? v1 : v2) as any).contractAddressOf(network, "Solana", contract)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  ((version === "v1" ? v1 : v2) as any).contractAddressOf(network, "Solana", contract),
 );
 
 const accounts = <V extends "v1" | "v2">(network: Network, version: V) => {
   const messageTransmitter = getAddress(network, version, "messageTransmitter");
   const tokenMessenger     = getAddress(network, version, "tokenMessenger");
   const denylist = {
-    denylist: (user: SolanaAddress) => pda(["denylist_account", user], tokenMessenger)
+    denylist: (user: SolanaAddress) => pda(["denylist_account", user], tokenMessenger),
   } as const;
   return {
     messageTransmitter:       messageTransmitter,
@@ -68,12 +69,13 @@ const accounts = <V extends "v1" | "v2">(network: Network, version: V) => {
     tokenMessengerConfig:     pda(["token_messenger"],     tokenMessenger),
     tokenMinter:              pda(["token_minter"],        tokenMessenger),
     senderAuthority:          pda(["sender_authority"],    tokenMessenger),
+    // eslint-disable-next-line @stylistic/space-in-parens
     remoteTokenMessengers:    remoteTokenMessengers(       tokenMessenger),
     eventAuthority:           pda(["__event_authority"],   tokenMessenger),
     localToken:               localUsdc(network,           tokenMessenger),
-    ...(version === "v2" ? denylist : {}) as V extends "v2" ? typeof denylist : {},
+    ...(version === "v2" ? denylist : {}) as V extends "v2" ? typeof denylist : object,
   } as const;
-}
+};
 
 const networkAccounts = (network: Network) => ({
   v1: accounts(network, "v1"),

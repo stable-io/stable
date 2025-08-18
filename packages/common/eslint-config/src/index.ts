@@ -76,6 +76,7 @@ const ruleOverridesConfig: Linter.Config = {
     "promise/catch-or-return": ["error", { allowFinally: true }],
     "unicorn/consistent-function-scoping": "off",
     "unicorn/filename-case": ["error", { case: "camelCase" }],
+    "unicorn/no-array-callback-reference": "off",
     "unicorn/no-array-reduce": "off",
     "unicorn/no-nested-ternary": "off",
     "unicorn/numeric-separators-style": "off",
