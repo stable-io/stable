@@ -78,6 +78,7 @@ const ruleOverridesConfig: Linter.Config = {
     "unicorn/filename-case": ["error", { case: "camelCase" }],
     "unicorn/no-array-callback-reference": "off",
     "unicorn/no-array-reduce": "off",
+    "unicorn/no-await-expression-member": "off",
     "unicorn/no-nested-ternary": "off",
     "unicorn/numeric-separators-style": "off",
     "unicorn/prefer-spread": "off",
