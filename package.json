@@ -29,6 +29,7 @@
     "publish-all": "yarn workspaces foreach --worktree --from \"packages/**/*\" --no-private --topological npm publish --access public --tolerate-republish"
   },
   "workspaces": [
+    "apps/*",
     "packages/cctp-sdk/*",
     "packages/common/*",
     "packages/fork-svm",
