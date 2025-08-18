@@ -17,7 +17,8 @@
     "verify-storage": "tsx verifyStorage.ts",
     "set-fees": "tsx setFees.ts",
     "transfer-ownership": "tsx transferOwnership.ts",
-    "accept-ownership": "tsx acceptOwnership.ts"
+    "accept-ownership": "tsx acceptOwnership.ts",
+    "cancel-ownership": "tsx cancelOwnershipTransfer.ts"
   },
   "license": "MPL-2.0",
   "devDependencies": {

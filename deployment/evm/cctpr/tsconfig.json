@@ -14,6 +14,7 @@
     "verifyStorage.ts",
     "transferOwnership.ts",
     "acceptOwnership.ts",
+    "cancelOwnershipTransfer.ts",
     "src/**/*"
   ]
 }
