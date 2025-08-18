@@ -13,7 +13,7 @@ import type { WalletClient } from "viem";
 
 interface StableContextValue {
   address?: string;
-  stable?: Stable<"Testnet">;
+  stable?: Stable<"Mainnet">;
   isConnected: boolean;
 }
 
@@ -35,8 +35,9 @@ export const StableProvider = ({
               const walletClient = await primaryWallet.getWalletClient(
                 chain.id.toString(10),
               );
+
               if ((await walletClient.getChainId()) !== chain.id) {
-                await walletClient.switchChain(chain);
+                await walletClient.switchChain({ id: chain.id });
               }
               return walletClient;
             },
@@ -49,7 +50,7 @@ export const StableProvider = ({
     () =>
       signer
         ? new Stable({
-            network: "Testnet",
+            network: "Mainnet",
             signer,
           })
         : undefined,

@@ -20,6 +20,7 @@ import { formatCost } from "@/utils";
 
 const Bridge: NextPageWithLayout = (): ReactElement => {
   const [amount, setAmount] = useState(0);
+  const [amountInput, setAmountInput] = useState<string>("");
   const [gasDropoffLevel, setGasDropoffLevel] =
     useState<GasDropoffLevel>("zero");
   const [sourceChain, setSourceChain] = useState<AvailableChains>(
@@ -50,6 +51,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
 
   const handleMaxAmount = (): void => {
     setAmount(balance);
+    setAmountInput(balance.toString());
   };
 
   const receivedAmount = route
@@ -77,8 +79,18 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const newAmount = Number.parseFloat(e.target.value) || 0;
-    setAmount(newAmount);
+    const { value } = e.target;
+    setAmountInput(value);
+
+    if (value === "" || value === ".") {
+      setAmount(0);
+      return;
+    }
+
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      setAmount(parsed);
+    }
   };
 
   const handleTransfer = (): void => {
@@ -131,6 +143,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
       <LeftSection>
         <BridgeWidget
           amount={amount}
+          amountInput={amountInput}
           onAmountChange={handleAmountChange}
           onMaxClick={handleMaxAmount}
           receivedAmount={receivedAmount}

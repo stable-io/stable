@@ -124,7 +124,7 @@ type TransferAction =
   | { type: "HOP_CONFIRMED" }
   | { type: "TRANSFER_RECEIVED" }
   | { type: "TRANSFER_COMPLETED" }
-  | { type: "TRANSFER_FAILED" };
+  | { type: "TRANSFER_FAILED"; errorMessage: string };
 
 const transferReducer = (
   state: TransferState,
@@ -190,6 +190,7 @@ const transferReducer = (
       };
 
     case "TRANSFER_FAILED":
+      console.error("Transfer Failed With Error:", action.errorMessage);
       return {
         ...state,
         isActive: false,
@@ -219,7 +220,9 @@ export const useTransferProgress = (
       throw new Error("resetTransfer can't be called without a route set");
     dispatch({
       type: "RESET_TRANSFER",
-      estimatedDuration: route.estimatedDuration.toUnit("sec").toNumber(),
+      estimatedDuration: Math.ceil(
+        route.estimatedDuration.toUnit("sec").toNumber(),
+      ),
     });
   }, [route]);
 
@@ -230,7 +233,7 @@ export const useTransferProgress = (
   useEffect(() => {
     dispatch({
       type: "SET_TIME_REMAINING",
-      time: route?.estimatedDuration.toUnit("sec").toNumber() ?? 0,
+      time: Math.ceil(route?.estimatedDuration.toUnit("sec").toNumber() ?? 0),
     });
   }, [route?.estimatedDuration]);
 
@@ -240,7 +243,7 @@ export const useTransferProgress = (
     const interval = setInterval(() => {
       dispatch({
         type: "SET_TIME_REMAINING",
-        time: Math.max(0, state.timeRemaining - 1),
+        time: Math.ceil(Math.max(0, state.timeRemaining - 1)),
       });
     }, 1000);
 
@@ -284,8 +287,9 @@ export const useTransferProgress = (
       dispatch({ type: "TRANSFER_RECEIVED" });
     };
 
-    const handleTransferFailed = (): void => {
-      dispatch({ type: "TRANSFER_FAILED" });
+    const handleTransferFailed = (e: unknown): void => {
+      const errorMessage = e instanceof Error ? e.message : "unknown error";
+      dispatch({ type: "TRANSFER_FAILED", errorMessage });
     };
 
     route.progress.on("transfer-initiated", handleTransferInitiated);

@@ -9,7 +9,7 @@ interface TransferInputProps {
   sourceChain: AvailableChains;
   onSelectSourceChain: (chain: AvailableChains) => void;
   availableChains: readonly AvailableChains[];
-  amount: number;
+  amount: string;
   onAmountChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onMaxClick: () => void;
   walletAddress?: string;
