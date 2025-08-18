@@ -55,7 +55,7 @@ export class CctpRBase<N extends Network> {
     this.network = network;
     this.rpc = rpc;
     this.address =
-      addresses?.cctpr ?? new SolanaAddress(contractAddressOf(network as Network, "Solana"));
+      addresses?.cctpr ?? new SolanaAddress(contractAddressOf(network, "Solana"));
     this.oracleAddress =
       addresses?.oracle ?? new SolanaAddress(oracleAddress);
     this._priceAddresses = new Map();
@@ -101,11 +101,11 @@ export class CctpRBase<N extends Network> {
 
     const chainConfigPda = findPda(
       ["chain_config", serialize(foreignDomainItem(this.network), domain as TODO)],
-      this.address
+      this.address,
     )[0];
     const oraclePricesPda = findPda(
       ["prices", serialize(oracleChainItem(this.network), domain as TODO)],
-      this.oracleAddress
+      this.oracleAddress,
     )[0];
     const res = [chainConfigPda, oraclePricesPda] as const;
     this._priceAddresses.set(domain, res);

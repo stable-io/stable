@@ -22,7 +22,7 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { usdcItem } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { accountLayout, littleEndian,solanaAddressItem } from "@stable-io/cctp-sdk-solana";
+import { accountLayout, littleEndian, solanaAddressItem } from "@stable-io/cctp-sdk-solana";
 import { foreignDomains } from "./constants.js";
 
 export const chainItem = <N extends Network>(network: N) =>
@@ -37,12 +37,12 @@ export const configLayout = accountLayout("PriceOracleConfigState", littleEndian
 const platformPriceSpace = 16;
 const platformPriceLayout = <const L extends ProperLayout>(layout: L) => littleEndian([
   ...layout,
-  { name: "reserved", ...paddingItem(platformPriceSpace - calcStaticSize(layout)!) }
+  { name: "reserved", ...paddingItem(platformPriceSpace - calcStaticSize(layout)!) },
 ]);
 
 const mweiAmount = amountItem(4, EvmGasToken, linearTransform("to->from", 10n**6n));
 const evmPricesLayout = platformPriceLayout([
-  { name: "gasPrice",       ...conversionItem(mweiAmount, Gas ) },
+  { name: "gasPrice",       ...conversionItem(mweiAmount, Gas) },
   { name: "pricePerTxByte", ...conversionItem(mweiAmount, Byte) },
 ]);
 export type EvmPrices = DeriveType<typeof evmPricesLayout>;

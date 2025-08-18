@@ -11,6 +11,7 @@ import { type Ix, CctpRBase } from "./base.js";
 
 export class CctpRReclaim<N extends Network> extends CctpRBase<N> {
   //async (though currently not necessary) for consistency and future-proofing
+  // eslint-disable-next-line @typescript-eslint/require-await
   async composeReclaimRentIx(
     eventDataAddress: SolanaAddress,
     attestation: Uint8Array,

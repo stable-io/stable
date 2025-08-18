@@ -116,7 +116,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     corridor: CorridorParams<N, DD>,
     quote: Quote<N>,
     user: SolanaAddress,
-    opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
+    opts?: { userUsdc?: SolanaAddress; eventDataSeed?: EventDataSeed },
   ): Promise<TransactionMessage & TransactionMessageWithFeePayer> {
     checkIsSensibleCorridor(this.network, "Solana", destination, corridor.type);
 
@@ -166,7 +166,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     gaslessFee: Usdc,
     relayer: SolanaAddress,
     nonceAccount: SolanaAddress,
-    opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
+    opts?: { userUsdc?: SolanaAddress; eventDataSeed?: EventDataSeed },
   ): Promise<TransactionMessage &
              TransactionMessageWithFeePayer &
              TransactionMessageWithDurableNonceLifetime> {
@@ -184,8 +184,8 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
           quoterSignature: quote.quoterSignature,
           relayFee: {
             payIn: "usdc",
-            amount: quote.relayFee
-          }
+            amount: quote.relayFee,
+          },
         }
       : { type: "onChainUsdc",
           takeRelayFeeFromInput: inOrOut.type === "in",
@@ -227,7 +227,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     relayer: SolanaAddress,
     user: SolanaAddress,
     gaslessParams: GaslessParams | undefined,
-    opts?: { userUsdc?: SolanaAddress, eventDataSeed?: EventDataSeed },
+    opts?: { userUsdc?: SolanaAddress; eventDataSeed?: EventDataSeed },
   ): Promise<TransactionMessage & TransactionMessageWithFeePayer> {
     const usdcMint = new SolanaAddress(usdcContracts.contractAddressOf[this.network]["Solana"]);
     const userUsdc = opts?.userUsdc ?? findAta(user, usdcMint);
@@ -259,9 +259,9 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     } = cctpAccs;
     const remoteTokenMessenger =
       remoteTokenMessengers[corridor.type === "avaxHop" ? "Avalanche" : destination];
-    const denylisted = corridor.type !== "v1"
-      ? (cctpAccs as Extract<typeof cctpAccs, { denylist: unknown }>).denylist(user)
-      : this.address;
+    const denylisted = corridor.type === "v1"
+      ? this.address
+      : (cctpAccs as Extract<typeof cctpAccs, { denylist: unknown }>).denylist(user);
     const cctprEventAuthority = findPda(["__event_authority"], this.address)[0];
 
     const accounts = [
@@ -318,17 +318,17 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
   //WARNING: does not include the rent rebate for user instantiated (i.e. not gasless) transfers
   //use cctpMessageRentCost() and the returned solPrice to calculate the rebate as necessary
   async quoteOnChainRelay(queries: RoArray<QuoteRelay<N>>): Promise<OnChainRelayQueryResult> {
-    const hasAvaxHopQuery = queries.some((q) => q.corridor === "avaxHop");
+    const hasAvaxHopQuery = queries.some(q => q.corridor === "avaxHop");
 
     //collect all domains that are involved in any of the queries
-    const involvedDomainsSet = new Set<ForeignDomain<N>>(queries.map((q) => q.destinationDomain));
+    const involvedDomainsSet = new Set<ForeignDomain<N>>(queries.map(q => q.destinationDomain));
     if (hasAvaxHopQuery)
       involvedDomainsSet.add("Avalanche");
     const involvedDomains = [...involvedDomainsSet.values()];
 
     //determine the addresses of their associated oracle and cctpr price accounts
     const priceAddresses = involvedDomains
-      .flatMap((d) => this.priceAddresses(d))
+      .flatMap(d => this.priceAddresses(d))
       .map(a => a.unwrap());
 
     //fetch all price accounts + the oracle config (which contains the sol price) in a single call,
@@ -336,14 +336,14 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     const [oracleConfigRawData, ...flatPriceAccountsRawData] =
       (await this.rpc.getMultipleAccounts(
           [this.oracleConfigAddress().unwrap(), ...priceAddresses],
-          { encoding: "base64" }
+          { encoding: "base64" },
         ).send()
       ).value.map((account, i) => encoding.base64.decode(definedOrThrow(
         account?.data[0],
         i === 0
         ? `Failed to fetch oracle config account` as Text
         : `Failed to fetch ${["cctpr", "oracle"][(i-1)%2]} price account for domain ` +
-          `${involvedDomains[Math.floor((i-1)/priceAccountsPerDomain)]}` as Text
+          `${involvedDomains[Math.floor((i-1)/priceAccountsPerDomain)]}` as Text,
       )));
 
     //group them by domain and deserialize them
@@ -367,7 +367,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
       : undefined;
 
     //finally calculate the fees for each query
-    const results = queries.map(query => {
+    const results = queries.map((query) => {
       const { destinationDomain, corridor, gasDropoff } = query;
       const { feeAdjustments } = domainPriceAccounts[destinationDomain][0];
 
@@ -380,7 +380,8 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         gasDropoffFee = CctpR.applyFeeAdjustment(
           feeAdjustments["gasDropoff"],
           gasDropoff.convert(
-            Conversion.from(usdc((gasTokenPrice as any).toUnit("human", "human")), GenericGasToken)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            Conversion.from(usdc((gasTokenPrice as any).toUnit("human", "human")), GenericGasToken),
           ),
         );
       }
@@ -392,9 +393,10 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
             const oraclePrices = domainPriceAccounts[destinationDomain][1] as PriceState<N, "Evm">;
             const execCosts = executionCosts.Evm;
 
+            // eslint-disable-next-line prefer-const
             let [gasCost, txBytes] = corridor === "v2Direct"
               ? [execCosts.Gas.v2, execCosts.TxBytes.v2]
-              : [execCosts.Gas.v1, execCosts.TxBytes.v1]
+              : [execCosts.Gas.v1, execCosts.TxBytes.v1];
             if (hasGasDropoff)
               gasCost += execCosts.Gas.gasDropoff;
 
@@ -417,7 +419,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
               computeUnit(executionCUs),
               byte(storageBytes),
               byte(rebateBytes),
-              oraclePrices
+              oraclePrices,
             );
           }
         }
@@ -440,7 +442,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     return minimumBalanceForRentExemption(
       corridor === "v1"
       ? v1SentEventDataSize
-      : v2SentEventDataSize(corridor === "avaxHop" ? routerHookDataSize : byte(0))
+      : v2SentEventDataSize(corridor === "avaxHop" ? routerHookDataSize : byte(0)),
     );
   }
 
@@ -448,7 +450,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     const { gasPrice, pricePerTxByte, gasTokenPrice } = oraclePrices;
     return CctpR.convert(
       CctpR.convert(gas, gasPrice).add(CctpR.convert(bytes, pricePerTxByte)),
-      gasTokenPrice
+      gasTokenPrice,
     );
   }
 

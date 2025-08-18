@@ -6,7 +6,7 @@
 import type { Intersect } from "@stable-io/map-utils";
 import { difference } from "@stable-io/map-utils";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
-import {supportedDomains } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { supportedDomains } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 export const oracleAddress = "xpo8sHWHkfS6NpVsYwE2t5pTvvdTHSdWUdxh2RtsT1H";
 
@@ -43,6 +43,6 @@ export const executionCosts = {
     RebateBytes: {
       gasDropoff:   260,
       delivery:   1_979,
-    }
+    },
   },
 } as const;

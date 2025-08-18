@@ -27,6 +27,8 @@ import { type Ix, CctpRBase } from "./base.js";
 type BasicEvmAddress = Uint8Array; //TODO: better type
 
 export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
+  //async (though currently not necessary) for consistency and future-proofing
+  // eslint-disable-next-line @typescript-eslint/require-await
   async composeInitializeIx(
     payer: SolanaAddress,
     owner: SolanaAddress,
@@ -121,7 +123,7 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     return this.composeIx(
       await this.roleUpdateAccounts(),
       updateFeeRecipientParamsLayout,
-      { newFeeRecipient }
+      { newFeeRecipient },
     );
   }
 
@@ -129,7 +131,7 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     return this.composeIx(
       await this.roleUpdateAccounts(),
       updateFeeAdjusterParamsLayout,
-      { newFeeAdjuster }
+      { newFeeAdjuster },
     );
   }
 
@@ -137,7 +139,7 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     return this.composeIx(
       await this.roleUpdateAccounts(),
       updateOffchainQuoterParamsLayout,
-      { newOffchainQuoter }
+      { newOffchainQuoter },
     );
   }
 
