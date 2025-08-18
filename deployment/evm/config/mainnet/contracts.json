@@ -63,7 +63,7 @@
     },
     {
       "address": "0x99dCe12A3Fc9bCdAc7b18076a571203e5b3A8Ba2",
-      "chainId": 41
+      "chainId": 38
     }
   ],
   "PriceOracleImplementation": [
@@ -124,96 +124,117 @@
     },
     {
       "address": "0xF3210CC6B55daA366A5c87932317C4C916eF88a6",
-      "chainId": 41
+      "chainId": 38
     }
   ],
   "AvaxRouter": [
     {
       "address": "0x80af48cb7e3c18da42d151f7c1aa215e63bfd8f0",
+      "txId": "0x1cf64f14c11d6ef47c51c78b18bd33cc899a45fee17511e06581ea27cca96e8f",
       "chainId": 6
     }
   ],
   "CctpR": [
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0x05bcb8c6ae3ebac10a375b93080043809508ef266b01f7a51d67078a51953c1c",
       "chainId": 2
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0x2f313b697beabf138fdfe4291f2055490f986e221489e3ab9a4c69921a52e132",
       "chainId": 5
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0x36865ff0fb6047c4136e17469b9d9e689f09a810bcac88407a243fba2090361a",
       "chainId": 6
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0x46deae562cdd080cd0d6e42995c39fa51ce905d2bb4691fad0a2e5e403911ce8",
       "chainId": 23
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0x933d8827f3cd7db1969cd1467820a83a21ed0de4fb47d3045330f0a0ad750d5c",
       "chainId": 24
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0x7c27be63a2597aed46bd6f4c4205c3d791c0d59b7e7b7f5f3d490ae60bf54d9b",
       "chainId": 30
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
-      "chainId": 41
+      "txId": "0x849286d888550e4c1009abd9996ae05eafc183ef318a8f668e65863d5a550e13",
+      "chainId": 38
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0xa55bcd8056df43fe59da280cf87bb6529fc7a53cdf9ff2f0b37a0f1df183b3eb",
       "chainId": 52
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0x2e1a3131ebd37d25ca2f66f86c3a0361a953aeaabc0d360ed9ffe453dbc5084e",
       "chainId": 44
     },
     {
       "address": "0xc8974200fadb96be23cea557dac23f1b25b21c7a",
+      "txId": "0xe92808f444d56b8e8849025cba27f71f61ee2453319dfecc1f8c93eb3a7662a0",
       "chainId": 45
     }
   ],
   "CctpGasDropoff": [
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x1ee28828d1187e2b074b195162a2fb180298a202cf1a945244888cf33f11868f",
       "chainId": 2
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x2ea9a10a2fb2dac67f83a135cc04258058952c8208e6a29a51f0f7d503ef098f",
       "chainId": 5
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x90e9d5c93b06caf264a0c1481e843ef795639add58e95bfd73a3031fed11aaf9",
       "chainId": 6
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x87fd540ea410fc6ba88f22bf5eef1f9b2255915ca473e619bb687e89cb9f3c9d",
       "chainId": 23
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x50c51b06b9dd4868e4c286553d799394d8b598529eac81b8318eba0e960d15f1",
       "chainId": 24
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x4a8e2fd6b69eea6748577c3029ab5f71c1ba5a4d95bc546fe7d5ffd3f0774431",
       "chainId": 30
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
-      "chainId": 41
+      "txId": "0x13b95f2d184e04c8f02fe4959c5a9a4833c034bdacd5686542caac8276f33669",
+      "chainId": 38
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x3dd63815ab9a5041148f9aa83ee657398e2df8111143287fa4eacc0cb4e9341d",
       "chainId": 52
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0x31a33a7b5fb762343bab999dd4330aa960dad083cdfb95307ca8a9f00da07d80",
       "chainId": 44
     },
     {
       "address": "0x29df355c8cc2199f8f5b18b07ffd58b65b50dcba",
+      "txId": "0xd2abc80db14694407c63e84771f4af1342dfb17c8785bfafee82ff4f4836e7d1",
       "chainId": 45
     }
   ]
