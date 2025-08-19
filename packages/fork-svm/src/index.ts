@@ -22,8 +22,8 @@ import {
 //TODO report inconsisent typing
 import { stringifyJsonWithBigints, parseJsonWithBigInts } from "@solana/rpc-spec-types";
 import { isJsonRpcPayload } from "@solana/rpc-spec";
-import type { AccountInfo as SvmAccountInfo } from "./liteSvm/index.js";
-import { LiteSVM, TransactionMetadata } from "./liteSvm/index.js";
+import type { AccountInfo as SvmAccountInfo } from "./liteSvm.js";
+import { LiteSVM, TransactionMetadata } from "./liteSvm.js";
 
 //TODO convert error types (and maybe success types too?)
 export type InnerInstruction = ReturnType<TransactionMetadata["innerInstructions"]>[number][number];
@@ -94,8 +94,12 @@ export class ForkSvm {
   private liteSvm: LiteSVM;
   private known: Set<Address>;
 
+  private static buildDefault() {
+    return (new LiteSVM()).withBuiltins().withSysvars().withDefaultPrograms();
+  }
+
   constructor(url?: string) {
-    this.liteSvm = (new LiteSVM()).withBuiltins().withSysvars().withSplPrograms();
+    this.liteSvm = ForkSvm.buildDefault();
     this.known = new Set();
     this.rpc = url ? createSolanaRpc(url) : undefined;
   }
@@ -143,7 +147,7 @@ export class ForkSvm {
   }
 
   restoreFromSnapshot(snapshot: Snapshot) {
-    this.liteSvm = (new LiteSVM()).withBuiltins().withSysvars().withSplPrograms();
+    this.liteSvm = ForkSvm.buildDefault();
     for (const [addr, acc] of Object.entries(snapshot))
       if (acc)
         this.setAccount(addr as Address, acc);
@@ -349,4 +353,4 @@ export function createForkRpc(forkSvm: ForkSvm) {
   return createSolanaRpcFromTransport(createForkTransport(forkSvm));
 }
 
-export { type TransactionMetadata } from "./liteSvm/index.js";
+export { type TransactionMetadata } from "./liteSvm.js";
