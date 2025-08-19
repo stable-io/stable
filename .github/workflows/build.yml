@@ -10,11 +10,14 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed to compare against base branch
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -36,14 +39,50 @@ jobs:
           cp ./apps/front-end/.env.local.example ./apps/front-end/.env.local
           cp ./apps/back-end/.env.example ./apps/back-end/.env
 
-      - name: Build
-        run: yarn build
+      - name: Get affected workspaces
+        id: get-affected
+        uses: ./.github/actions/get-affected-workspaces
+        with:
+          base-ref: ${{ github.base_ref }}
+
+      - name: Build affected workspaces
+        if: steps.get-affected.outputs.workspaces != ''
+        run: |
+          # Parse the comma-separated workspace list
+          IFS=',' read -ra WORKSPACES <<< "${{ steps.get-affected.outputs.workspaces }}"
+          
+          echo "Building affected workspaces: ${WORKSPACES[*]}"
+          
+          for workspace in "${WORKSPACES[@]}"; do
+            echo "Building workspace: $workspace"
+            yarn workspace "$workspace" build
+          done
 
       - name: Check formatting
         run: yarn format:check
 
-      - name: Lint
-        run: yarn lint
+      - name: Lint affected workspaces
+        if: steps.get-affected.outputs.workspaces != ''
+        run: |
+          # Parse the comma-separated workspace list
+          IFS=',' read -ra WORKSPACES <<< "${{ steps.get-affected.outputs.workspaces }}"
+          
+          echo "Linting affected workspaces: ${WORKSPACES[*]}"
+          
+          for workspace in "${WORKSPACES[@]}"; do
+            echo "Linting workspace: $workspace"
+            yarn workspace "$workspace" lint
+          done
 
-      - name: Test
-        run: yarn test
+      - name: Test affected workspaces
+        if: steps.get-affected.outputs.workspaces != ''
+        run: |
+          # Parse the comma-separated workspace list
+          IFS=',' read -ra WORKSPACES <<< "${{ steps.get-affected.outputs.workspaces }}"
+          
+          echo "Testing affected workspaces: ${WORKSPACES[*]}"
+          
+          for workspace in "${WORKSPACES[@]}"; do
+            echo "Testing workspace: $workspace"
+            yarn workspace "$workspace" test
+          done

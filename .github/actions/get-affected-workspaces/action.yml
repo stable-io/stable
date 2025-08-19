@@ -1,0 +1,160 @@
+name: 'Get Affected Workspaces'
+description: 'Determine which workspaces are affected by changes in a PR'
+
+inputs:
+  base-ref:
+    description: 'Base branch reference (e.g., main, develop)'
+    required: false
+    default: 'main'
+  command:
+    description: 'Command to run on affected workspaces (build, test, lint, etc.)'
+    required: false
+    default: 'build'
+
+outputs:
+  workspaces:
+    description: 'Comma-separated list of affected workspace names'
+    value: ${{ steps.get-affected.outputs.workspaces }}
+  workspace-array:
+    description: 'JSON array of affected workspace names'
+    value: ${{ steps.get-affected.outputs.workspace-array }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get affected workspaces
+      id: get-affected
+      shell: bash
+      run: |
+        # Get the base and head refs for comparison
+        BASE_REF="${{ inputs.base-ref }}"
+        HEAD_REF="${{ github.head_ref }}"
+        
+        # If this is a push event (not PR), compare with the previous commit
+        if [[ "${{ github.event_name }}" == "push" ]]; then
+          BASE_REF="${{ github.before }}"
+          HEAD_REF="${{ github.after }}"
+        fi
+        
+        echo "Comparing $HEAD_REF against $BASE_REF"
+        
+        # Get changed files between the two refs
+        CHANGED_FILES=$(git diff --name-only $BASE_REF $HEAD_REF)
+        
+        if [[ -z "$CHANGED_FILES" ]]; then
+          echo "No files changed"
+          echo "workspaces=" >> $GITHUB_OUTPUT
+          echo "workspace-array=[]" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        echo "Changed files:"
+        echo "$CHANGED_FILES"
+        
+        # Initialize arrays for affected workspaces
+        DIRECTLY_AFFECTED_WORKSPACES=()
+        ALL_AFFECTED_WORKSPACES=()
+        
+        # Get all workspaces and their dependencies using yarn
+        WORKSPACES_JSON=$(yarn workspaces list -v --json)
+        
+        # Function to find all upstream dependents of a workspace
+        find_upstream_dependents() {
+            local target_workspace=$1
+            local dependents=()
+            
+            # Parse each workspace from the JSON output
+            while IFS= read -r workspace_line; do
+                # Extract workspace name and dependencies from JSON
+                WORKSPACE_NAME=$(echo "$workspace_line" | jq -r '.name')
+                WORKSPACE_DEPS=$(echo "$workspace_line" | jq -r '.workspaceDependencies[]?' 2>/dev/null)
+                
+                # Skip the root workspace
+                WORKSPACE_LOCATION=$(echo "$workspace_line" | jq -r '.location')
+                if [[ "$WORKSPACE_LOCATION" == "." ]]; then
+                    continue
+                fi
+                
+                # Check if this workspace depends on the target workspace
+                for DEP in $WORKSPACE_DEPS; do
+                    # Convert dependency path to workspace name
+                    DEP_WORKSPACE_NAME=""
+                    while IFS= read -r dep_workspace_line; do
+                        DEP_LOCATION=$(echo "$dep_workspace_line" | jq -r '.location')
+                        if [[ "$DEP_LOCATION" == "$DEP" ]]; then
+                            DEP_WORKSPACE_NAME=$(echo "$dep_workspace_line" | jq -r '.name')
+                            break
+                        fi
+                    done <<< "$WORKSPACES_JSON"
+                    
+                    if [[ "$DEP_WORKSPACE_NAME" == "$target_workspace" ]]; then
+                        dependents+=("$WORKSPACE_NAME")
+                        break
+                    fi
+                done
+            done <<< "$WORKSPACES_JSON"
+            
+            echo "${dependents[@]}"
+        }
+        
+        # Loop through changed files and identify directly affected workspaces
+        for FILE in $CHANGED_FILES; do
+          # Parse each workspace from the JSON output
+          while IFS= read -r workspace_line; do
+            # Extract workspace name and location from JSON
+            WORKSPACE_NAME=$(echo "$workspace_line" | jq -r '.name')
+            WORKSPACE_LOCATION=$(echo "$workspace_line" | jq -r '.location')
+            
+            # Skip the root workspace
+            if [[ "$WORKSPACE_LOCATION" == "." ]]; then
+              continue
+            fi
+            
+            # Check if the changed file is within this workspace
+            if [[ "$FILE" == "$WORKSPACE_LOCATION"/* ]]; then
+              if [[ ! " ${DIRECTLY_AFFECTED_WORKSPACES[@]} " =~ " ${WORKSPACE_NAME} " ]]; then
+                DIRECTLY_AFFECTED_WORKSPACES+=("$WORKSPACE_NAME")
+                echo "File $FILE directly affects workspace: $WORKSPACE_NAME"
+              fi
+              break
+            fi
+          done <<< "$WORKSPACES_JSON"
+        done
+        
+        # Find all upstream dependents for each directly affected workspace
+        for WORKSPACE in "${DIRECTLY_AFFECTED_WORKSPACES[@]}"; do
+          echo "Finding dependents of: $WORKSPACE"
+          DEPENDENTS=($(find_upstream_dependents "$WORKSPACE"))
+          
+          for DEPENDENT in "${DEPENDENTS[@]}"; do
+            if [[ ! " ${ALL_AFFECTED_WORKSPACES[@]} " =~ " ${DEPENDENT} " ]]; then
+              ALL_AFFECTED_WORKSPACES+=("$DEPENDENT")
+              echo "  Upstream dependent: $DEPENDENT"
+            fi
+          done
+        done
+        
+        # Add directly affected workspaces to the final list
+        for WORKSPACE in "${DIRECTLY_AFFECTED_WORKSPACES[@]}"; do
+          if [[ ! " ${ALL_AFFECTED_WORKSPACES[@]} " =~ " ${WORKSPACE} " ]]; then
+            ALL_AFFECTED_WORKSPACES+=("$WORKSPACE")
+          fi
+        done
+        
+        # Output the results
+        if [ ${#ALL_AFFECTED_WORKSPACES[@]} -eq 0 ]; then
+          echo "No workspaces affected by the changes."
+          echo "workspaces=" >> $GITHUB_OUTPUT
+          echo "workspace-array=[]" >> $GITHUB_OUTPUT
+        else
+          echo "All affected workspaces (including dependents): ${ALL_AFFECTED_WORKSPACES[*]}"
+          
+          # Create comma-separated list
+          WORKSPACES_CSV=$(IFS=','; echo "${ALL_AFFECTED_WORKSPACES[*]}")
+          
+          # Create JSON array
+          WORKSPACES_JSON_ARRAY=$(printf '%s\n' "${ALL_AFFECTED_WORKSPACES[@]}" | jq -R . | jq -s .)
+          
+          echo "workspaces=$WORKSPACES_CSV" >> $GITHUB_OUTPUT
+          echo "workspace-array=$WORKSPACES_JSON_ARRAY" >> $GITHUB_OUTPUT
+        fi 
