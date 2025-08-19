@@ -14,7 +14,7 @@ const operatingChains = getOperatingChains();
 const network = getNetwork();
 async function run() {
   const cancelOwnershipTasks = operatingChains.map(chain =>
-    acceptOwnershipTransfer(chain),
+    cancelOwnershipTransfer(chain),
   );
 
   const results = await Promise.allSettled(cancelOwnershipTasks);
@@ -27,25 +27,25 @@ async function run() {
         `Ownership transfer failed: ${result.reason?.stack || result.reason}`,
       );
     } else {
-      console.info(`\nOwnership transfer accepted successfully on ${result.value.chain.domain}.`);
+      console.info(`\nOwnership transfer cancelled successfully on ${result.value.chain.domain}.`);
       console.info(`Transaction hash: ${result.value.hash}`);
     }
   }
   if (failedDomains.length > 0) {
     console.error(`\nOwnership transfer failed on ${failedDomains.join(", ")}`);
   } else {
-    console.info(`\nOwnership transfer successfuly accepted on all domains.`);
+    console.info(`\nOwnership transfer successfuly cancelled on all domains.`);
   }
 }
 
-async function acceptOwnershipTransfer(chain: ChainInfo) {
+async function cancelOwnershipTransfer(chain: ChainInfo) {
   console.info(`Cancelling Ownership Transfer on: ${chain.domain}`);
 
   const signer = getViemSigner(network, chain);
   const viemClient = getViemClient(network, chain);
   const cctpr = getCctpRGovernance(viemClient, chain);
   const commands: GovernanceCommand<Network>[] = [{
-    command: "acceptOwnershipTransfer",
+    command: "cancelOwnershipTransfer",
   }];
   const partialTx = cctpr.execGovernance(commands);
 
