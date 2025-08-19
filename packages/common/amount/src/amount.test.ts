@@ -122,6 +122,42 @@ describe("Amount", () => {
       const amount = Amount.from(1n, USD);
       expect(() => amount.convert(btcToUsd as any)).toThrow("Kind mismatch: USD vs BTC");
     });
+
+    it("floors to specific unit", () => {
+      const amount = Amount.from(1.7, BTC);
+      const floored = amount.floorTo("BTC");
+      expect(floored.toUnit("BTC").unwrap()).toEqual([1n, 1n]);
+    });
+
+    it("ceils to specific unit", () => {
+      const amount = Amount.from(1.3, BTC);
+      const ceiled = amount.ceilTo("BTC");
+      expect(ceiled.toUnit("BTC").unwrap()).toEqual([2n, 1n]);
+    });
+
+    it("floors to atomic unit", () => {
+      const amount = Amount.from(Rational.from(150_000_000n, 1n).add(Rational.from(7n, 10n)), BTC, "satoshi");
+      const floored = amount.floorTo("atomic");
+      expect(floored.toUnit("atomic")).toEqual(150_000_000n);
+    });
+
+    it("ceils to atomic unit", () => {
+      const amount = Amount.from(Rational.from(150_000_000n, 1n).add(Rational.from(3n, 10n)), BTC, "satoshi");
+      const ceiled = amount.ceilTo("atomic");
+      expect(ceiled.toUnit("atomic")).toEqual(150_000_001n);
+    });
+
+    it("floors to human unit", () => {
+      const amount = Amount.from(1.7, USD);
+      const floored = amount.floorTo("human");
+      expect(floored.toUnit("human").unwrap()).toEqual([1n, 1n]);
+    });
+
+    it("ceils to human unit", () => {
+      const amount = Amount.from(1.3, USD);
+      const ceiled = amount.ceilTo("human");
+      expect(ceiled.toUnit("human").unwrap()).toEqual([2n, 1n]);
+    });
   });
 
   describe("standardUnit", () => {

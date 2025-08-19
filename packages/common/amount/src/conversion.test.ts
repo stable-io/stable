@@ -111,4 +111,32 @@ describe("Conversion", () => {
       expect(conv.toString()).toBe("50 sat/USD");
     });
   });
+
+  describe("toUnit", () => {
+    it("returns ratio for human/human units", () => {
+      const conv = Conversion.from(50_000, USD, BTC);
+      expect(conv.toUnit("USD", "BTC").toString()).toBe("50000");
+    });
+
+    it("supports atomic denominator scaling", () => {
+      const conv = Conversion.from(50_000, USD, BTC);
+      expect(conv.toUnit("USD", "satoshi").toString()).toBe("0.0005");
+    });
+
+    it("supports atomic numerator scaling", () => {
+      const btcToEth = Conversion.from(2, BTC, ETH);
+      expect(btcToEth.toUnit("satoshi", "ETH").toString()).toBe("200000000");
+    });
+
+    it("works with combined conversions and different units", () => {
+      const usdToBtc = Conversion.from(50_000, USD, BTC);
+      const btcToEth = Conversion.from(2, BTC, ETH);
+      const usdToEth = usdToBtc.combine(btcToEth);
+      expect(usdToEth.toUnit("USD", "ETH").toString()).toBe("100000");
+
+      const [num, den] = usdToEth.toUnit("USD", "wei").unwrap();
+      expect(num).toBe(1n);
+      expect(den).toBe(10_000_000_000_000n);
+    });
+  });
 });
