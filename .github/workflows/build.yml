@@ -43,7 +43,7 @@ jobs:
         id: get-affected
         uses: ./.github/actions/get-affected-workspaces
         with:
-          base-ref: ${{ github.head_ref }}
+          base-ref: ${{ github.base_ref }}
 
       - name: Build affected workspaces
         if: steps.get-affected.outputs.workspaces != ''
