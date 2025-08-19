@@ -5,7 +5,6 @@ inputs:
   base-ref:
     description: 'Base branch reference (e.g., main, develop)'
     required: false
-    default: 'main'
   command:
     description: 'Command to run on affected workspaces (build, test, lint, etc.)'
     required: false
