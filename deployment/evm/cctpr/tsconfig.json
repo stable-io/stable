@@ -14,7 +14,9 @@
     "verifyStorage.ts",
     "transferOwnership.ts",
     "acceptOwnership.ts",
+    "logAcceptOwnershipCalldata.ts",
     "cancelOwnershipTransfer.ts",
+    "transferFeeAdjuster.ts",
     "src/**/*"
   ]
 }
