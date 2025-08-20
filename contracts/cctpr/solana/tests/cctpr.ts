@@ -83,12 +83,12 @@ import {
   relayRequestEventLayout,
   oracle,
 } from "@stable-io/cctp-sdk-cctpr-solana";
-import type { Snapshot } from "./forkSvm/index.js";
-import { ForkSvm, createForkRpc } from "./forkSvm/index.js";
-import {
+import type {
   FailedTransactionMetadata,
   TransactionMetadata,
-} from "./forkSvm/liteSvm/internal.js";
+  Snapshot,
+} from "@stable-io/fork-svm";
+import { ForkSvm, createForkRpc } from "@stable-io/fork-svm";
 
 //prevent truncation of objects in error messages
 util.inspect.defaultOptions = {

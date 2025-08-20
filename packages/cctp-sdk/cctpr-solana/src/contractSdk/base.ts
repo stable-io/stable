@@ -55,7 +55,7 @@ export class CctpRBase<N extends Network> {
     this.network = network;
     this.rpc = rpc;
     this.address =
-      addresses?.cctpr ?? new SolanaAddress(contractAddressOf(network, "Solana"));
+      addresses?.cctpr ?? new SolanaAddress(contractAddressOf(network, "Solana" as any));
     this.oracleAddress =
       addresses?.oracle ?? new SolanaAddress(oracleAddress);
     this._priceAddresses = new Map();
