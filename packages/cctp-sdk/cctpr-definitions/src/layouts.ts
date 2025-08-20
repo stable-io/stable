@@ -81,13 +81,15 @@ export const routerHookDataSize = byte((() => {
   return mainnetSize;
 })());
 
+//store in nano (gwei)
+//can't use atomic because that is 1e-18 for Evm but 1e-9 for Solana
 const relayFeeGasTokenItem = <const K extends GasTokenKind>(kind: K) =>
-  amountItem(8, kind, linearTransform("to->from", 10n**9n)); //store in nano (gwei)
+  amountItem(8, kind, "human", linearTransform("from->to", 10n**9n));
 
 //both variants store their amount using 8 bytes
 const relayFeeVariants = <const K extends GasTokenKind>(kind: K) => [
-  ["usdc",     [{ name: "amount", ...usdcItem                   }]],
   ["gasToken", [{ name: "amount", ...relayFeeGasTokenItem(kind) }]],
+  ["usdc",     [{ name: "amount", ...usdcItem                   }]],
 ] as const;
 
 export const offChainRelayFeeVariantItem = <const K extends GasTokenKind>(kind: K) =>

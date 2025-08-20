@@ -19,13 +19,11 @@ import {
   getAddressDecoder,
   createSolanaRpcFromTransport,
 } from "@solana/kit";
-//TODO report inconsisent typing
 import { stringifyJsonWithBigints, parseJsonWithBigInts } from "@solana/rpc-spec-types";
 import { isJsonRpcPayload } from "@solana/rpc-spec";
 import type { AccountInfo as SvmAccountInfo } from "./liteSvm.js";
 import { LiteSVM, TransactionMetadata } from "./liteSvm.js";
 
-//TODO convert error types (and maybe success types too?)
 export type InnerInstruction = ReturnType<TransactionMetadata["innerInstructions"]>[number][number];
 export type CompiledInstruction = ReturnType<InnerInstruction["instruction"]>;
 export type TransactionReturnData = ReturnType<TransactionMetadata["returnData"]>;
@@ -47,6 +45,7 @@ const builtin = new Set<Address>([
   "Sysvar1nstructions1111111111111111111111111",
   "SysvarC1ock11111111111111111111111111111111",
   "SysvarRent111111111111111111111111111111111",
+  "SysvarRecentB1ockHashes11111111111111111111",
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
@@ -148,13 +147,14 @@ export class ForkSvm {
 
   restoreFromSnapshot(snapshot: Snapshot) {
     this.liteSvm = ForkSvm.buildDefault();
+    this.known = new Set();
     for (const [addr, acc] of Object.entries(snapshot))
       if (acc)
         this.setAccount(addr as Address, acc);
   }
 
   latestTimestamp = () =>
-    this.liteSvm.getClock().unixTimestamp;
+    new Date(Number(this.liteSvm.getClock().unixTimestamp) / 1000);
 
   latestBlockheight = () =>
     this.liteSvm.getClock().slot;
@@ -165,6 +165,9 @@ export class ForkSvm {
   getTransaction = (signature: Uint8Array) =>
     this.liteSvm.getTransaction(signature);
 
+  expireBlockhash = () =>
+    this.liteSvm.expireBlockhash();
+
   async advanceToNow() {
     if (this.rpc) {
       const clock = this.liteSvm.getClock();
@@ -173,6 +176,15 @@ export class ForkSvm {
       //again only setting the essentials, skipping all the epoch and leader schedule stuff
       this.liteSvm.setClock(clock);
     }
+    //expire genesis blockhash
+    this.expireBlockhash();
+  }
+
+  setClock(timestamp?: Date, slot?: bigint) {
+    const clock = this.liteSvm.getClock();
+    clock.slot = slot ?? clock.slot;
+    clock.unixTimestamp = timestamp ? BigInt(timestamp.getTime() * 1000) : clock.unixTimestamp;
+    this.liteSvm.setClock(clock);
   }
 
   async sendTransaction(tx: Transaction): Promise<TransactionMetadata> {

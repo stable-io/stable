@@ -3,17 +3,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { Address } from "@stable-io/cctp-sdk-definitions";
-import { UniversalAddress } from "@stable-io/cctp-sdk-definitions";
-import type { Text } from "@stable-io/utils";
-import { encoding, isUint8Array } from "@stable-io/utils";
 import type { Address as SolanaNativeAddress } from "@solana/kit";
+import type { Text, Size } from "@stable-io/utils";
+import { encoding, isUint8Array } from "@stable-io/utils";
+import { type Address, UniversalAddress } from "@stable-io/cctp-sdk-definitions";
 
 export type SolanaAddressish =
   string | SolanaNativeAddress | Uint8Array | UniversalAddress | SolanaAddress;
 
 export class SolanaAddress implements Address {
-  static readonly byteSize = 32;
+  static readonly byteSize = 32 as Size;
   static readonly zeroAddress = new SolanaAddress(new Uint8Array(SolanaAddress.byteSize));
 
   static isValidAddress(address: string): address is SolanaNativeAddress {

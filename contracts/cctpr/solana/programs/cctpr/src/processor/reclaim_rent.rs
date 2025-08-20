@@ -82,6 +82,6 @@ pub fn transfer_surplus_sol(ctx: Context<TransferSurplusSol>) -> Result<()> {
       },
       &seeds,
     ),
-    **ctx.accounts.rent_custodian.to_account_info().lamports.borrow(),
+    ctx.accounts.rent_custodian.to_account_info().lamports(),
   )
 }

@@ -5,13 +5,13 @@
 
 import type { Layout, DeriveType } from "binary-layout";
 import { byteSwitchItem, Network } from "@stable-io/cctp-sdk-definitions";
+import { timestampItem } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   corridorItem,
   supportedDomainItem,
   gasDropoffItem,
   usdcItem,
   evmGasTokenItem,
-  timestampItem,
   evmDomainItem,
 } from "./common.js";
 

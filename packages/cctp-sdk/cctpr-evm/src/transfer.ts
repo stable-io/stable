@@ -11,11 +11,16 @@ import type {
 } from "@stable-io/cctp-sdk-definitions";
 import {
   Usdc,
+  usdc,
   platformClient,
   usdcContracts,
 } from "@stable-io/cctp-sdk-definitions";
 import type { InOrOut, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { contractAddressOf, quoteIsInUsdc } from "@stable-io/cctp-sdk-cctpr-definitions";
+import {
+  contractAddressOf,
+  quoteIsInUsdc,
+  calcUsdcAmounts,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { ContractTx, Eip2612Data, EvmClient, Permit } from "@stable-io/cctp-sdk-evm";
 import {
   EvmAddress,
@@ -59,11 +64,7 @@ export async function* transfer<
     getTokenAllowance(client, usdcAddr, sender, cctprAddress, Usdc),
   ]);
 
-  const requiredAllowance = cctprSdk.checkCostAndCalcRequiredAllowance(
-    inOrOut,
-    quote,
-    corridor,
-  );
+  const [requiredAllowance] = calcUsdcAmounts(inOrOut, corridor, quote, usdc(0));
 
   if (usdcBalance.lt(requiredAllowance))
     throw new Error("Insufficient USDC balance");

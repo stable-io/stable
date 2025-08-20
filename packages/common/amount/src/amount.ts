@@ -67,8 +67,16 @@ export class Amount<K extends Kind> {
   toUnit(unitSymbol: K extends { human: string } ? "human" : never): Rational;
   toUnit(unitSymbol: K extends { atomic: string } ? "atomic" : never): bigint;
   toUnit<S extends SymbolsOf<K>>(unitSymbol: S): S extends "atomic" ? bigint : Rational {
-    const rat = this.amount.div(Amount.getUnit(this.kind, unitSymbol).scale);
+    const rat = this.getIn(unitSymbol);
     return (unitSymbol === "atomic" ? rat.floor() : rat) as S extends "atomic" ? bigint : Rational;
+  }
+
+  ceilTo<S extends SymbolsOf<K>>(unitSymbol: S): Amount<K> {
+    return Amount.from(this.getIn(unitSymbol).ceil(), this.kind, unitSymbol);
+  }
+
+  floorTo<S extends SymbolsOf<K>>(unitSymbol: S): Amount<K> {
+    return Amount.from(this.getIn(unitSymbol).floor(), this.kind, unitSymbol);
   }
 
   eq(other: Amount<K>): boolean {
@@ -141,6 +149,10 @@ export class Amount<K extends Kind> {
     if (symbol === undefined)
       throw new Error(`Unit ${unitSymbol} not found in kind ${kind.name}`);
     return kind.units.find(u => u.symbol === symbol)!;
+  }
+
+  private getIn<S extends SymbolsOf<K>>(unitSymbol: S): Rational {
+    return this.amount.div(Amount.getUnit(this.kind, unitSymbol).scale);
   }
 
   private checkKind(other: Kind | Amount<Kind>): void {

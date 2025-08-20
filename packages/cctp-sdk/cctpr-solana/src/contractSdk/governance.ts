@@ -27,6 +27,8 @@ import { type Ix, CctpRBase } from "./base.js";
 type BasicEvmAddress = Uint8Array; //TODO: better type
 
 export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
+  //async (though currently not necessary) for consistency and future-proofing
+  // eslint-disable-next-line @typescript-eslint/require-await
   async composeInitializeIx(
     payer: SolanaAddress,
     owner: SolanaAddress,
@@ -62,10 +64,9 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
   }
 
   private async ownershipUpdateAccounts(who: "owner" | "pendingOwner") {
-    this.invalidateCachedConfig();
     return [
-      [(await this.config())[who], AccountRole.READONLY_SIGNER],
-      [this.configAddress(),       AccountRole.READONLY       ],
+      [(await this.defensiveGetConfig())[who], AccountRole.READONLY_SIGNER],
+      [this.configAddress(),                   AccountRole.WRITABLE       ],
     ] as const;
   }
 
@@ -122,7 +123,7 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     return this.composeIx(
       await this.roleUpdateAccounts(),
       updateFeeRecipientParamsLayout,
-      { newFeeRecipient }
+      { newFeeRecipient },
     );
   }
 
@@ -130,7 +131,7 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     return this.composeIx(
       await this.roleUpdateAccounts(),
       updateFeeAdjusterParamsLayout,
-      { newFeeAdjuster }
+      { newFeeAdjuster },
     );
   }
 
@@ -138,16 +139,22 @@ export class CctpRGovernance<N extends Network> extends CctpRBase<N> {
     return this.composeIx(
       await this.roleUpdateAccounts(),
       updateOffchainQuoterParamsLayout,
-      { newOffchainQuoter }
+      { newOffchainQuoter },
     );
   }
 
   private async roleUpdateAccounts() {
-    this.invalidateCachedConfig();
-    const { owner } = await this.config();
+    const { owner } = await this.defensiveGetConfig();
     return [
       [owner,                AccountRole.READONLY_SIGNER],
-      [this.configAddress(), AccountRole.READONLY       ],
+      [this.configAddress(), AccountRole.WRITABLE       ],
     ] as const;
+  }
+
+  private async defensiveGetConfig() {
+    this.invalidateCachedConfig();
+    const config = await this.config();
+    this.invalidateCachedConfig();
+    return config;
   }
 }

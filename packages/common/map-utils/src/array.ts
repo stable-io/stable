@@ -266,7 +266,6 @@ export type MapTo<A extends RoArray> =
 // mapTo(test)(x => x * 2) // => readonly [number, number, number]
 export const mapTo = <const A extends RoArray>(arr: A): MapTo<A> =>
   <F extends (value: A[number]) => unknown>(f: F): MappingFunc<A, F> =>
-    //eslint-disable-next-line unicorn/no-array-callback-reference
     arr.map(f) as any;
 
 export type TupleFilter<T extends RoTuple, Include> =

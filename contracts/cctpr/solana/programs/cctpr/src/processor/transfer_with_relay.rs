@@ -18,8 +18,9 @@ use crate::{
   cctp_cpi::deposit,
 };
 
-const DOMAIN_ID_SOLANA: u8 = 5;
-const CHAIN_ID_AVALANCHE: u16 = 6;
+const DOMAIN_ID_SOLANA:     u8 = 5;
+const DOMAIN_ID_AVALANCHE:  u8 = 1;
+const CHAIN_ID_AVALANCHE:  u16 = 6;
 
 //taken from EVM contract
 const AVAX_HOP_GAS_COST:              u32 = 281_200;
@@ -187,9 +188,9 @@ impl From<Corridor> for u8 {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
 pub enum RelayQuote {
   OffChain {
+    expiration_time: u32,
     charge_in_usdc: bool,
     relay_fee: u64, //sol or usdc
-    expiration_time: u32,
     quoter_signature: [u8; 65],
   },
   OnChainUsdc {
@@ -209,22 +210,20 @@ pub struct GaslessParams {
 
 #[derive(AnchorSerialize)]
 pub struct OffChainQuoteData {
-  source_domain: u8,
+  source_domain:      u8,
   destination_domain: u8,
-  corridor: u8,
-  gas_dropoff: u32,
-  expiration_time: u32,
-  relay_fee: u64,
+  corridor:           u8,
+  gas_dropoff:     [u8; 4], //use array and .to_be_bytes() to avoid endianness issue
+  expiration_time: [u8; 4], //use array and .to_be_bytes() to avoid endianness issue
+  pay_in_usdc:      bool,
+  relay_fee:       [u8; 8], //use array and .to_be_bytes() to avoid endianness issue
 }
 
 #[derive(AnchorSerialize, InitSpace)]
 pub struct AvaxHopMessage {
   pub destination_domain: u8,
   pub mint_recipient: [u8; 32],
-  //gas dropoff is actually a u32 but since it has to be serialized in big endian and it is
-  //  literally the only field where byte order matters we stick to this minor hack and
-  //  manually use u32.to_be_bytes(), rather than drag in an entire serialization crate
-  pub gas_dropoff_micro_gas_token: [u8; 4],
+  pub gas_dropoff_micro_gas_token: [u8; 4], //use array and .to_be_bytes() to avoid endianness issue
 }
 
 pub fn transfer_with_relay(
@@ -254,8 +253,10 @@ pub fn transfer_with_relay(
       corridor_fee_adjustment.relative_percent_bps != 0,
       || {
         let (evm_transaction_gas, evm_transaction_size) =
-          if corridor == Corridor::V1 { (EVM_V1_GAS_COST, EVM_V1_BILLED_SIZE) }
-          else                        { (EVM_V2_GAS_COST, EVM_V2_BILLED_SIZE) };
+          if matches!(corridor, Corridor::V2Direct {..})
+            { (EVM_V2_GAS_COST, EVM_V2_BILLED_SIZE) }
+          else
+            { (EVM_V1_GAS_COST, EVM_V1_BILLED_SIZE) };
 
         let (evm_transaction_gas, sui_computation_units, sui_stored_bytes, sui_deleted_bytes) =
           if gas_dropoff_micro_gas_token == 0 {
@@ -307,7 +308,7 @@ pub fn transfer_with_relay(
     int_to_u64(Int::Ok(total_execution_fee_micro_usd) + gas_dropoff_fee_micro_usd)
   };
 
-  let cctp_message_rent_cost_sol =
+  let rent_rebate_sol =
     Rent::get()?.minimum_balance(
       if corridor == Corridor::V1 {
         deposit::v1::MESSAGE_SENT_EVENT_DATA_SIZE
@@ -326,24 +327,22 @@ pub fn transfer_with_relay(
         to: accs.rent_custodian.to_account_info(),
       },
     ),
-    cctp_message_rent_cost_sol,
+    rent_rebate_sol,
   )?;
 
   let (charge_in_usdc, relay_fee, transfer_amount) = match quote {
     RelayQuote::OnChainGas  { max_relay_fee_sol } => {
       let relay_fee_usdc = calc_onchain_relay_fee_usdc()?;
-      let relay_fee_sol = accs.oracle_config.micro_usd_to_sol(relay_fee_usdc)?.saturating_sub(
-        if gasless.is_none() { cctp_message_rent_cost_sol } else { 0 }
-      );
+      let relay_fee_sol =
+        accs.oracle_config.micro_usd_to_sol(relay_fee_usdc)?.saturating_sub(rent_rebate_sol);
       require!(relay_fee_sol <= max_relay_fee_sol, CctprError::ExceedsMaxFee);
       (false, relay_fee_sol, input_amount)
     }
     RelayQuote::OnChainUsdc { max_relay_fee_usdc, take_fee_from_input } => {
-      let relay_fee_usdc = calc_onchain_relay_fee_usdc()?.saturating_sub(
-        conditional_fee(gasless.is_none(), || {
-          accs.oracle_config.sol_to_micro_usd(cctp_message_rent_cost_sol)
-        })?
-      );
+      let rent_rebate_usdc = conditional_fee(gasless.is_none(), || {
+        accs.oracle_config.sol_to_micro_usd(rent_rebate_sol)
+      })?;
+      let relay_fee_usdc = calc_onchain_relay_fee_usdc()?.saturating_sub(rent_rebate_usdc);
       require!(relay_fee_usdc <= max_relay_fee_usdc, CctprError::ExceedsMaxFee);
       let transfer_amount = if take_fee_from_input {
         require!(max_relay_fee_usdc < input_amount, CctprError::InvalidTransferArgs);
@@ -364,17 +363,17 @@ pub fn transfer_with_relay(
       require!(now < expiration_time, CctprError::QuoteExpired);
 
       let quote_data = OffChainQuoteData {
-        source_domain: DOMAIN_ID_SOLANA,
+        source_domain:   DOMAIN_ID_SOLANA,
         destination_domain,
-        corridor: corridor.into(),
-        gas_dropoff: gas_dropoff_micro_gas_token,
-        expiration_time,
-        relay_fee,
+        corridor:        corridor.into(),
+        gas_dropoff:     gas_dropoff_micro_gas_token.to_be_bytes(),
+        expiration_time: expiration_time.to_be_bytes(),
+        pay_in_usdc:     charge_in_usdc,
+        relay_fee:       relay_fee.to_be_bytes(),
       };
-
       let quote_hash = hash(&quote_data.try_to_vec().unwrap().as_slice()).0;
       require!(
-        secp256k1_recover(&quote_hash, quoter_signature[64], &quoter_signature[..64])
+        secp256k1_recover(&quote_hash, quoter_signature[64] - 27, &quoter_signature[..64])
           .map(|pubkey| hash(&pubkey.0).0)
           .ok().filter(|recovered_pubkey| &recovered_pubkey[12..] == accs.config.offchain_quoter)
           .is_some(),
@@ -533,9 +532,11 @@ pub fn transfer_with_relay(
 
       let burn_params = deposit::v2::DepositForBurnParams {
         amount: transfer_amount,
-        destination_domain: destination_domain as u32,
+        destination_domain:
+          if is_avax_hop { DOMAIN_ID_AVALANCHE } else { destination_domain } as u32,
         mint_recipient,
-        destination_caller: if is_avax_hop { AVALANCHE_ROUTER_ADDRESS } else { [0; 32] },
+        destination_caller:
+          if is_avax_hop { AVALANCHE_ROUTER_ADDRESS } else { [0; 32] },
         max_fee,
         min_finality_threshold: 0,
       };

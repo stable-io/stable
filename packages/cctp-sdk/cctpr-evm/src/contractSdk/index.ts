@@ -70,8 +70,7 @@ import {
   feeAdjustmentTypes,
   contractAddressOf,
   quoteIsInUsdc,
-  calcBurnAmount,
-  calcInputAmount,
+  calcUsdcAmounts,
   calcFastFee,
   checkIsSensibleCorridor,
   toCorridorVariant,
@@ -211,29 +210,6 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     ) as RoArray<Usdc | GasTokenOf<SD>>;
   }
 
-  checkCostAndCalcRequiredAllowance(
-    inOrOut: InOrOut,
-    quote: Quote<N, SD>,
-    corridor: CorridorParams<N, SD, SupportedDomain<N>>,
-    gaslessFee?: Usdc,
-  ): Usdc {
-    gaslessFee = gaslessFee ?? usdc(0);
-
-    const totalFeesUsdc = gaslessFee.add(quoteIsInUsdc(quote)
-      ? (quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee)
-      : usdc(0),
-    );
-
-    return inOrOut.type === "in"
-      ? (() => {
-        if (totalFeesUsdc.ge(inOrOut.amount))
-          throw new Error(`Costs of ${totalFeesUsdc} exceed input amount of ${inOrOut.amount}`);
-
-        return inOrOut.amount;
-      })()
-      : totalFeesUsdc.add(calcBurnAmount(inOrOut, corridor, quote, gaslessFee));
-  }
-
   transferWithRelay<DD extends SupportedDomain<N>>(
     destination: DD,
     inOrOut: InOrOut, //meaningless distinction, if relay fee is paid in gas and corridor is v1
@@ -268,8 +244,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       : { type: "onChainGas" }
     ) satisfies UserQuoteVariant;
 
-    const burnAmount = calcBurnAmount(inOrOut, corridor, quote, usdc(0));
-    const inputAmountUsdc = calcInputAmount(inOrOut, quote, burnAmount);
+    const [, inputAmountUsdc, burnAmount] = calcUsdcAmounts(inOrOut, corridor, quote, usdc(0));
 
     const transfer = {
       ...(permit ? { approvalType: "Permit", permit } : { approvalType: "Preapproval" }),
@@ -302,8 +277,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
     const erasedCorridor = corridor as ErasedCorridorParams;
     const [network, domain] = [this.client.network, this.client.domain];
-    const [amount, baseAmount, burnAmount] =
-      this.calcGaslessAmounts(inOrOut, corridor, quote, gaslessFee);
+    const [amount, baseAmount, burnAmount] = calcUsdcAmounts(inOrOut, corridor, quote, gaslessFee);
 
     return {
       types: {
@@ -384,8 +358,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
     user: EvmAddress,
     permit2Signature: Uint8Array, //TODO better type
   ): ContractTx {
-    const [amount, baseAmount, burnAmount] =
-      this.calcGaslessAmounts(inOrOut, corridor, quote, gaslessFee);
+    const [amount, baseAmount, burnAmount] = calcUsdcAmounts(inOrOut, corridor, quote, gaslessFee);
 
     const transfer = {
       approvalType: "Gasless",
@@ -420,31 +393,6 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
       evmGasToken(0),
       serialize(transferLayout(this.client.network), transfer) as CallData,
     );
-  }
-
-  private calcGaslessAmounts<DD extends SupportedDomain<N>>(
-    inOrOut: InOrOut,
-    corridor: CorridorParams<N, SD, DD>,
-    quote: UsdcQuoteBase,
-    gaslessFee: Usdc,
-  ): [amount: Usdc, baseAmount: Usdc, burnAmount: Usdc] {
-    const burnAmount = calcBurnAmount(inOrOut, corridor, quote, gaslessFee);
-    const [amount, baseAmount] = inOrOut.type === "in"
-      ? [ inOrOut.amount,
-          inOrOut.amount
-            .sub(gaslessFee)
-            .sub(quote.type === "offChain" ? quote.relayFee : usdc(0)),
-        ]
-      : [ burnAmount
-            .add(gaslessFee)
-            .add(quote.type === "offChain" ? quote.relayFee : quote.maxRelayFee),
-          burnAmount,
-        ];
-
-    if (baseAmount.le(usdc(0)))
-      throw new Error("Base Amount Less or Equal to 0");
-
-    return [amount, baseAmount, burnAmount];
   }
 }
 

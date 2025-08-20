@@ -22,7 +22,7 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { usdcItem } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { accountLayout, littleEndian,solanaAddressItem } from "@stable-io/cctp-sdk-solana";
+import { accountLayout, littleEndian, solanaAddressItem } from "@stable-io/cctp-sdk-solana";
 import { foreignDomains } from "./constants.js";
 
 export const chainItem = <N extends Network>(network: N) =>
@@ -37,12 +37,12 @@ export const configLayout = accountLayout("PriceOracleConfigState", littleEndian
 const platformPriceSpace = 16;
 const platformPriceLayout = <const L extends ProperLayout>(layout: L) => littleEndian([
   ...layout,
-  { name: "reserved", ...paddingItem(platformPriceSpace - calcStaticSize(layout)!) }
+  { name: "reserved", ...paddingItem(platformPriceSpace - calcStaticSize(layout)!) },
 ]);
 
 const mweiAmount = amountItem(4, EvmGasToken, linearTransform("to->from", 10n**6n));
 const evmPricesLayout = platformPriceLayout([
-  { name: "gasPrice",       ...conversionItem(mweiAmount, Gas ) },
+  { name: "gasPrice",       ...conversionItem(mweiAmount, Gas) },
   { name: "pricePerTxByte", ...conversionItem(mweiAmount, Byte) },
 ]);
 export type EvmPrices = DeriveType<typeof evmPricesLayout>;
@@ -73,12 +73,3 @@ export const priceStateLayout = <N extends Network>(network: N) => ({
 } as const);
 export type PriceState<N extends Network, P extends keyof ReturnType<typeof priceStateLayout<N>>> =
   DeriveType<ReturnType<typeof priceStateLayout<N>>[P]>;
-
-//TODO remove, just adding here because it is easy
-export const tokenMessengerConfigLayout = accountLayout("TokenMessenger", littleEndian([
-  { name: "owner",                   ...solanaAddressItem    },
-  { name: "pendingOwner",            ...solanaAddressItem    },
-  { name: "localMessageTransmitter", ...solanaAddressItem    },
-  { name: "messageBodyVersion",      binary: "uint", size: 4 },
-  { name: "authorityBump",           binary: "uint", size: 1 },
-]));
