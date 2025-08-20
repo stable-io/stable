@@ -62,7 +62,7 @@ function toAccountInfo(acc: Account): AccountInfo {
 
 function fromAccountInfo(acc: AccountInfo): Account {
   return new Account(
-    BigInt(acc.lamports),
+    acc.lamports,
     acc.data,
     encodeAddress(acc.owner),
     acc.executable,

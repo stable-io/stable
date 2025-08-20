@@ -27,6 +27,7 @@ import { LiteSVM, TransactionMetadata } from "./liteSvm.js";
 export type InnerInstruction = ReturnType<TransactionMetadata["innerInstructions"]>[number][number];
 export type CompiledInstruction = ReturnType<InnerInstruction["instruction"]>;
 export type TransactionReturnData = ReturnType<TransactionMetadata["returnData"]>;
+export { type TransactionMetadata, type FailedTransactionMetadata } from "./liteSvm.js";
 
 type Rpc = ReturnType<typeof createSolanaRpc>;
 type KitAccountInfo = AccountInfoBase & AccountInfoWithBase64EncodedData;
@@ -364,5 +365,3 @@ export function createForkTransport(forkSvm: ForkSvm): RpcTransport {
 export function createForkRpc(forkSvm: ForkSvm) {
   return createSolanaRpcFromTransport(createForkTransport(forkSvm));
 }
-
-export { type TransactionMetadata } from "./liteSvm.js";

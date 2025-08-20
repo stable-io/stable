@@ -83,7 +83,7 @@ import {
   relayRequestEventLayout,
   oracle,
 } from "@stable-io/cctp-sdk-cctpr-solana";
-import {
+import type {
   FailedTransactionMetadata,
   TransactionMetadata,
   Snapshot,

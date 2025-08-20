@@ -6,7 +6,7 @@
 import eslintConfig from "eslint-config";
 
 const ignoreConfig = {
-  ignores: ["dist/", "litesvm-source/", "src/liteSvm/internal.*"],
+  ignores: ["dist/", "src/liteSvm/internal.*", "scripts/"],
 };
 
 const tsConfig = {
