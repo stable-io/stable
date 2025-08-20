@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/require-await */
+import "@stable-io/cctp-sdk-viem";
 import type { EvmClient, ContractTx } from "@stable-io/cctp-sdk-evm";
 import { avax, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { getCorridorCosts } from "./getCorridorCosts.js";
