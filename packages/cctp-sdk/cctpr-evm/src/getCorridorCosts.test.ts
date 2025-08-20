@@ -5,10 +5,12 @@
 
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/require-await */
-import "@stable-io/cctp-sdk-viem";
+import { Network, registerPlatformClient } from "@stable-io/cctp-sdk-definitions";
 import type { EvmClient, ContractTx } from "@stable-io/cctp-sdk-evm";
 import { avax, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { getCorridorCosts } from "./getCorridorCosts.js";
+import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { Url } from "@stable-io/utils";
 
 describe("getCorridorCosts", () => {
   const network = "Testnet";
@@ -35,10 +37,14 @@ describe("getCorridorCosts", () => {
         throw new Error(`No mock for fetch input: ${input.toString()}`);
       },
     );
-    // @todo: inject mock client
-    mockClient = {
-      network: "Testnet" as const,
-      domain: "Ethereum" as const,
+
+    registerPlatformClient("Evm", (
+      network: Network,
+      domain: SupportedDomain<Network>,
+      rpcUrl?: Url,
+    ) => ({
+      network,
+      domain,
       ethCall: jest.fn().mockImplementation(
         async (tx: ContractTx) => {
           const serializedLength2Quotes = 18;
@@ -56,7 +62,7 @@ describe("getCorridorCosts", () => {
           return new Uint8Array(Buffer.from(data, "base64"));
         },
       ),
-    } as unknown as EvmClient<"Testnet", keyof EvmDomains>;
+    }) as unknown as EvmClient<"Testnet", keyof EvmDomains>);
   });
 
   it("throws when source and destination domains are the same", async () => {
