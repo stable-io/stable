@@ -45,6 +45,10 @@ jobs:
         if: steps.get-affected.outputs.workspaces != ''
         run: yarn install --immutable
 
+      - name: Check formatting
+        if: steps.get-affected.outputs.workspaces != ''
+        run: yarn format:check
+
       - name: Set up environment variables
         run: |
           cp ./apps/front-end/.env.local.example ./apps/front-end/.env.local
@@ -62,8 +66,7 @@ jobs:
             yarn workspace "$workspace" build
           done
 
-      - name: Check formatting
-        run: yarn format:check
+
 
       - name: Lint affected workspaces
         run: |
