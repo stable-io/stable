@@ -1,23 +1,10 @@
 name: 'Get Affected Workspaces'
 description: 'Determine which workspaces are affected by changes in a PR'
 
-inputs:
-  base-ref:
-    description: 'Base branch reference (e.g., main, develop)'
-    required: false
-    default: 'main'
-  command:
-    description: 'Command to run on affected workspaces (build, test, lint, etc.)'
-    required: false
-    default: 'build'
-
 outputs:
   workspaces:
     description: 'Comma-separated list of affected workspace names'
     value: ${{ steps.get-affected.outputs.workspaces }}
-  workspace-array:
-    description: 'JSON array of affected workspace names'
-    value: ${{ steps.get-affected.outputs.workspace-array }}
 
 runs:
   using: 'composite'
@@ -26,14 +13,18 @@ runs:
       id: get-affected
       shell: bash
       run: |
-        # Get the base and head refs for comparison
-        BASE_REF="${{ inputs.base-ref }}"
-        HEAD_REF="${{ github.head_ref }}"
-        
-        # If this is a push event (not PR), compare with the previous commit
-        if [[ "${{ github.event_name }}" == "push" ]]; then
+        # Get the base and head commit hashes for comparison
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          # For PRs, use the base and head commit hashes
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+        elif [[ "${{ github.event_name }}" == "push" ]]; then
+          # For push events, compare with the previous commit
           BASE_REF="${{ github.before }}"
           HEAD_REF="${{ github.after }}"
+        else
+          echo "Couldn't find branches to compare"
+          exit 1
         fi
         
         echo "Comparing $HEAD_REF against $BASE_REF"
@@ -44,7 +35,6 @@ runs:
         if [[ -z "$CHANGED_FILES" ]]; then
           echo "No files changed"
           echo "workspaces=" >> $GITHUB_OUTPUT
-          echo "workspace-array=[]" >> $GITHUB_OUTPUT
           exit 0
         fi
         
@@ -153,8 +143,6 @@ runs:
           WORKSPACES_CSV=$(IFS=','; echo "${ALL_AFFECTED_WORKSPACES[*]}")
           
           # Create JSON array
-          WORKSPACES_JSON_ARRAY=$(printf '%s\n' "${ALL_AFFECTED_WORKSPACES[@]}" | jq -R . | jq -s .)
           
           echo "workspaces=$WORKSPACES_CSV" >> $GITHUB_OUTPUT
-          echo "workspace-array=$WORKSPACES_JSON_ARRAY" >> $GITHUB_OUTPUT
         fi 

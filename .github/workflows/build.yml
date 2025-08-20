@@ -26,12 +26,23 @@ jobs:
           ssh-keyscan github.com >> ~/.ssh/known_hosts
         shell: bash
 
+      - name: Get affected workspaces
+        id: get-affected
+        uses: ./.github/actions/get-affected-workspaces
+
+      - name: No workspaces affected
+        if: steps.get-affected.outputs.workspaces == ''
+        run: |
+          echo "✅ No workspaces are affected by the changes in this PR."
+
       - name: Set up Yarn
+        if: steps.get-affected.outputs.workspaces != ''
         run: |
           corepack enable
           yarn --version
 
       - name: Install dependencies
+        if: steps.get-affected.outputs.workspaces != ''
         run: yarn install --immutable
 
       - name: Set up environment variables
@@ -39,14 +50,7 @@ jobs:
           cp ./apps/front-end/.env.local.example ./apps/front-end/.env.local
           cp ./apps/back-end/.env.example ./apps/back-end/.env
 
-      - name: Get affected workspaces
-        id: get-affected
-        uses: ./.github/actions/get-affected-workspaces
-        with:
-          base-ref: ${{ github.base_ref }}
-
       - name: Build affected workspaces
-        if: steps.get-affected.outputs.workspaces != ''
         run: |
           # Parse the comma-separated workspace list
           IFS=',' read -ra WORKSPACES <<< "${{ steps.get-affected.outputs.workspaces }}"
@@ -62,7 +66,6 @@ jobs:
         run: yarn format:check
 
       - name: Lint affected workspaces
-        if: steps.get-affected.outputs.workspaces != ''
         run: |
           # Parse the comma-separated workspace list
           IFS=',' read -ra WORKSPACES <<< "${{ steps.get-affected.outputs.workspaces }}"
@@ -75,7 +78,6 @@ jobs:
           done
 
       - name: Test affected workspaces
-        if: steps.get-affected.outputs.workspaces != ''
         run: |
           # Parse the comma-separated workspace list
           IFS=',' read -ra WORKSPACES <<< "${{ steps.get-affected.outputs.workspaces }}"
