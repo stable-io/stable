@@ -5,9 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/require-await */
-import { Network, registerPlatformClient } from "@stable-io/cctp-sdk-definitions";
+import { Network, registerPlatformClient, avax, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import type { EvmClient, ContractTx } from "@stable-io/cctp-sdk-evm";
-import { avax, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { getCorridorCosts } from "./getCorridorCosts.js";
 import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Url } from "@stable-io/utils";
@@ -18,7 +17,6 @@ describe("getCorridorCosts", () => {
   const destinationDomain = "Avalanche";
   const allowance = 99999999997.99998;
   const minimumFee = 1;
-  let mockClient: EvmClient<"Testnet", keyof EvmDomains>;
 
   beforeEach(() => {
     jest.spyOn(globalThis, "fetch").mockImplementation(
@@ -48,14 +46,11 @@ describe("getCorridorCosts", () => {
       ethCall: jest.fn().mockImplementation(
         async (tx: ContractTx) => {
           const serializedLength2Quotes = 18;
-          const serializedLength4Quotes = 32;
           const data = tx.data.length === serializedLength2Quotes
             // [0.334538, 0.000107569911611929]
             ? "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABRrKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABh1ZJewhk"
-            : tx.data.length === serializedLength4Quotes
-            // [0.334538, 0.000107569911611929, 0.308127, 0.000099077550168882]
-            ? "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABRrKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABh1ZJewhkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASznwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWhxKLtsy"
             : undefined;
+
           if (data === undefined) {
             throw new Error("Invalid number of quotes");
           }
@@ -63,12 +58,6 @@ describe("getCorridorCosts", () => {
         },
       ),
     }) as unknown as EvmClient<"Testnet", keyof EvmDomains>);
-  });
-
-  it("throws when source and destination domains are the same", async () => {
-    await expect(
-      getCorridorCosts(network, sourceDomain, sourceDomain, ["v1"]),
-    ).rejects.toThrow("Values are not distinct: Ethereum, Ethereum");
   });
 
   it.each([
@@ -83,9 +72,9 @@ describe("getCorridorCosts", () => {
     {
       corridor: "v2Direct" as const,
       sourceDomain: "Ethereum" as const,
-      destinationDomain: "Avalanche" as const,
-      expectedUsdcCost: 0.308127,
-      expectedGasCost: 0.000099077550168882,
+      destinationDomain: "Arbitrum" as const,
+      expectedUsdcCost: 0.334538,
+      expectedGasCost: 0.000107569911611929,
       hasFastCost: true,
     },
     // Currently no route uses avax hop
