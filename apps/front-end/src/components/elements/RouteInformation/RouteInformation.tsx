@@ -1,4 +1,4 @@
-import type { Route } from "@stable-io/sdk";
+import type { Network, Route } from "@stable-io/sdk";
 import Image from "next/image";
 import type { ReactElement } from "react";
 
@@ -9,7 +9,7 @@ import type { AvailableChains } from "@/constants";
 import { formatCost } from "@/utils";
 
 interface RouteInformationProps {
-  route?: Route<AvailableChains, AvailableChains>;
+  route?: Route<Network, AvailableChains, AvailableChains>;
 }
 
 export const RouteInformation = ({

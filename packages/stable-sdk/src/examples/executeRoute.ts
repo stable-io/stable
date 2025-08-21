@@ -5,7 +5,7 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { eth, EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../index.js";
@@ -80,7 +80,7 @@ for (const route of selectedRoutes) {
   console.info(`Transfer Received:`, getTestnetScannerTxUrl(route.intent.targetChain, receiveHash));
 }
 
-function logRouteInfo(route: Route<any, any>) {
+function logRouteInfo(route: Route<any, any, any>) {
   console.info("");
   console.info(`Transferring from ${intent.sourceChain} to ${intent.targetChain}.`);
   console.info(`Sender: ${sender}`);

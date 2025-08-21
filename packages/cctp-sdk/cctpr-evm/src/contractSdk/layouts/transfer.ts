@@ -4,59 +4,32 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { Layout, Item, DeriveType } from "binary-layout";
-import { boolItem } from "binary-layout";
 import {
   universalAddressItem,
   signatureItem,
   enumSwitchVariants,
-  byteSwitchLayout,
+  byteSwitchItem,
   Network,
+  EvmGasToken,
+  hashItem,
 } from "@stable-io/cctp-sdk-definitions";
-import { wordSize, permitItem, evmAddressItem } from "@stable-io/cctp-sdk-evm";
-import { zip } from "@stable-io/map-utils";
+import { permitItem, evmAddressItem } from "@stable-io/cctp-sdk-evm";
 import {
   usdcItem,
-  evmGasTokenItem,
   supportedDomainItem,
   gasDropoffItem,
-  corridors,
   timestampItem,
-} from "./common.js";
-
-const maxFastFeeUsdcItem = { name: "maxFastFeeUsdc", ...usdcItem } as const;
-const corridorVariants = zip([corridors, [[], [maxFastFeeUsdcItem], [maxFastFeeUsdcItem]]]);
-const corridorVariantItem = byteSwitchLayout("type", enumSwitchVariants(corridorVariants));
-export type CorridorVariant = DeriveType<typeof corridorVariantItem>;
-
-const offChainVariant = <const I extends Item>(feePaymentVariant: I) => [
-  "offChain", [
-    { name: "expirationTime",    ...timestampItem     },
-    { name: "feePaymentVariant", ...feePaymentVariant },
-    { name: "quoterSignature",   ...signatureItem     },
-  ],
-] as const;
-
-const onChainUsdcVariant = [
-  "onChainUsdc", [
-    { name: "maxRelayFeeUsdc",       ...usdcItem   },
-    { name: "takeRelayFeeFromInput", ...boolItem() },
-  ],
-] as const;
-
-const userFeePaymentVariants = [
-  ["usdc",     [{ name: "relayFeeUsdc",     ...usdcItem        }]],
-  ["gasToken", [{ name: "relayFeeGasToken", ...evmGasTokenItem }]],
-] as const;
-const userFeePaymentVariantItem =
-  byteSwitchLayout("payIn", enumSwitchVariants(userFeePaymentVariants));
-
-const userQuoteVariants = [
-  offChainVariant(userFeePaymentVariantItem),
+  corridorVariantItem,
+  userQuoteVariantItem,
+  offChainVariant,
   onChainUsdcVariant,
-  ["onChainGas", []],
-] as const;
-const userQuoteVariantItem = byteSwitchLayout("type", enumSwitchVariants(userQuoteVariants));
-export type UserQuoteVariant = DeriveType<typeof userQuoteVariantItem>;
+  offChainQuoteLayout as cctprOffChainQuoteLayout,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
+
+export const offChainQuoteLayout = <N extends Network>(network: N) =>
+  cctprOffChainQuoteLayout(network, "Evm", EvmGasToken);
+export type OffChainQuote<N extends Network> =
+  DeriveType<ReturnType<typeof offChainQuoteLayout<N>>>;
 
 const transferCommonLayout = <N extends Network, const I extends Item>(
   network: N,
@@ -74,31 +47,34 @@ const payInUsdcItem = { binary: "uint", size: 1, custom: { to: "usdc", from: 1 }
 const usdcFeePaymentItem = {
   binary: "bytes",
   layout: [
-    { name: "payIn",        ...payInUsdcItem },
-    { name: "relayFeeUsdc", ...usdcItem      },
+    { name: "payIn",  ...payInUsdcItem },
+    { name: "amount", ...usdcItem      },
   ],
 } as const satisfies Layout;
 const gaslessQuoteVariants = [
   offChainVariant(usdcFeePaymentItem),
   onChainUsdcVariant,
 ] as const;
-const gaslessQuoteVariantItem = byteSwitchLayout("type", enumSwitchVariants(gaslessQuoteVariants));
+const gaslessQuoteVariantItem = byteSwitchItem("type", enumSwitchVariants(gaslessQuoteVariants));
 export type GaslessQuoteVariant = DeriveType<typeof gaslessQuoteVariantItem>;
 
-const permit2NonceItem = { binary: "bytes", size: wordSize } as const;
+const permit2NonceItem = hashItem;
 const permit2DataItem = {
   binary: "bytes",
   layout: [
-    { name: "owner",          ...evmAddressItem   },
-    { name: "amount",         ...usdcItem         },
-    { name: "nonce",          ...permit2NonceItem },
-    { name: "deadline",       ...timestampItem    },
-    { name: "signature",      ...signatureItem    },
+    { name: "owner",     ...evmAddressItem   },
+    { name: "amount",    ...usdcItem         },
+    { name: "nonce",     ...permit2NonceItem },
+    { name: "deadline",  ...timestampItem    },
+    { name: "signature", ...signatureItem    },
   ],
 } as const satisfies Layout;
 
+const evmUserQuoteVariantItem = userQuoteVariantItem(EvmGasToken, []);
+export type UserQuoteVariant = DeriveType<typeof evmUserQuoteVariantItem>;
+
 const userTransferCommonLayout = <N extends Network>(network: N) =>
-  transferCommonLayout(network, userQuoteVariantItem);
+  transferCommonLayout(network, evmUserQuoteVariantItem);
 
 const transferWithPermitLayout = <N extends Network>(network: N) => [
   { name: "permit", ...permitItem },
@@ -106,8 +82,8 @@ const transferWithPermitLayout = <N extends Network>(network: N) => [
 ] as const satisfies Layout;
 
 const transferGaslessLayout = <N extends Network>(network: N) => [
-  { name: "permit2Data", ...permit2DataItem },
-  { name: "gaslessFeeUsdc", ...usdcItem },
+  { name: "permit2Data",    ...permit2DataItem            },
+  { name: "gaslessFeeUsdc", ...usdcItem                   },
   ...transferCommonLayout(network, gaslessQuoteVariantItem),
 ] as const satisfies Layout;
 
@@ -117,5 +93,5 @@ const transferVariants = <N extends Network>(network: N) => [
   [[0x03, "Gasless"    ], transferGaslessLayout(network)   ],
 ] as const;
 export const transferLayout = <N extends Network>(network: N) =>
-  byteSwitchLayout("approvalType", transferVariants(network));
+  byteSwitchItem("approvalType", transferVariants(network));
 export type Transfer<N extends Network> = DeriveType<ReturnType<typeof transferLayout<N>>>;

@@ -27,7 +27,7 @@ export class ExecutionTracker {
   private stepStartTime: number;
   private lastStepTime: number;
 
-  constructor(route: Route<any, any>) {
+  constructor(route: Route<any, any, any>) {
     this.result = {
       source: route.intent.sourceChain,
       target: route.intent.targetChain,
@@ -139,7 +139,7 @@ export function formatTimeDiff(timeMs: number): string {
   }
 }
 
-function getRouteType(r: Route<any, any>) {
+function getRouteType(r: Route<any, any, any>) {
   return r.steps.some(
     s => s.type === "gasless-transfer",
   )
@@ -147,6 +147,6 @@ function getRouteType(r: Route<any, any>) {
     : "normal";
 }
 
-function getApprovalType(r: Route<any, any>) {
+function getApprovalType(r: Route<any, any, any>) {
   return r.requiresMessageSignature ? "permit" : "approval";
 }

@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { RoNeTuple, RoTuple, HeadTail, Simplify } from "./metaprogramming.js";
+import type { RoNeTuple, RoTuple, RoPair, HeadTail, Simplify, RoArray } from "./metaprogramming.js";
 
 //TODO implement support for arrays (that aren't tuples)
 //  Right now, the typing prevents passing arrays to functions whose values are not known at
@@ -182,6 +182,8 @@ export function deepOmit<const O extends PlainObject, const P extends Paths>(
   return deepOmitPath(obj, pathOrPaths as any);
 }
 
+// ---- DeepReplace ----
+
 //TODO refine type to allow multiple replacements
 export type DeepReplace<O, Path extends RoTuple<PropertyKey>, NewType>
   = Path extends HeadTail<Path, infer Head, infer Tail>
@@ -189,3 +191,21 @@ export type DeepReplace<O, Path extends RoTuple<PropertyKey>, NewType>
   : NewType;
 
 //TODO implement deepReplace
+
+// ---- FromEntries ----
+
+export type TupleFromEntries<T extends RoTuple<RoPair<PropertyKey, unknown>>> =
+  { [E in T[number] as E[0]]: E[1]; };
+
+export type FromEntries<A extends RoArray<RoPair<PropertyKey, unknown>>> =
+  A extends RoTuple<RoPair<PropertyKey, unknown>>
+  ? TupleFromEntries<A>
+  : A extends RoArray<RoPair<infer K extends PropertyKey, infer V>>
+  ? Record<K, V>
+  : never;
+
+export function fromEntries<const A extends RoArray<RoPair<PropertyKey, unknown>>>(
+  entries: A,
+): FromEntries<A> {
+  return Object.fromEntries(entries) as any;
+}

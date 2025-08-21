@@ -7,21 +7,21 @@ import { Amount, Conversion } from "@stable-io/amount";
 import type {
   Corridor,
   CorridorStats,
-} from "@stable-io/cctp-sdk-cctpr-evm";
+  LoadedCctprPlatformDomain,
+  SupportedDomain,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   EvmDomains,
   GasTokenKindOf,
-  GasTokenNameOf,
-  GasTokenOf,
   Usdc,
-  usdc,
   usd,
   Usd,
   gasTokenKindOf,
-  gasTokenNameOf,
   gasTokenOf,
   Percentage,
   percentage,
+  RegisteredPlatform,
+  usdc,
 } from "@stable-io/cctp-sdk-definitions";
 
 import type { Fee, Network, Intent } from "../../types/index.js";
@@ -30,11 +30,12 @@ import { getDomainPrices } from "../../api/oracle.js";
 
 export function getCorridorFees<
   N extends Network,
-  S extends keyof EvmDomains,
-  D extends keyof EvmDomains,
+  P extends RegisteredPlatform,
+  S extends LoadedCctprPlatformDomain<N, P>,
+  D extends SupportedDomain<N>,
 >(
   corridorCost: CorridorStats<N, keyof EvmDomains, Corridor>["cost"],
-  intent: Intent<S, D>,
+  intent: Intent<N, S, D>,
 ): { corridorFees: Fee[]; maxRelayFee: Fee; fastFeeRate: Percentage } {
   const corridorFees = [] as Fee[];
 

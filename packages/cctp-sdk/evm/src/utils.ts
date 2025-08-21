@@ -4,20 +4,14 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { type Layout, serialize, deserialize } from "binary-layout";
-import type { KindWithAtomic } from "@stable-io/amount";
-import { Amount } from "@stable-io/amount";
-import type { Network } from "@stable-io/cctp-sdk-definitions";
-import { amountItem } from "@stable-io/cctp-sdk-definitions";
+import { type KindWithAtomic, Amount } from "@stable-io/amount";
+import { type Network, amountItem } from "@stable-io/cctp-sdk-definitions";
 import { keccak256 } from "@stable-io/utils";
 import { EvmAddress } from "./address.js";
-import type { ContractTx, EvmClient, CallData } from "./platform.js";
-import {
-  wordSize,
-  selectorItem,
-  evmAddressItem,
-  paddedSlotItem,
-  abiEncodedBytesItem,
-} from "./layoutItems.js";
+import type { EvmClient } from "./client.js";
+import type { ContractTx, CallData } from "./platform.js";
+import { wordSize, selectorItem, evmAddressItem, paddedSlotItem } from "./layoutItems.js";
+
 export async function getTokenBalance<const K extends KindWithAtomic>(
   client: EvmClient,
   token:  EvmAddress,
@@ -30,7 +24,7 @@ export async function getTokenBalance<const K extends KindWithAtomic>(
   ] as const satisfies Layout;
 
   return deserialize(
-    amountItem(wordSize, kind, "atomic"),
+    amountItem(wordSize, kind),
     await client.ethCall({
       to: token,
       data: serialize(balanceOfLayout, { owner }) as CallData,
@@ -54,7 +48,7 @@ export async function getTokenAllowance<const K extends KindWithAtomic>(
   return client.ethCall({
     to: token,
     data: serialize(allowanceLayout, { owner, spender }) as CallData,
-  }).then(resp => deserialize(amountItem(wordSize, kind, "atomic"), resp));
+  }).then(resp => deserialize(amountItem(wordSize, kind), resp));
 }
 
 export function composeApproveTx(
@@ -66,7 +60,7 @@ export function composeApproveTx(
   const approveLayout = [
     selectorItem("approve(address,uint256)"),
     { name: "spender", ...paddedSlotItem(evmAddressItem) },
-    { name: "amount", ...amountItem(wordSize, amount.kind, "atomic") },
+    { name: "amount", ...amountItem(wordSize, amount.kind) },
   ] as const satisfies Layout;
 
   return {

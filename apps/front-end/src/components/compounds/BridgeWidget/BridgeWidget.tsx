@@ -1,4 +1,4 @@
-import type { Route } from "@stable-io/sdk";
+import type { Network, Route } from "@stable-io/sdk";
 import type { ReactElement } from "react";
 
 import {
@@ -26,7 +26,7 @@ interface BridgeWidgetProps {
   availableChains: readonly AvailableChains[];
   walletAddress?: string;
   balance: number;
-  route?: Route<AvailableChains, AvailableChains>;
+  route?: Route<Network, AvailableChains, AvailableChains>;
   isInProgress: boolean;
   onTransfer: () => void;
 }

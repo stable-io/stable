@@ -59,17 +59,8 @@ function feeParamsState() pure returns (FeeParamsState storage state) {
 //the additional gas cost is likely worth the cost of being able to reconstruct old fees
 event FeeParamsUpdated(uint16 indexed chainId, bytes32 feeParams);
 
-/**
- * Chain id 0 is invalid.
- */
 error InvalidChainId();
-/**
- * The query is not recognized.
- */
 error InvalidPriceQuery(uint8 query);
-/**
- * The command is not supported by the chain.
- */
 error ChainNotSupportedByCommand(uint16 chainId, uint8 command);
 
 // TODO: add non-native tokens prices
@@ -334,14 +325,6 @@ abstract contract PriceOraclePrices is PriceOracleConfig {
     return (BaseFee.wrap(baseFee), offset);
   }
 
-  /**
-   * @param targetChainId The chainId of the target chain
-   * @param gasDropoff amount of target chain native token (with 18 decimals = wei) to be converted
-   * @param gas amount of gas units
-   * @param baseFee additional flat fee for the relayer in usd with 18 decimals
-   * @param billedSize the billable bytes of the call (typically the tx size)
-   * @return quote quote in current chain native asset (with 18 decimals = wei)
-   */
   function evmTransactionQuote(
     uint16 targetChainId,
     GasDropoff gasDropoff,
@@ -364,15 +347,6 @@ abstract contract PriceOraclePrices is PriceOracleConfig {
     return (totalTargetUsd + baseFee.from() * 1e18)  / localChainParams.gasTokenPrice().from();
   }}
 
-  /**
-   * @param gasDropoff amount of target chain native token (with 18 decimals = wei) to be converted
-   * @param computationUnits the amount of computation units to be spent
-   * @param totalSizeOfAccounts total size of the accounts to be spawned in bytes
-   * @param signatureCount total amount of signatures in the transaction
-   * Each account spawned has 128 bytes of overhead that should be added to this value
-   * @param baseFee additional flat fee for the relayer in usd (with 18 decimals)
-   * @return quote quote in current chain native asset (with 18 decimals = wei)
-   */
   function solanaTransactionQuote(
     GasDropoff gasDropoff,
     uint computationUnits,
@@ -398,14 +372,6 @@ abstract contract PriceOraclePrices is PriceOracleConfig {
     return (totalTargetUsd + baseFee.from() * 1e18) / localChainParams.gasTokenPrice().from();
   }}
 
-  /**
-   * @param gasDropoff amount of target chain native token (with 18 decimals) to be converted
-   * @param computationUnits the amount of computation units to be spent
-   * @param storageBytes the amount of storage bytes to be used
-   * @param rebateBytes the amount of storage bytes to be rebated
-   * @param baseFee additional flat fee for the relayer in usd (with 18 decimals)
-   * @return quote quote in current chain native asset (with 18 decimals = wei)
-   */
   function suiTransactionQuote(
     GasDropoff gasDropoff,
     uint computationUnits,
@@ -428,7 +394,8 @@ abstract contract PriceOraclePrices is PriceOracleConfig {
     uint totalRebate = rebateBytes * storagePrice 
                        * suiParams.storageRebate().from() / StorageRebateLib.MAX;
     // SUI in 18dec + SUI in 18dec - SUI in 18dec = SUI in 18dec
-    uint totalSui = gasDropoff.from() + totalRebate < totalGasCost ? totalGasCost - totalRebate : 0;
+    uint totalSui = gasDropoff.from()
+                    + (totalRebate < totalGasCost ? totalGasCost - totalRebate : 0);
     // There is a minimum of 2000 MIST in gas costs for SUI transactions
     // MIST (Sui in 9dec) * 1e9 = SUI in 18dec
     uint minimumGasCost = 2000 * 1e9;

@@ -4,15 +4,19 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { type Rationalish, Rational } from "./rational.js";
-import type { Kind, KindWithHuman, Unit } from "./types.js";
+import type { Kind, KindWithHuman, Unit, SymbolsOf } from "./types.js";
 import { Amount } from "./amount.js";
 
 export class Conversion<NK extends Kind, DK extends Kind> {
-  private constructor(
-    readonly ratio: Rational,
-    readonly num: NK,
-    readonly den: DK,
-  ) {}
+  readonly ratio: Rational;
+  readonly num: NK;
+  readonly den: DK;
+
+  private constructor(ratio: Rational, num: NK, den: DK) {
+    this.ratio = ratio;
+    this.num = num;
+    this.den = den;
+  }
 
   static from<NK extends Kind, DK extends Kind>(
     ratio: Rationalish,
@@ -47,8 +51,14 @@ export class Conversion<NK extends Kind, DK extends Kind> {
     const numUnit = getUnit(this.num);
     const denUnit = getUnit(this.den);
     const scaledRatio = this.ratio.mul(denUnit.scale).div(numUnit.scale);
-    const rat = this.num.stringify?.(scaledRatio) ?? scaledRatio.toString();
-    return `${rat} ${numUnit.symbol}/${denUnit.symbol}`;
+    const num = this.num.stringify?.(scaledRatio) ?? scaledRatio.toString() + ` ${numUnit.symbol}`;
+    return `${num}/${denUnit.symbol}`;
+  }
+
+  toUnit<NS extends SymbolsOf<NK>, DS extends SymbolsOf<DK>>(numUnit: NS, denUnit: DS): Rational {
+    const num = Amount.getUnit(this.num, numUnit);
+    const den = Amount.getUnit(this.den, denUnit);
+    return this.ratio.mul(den.scale).div(num.scale);
   }
 
   mul(scalar: Rationalish): Conversion<NK, DK> {
@@ -72,6 +82,8 @@ export class Conversion<NK extends Kind, DK extends Kind> {
 
     return Conversion.checkedNew(this.ratio.mul(other.ratio), this.num, other.den);
   }
+
+  //TODO impl comparison
 
   private static checkedNew<
     NK extends Kind,

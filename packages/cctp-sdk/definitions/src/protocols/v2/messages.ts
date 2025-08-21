@@ -17,7 +17,7 @@ const extraFields = [
 
 export const messageLayout = <
   const B extends CustomizableBytes = undefined,
-  const R extends boolean = false,
+  R extends boolean = false,
 >(messageBody?: B, useRawDomains?: R) =>
   messageLayoutTemplate(1, hashItem, extraFields, messageBody, useRawDomains);
 
@@ -42,7 +42,7 @@ export type BurnMessageBody<
 
 export const burnMessageLayout = <
   const H extends CustomizableBytes = undefined,
-  const R extends boolean = false,
+  R extends boolean = false,
 >(hookData?: H, useRawDomains?: R) =>
   messageLayout(burnMessageBodyLayout(hookData), useRawDomains);
 

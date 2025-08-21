@@ -1,4 +1,4 @@
-import type { Route } from "@stable-io/sdk";
+import type { Network, Route } from "@stable-io/sdk";
 import { useCallback, useEffect, useReducer } from "react";
 
 import type { StepStatus, AvailableChains } from "@/constants";
@@ -210,8 +210,8 @@ interface UseTransferProgressReturn extends Omit<TransferState, "uiSteps"> {
   steps: readonly UIStep[];
 }
 
-export const useTransferProgress = (
-  route?: Route<AvailableChains, AvailableChains>,
+export const useTransferProgress = <N extends Network>(
+  route?: Route<N, AvailableChains, AvailableChains>,
 ): UseTransferProgressReturn => {
   const [state, dispatch] = useReducer(transferReducer, initialTransferState);
 

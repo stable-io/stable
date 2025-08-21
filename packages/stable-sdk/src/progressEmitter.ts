@@ -1,10 +1,10 @@
 import { EventEmitter } from "events";
 import { Eip712Data } from "@stable-io/cctp-sdk-evm";
-import { Hex, Intent, Network } from "./types/index.js";
+import { Hex, Intent, Network, TxHash } from "./types/index.js";
 import { CctpAttestation } from "./methods/executeRoute/findTransferAttestation.js";
 import { Receive } from "./types/receive.js";
 import { Usdc } from "@stable-io/cctp-sdk-definitions";
-import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 export class TransferProgressEmitter extends (
   EventEmitter as { new(): TransferProgressEventEmitter }
@@ -59,8 +59,8 @@ export interface TransferProgressEvent {
  * Transfer Life Cycle Events
  */
 
-export type TransferInitiatedEventData = {
-  intent: Intent<SupportedEvmDomain<Network>, SupportedEvmDomain<Network>>;
+export type TransferInitiatedEventData<N extends Network = Network> = {
+  intent: Intent<N, LoadedCctprDomain<N>, SupportedDomain<N>>;
   // other info could be added here such as
   // quote, corridor, gasless or not, etc.
 };
@@ -70,13 +70,13 @@ export type TransferInitiatedEventData = {
  */
 
 export type ApprovalSentEventData = {
-  transactionHash: Hex;
+  transactionHash: TxHash;
   approvalAmount: bigint;
 };
 
 export type MessageSignedEventData = {
   signer: Hex;
-  messageSigned: Eip712Data<any>;
+  messageSigned: Eip712Data;
   signature: Hex;
 };
 
@@ -85,7 +85,7 @@ export type MessageSignedEventData = {
  */
 
 export type TransferSentEventData = {
-  transactionHash: Hex;
+  transactionHash: TxHash;
   approvalType: "Permit" | "Preapproval" | "Gasless";
   gasDropOff: bigint;
   usdcAmount: Usdc;
@@ -113,10 +113,13 @@ export type FailureScenarios = "transfer-failed" // tokens never left the accoun
 
 export type TransferFailedEventData<S extends FailureScenarios=FailureScenarios> = {
   type: FailureScenarios;
-  details: S extends "transfer-failed" ? undefined
-            : S extends "attestation-failed" ? { txHash: Hex } // timeout boolean
-            : S extends "receive-failed" ? { txHash: Hex }
-            : never;
+  details: S extends "transfer-failed"
+    ? undefined
+    : S extends "attestation-failed"
+    ? { txHash: TxHash } // timeout boolean
+    : S extends "receive-failed"
+    ? { txHash: TxHash }
+    : never;
 };
 
 /**

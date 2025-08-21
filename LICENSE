@@ -320,6 +320,9 @@ necessary to make it enforceable. Any law or regulation which provides
 that the language of a contract shall be construed against the drafter
 shall not be used to construe this License against a Contributor.
 
+This project includes code from LiteSVM, licensed under the Apache License,
+Version 2.0. See [packages/fork-svm/litesvm-source/LICENSE] for details.
+
 10. Versions of the License
 ---------------------------
 

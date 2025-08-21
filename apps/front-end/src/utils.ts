@@ -16,7 +16,7 @@ export const formatNumber = (num: number): string =>
   });
 
 export const formatCost = (
-  cost: Route<any, any>["estimatedTotalCost"],
+  cost: Route<any, any, any>["estimatedTotalCost"],
 ): string => {
   return `$${cost.toUnit("human").toFixed(2)}`;
 };

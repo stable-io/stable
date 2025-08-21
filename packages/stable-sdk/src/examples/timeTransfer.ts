@@ -231,7 +231,7 @@ function logScriptSummary(results: ExecutionResult[]) {
   console.info(`\n📁 Results saved to: ${scriptConfig.outputFile}`);
 }
 
-function logFees(route: Route<any, any>) {
+function logFees(route: Route<any, any, any>) {
   console.info("Fees:");
 
   for (const fee of route.fees) {

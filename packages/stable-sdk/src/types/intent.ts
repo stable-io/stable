@@ -3,32 +3,42 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains, GasTokenOf, Percentage, Usdc } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { PaymentTokenOptions } from "./sdk.js";
+import type {
+  GasTokenOf,
+  LoadedDomain,
+  Network,
+  Percentage,
+  PlatformAddress,
+  PlatformOf,
+  RegisteredPlatform,
+  Usdc,
+} from "@stable-io/cctp-sdk-definitions";
+import type { CctprRecipientAddress, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
-export type UserIntent = {
-  sourceChain: keyof EvmDomains;
-  targetChain: keyof EvmDomains;
-  amount: string | Usdc;
-  sender: string | EvmAddress;
-  recipient: string | EvmAddress;
+export type PaymentTokenOptions = "usdc" | "native" | "gas";
 
+export type UserIntent<N extends Network, S extends LoadedDomain, D extends SupportedDomain<N>> = {
+  sourceChain: S;
+  targetChain: D;
+  amount: string;
+  sender: string | PlatformAddress<PlatformOf<S>>;
+  recipient: string | PlatformAddress<RegisteredPlatform & PlatformOf<D>>;
   usePermit?: boolean;
-  gasDropoffDesired?: bigint | GasTokenOf<keyof EvmDomains>;
+  gasDropoffDesired?: bigint | GasTokenOf<D>;
   paymentToken?: PaymentTokenOptions;
-  relayFeeMaxChangeMargin?: number |  Percentage; // | percentage?; TODO
+  relayFeeMaxChangeMargin?: number |  Percentage;
 };
 
 export type Intent<
-  S extends keyof EvmDomains,
-  D extends keyof EvmDomains,
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
 > = {
   sourceChain: S;
   targetChain: D;
   amount: Usdc;
-  sender: EvmAddress; // eventually universal address
-  recipient: EvmAddress; // eventually universal address
+  sender: PlatformAddress<PlatformOf<S>>;
+  recipient: CctprRecipientAddress<N, D>;
   usePermit: boolean;
   gasDropoffDesired: GasTokenOf<D>;
   paymentToken: PaymentTokenOptions;

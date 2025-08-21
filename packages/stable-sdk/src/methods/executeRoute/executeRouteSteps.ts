@@ -5,12 +5,12 @@
 
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
-import { Permit, ContractTx, Eip712Data } from "@stable-io/cctp-sdk-evm";
+import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
-import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
+import { parseTransferTxCalldata, Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
 import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
@@ -59,7 +59,7 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
     }
     case SIGN_PERMIT:
     case SIGN_PERMIT_2: {
-      const typedMessage = stepData as Eip712Data<any>;
+      const typedMessage = stepData as Eip2612Data;
 
       const signature = await signer.signTypedData({
         account: signer.account!,
@@ -87,7 +87,7 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
     }
     case GASLESS_TRANSFER: {
       const transferData = stepData as GaslessTransferData;
-      const transferParameters = transferData.permit2TypedData.message.parameters;
+      const transferParameters = transferData.permit2GaslessData.message.parameters;
       route.progress.emit("transfer-sent", {
         transactionHash: transferData.txHash,
         approvalType: "Gasless",

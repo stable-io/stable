@@ -3,15 +3,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import type { Size } from "@stable-io/utils";
 import type { Layout, DeriveType, CustomConversion, Item } from "binary-layout";
 import { calcStaticSize } from "binary-layout";
-import { keccak256 } from "@stable-io/utils";
 import { signatureItem, uint256Item } from "@stable-io/cctp-sdk-definitions";
-import type { CallData } from "./platform.js";
 import { EvmAddress } from "./address.js";
 import { selectorOf } from "./utils.js";
 
-export const wordSize = 32;
+export const wordSize = 32 as Size;
 
 export const selectorItem = (funcSig: string) => ({
   name: "selector",
@@ -22,12 +21,12 @@ export const selectorItem = (funcSig: string) => ({
 
 export const evmAddressItem = {
   binary: "bytes",
-  size: 20,
+  size: EvmAddress.byteSize,
   custom: {
     to: (encoded: Uint8Array) => new EvmAddress(encoded),
     from: (addr: EvmAddress) => addr.toUint8Array(),
   } satisfies CustomConversion<Uint8Array, EvmAddress>,
-} as const;
+} as const satisfies Item;
 
 export const permitItem = {
   binary: "bytes", layout: [
@@ -35,7 +34,7 @@ export const permitItem = {
     { name: "deadline",  ...uint256Item   },
     { name: "signature", ...signatureItem },
   ],
-} as const satisfies Layout;
+} as const satisfies Item;
 export type Permit = DeriveType<typeof permitItem>;
 
 export const paddedSlotItem = <const I extends Item>(item: I) => ({

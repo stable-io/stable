@@ -4,23 +4,17 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 export {
-  type Corridor,
-  type FeeAdjustmentType,
-  type DomainChainIdPair,
-  type ExtraChainIds,
-  corridors,
-  feeAdjustmentTypes,
-} from "./common.js";
-export {
   constructorLayout,
 } from "./constructor.js";
 export {
+  type ExtraDomain,
+  type ExtraChainIds,
   chainIdsPerSlot,
   chainIdsSlotItem,
+  extraDomains,
 } from "./extraChainIds.js";
 export {
   type FeeAdjustment,
-  type FeeAdjustmentsSlot,
   feeAdjustmentsPerSlot,
   feeAdjustmentsSlotItem,
 } from "./feeAdjustments.js";
@@ -31,20 +25,13 @@ export {
 } from "./quoteRelay.js";
 export {
   type Transfer,
+  type OffChainQuote,
   type UserQuoteVariant,
   type GaslessQuoteVariant,
-  type CorridorVariant,
   transferLayout,
+  offChainQuoteLayout,
 } from "./transfer.js";
 export {
   type GovernanceCommand,
   governanceCommandArrayLayout,
 } from "./governance.js";
-export {
-  type OffChainQuote,
-  offChainQuoteLayout,
-} from "./offChainQuote.js";
-export {
-  type RouterHookData,
-  routerHookDataLayout,
-} from "./routerHookData.js";

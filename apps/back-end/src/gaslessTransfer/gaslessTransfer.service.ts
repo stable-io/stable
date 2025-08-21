@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import {
   usdcContracts,
   evmGasToken,
@@ -10,7 +11,6 @@ import {
   ContractTx,
   EvmAddress,
   permit2Address,
-  Permit2TypedData,
 } from "@stable-io/cctp-sdk-evm";
 import {
   instanceToPlain,
@@ -46,18 +46,19 @@ export class GaslessTransferService {
   ): Promise<QuoteDto> {
     const gaslessFee = await this.calculateGaslessFee(request);
 
-    let permit2TypedData: Permit2TypedData | undefined;
+    let permit2GaslessData: Permit2GaslessData | undefined;
 
     try {
-      permit2TypedData = await this.cctpRService.composeGaslessTransferMessage(
-        request,
-        gaslessFee,
-      );
+      permit2GaslessData =
+        await this.cctpRService.composeGaslessTransferMessage(
+          request,
+          gaslessFee,
+        );
     } catch (error: unknown) {
       if (!(error instanceof Error)) throw error;
 
       if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
-        permit2TypedData = undefined;
+        permit2GaslessData = undefined;
         this.logger.log(
           `Transfer Amount Less or Equal to 0 After Fees. Amount: ${
             request.amount
@@ -67,8 +68,8 @@ export class GaslessTransferService {
     }
 
     const jwtPayload: JwtPayload = {
-      willRelay: permit2TypedData !== undefined,
-      permit2TypedData,
+      willRelay: permit2GaslessData !== undefined,
+      permit2GaslessData,
       quoteRequest: instanceToPlain(request),
       gaslessFee: gaslessFee.toUnit("human").toString(),
     };
@@ -81,14 +82,14 @@ export class GaslessTransferService {
     request: RelayRequestDto,
   ): Promise<RelayTx> {
     const {
-      jwt: { quoteRequest, permit2TypedData, gaslessFee },
+      jwt: { quoteRequest, permit2GaslessData, gaslessFee },
       permit2Signature,
       permit,
     } = request;
 
     const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
       quoteRequest,
-      permit2TypedData,
+      permit2GaslessData,
       permit2Signature,
       gaslessFee,
     );

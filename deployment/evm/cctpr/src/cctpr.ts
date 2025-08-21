@@ -17,12 +17,8 @@ import {
   loadContractsFromFile,
 } from "./common.js";
 import { ChainConfig } from "./interfaces.js";
-import {
-  CctpRGovernance,
-  FeeAdjustment,
-  FeeAdjustments,
-  FeeAdjustmentType,
-} from "@stable-io/cctp-sdk-cctpr-evm";
+import { FeeAdjustmentType } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { CctpRGovernance, FeeAdjustments, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CallData, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import {
   Domain,
@@ -97,7 +93,10 @@ export function loadFeeAdjustments(): Record<FeeAdjustmentType, Partial<FeeAdjus
   };
 }
 
-export function adjustmentEquals(current: FeeAdjustment, expected: FeeAdjustment): boolean {
+export function adjustmentEquals(
+  current: layouts.FeeAdjustment,
+  expected: layouts.FeeAdjustment,
+): boolean {
   return current.absoluteUsdc.eq(expected.absoluteUsdc) &&
     current.relativePercent === expected.relativePercent;
 }

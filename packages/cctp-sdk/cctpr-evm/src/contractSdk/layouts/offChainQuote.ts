@@ -4,14 +4,14 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { Layout, DeriveType } from "binary-layout";
-import { byteSwitchLayout, Network } from "@stable-io/cctp-sdk-definitions";
+import { byteSwitchItem, Network } from "@stable-io/cctp-sdk-definitions";
+import { timestampItem } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   corridorItem,
   supportedDomainItem,
   gasDropoffItem,
   usdcItem,
   evmGasTokenItem,
-  timestampItem,
   evmDomainItem,
 } from "./common.js";
 
@@ -20,7 +20,7 @@ const relayFeeVariants = [
   [[1, "gasToken"], [{ name: "amount", ...evmGasTokenItem }]],
 ] as const;
 
-const relayFeeItem = byteSwitchLayout("chargeIn", relayFeeVariants);
+const relayFeeItem = byteSwitchItem("chargeIn", relayFeeVariants);
 
 export const offChainQuoteLayout = <N extends Network>(network: N) => [
   { name: "sourceDomain",      ...evmDomainItem                },

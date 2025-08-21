@@ -15,7 +15,7 @@ export interface StandardUnit extends UnitBase {
 }
 
 export interface Unit extends UnitBase {
-  scale:  Rationalish;
+  scale: Rationalish;
 };
 
 //A few examples regarding kinds, units, and meta-units:

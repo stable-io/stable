@@ -88,12 +88,14 @@ type ViemPublicClientOf<N extends Network, D extends DomainsOf<"Evm">> = ReturnT
 export class ViemEvmClient<N extends Network, D extends DomainsOf<"Evm">> implements
   EvmClient<N, D> {
   readonly network: N;
+  readonly platform: "Evm";
   readonly domain: D;
   readonly client: ViemPublicClientOf<N, D>;
   readonly gasTokenCtr: GasTokenCtrOf<D>;
 
   private constructor(network: N, domain: D, client: ViemPublicClientOf<N, D>) {
     this.network = network;
+    this.platform = "Evm";
     this.domain = domain;
     this.client = client;
     this.gasTokenCtr = gasTokenOf(this.domain);

@@ -4,20 +4,37 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { encoding, deserializeBigints } from "@stable-io/utils";
-import { layouts } from "@stable-io/cctp-sdk-cctpr-evm";
-import { EvmDomains, Usdc, GenericGasToken, usdc, genericGasToken, Percentage, percentage } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, Permit, Permit2TypedData } from "@stable-io/cctp-sdk-evm";
-
-import { Network } from "../types/index.js";
+import type { CctprRecipientAddress, Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
+import {
+  LoadedDomain,
+  Usdc,
+  GenericGasToken,
+  usdc,
+  genericGasToken,
+  Percentage,
+  percentage,
+  PlatformAddress,
+  PlatformOf,
+  UniversalAddress,
+  platformAddress,
+  platformOf,
+} from "@stable-io/cctp-sdk-definitions";
+import type { Permit } from "@stable-io/cctp-sdk-evm";
+import type { Network } from "../types/index.js";
 import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./base.js";
 
-export type GetQuoteParams = {
-  sourceChain: keyof EvmDomains;
-  targetChain: keyof EvmDomains;
+export type GetQuoteParams<
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+> = {
+  sourceChain: S;
+  targetChain: D;
   amount: Usdc;
-  sender: EvmAddress;
-  recipient: EvmAddress;
-  corridor: layouts.CorridorVariant["type"];
+  sender: PlatformAddress<PlatformOf<S>>;
+  recipient: CctprRecipientAddress<N, D>;
+  corridor: Corridor;
   gasDropoff: GenericGasToken;
   permit2PermitRequired: boolean;
   maxRelayFee: Usdc;
@@ -25,19 +42,27 @@ export type GetQuoteParams = {
   takeFeesFromInput: boolean;
 };
 
-export type GetQuoteResponse = {
+export type GetQuoteResponse<
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+> = {
   iat: number;
   exp: number;
-  quoteRequest: GetQuoteParams;
-  permit2TypedData: Permit2TypedData;
+  quoteRequest: GetQuoteParams<N, S, D>;
+  permit2GaslessData: Permit2GaslessData;
   gaslessFee: Usdc;
   jwt: string;
 } | undefined;
 
-export async function getTransferQuote(
+export async function getTransferQuote<
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+>(
   network: Network,
-  quoteParams: GetQuoteParams,
-): Promise<GetQuoteResponse> {
+  quoteParams: GetQuoteParams<N, S, D>,
+): Promise<GetQuoteResponse<N, S, D>> {
   const apiParams: Record<string, string> = serializeQuoteRequest(quoteParams);
 
   const endpoint = apiEndpointWithQuery(network)("gasless-transfer/quote", apiParams);
@@ -52,24 +77,31 @@ export async function getTransferQuote(
   const jwt = extractJwtFromQuoteResponse(apiResponse.value);
 
   const payload = decodeAndDeserializeJwt(jwt);
-
   if (payload.willRelay === false) {
     return undefined;
   }
 
-  const quoteRequest = deserializeQuoteRequest(payload.quoteRequest as Record<string, unknown>);
+  const quoteRequest = deserializeQuoteRequest<N, S, D>(
+    payload.quoteRequest as Record<string, unknown>,
+  );
   const gaslessFee = usdc(payload.gaslessFee! as string);
   return {
     iat: payload.iat as number,
     exp: payload.exp as number,
-    permit2TypedData: payload.permit2TypedData as Permit2TypedData,
+    permit2GaslessData: payload.permit2GaslessData as Permit2GaslessData,
     quoteRequest,
     gaslessFee,
     jwt,
   };
 }
 
-function serializeQuoteRequest(params: GetQuoteParams): Record<string, string> {
+function serializeQuoteRequest<
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+>(
+  params: GetQuoteParams<N, S, D>,
+): Record<string, string> {
   return {
     ...params,
     sourceDomain: params.sourceChain,
@@ -80,23 +112,36 @@ function serializeQuoteRequest(params: GetQuoteParams): Record<string, string> {
     recipient: params.recipient.toString(),
     gasDropoff: params.gasDropoff.toUnit("human").toString(),
     takeFeesFromInput: params.takeFeesFromInput.toString(),
-    maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6).toString(),
+    maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6),
     fastFeeRate: params.corridor === "v2Direct"
       ? params.fastFeeRate.toUnit("human").toString()
       : "0",
   };
 }
 
-function deserializeQuoteRequest(responseQuoteParams: Record<string, unknown>): GetQuoteParams {
+function deserializeQuoteRequest<
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+>(
+  responseQuoteParams: Record<string, unknown>,
+): GetQuoteParams<N, S, D> {
+  const destinationPlatform = platformOf(responseQuoteParams.targetDomain as D);
   return {
-    sourceChain: responseQuoteParams.sourceDomain as keyof EvmDomains,
-    targetChain: responseQuoteParams.targetDomain as keyof EvmDomains,
+    sourceChain: responseQuoteParams.sourceDomain as S,
+    targetChain: responseQuoteParams.targetDomain as D,
     permit2PermitRequired: responseQuoteParams.permit2PermitRequired as boolean,
     amount: usdc(responseQuoteParams.amount as string, "human"),
-    sender: new EvmAddress(responseQuoteParams.sender as string),
-    recipient: new EvmAddress(responseQuoteParams.recipient as string),
+    sender: platformAddress(
+      responseQuoteParams.sourceDomain as S,
+      responseQuoteParams.sender as string,
+    ),
+    recipient: new UniversalAddress(
+      responseQuoteParams.recipient as string,
+      destinationPlatform,
+    ),
     gasDropoff: genericGasToken(responseQuoteParams.gasDropoff as string, "human"),
-    corridor: responseQuoteParams.corridor as layouts.CorridorVariant["type"],
+    corridor: responseQuoteParams.corridor as Corridor,
     takeFeesFromInput: responseQuoteParams.takeFeesFromInput as boolean,
     maxRelayFee: usdc(responseQuoteParams.maxRelayFee as string),
     fastFeeRate: percentage(responseQuoteParams.fastFeeRate as string || "0"),

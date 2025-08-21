@@ -3,41 +3,61 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { SupportedDomain } from "./constants.js";
+import type { TODO } from "@stable-io/utils";
+import { Amount } from "@stable-io/amount";
 import type {
-  Usdc,
-  GasTokenOf,
-  Duration,
   Network,
-  Percentage,
+  PlatformOf,
+  PlatformAddress,
+  GasTokenOf,
 } from "@stable-io/cctp-sdk-definitions";
+import { gasTokenKindOf, platformOf } from "@stable-io/cctp-sdk-definitions";
+import type { SupportedDomain } from "./constants.js";
+import { gasDropoffLimitOf } from "./constants.js";
+import type {
+  RegisteredCctprPlatform,
+  LoadedCctprPlatformDomain,
+  CctprRecipientAddress,
+} from "./registry.js";
+import { platformCctpr } from "./registry.js";
+import type { InOrOut, QuoteBase, CorridorParamsBase } from "./common.js";
 
-type CorridorStats<N extends Network, D extends SupportedDomain<N>> = {
-  cost: { relay: [usdcCost: Usdc, gasCost: GasTokenOf<D>]; fast?: Percentage };
-  transferTime: Duration;
-};
-
-export const getCorridors = <N extends Network>(network: N) => async function<
-  S extends SupportedDomain<N>,
+export const transfer = <
+  N extends Network,
+  P extends RegisteredCctprPlatform,
+  S extends LoadedCctprPlatformDomain<N, P>,
   D extends SupportedDomain<N>,
-  //... provider<S>,
-  //... circleApi
 >(
-  sourceDomain: S,
-  destinationDomain: D,
-  gasDropoff?: GasTokenOf<D>,
-): Promise<CorridorStats<N, S>[]> {
-  //overloaded: requires amount but only if S is a v2 chain (and not Avalanche)
-  //TODO impl
-  //check if gas dropoff is supported and below max
-  return await Promise.resolve([]);
-};
+  network: N,
+  source: S,
+  destination: D,
+  sender: PlatformAddress<P>,
+  recipient: CctprRecipientAddress<N, D>,
+  inOrOut: InOrOut,
+  corridor: CorridorParamsBase<N, PlatformOf<S>, S, D>,
+  quote: QuoteBase<N, PlatformOf<S>, S>,
+  gasDropoff: GasTokenOf<D>,
+  options: TODO,
+): AsyncGenerator<TODO, TODO> => {
+  const platform = platformOf(source);
+  const gasDropoffLimit = Amount.ofKind(gasTokenKindOf(destination))(
+    gasDropoffLimitOf[network][destination],
+  );
+  if (gasDropoff.gt(gasDropoffLimit as TODO)) {
+    throw new Error("Gas Drop Off Limit Exceeded");
+  }
 
-// export async function* transfer<
-//   const S extends SupportedDomain,
-//   const D extends SupportedDomain,
-//   //... provider<S>,
-// >(sourceDomain: S, destinationDomain: D, amount: number):
-// Promise<AsyncGenerator<WalletInteractionPrepper<PlatformOf<S>>>> {
-//   yield 1;
-// }
+  const cctprImpl = platformCctpr(platform);
+  return cctprImpl.transfer(
+    network,
+    source,
+    destination,
+    sender,
+    recipient,
+    inOrOut,
+    corridor,
+    quote,
+    gasDropoff,
+    options,
+  );
+};

@@ -81,9 +81,6 @@ import type {
 import { range, zip } from "./array.js";
 import type { RoTuple, RoNeTuple, RoArray, RoPair, HeadTail, Widen } from "./metaprogramming.js";
 
-export type ShallowMapping<M extends RoTuple<readonly [PropertyKey, unknown]>> =
-  { readonly [E in M[number] as E[0]]: E[1] };
-
 //symbol probably shouldn't be part of the union (but then our type isn't a superset of PropertyKey
 //  anymore which comes with its own set of headaches)
 export type MappableKey = PropertyKey | bigint | boolean;

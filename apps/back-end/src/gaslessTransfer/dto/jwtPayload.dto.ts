@@ -1,6 +1,6 @@
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
 import { usdc } from "@stable-io/cctp-sdk-definitions";
-import type { Permit2TypedData } from "@stable-io/cctp-sdk-evm";
+import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { IsNotEmpty, IsObject, ValidateNested } from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";
 import { IsUsdcAmount } from "../../common/validators";
@@ -13,7 +13,7 @@ export class JwtPayloadDto {
   // signature and we won't be manipulating it
   @IsObject()
   @IsNotEmpty()
-  readonly permit2TypedData!: Permit2TypedData;
+  readonly permit2GaslessData!: Permit2GaslessData;
 
   /**
    * Original quote request parameters

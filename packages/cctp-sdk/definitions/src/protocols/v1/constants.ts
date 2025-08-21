@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { ContractName, Domain, Network } from "../../constants/index.js";
-import { constMap, MapLevels } from "@stable-io/map-utils";
+import { constMap, MapLevels, RoArray } from "@stable-io/map-utils";
 
 export const contractEntries = [[
   "Mainnet", [[
@@ -97,6 +97,10 @@ export const contractAddressOf = constMap(contractEntries);
 export const supportedDomains = constMap(contractEntries, [0, 1]);
 export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDomains<N>>[number];
 
+export const isSupportedDomain = <N extends Network>(network: N) =>
+  (domain: Domain): domain is SupportedDomain<N> =>
+    (supportedDomains(network) as RoArray<Domain>).includes(domain);
+
 // See https://developers.circle.com/stablecoins/required-block-confirmations
 export const attestationTimeEstimates = {
   Mainnet:{
@@ -129,5 +133,6 @@ export const attestationTimeEstimates = {
 
 export const init = <N extends Network>(network: N) => ({
   contractAddressOf: contractAddressOf.subMap(network),
+  isSupportedDomain: isSupportedDomain(network),
   attestationTimeEstimates: attestationTimeEstimates[network],
 } as const);

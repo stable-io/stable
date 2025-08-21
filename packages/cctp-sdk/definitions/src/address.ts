@@ -5,8 +5,8 @@
 
 import type { Size } from "@stable-io/utils";
 import { encoding, isUint8Array } from "@stable-io/utils";
-import type { PlatformRegistry, RegisteredPlatform, LoadedDomain } from "./registry.js";
-import type { Platform, PlatformOf } from "./constants/chains/index.js";
+import type { PlatformRegistry, RegisteredPlatform, LoadedDomain, ToPlatform } from "./registry.js";
+import type { Platform, PlatformOf, Domain } from "./constants/chains/index.js";
 import { platformOf, addressFormatOf } from "./constants/chains/platforms.js";
 
 export interface AddressSubclass<T extends Address> {
@@ -32,8 +32,8 @@ export interface Address {
 }
 
 export type PlatformAddress<P extends RegisteredPlatform> = PlatformRegistry[P]["Address"];
-type ToPlatform<T extends LoadedDomain | RegisteredPlatform> =
-  T extends LoadedDomain ? PlatformOf<T> : T;
+
+export type UniversalAddressish = string | Uint8Array | UniversalAddress;
 
 export class UniversalAddress implements Address {
   static readonly byteSize = 32 as Size;
@@ -48,7 +48,7 @@ export class UniversalAddress implements Address {
 
   constructor(address: string, platform?: Platform);
   constructor(address: Uint8Array | UniversalAddress);
-  constructor(address: string | Uint8Array | UniversalAddress, platform?: Platform) {
+  constructor(address: UniversalAddressish, platform?: Platform) {
     this.address = (() => {
       if (typeof address === "string") {
         const [size, format] = platform ? addressFormatOf(platform) : [32, "hex"] as const;
@@ -106,8 +106,8 @@ export class UniversalAddress implements Address {
 }
 UniversalAddress satisfies AddressSubclass<UniversalAddress>;
 
-export type UniversalOrNative<T extends LoadedDomain | RegisteredPlatform> =
-  UniversalAddress | PlatformAddress<ToPlatform<T>>;
+export type UniversalOrNative<T extends Domain | Platform> = UniversalAddress |
+  (T extends LoadedDomain | RegisteredPlatform ? PlatformAddress<ToPlatform<T>> : never);
 
 export type DomainAddress<
   D extends LoadedDomain,
@@ -117,12 +117,13 @@ export type DomainAddress<
   readonly address: A;
 };
 
-export type PlatformAddressCtr = new (ua: UniversalAddress | string | Uint8Array) => Address;
-const platformAddrFactory = new Map<Platform, PlatformAddressCtr>();
+export type PlatformAddressCtr<P extends RegisteredPlatform> = new (
+  ua: UniversalAddress | string | Uint8Array | PlatformAddress<P>) => Address;
+const platformAddrFactory = new Map<Platform, PlatformAddressCtr<any>>();
 
-export function registerPlatformAddress<const P extends Platform>(
+export function registerPlatformAddress<const P extends RegisteredPlatform>(
   platform: P,
-  ctr: PlatformAddressCtr,
+  ctr: PlatformAddressCtr<P>,
 ): void {
   if (platformAddrFactory.has(platform))
     throw new Error(`Address type for platform ${platform} has already been registered`);
@@ -132,7 +133,7 @@ export function registerPlatformAddress<const P extends Platform>(
 
 export function platformAddress<const T extends LoadedDomain | RegisteredPlatform>(
   domainOrPlatform: T,
-  address: string | Uint8Array | UniversalAddress,
+  address: string | Uint8Array | UniversalAddress | PlatformAddress<ToPlatform<T>>,
 ): PlatformAddress<ToPlatform<T>> {
   const platform = platformOf.get(domainOrPlatform) ?? domainOrPlatform as Platform;
   const addrCtr = platformAddrFactory.get(platform)!;

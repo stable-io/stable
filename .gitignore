@@ -1,6 +1,9 @@
 # OS
 .DS_Store
 
+# Git
+.worktrees
+
 # Sensitive files
 .env*
 !.env*.example

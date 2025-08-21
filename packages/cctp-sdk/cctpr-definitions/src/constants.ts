@@ -3,9 +3,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { MapLevels } from "@stable-io/map-utils";
-import { constMap } from "@stable-io/map-utils";
-import type { Domain, Network } from "@stable-io/cctp-sdk-definitions";
+import type { Intersect, MapLevels, RoTuple } from "@stable-io/map-utils";
+import { constMap, intersect } from "@stable-io/map-utils";
+import type { Domain, Network, Platform, DomainsOf } from "@stable-io/cctp-sdk-definitions";
+import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 
 export const contractAddressEntries = [[
   "Mainnet", [
@@ -14,7 +15,7 @@ export const contractAddressEntries = [[
     ["Optimism",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Arbitrum",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Base",       "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
-    ["Solana",     undefined],
+    ["Solana",     ""],
     ["Polygon",    "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
@@ -30,7 +31,7 @@ export const contractAddressEntries = [[
     ["Optimism",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Arbitrum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Base",       "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    // ["Solana",     undefined],
+    ["Solana",     ""],
     ["Polygon",    "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
@@ -43,9 +44,28 @@ export const contractAddressEntries = [[
 ] as const satisfies MapLevels<[Network, Domain, string | undefined]>;
 
 export const contractAddressOf = constMap(contractAddressEntries);
-
 export const supportedDomains = constMap(contractAddressEntries, [0, 1]);
 export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDomains<N>>[number];
+
+//used to tie the following two types together
+type SupportedPlatformDomainImpl<N extends Network, P extends Platform> =
+  SupportedDomain<N> & DomainsOf<P>;
+
+//to nip complaints about overly long inferred types in the bud
+export type SupportedPlatformDomainTuple<N extends Network, P extends Platform> =
+  Intersect<ReturnType<typeof domainsOf<P>>, ReturnType<typeof supportedDomains<N>>> extends
+    infer DT extends RoTuple<SupportedPlatformDomainImpl<N, P>> ? DT : never;
+
+export type SupportedPlatformDomain<N extends Network, P extends Platform> =
+  SupportedPlatformDomainTuple<N, P>[number] extends infer R
+    extends SupportedPlatformDomainImpl<N, P>
+  ? R
+  : never;
+
+export const supportedPlatformDomains =
+  <N extends Network, P extends Platform>(network: N, platform: P):
+    SupportedPlatformDomainTuple<N, P> =>
+      intersect(domainsOf(platform), supportedDomains(network)) as any;
 
 export const avaxRouterContractAddress = {
   Mainnet: "0x80af48cb7e3c18da42d151f7c1aa215e63bfd8f0",
@@ -59,12 +79,13 @@ export const relayOverheadOf = {
     Optimism:   5.92,
     Arbitrum:   4.49,
     Base:       5.34,
-    Polygon:    7.22,
     Solana:     6, // TODO: Adjust
+    Polygon:    7.22,
     Sui:        6, // TODO: Adjust
     Aptos:      6, // TODO: Adjust
     Unichain:   6.45,
     Linea:      7.22,
+    Codex:      6, // TODO: Adjust
     Sonic:      6.95,
     Worldchain: 6.59,
   },
@@ -74,12 +95,15 @@ export const relayOverheadOf = {
     Optimism:  3.05,
     Arbitrum:  2.78,
     Base:      3.11,
-    Polygon:   3.49,
     Solana:    6, // TODO: Adjust
+    Polygon:   3.49,
     Sui:       6, // TODO: Adjust
     Aptos:     6, // TODO: Adjust
     Unichain:  7.73,
     Linea:     6.06,
+    Codex:      6, // TODO: Adjust
+    Sonic:      6.95,
+    Worldchain: 6.59,
   },
 } as const satisfies Record<Network, Record<string, number>>;
 

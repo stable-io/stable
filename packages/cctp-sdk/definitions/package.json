@@ -32,7 +32,7 @@
   "dependencies": {
     "@stable-io/map-utils": "workspace:^",
     "@stable-io/utils": "workspace:^",
-    "binary-layout": "^1.2.2"
+    "binary-layout": "^1.3.1"
   },
   "publishConfig": {
     "access": "public"

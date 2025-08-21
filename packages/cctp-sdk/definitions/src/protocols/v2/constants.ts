@@ -38,15 +38,19 @@ export const contractEntries = [[
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
+    "Solana", [
+      ["messageTransmitter", "CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC"],
+      ["tokenMessenger",     "CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe"],
+    ]], [
     "Linea", [
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
-    "Sonic", [
+    "Codex", [
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
-    "Codex", [
+    "Sonic", [
       ["messageTransmitter", "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64"],
       ["tokenMessenger",     "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d"],
     ]], [
@@ -84,15 +88,19 @@ export const contractEntries = [[
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
+    "Solana", [
+      ["messageTransmitter", "CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC"],
+      ["tokenMessenger",     "CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe"],
+    ]], [
     "Linea", [
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
-    "Sonic", [
+    "Codex", [
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
-    "Codex", [
+    "Sonic", [
       ["messageTransmitter", "0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275"],
       ["tokenMessenger",     "0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA"],
     ]], [
@@ -110,7 +118,7 @@ export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDoma
 
 export const isSupportedDomain = <N extends Network>(network: N) =>
   (domain: Domain): domain is SupportedDomain<N> =>
-  (supportedDomains(network) as RoArray<Domain>).includes(domain);
+    (supportedDomains(network) as RoArray<Domain>).includes(domain);
 
 export const fastDomains = ["Avalanche"] as const satisfies RoArray<Domain>;
 export type FastDomain = typeof fastDomains[number];
@@ -143,6 +151,10 @@ export const attestationTimeEstimates = {
     Optimism:   0.85,
     Unichain:   8,    // TODO
     Polygon:    9.04,
+    Worldchain: 8, // TODO
+    Sonic:      8, // TODO
+    Codex:      8, // TODO
+    Sei:        8, // TODO
   },
 } as const satisfies Record<Network, Record<string, number>>;
 

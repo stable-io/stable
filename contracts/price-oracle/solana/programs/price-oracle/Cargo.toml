@@ -1,0 +1,36 @@
+[package]
+name = "solana-price-oracle"
+version = "0.2.0"
+description = "The program holding the prices for the EVM chains"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "solana_price_oracle"
+
+[features]
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+custom-heap = []
+custom-panic = []
+anchor-debug = []
+# Networks:
+mainnet = []
+testnet = []
+
+[dependencies]
+anchor-lang = { version = "0.31.1", features = [
+    "init-if-needed",
+] }
+cfg-if = "1"
+anchor-extra-util = { path = "../../magic/anchor-extra-util" }
+
+[build-dependencies]
+serde = "1"
+serde_json = "1"
+anyhow = "1"
+ed25519-dalek = "1.0.1" # Same as in the Solana dependencies
+bs58 = "0.5.1"

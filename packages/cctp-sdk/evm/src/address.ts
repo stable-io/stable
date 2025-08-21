@@ -5,21 +5,25 @@
 
 import type { Address } from "@stable-io/cctp-sdk-definitions";
 import { UniversalAddress } from "@stable-io/cctp-sdk-definitions";
-import type { Text } from "@stable-io/utils";
+import type { Text, Size } from "@stable-io/utils";
 import { encoding, isUint8Array } from "@stable-io/utils";
 import { isAddress, getAddress } from "viem/utils"; // TODO: Remove this dependency?
 
+export type RawAddress = `0x${string}`;
+
+export type EvmAddressish = string | Uint8Array | UniversalAddress | EvmAddress;
+
 export class EvmAddress implements Address {
-  static readonly byteSize = 20;
+  static readonly byteSize = 20 as Size;
   static readonly zeroAddress = new EvmAddress(new Uint8Array(EvmAddress.byteSize));
 
   static isValidAddress(address: string): boolean {
     return isAddress(address);
   }
 
-  private readonly address: `0x${string}`; //stored as checksum address
+  private readonly address: RawAddress; //stored as checksum address
 
-  constructor(address: string | Uint8Array | UniversalAddress | EvmAddress) {
+  constructor(address: EvmAddressish) {
     this.address = (() => {
       if (typeof address === "string") {
         if (!EvmAddress.isValidAddress(address))
@@ -52,11 +56,11 @@ export class EvmAddress implements Address {
     })();
   }
 
-  unwrap(): `0x${string}` {
+  unwrap(): RawAddress {
     return this.address;
   }
 
-  toString(): `0x${string}` {
+  toString(): RawAddress {
     return this.address;
   }
 
@@ -66,6 +70,10 @@ export class EvmAddress implements Address {
 
   toUniversalAddress(): UniversalAddress {
     return new UniversalAddress(this.address, "Evm");
+  }
+
+  equals(other: EvmAddress): boolean {
+    return this.address === other.address;
   }
 
   private static invalid(address: string, cause: Text) {
