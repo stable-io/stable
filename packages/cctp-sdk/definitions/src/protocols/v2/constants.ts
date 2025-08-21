@@ -118,7 +118,7 @@ export type SupportedDomain<N extends Network> = ReturnType<typeof supportedDoma
 
 export const isSupportedDomain = <N extends Network>(network: N) =>
   (domain: Domain): domain is SupportedDomain<N> =>
-  (supportedDomains(network) as RoArray<Domain>).includes(domain);
+    (supportedDomains(network) as RoArray<Domain>).includes(domain);
 
 export const fastDomains = ["Avalanche"] as const satisfies RoArray<Domain>;
 export type FastDomain = typeof fastDomains[number];
