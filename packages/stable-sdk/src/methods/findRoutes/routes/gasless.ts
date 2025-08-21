@@ -12,7 +12,7 @@ import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
-import { GetQuoteParams, getTransferQuote } from "../../../gasless/api.js";
+import { GetQuoteParams, GetQuoteResponse, getTransferQuote } from "../../../api/gasless.js";
 import { transferWithGaslessRelay } from "../../../gasless/transfer.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
@@ -28,6 +28,9 @@ import { TransferProgressEmitter } from "../../../progressEmitter.js";
  */
 const PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD = 1_000_000_000;
 
+/**
+ * Can return undefined if the route can't be satisfied
+ */
 export async function buildGaslessRoute<
   N extends Network,
   S extends LoadedDomain,
@@ -36,7 +39,7 @@ export async function buildGaslessRoute<
   evmClient: ViemEvmClient<N, S>,
   intent: Intent<N, S, D>,
   corridor: CorridorStats<N, S, Corridor>,
-): Promise<Route<N, S, D>> {
+): Promise<Route<N, S, D> | undefined> {
   if (intent.paymentToken !== "usdc")
     throw new Error("Gasless Transfer can't be paid in native token");
 
@@ -68,11 +71,20 @@ export async function buildGaslessRoute<
     transferParams,
   );
 
+  if (quote === undefined) return quote;
+
+  // all gasless fees are in usdc.
+  const fees = [quote.gaslessFee, ...corridorFees] as Usdc[];
+
+  const totalFee = fees.reduce((acc, f) => acc.add(f), usdc(0));
+
+  // TODO: In the future it'd be nice to let the user know
+  //       what's the minimal amount we'll relay for.
+  if (intent.amount.le(totalFee)) return undefined;
+
   const tokenAllowanceSteps = permit2PermitRequired
     ? [signPermitStep(intent.sourceChain)]
     : [];
-
-  const totalFees = [quote.gaslessFee, ...corridorFees];
 
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
@@ -81,12 +93,12 @@ export async function buildGaslessRoute<
 
   return {
     intent,
-    fees: totalFees,
+    fees,
     estimatedDuration: corridor.transferTime,
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost(routeSteps, totalFees),
+    estimatedTotalCost: await calculateTotalCost(evmClient.network, routeSteps, fees),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(

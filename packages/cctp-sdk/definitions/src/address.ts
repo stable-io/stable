@@ -117,12 +117,13 @@ export type DomainAddress<
   readonly address: A;
 };
 
-export type PlatformAddressCtr = new (ua: UniversalAddress | string | Uint8Array) => Address;
-const platformAddrFactory = new Map<Platform, PlatformAddressCtr>();
+export type PlatformAddressCtr<P extends RegisteredPlatform> = new (
+  ua: UniversalAddress | string | Uint8Array | PlatformAddress<P>) => Address;
+const platformAddrFactory = new Map<Platform, PlatformAddressCtr<any>>();
 
-export function registerPlatformAddress<const P extends Platform>(
+export function registerPlatformAddress<const P extends RegisteredPlatform>(
   platform: P,
-  ctr: PlatformAddressCtr,
+  ctr: PlatformAddressCtr<P>,
 ): void {
   if (platformAddrFactory.has(platform))
     throw new Error(`Address type for platform ${platform} has already been registered`);
@@ -132,7 +133,7 @@ export function registerPlatformAddress<const P extends Platform>(
 
 export function platformAddress<const T extends LoadedDomain | RegisteredPlatform>(
   domainOrPlatform: T,
-  address: string | Uint8Array | UniversalAddress,
+  address: string | Uint8Array | UniversalAddress | PlatformAddress<ToPlatform<T>>,
 ): PlatformAddress<ToPlatform<T>> {
   const platform = platformOf.get(domainOrPlatform) ?? domainOrPlatform as Platform;
   const addrCtr = platformAddrFactory.get(platform)!;

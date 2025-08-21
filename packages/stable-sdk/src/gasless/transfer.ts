@@ -8,7 +8,7 @@ import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 import { Intent } from "../types/index.js";
-import { postTransferRequest } from "./api.js";
+import { postTransferRequest } from "../api/gasless.js";
 import { GaslessTransferData } from "src/methods/findRoutes/steps.js";
 
 export async function* transferWithGaslessRelay<

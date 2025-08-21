@@ -99,12 +99,16 @@ abstract contract CctpRUser is CctpRQuote {
     _tokenMessengerV2 = ITokenMessengerV2(tokenMessengerV2);
     _avaxRouter       = toUniversalAddress(avaxRouter);
     _permit2          = IPermit2(permit2);
-    _sourceDomain     = uint8(_tokenMessengerV1.localMessageTransmitter().localDomain());
 
-    if (tokenMessengerV1 != address(0))
+    if (tokenMessengerV1 != address(0)) {
+      _sourceDomain = uint8(_tokenMessengerV1.localMessageTransmitter().localDomain());
       _usdc.approve(tokenMessengerV1, type(uint256).max);
-    if (tokenMessengerV2 != address(0))
+    }
+    if (tokenMessengerV2 != address(0)) {
+      if (tokenMessengerV1 == address(0))
+        _sourceDomain = uint8(_tokenMessengerV2.localMessageTransmitter().localDomain());
       _usdc.approve(tokenMessengerV2, type(uint256).max);
+    }
   }
 
   function _redeemUserPermit(

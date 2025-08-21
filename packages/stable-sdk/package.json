@@ -1,12 +1,17 @@
 {
   "name": "@stable-io/sdk",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "main": "./dist/esm/index.js",
   "type": "module",
   "license": "MPL-2.0",
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist",
+    "!*.test.*",
+    "README.md"
+  ],
   "scripts": {
     "prepublishOnly": "eslint . && jest && yarn run build",
     "build": "tsc --build ./tsconfig.build.esm.json",

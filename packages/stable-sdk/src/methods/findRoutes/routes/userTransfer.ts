@@ -4,7 +4,6 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import type {
   EvmDomains,
-  GasTokenOf,
   PlatformAddress,
   RegisteredPlatform,
   PlatformOf,
@@ -15,6 +14,7 @@ import {
   platformAddress,
   platformClient,
   platformOf,
+  usdc,
 } from "@stable-io/cctp-sdk-definitions";
 import { getTokenAllowance } from "@stable-io/cctp-sdk-evm";
 import { init as initCctpr, platformCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
@@ -39,6 +39,9 @@ import type {
 } from "../../../types/index.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 
+/**
+ * Can return undefined if the route can't be satisfied.
+ */
 export async function buildUserTransferRoute<
   N extends Network,
   P extends RegisteredPlatform,
@@ -48,7 +51,7 @@ export async function buildUserTransferRoute<
   network: N,
   intent: Intent<N, S, D>,
   corridor: CorridorStats<N, keyof EvmDomains, Corridor>,
-): Promise<Route<N, S, D>> {
+): Promise<Route<N, S, D> | undefined> {
   const platform = platformOf(intent.sourceChain);
   const cctprImpl = platformCctpr(platform);
   const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
@@ -62,7 +65,16 @@ export async function buildUserTransferRoute<
   } as QuoteBase<N, PlatformOf<S>, S>; // @todo: remove cast
 
   const usdcFees = corridorFees.filter(fee => fee.kind.name === "Usdc") as Usdc[];
-  const totalUsdcValue = usdcFees.reduce((acc, fee) => acc.add(fee), intent.amount);
+  const totalUsdcValue = usdcFees.reduce((acc, fee) => acc.add(fee), usdc(0));
+
+  if (intent.amount.le(totalUsdcValue)) {
+    // the user is trying to transfer an amount lesser than the usdc fees to pay
+    // so we won't relay because they can't cover the cost.
+
+    // TODO: In the future it'd be nice to let the user know what's the minimum
+    //       amount we are willing to relay for.
+    return undefined;
+  }
 
   const allowanceRequired = await cctprRequiresAllowance(
     network,
@@ -81,7 +93,12 @@ export async function buildUserTransferRoute<
 
   const routeSteps = [
     ...tokenAllowanceSteps,
-    buildTransferStep(corridor.corridor, intent.sourceChain),
+    await buildTransferStep(
+      network,
+      corridor.corridor,
+      intent.sourceChain,
+      intent.usePermit,
+    ),
   ];
 
   const inOrOut: InOrOut = {
@@ -98,9 +115,10 @@ export async function buildUserTransferRoute<
     fees: corridorFees,
     estimatedDuration: corridor.transferTime,
     corridor: corridor.corridor,
-    requiresMessageSignature: true,
+    requiresMessageSignature: intent.usePermit,
     steps: routeSteps,
     estimatedTotalCost: await calculateTotalCost(
+      network,
       routeSteps,
       corridorFees,
     ),
@@ -148,7 +166,7 @@ async function cctprRequiresAllowance<
      *        but at runtime it is. Figure out what's up.
      */
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    (cctpr.contractAddressOf as any)(sourceChain),
+    (cctpr.contractAddressOf as TODO)(sourceChain),
   );
 
   const allowance = await getTokenAllowance(

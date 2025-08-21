@@ -3,9 +3,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { ViemSigner } from "../src/signer/viemSigner.js";
+import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
-import StableSDK from "../src/index.js";
+import StableSDK from "../index.js";
 import { Address } from "viem";
 import dotenv from "dotenv";
 

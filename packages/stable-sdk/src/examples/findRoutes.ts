@@ -6,10 +6,10 @@
 import dotenv from "dotenv";
 import { privateKeyToAccount } from "viem/accounts";
 
-import StableSDK from "../src/index.js";
+import StableSDK from "../index.js";
 import { Address } from "viem";
-import { ViemSigner } from "../src/signer/viemSigner.js";
-import { bigintReplacer } from "../src/utils.js";
+import { ViemSigner } from "../signer/viemSigner.js";
+import { bigintReplacer } from "../utils.js";
 
 dotenv.config();
 const privateKey = process.env.EVM_PRIVATE_KEY as Address;

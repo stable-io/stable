@@ -9,34 +9,33 @@ import type { Domain, Network, Platform, DomainsOf } from "@stable-io/cctp-sdk-d
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 
 export const contractAddressEntries = [[
-  //TODO
   "Mainnet", [
-    ["Ethereum",   undefined],
-    ["Avalanche",  undefined],
-    ["Optimism",   undefined],
-    ["Arbitrum",   undefined],
-    ["Base",       undefined],
+    ["Ethereum",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Avalanche",  "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Optimism",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Arbitrum",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Base",       "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Solana",     ""],
-    ["Polygon",    undefined],
+    ["Polygon",    "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
-    ["Unichain",   undefined],
-    ["Linea",      undefined],
+    ["Unichain",   "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Linea",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Codex",      undefined],
-    ["Sonic",      undefined],
-    ["Worldchain", undefined],
+    ["Sonic",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Worldchain", "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
   ]], [
   "Testnet", [
-    ["Ethereum",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
-    ["Avalanche",  "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    ["Optimism",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
-    ["Arbitrum",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
-    ["Base",       "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    ["Ethereum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Avalanche",  "0xc56ec809bb285cd69ddc9e99e6a46975d04527c7"],
+    ["Optimism",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Arbitrum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Base",       "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Solana",     ""],
-    ["Polygon",    "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    ["Polygon",    "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
-    ["Unichain",   "0x6f15237908e4f284eaddaa5d10d94ea5988f2010"],
+    ["Unichain",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Linea",      undefined],
     ["Codex",      undefined],
     ["Sonic",      undefined],
@@ -69,42 +68,42 @@ export const supportedPlatformDomains =
       intersect(domainsOf(platform), supportedDomains(network)) as any;
 
 export const avaxRouterContractAddress = {
-  Mainnet: "0x", //TODO
-  Testnet: "0x6f097674abc0895f9ec2cff13c8312492cf09815",
+  Mainnet: "0x80af48cb7e3c18da42d151f7c1aa215e63bfd8f0",
+  Testnet: "0x4cfa05575695dc4383973e02af0c261dec65a948",
 } as const satisfies Record<Network, `0x${string}` | undefined>;
 
 export const relayOverheadOf = {
   Mainnet: {
-    Ethereum:   30, // TODO: Adjust
-    Avalanche:  30, // TODO: Adjust
-    Optimism:   30, // TODO: Adjust
-    Arbitrum:   30, // TODO: Adjust
-    Base:       30, // TODO: Adjust
-    Solana:     30, // TODO: Adjust
-    Polygon:    30, // TODO: Adjust
-    Sui:        30, // TODO: Adjust
-    Aptos:      30, // TODO: Adjust
-    Unichain:   30, // TODO: Adjust
-    Linea:      30, // TODO: Adjust
-    Codex:      30, // TODO: Adjust
-    Sonic:      30, // TODO: Adjust
-    Worldchain: 30, // TODO: Adjust
-  },
-  Testnet: {
-    Ethereum:   6, // TODO: Adjust
-    Avalanche:  6, // TODO: Adjust
-    Optimism:   6, // TODO: Adjust
-    Arbitrum:   6, // TODO: Adjust
-    Base:       6, // TODO: Adjust
+    Ethereum:   12.35,
+    Avalanche:  8.32,
+    Optimism:   5.92,
+    Arbitrum:   4.49,
+    Base:       5.34,
     Solana:     6, // TODO: Adjust
-    Polygon:    6, // TODO: Adjust
+    Polygon:    7.22,
     Sui:        6, // TODO: Adjust
     Aptos:      6, // TODO: Adjust
-    Unichain:   6, // TODO: Adjust
-    Linea:      6, // TODO: Adjust
+    Unichain:   6.45,
+    Linea:      7.22,
     Codex:      6, // TODO: Adjust
-    Sonic:      6, // TODO: Adjust
-    Worldchain: 6, // TODO: Adjust
+    Sonic:      6.95,
+    Worldchain: 6.59,
+  },
+  Testnet: {
+    Ethereum:  13.2,
+    Avalanche: 5.27,
+    Optimism:  3.05,
+    Arbitrum:  2.78,
+    Base:      3.11,
+    Solana:    6, // TODO: Adjust
+    Polygon:   3.49,
+    Sui:       6, // TODO: Adjust
+    Aptos:     6, // TODO: Adjust
+    Unichain:  7.73,
+    Linea:     6.06,
+    Codex:      6, // TODO: Adjust
+    Sonic:      6.95,
+    Worldchain: 6.59,
   },
 } as const satisfies Record<Network, Record<string, number>>;
 
@@ -115,7 +114,7 @@ export const gasDropoffLimitOf = {
     Optimism:   0.00151,
     Arbitrum:   0.00151,
     Base:       0.00151,
-    Solana:     0.1,
+    Solana:     0.15,
     Polygon:    0.00151,
     // Sui:        30,
     // Aptos:      30,
@@ -126,12 +125,12 @@ export const gasDropoffLimitOf = {
     Worldchain: 0.00151,
   },
   Testnet: {
-    Ethereum:   0.01509,
+    Ethereum:   0.00151,
     Avalanche:  0.00151,
     Optimism:   0.00151,
     Arbitrum:   0.00151,
     Base:       0.00151,
-    Solana:     0.1,
+    Solana:     0.15,
     Polygon:    0.00151,
     // Sui:        30,
     // Aptos:      30,

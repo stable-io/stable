@@ -80,4 +80,6 @@ export interface Route<
 
 export type SupportedRoute<
   N extends Network,
-> = Route<N, LoadedCctprDomain<N>, SupportedDomain<N>>;
+  S extends LoadedCctprDomain<N> = LoadedCctprDomain<N>,
+  D extends SupportedDomain<N> = SupportedDomain<N>,
+> = Route<N, S, D>;

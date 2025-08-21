@@ -10,34 +10,34 @@ import type { Network } from "../../types/index.js";
 import type { CctpAttestation } from "./findTransferAttestation.js";
 import { parseAbiItem } from "viem/utils";
 import type { Hex } from "viem";
-import type { Redeem } from "src/types/redeem.js";
-import type { PollingConfig } from "../../utils.js";
-import { pollUntil } from "../../utils.js";
+import type { Receive } from "src/types/receive.js";
+import { pollUntil, type PollingConfig } from "@stable-io/utils";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 
-const redeemScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
+const receiveScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
   // Around 40s for each chain, depending on their block time
   Ethereum: 4n,
   Avalanche: 20n,
   Optimism: 20n,
   Arbitrum: 180n,
   Base: 20n,
-  Polygon: 210n,
-  Unichain: 180n,
+  Polygon: 20n,
+  Unichain: 20n,
   Linea: 20n,
   Codex: 20n, // couldn't find blocktime data. just guessing for this one.
   Sonic: 40n,
   Worldchain: 20n,
 };
 
-export async function findTransferRedeem<N extends Network>(
+export async function findTransferReceive<N extends Network>(
   network: N,
   rpcUrl: Url,
   attestation: CctpAttestation,
   config: PollingConfig = {},
-): Promise<Redeem> {
+): Promise<Receive> {
   const defaultConfig: PollingConfig = {
-    baseDelayMs: 2000,
+    baseDelayMs: 300,
+    maxDelayMs: 1200,
   };
   const { cctpVersion, nonce, sourceDomain, targetDomain } = attestation;
   const viemEvmClient = ViemEvmClient.fromNetworkAndDomain(
@@ -46,18 +46,18 @@ export async function findTransferRedeem<N extends Network>(
     rpcUrl,
   );
 
-  let fromBlock = await viemEvmClient.getLatestBlock() - redeemScanBufferPerChain[targetDomain];
+  let fromBlock = await viemEvmClient.getLatestBlock() - receiveScanBufferPerChain[targetDomain];
   return await pollUntil(async () => {
     const [latestBlock, logs] = await Promise.all([
       viemEvmClient.getLatestBlock(),
       cctpVersion === 1 ?
-        getV1RedeemLogs(network, viemEvmClient, nonce, targetDomain, fromBlock) :
-        await getV2RedeemLogs(network, viemEvmClient, nonce, targetDomain, fromBlock),
+        getV1ReceiveLogs(network, viemEvmClient, nonce, targetDomain, fromBlock) :
+        await getV2ReceiveLogs(network, viemEvmClient, nonce, targetDomain, fromBlock),
     ]);
 
     const filteredLogs = logs.filter(log => log.args.sourceDomain === domainIdOf(sourceDomain));
     if (filteredLogs.length > 1) {
-      throw new Error(`Found multiple ${filteredLogs.length} redeem logs for the same nonce.`);
+      throw new Error(`Found multiple ${filteredLogs.length} receive logs for the same nonce.`);
     }
 
     fromBlock = latestBlock;
@@ -77,7 +77,7 @@ const v1MessageReceivedEvent = parseAbiItem(
   "event MessageReceived(address indexed caller,uint32 sourceDomain,uint64 indexed nonce,bytes32 sender,bytes messageBody)",
 );
 
-async function getV1RedeemLogs<
+async function getV1ReceiveLogs<
   N extends Network,
   D extends keyof EvmDomains,
 >(
@@ -104,7 +104,7 @@ const v2MessageReceivedEvent = parseAbiItem(
   "event MessageReceived(address indexed caller,uint32 sourceDomain,bytes32 indexed nonce,bytes32 sender,uint32 indexed finalityThresholdExecuted,bytes messageBody)",
 );
 
-async function getV2RedeemLogs<
+async function getV2ReceiveLogs<
   N extends Network,
   D extends keyof EvmDomains,
 >(

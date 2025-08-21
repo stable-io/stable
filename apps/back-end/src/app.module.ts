@@ -8,17 +8,23 @@ import { GaslessTransferModule } from "./gaslessTransfer/gaslessTransfer.module"
 import { TxLandingModule } from "./txLanding/txLanding.module";
 import { CctpRModule } from "./cctpr/cctpr.module";
 import { StatusModule } from "./status/status.module";
+import { OracleModule } from "./oracle/oracle.module";
+import { ExecutionCostModule } from "./executionCost/executionCost.module";
+import { BlockchainClientModule } from "./blockchainClient/blockchainClient.module";
 
 @Module({
   imports: [
     NestConfigModule,
     ConfigModule,
+    BlockchainClientModule,
     MetricsModule,
     AuthModule,
     TxLandingModule,
     CctpRModule,
     GaslessTransferModule,
     StatusModule,
+    OracleModule,
+    ExecutionCostModule,
   ],
 })
 export class AppModule implements NestModule {

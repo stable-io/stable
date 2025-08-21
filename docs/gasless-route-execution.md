@@ -104,9 +104,9 @@ sequenceDiagram
     Blockchain-->>SDK: Attestation found
     SDK->>SDK: Emit "transfer-confirmed" event
     
-    SDK->>Blockchain: Poll for redeem transaction
-    Blockchain-->>SDK: Redeem transaction found
-    SDK->>SDK: Emit "transfer-redeemed" event
+    SDK->>Blockchain: Poll for receive transaction
+    Blockchain-->>SDK: Receive transaction found
+    SDK->>SDK: Emit "transfer-received" event
     
-    SDK-->>User: Execution complete<br/>(transactions, attestations, redeems)
+    SDK-->>User: Execution complete<br/>(transactions, attestations, receiveTxs)
 ```

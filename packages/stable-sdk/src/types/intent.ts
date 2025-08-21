@@ -7,25 +7,26 @@ import type {
   GasTokenOf,
   LoadedDomain,
   Network,
+  Percentage,
   PlatformAddress,
   PlatformOf,
+  RegisteredPlatform,
   Usdc,
 } from "@stable-io/cctp-sdk-definitions";
 import type { CctprRecipientAddress, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 export type PaymentTokenOptions = "usdc" | "native" | "gas";
 
-export type UserIntent<N extends Network> = {
-  sourceChain: LoadedDomain;
-  targetChain: SupportedDomain<N>;
+export type UserIntent<N extends Network, S extends LoadedDomain, D extends SupportedDomain<N>> = {
+  sourceChain: S;
+  targetChain: D;
   amount: string;
-  sender: string; // | EvmAddress; TODO
-  recipient: string; // | EvmAddress; TODO
-
+  sender: string | PlatformAddress<PlatformOf<S>>;
+  recipient: string | PlatformAddress<RegisteredPlatform & PlatformOf<D>>;
   usePermit?: boolean;
-  gasDropoffDesired?: bigint; // | GasTokenOf<N>; TODO
+  gasDropoffDesired?: bigint | GasTokenOf<D>;
   paymentToken?: PaymentTokenOptions;
-  relayFeeMaxChangeMargin?: number; // | percentage?; TODO
+  relayFeeMaxChangeMargin?: number |  Percentage;
 };
 
 export type Intent<
@@ -41,5 +42,5 @@ export type Intent<
   usePermit: boolean;
   gasDropoffDesired: GasTokenOf<D>;
   paymentToken: PaymentTokenOptions;
-  relayFeeMaxChangeMargin: number;
+  relayFeeMaxChangeMargin: Percentage;
 };

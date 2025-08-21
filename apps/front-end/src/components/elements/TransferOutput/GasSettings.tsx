@@ -28,6 +28,9 @@ export const GasSettings = ({
           height={14}
           width={14}
         />
+        <span className="tooltip-text">
+          Receive native gas along with your USDC on the destination chain.
+        </span>
       </div>
       <GasLevelOptions
         gasDropoffLevel={gasDropoffLevel}

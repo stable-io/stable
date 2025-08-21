@@ -33,12 +33,13 @@ export type ChainInfo = {
 export type Deployment = {
   chainId: WormholeChainId;
 } & (
-  | { address: string }
+  | { txId: Hex; address: string }
   | { address?: string; error: unknown }
 );
 
 export interface SerializedDeployment {
   chainId: WormholeChainId;
+  txId: Hex;
   address: string;
 };
 
@@ -289,12 +290,8 @@ export function getViemClient(network: Network, chain: ChainInfo) {
   return ViemEvmClient.fromNetworkAndDomain(network, chain.domain, getRpcURL(chain));
 }
 
-export function getRpcURL(chain: ChainInfo): Url {
-  const provider = loadChains().find((x: any) => x.chainId == chain.chainId)?.rpc || "";
-  if (!provider) {
-    throw new Error(`Failed to find a RPC provider for ${chain.domain}`);
-  }
-  return provider as Url;
+export function getRpcURL(chain: ChainInfo): Url | undefined {
+  return loadChains().find((x: any) => x.chainId == chain.chainId)?.rpc as Url | undefined;
 }
 
 export function getDeliveryProviderAddress(chain: ChainInfo): string {
@@ -494,5 +491,6 @@ export function buildOverrides(chain: ChainInfo): Omit<Overrides, "gas"> {
 }
 
 export function toReadable(chainId: number): string {
-  return domainOfWormholeChainId(env as "Testnet" | "Mainnet", chainId as any);
+  const sdkEnv = env === "testnet" ? "Testnet" : "Mainnet";
+  return domainOfWormholeChainId(sdkEnv, chainId as any);
 }

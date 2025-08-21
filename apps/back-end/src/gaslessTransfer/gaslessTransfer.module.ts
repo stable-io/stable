@@ -3,12 +3,21 @@ import { CctpRModule } from "../cctpr/cctpr.module";
 import { TxLandingModule } from "../txLanding/txLanding.module";
 import { ConfigModule } from "../config/config.module";
 import { AuthModule } from "../auth/auth.module";
+import { OracleModule } from "../oracle/oracle.module";
+import { ExecutionCostModule } from "../executionCost/executionCost.module";
 import { GaslessTransferController } from "./gaslessTransfer.controller";
 import { GaslessTransferService } from "./gaslessTransfer.service";
 import { ValidatePermitSignatureConstraint } from "./validators";
 
 @Module({
-  imports: [CctpRModule, TxLandingModule, ConfigModule, AuthModule],
+  imports: [
+    CctpRModule,
+    TxLandingModule,
+    ConfigModule,
+    AuthModule,
+    OracleModule,
+    ExecutionCostModule,
+  ],
   controllers: [GaslessTransferController],
   providers: [GaslessTransferService, ValidatePermitSignatureConstraint],
   exports: [GaslessTransferService],

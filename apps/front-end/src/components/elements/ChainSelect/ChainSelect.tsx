@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ReactElement } from "react";
 
 import { ChainSelectButton } from "./ChainSelectButton";
@@ -19,8 +19,8 @@ export const ChainSelect = ({
   selectedChain,
   onSelect,
 }: ChainSelectProps): ReactElement => {
-  const otherChains = chains.filter((chain) => chain !== selectedChain);
   const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = (): void => {
     setIsOpen(!isOpen);
@@ -31,15 +31,43 @@ export const ChainSelect = ({
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (
+        containerRef.current &&
+        event.target instanceof Node &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return (): void => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <div data-testid="ChainSelect" className="network-select">
+    <div
+      ref={containerRef}
+      data-testid="ChainSelect"
+      className="network-select"
+    >
       <span className="network-select-title">{title}</span>
       <ChainSelectButton
         selectedChain={selectedChain}
         onToggle={handleToggle}
       />
       {isOpen && (
-        <ChainSelectMenu chains={otherChains} onSelect={handleSelect} />
+        <ChainSelectMenu
+          chains={chains}
+          selectedChain={selectedChain}
+          onSelect={handleSelect}
+        />
       )}
     </div>
   );
