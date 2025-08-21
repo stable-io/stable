@@ -49,10 +49,11 @@ export class GaslessTransferService {
     let permit2GaslessData: Permit2GaslessData | undefined;
 
     try {
-      permit2GaslessData = await this.cctpRService.composeGaslessTransferMessage(
-        request,
-        gaslessFee,
-      );
+      permit2GaslessData =
+        await this.cctpRService.composeGaslessTransferMessage(
+          request,
+          gaslessFee,
+        );
     } catch (error: unknown) {
       if (!(error instanceof Error)) throw error;
 
