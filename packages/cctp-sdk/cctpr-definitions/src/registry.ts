@@ -14,7 +14,7 @@ import type {
   LoadedDomain,
   PlatformAddress,
   RegisteredPlatform,
-  UniversalOrNative,
+  UniversalAddress,
 } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain } from "./constants.js";
 import type { InOrOut, QuoteBase, CorridorParamsBase } from "./common.js";
@@ -48,6 +48,9 @@ export type LoadedCctprDomain<N extends Network> =
 export type LoadedCctprPlatformDomain<N extends Network, P extends RegisteredCctprPlatform> =
   LoadedCctprDomain<N> & DomainsOf<P>;
 
+export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N>> =
+  UniversalAddress | (D extends LoadedDomain ? PlatformAddress<PlatformOf<D>> : never);
+
 export interface PlatformCctpr<
   P extends RegisteredPlatform,
 > {
@@ -72,7 +75,7 @@ export interface PlatformCctpr<
     source: S,
     destination: D,
     sender: PlatformAddress<P>,
-    recipient: UniversalOrNative<SupportedDomain<N>>,
+    recipient: CctprRecipientAddress<N, D>,
     inOrOut: InOrOut,
     corridor: CorridorParamsBase<N, PlatformOf<S>, S, D>,
     quote: QuoteBase<N, PlatformOf<S>, S>,

@@ -16,10 +16,7 @@ import type {
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import {
-  ContractTx,
-  EvmAddress,
-} from "@stable-io/cctp-sdk-evm";
+import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { QuoteRequestDto } from "../gaslessTransfer/dto/quoteRequest.dto";
 import { Network } from "../common/types";
@@ -27,7 +24,9 @@ import type { ParsedSignature } from "../common/types";
 import type { Permit2Nonce } from "../common/utils";
 import { fetchNextPermit2Nonce, serializeSignature } from "../common/utils";
 
-export type OnchainGaslessQuote = layouts.GaslessQuoteVariant & { type: "onChainUsdc" };
+export type OnchainGaslessQuote = layouts.GaslessQuoteVariant & {
+  type: "onChainUsdc";
+};
 
 @Injectable()
 export class CctpRService {
@@ -132,6 +131,9 @@ export class CctpRService {
   > {
     return corridor === "v1"
       ? { type: corridor }
-      : { type: corridor, fastFeeRate: fastFeeRate };
+      : {
+          type: corridor as "v2Direct", // @todo: figure out why this is needed
+          fastFeeRate: fastFeeRate,
+        };
   }
 }

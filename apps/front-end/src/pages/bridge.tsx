@@ -1,4 +1,4 @@
-import type { Route } from "@stable-io/sdk";
+import type { Network, Route } from "@stable-io/sdk";
 import Head from "next/head";
 import { useState } from "react";
 import type { ReactElement } from "react";
@@ -18,7 +18,7 @@ import { useBalance, useRoutes, useTransferProgress } from "@/hooks";
 import { useStableContext } from "@/providers";
 import type { NextPageWithLayout } from "@/utils";
 
-const Bridge: NextPageWithLayout = (): ReactElement => {
+const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
   const [amount, setAmount] = useState(0);
   const [gasDropoffLevel, setGasDropoffLevel] =
     useState<GasDropoffLevel>("zero");
@@ -48,7 +48,7 @@ const Bridge: NextPageWithLayout = (): ReactElement => {
   } = useTransferProgress(route);
 
   const formatCost = (
-    cost: Route<AvailableChains, AvailableChains>["estimatedTotalCost"],
+    cost: Route<N, AvailableChains, AvailableChains>["estimatedTotalCost"],
   ): string => {
     return `$${cost.toUnit("human")}`;
   };

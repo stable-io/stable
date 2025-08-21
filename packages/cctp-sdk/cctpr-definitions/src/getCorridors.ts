@@ -14,24 +14,35 @@ import type { RegisteredCctprPlatform, LoadedCctprPlatformDomain } from "./regis
 import { platformCctpr } from "./registry.js";
 import type { Corridor } from "./layouts.js";
 
-export type SensibleV2Corridor<
+type SupportedV1Corridor<
   N extends Network,
   S extends SupportedDomain<N>,
   D extends SupportedDomain<N>,
-> =
-  S extends "Avalanche"
-  ? never
-  : S extends v2.SupportedDomain<N>
+> = S extends v1.SupportedDomain<N>
+  ? D extends v1.SupportedDomain<N>
+    ? "v1"
+    : never
+  : never;
+
+type SensibleV2Corridor<
+  N extends Network,
+  S extends SupportedDomain<N>,
+  D extends SupportedDomain<N>,
+> = S extends v2.SupportedDomain<N>
   ? D extends v2.SupportedDomain<N>
-    ? "v2Direct"
-    : "avaxHop"
+    ? S extends v2.FastDomain
+      ? D extends v1.SupportedDomain<N>
+        ? never //no point using v2 if S is fast and D supports v1
+        : "v2Direct"
+      : "v2Direct"
+    : "avaxHop" //for D to be supported, it must support either v1 or v2
   : never;
 
 export type SensibleCorridor<
   N extends Network,
   S extends SupportedDomain<N>,
   D extends SupportedDomain<N>,
-> = "v1" | SensibleV2Corridor<N, S, D>;
+> = SupportedV1Corridor<N, S, D> | SensibleV2Corridor<N, S, D>;
 
 export type CorridorCost<N extends Network, S extends SupportedDomain<N>> = {
   relay: readonly [usdcCost: Usdc, gasCost: GasTokenOf<S>];
@@ -68,6 +79,20 @@ export async function getFastCost<
   return minimumFee;
 }
 
+type AllSensibleCorridors<
+  N extends Network,
+  S extends SupportedDomain<N>,
+  D extends SupportedDomain<N>,
+> = (
+  SensibleV2Corridor<N, S, D> extends infer V2
+  ? "v1" extends SupportedV1Corridor<N, S, D>
+    ? V2 extends never
+      ? ["v1"]
+      : ["v1", V2]
+    : [V2]
+  : never
+) extends infer R extends RoArray<SensibleCorridor<N, S, D>> ? R : never;
+
 export function getSensibleCorridors<
   N extends Network,
   S extends SupportedDomain<N>,
@@ -76,20 +101,21 @@ export function getSensibleCorridors<
   network: N,
   source: S,
   destination: D,
-): RoArray<SensibleCorridor<N, S, D>> {
-  const universalCorridors: RoArray<SensibleCorridor<N, S, D>> = ["v1"];
-  return !v2.isSupportedDomain(network)(source) || v2.isFastDomain(source)
-    ? universalCorridors
-    : [
-      ...universalCorridors,
-      (v2.isSupportedDomain(network)(destination)
-        ? "v2Direct"
-        : "avaxHop"
-      ) as SensibleCorridor<N, S, D>,
-    ];
+): AllSensibleCorridors<N, S, D> {
+  const v1IsSupported = v1.isSupportedDomain(network);
+  const v2IsSupported = v2.isSupportedDomain(network);
+  return [
+    ...(v1IsSupported(source) && v1IsSupported(destination) ? ["v1"] : []),
+    ...(!v2IsSupported(source) || (v2.isFastDomain(source) && v1IsSupported(destination))
+      ? []
+      : v2IsSupported(destination)
+      ? ["v2Direct"]
+      : ["avaxHop"]
+    ),
+  ] as unknown as AllSensibleCorridors<N, S, D>;
 }
 
-const hopDeliverySeconds = <
+const hopDeliveryTime = <
   N extends Network,
   S extends SupportedDomain<N>,
   D extends SupportedDomain<N>,
@@ -97,10 +123,13 @@ const hopDeliverySeconds = <
   network: N,
   source: S,
   destination: D,
-  corridor: SensibleCorridor<N, S, D>,
+  version: "v1" | "v2",
 ) =>
-  ((corridor === "v1" ? v1 : v2)["attestationTimeEstimates"] as TODO)[network][source] as number +
-    relayOverheadOf[network][destination];
+  duration(
+    ((version === "v1" ? v1 : v2)["attestationTimeEstimates"] as TODO)[network][source] as number +
+      relayOverheadOf[network][destination],
+    "sec",
+  );
 
 export const calculateSpeed = <
   N extends Network,
@@ -112,12 +141,10 @@ export const calculateSpeed = <
   destination: D,
   corridor: SensibleCorridor<N, S, D>,
 ): Duration =>
-  duration(hopDeliverySeconds(network, source, destination, corridor) +
-    (corridor === "avaxHop"
-      ? hopDeliverySeconds(network, "Avalanche", "Avalanche", "v1")
-      : 0),
-    "sec",
-  );
+  corridor === "avaxHop"
+  ? hopDeliveryTime(network, source, "Avalanche", "v2")
+      .add(hopDeliveryTime(network, "Avalanche", destination, "v1"))
+  : hopDeliveryTime(network, source, destination, corridor === "v1" ? "v1" : "v2");
 
 export const getCorridors = async <
   N extends Network,
