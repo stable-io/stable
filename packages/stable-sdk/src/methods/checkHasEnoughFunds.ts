@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { Network } from "@stable-io/cctp-sdk-definitions";
-import { gasTokenOf, isUsdc, Usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
+import { gasTokenOf, isUsdc, Usdc, usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress, getTokenBalance } from "@stable-io/cctp-sdk-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { TODO } from "@stable-io/utils";
@@ -36,7 +36,7 @@ export const $checkHasEnoughFunds =
     );
     const requiredBalance = fees.reduce(
       (acc, fee) => isUsdc(fee)
-        ? { ...acc, usdc: acc.usdc.add(fee) }
+        ? acc // usdc fees are discounted from the amount sent.
         : { ...acc, gasToken: acc.gasToken.add(fee as TODO) },
       { gasToken: requiredGasFromSteps, usdc: amount },
     );

@@ -5,11 +5,11 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { eth, EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { ViemSigner } from "../src/signer/viemSigner.js";
+import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
-import StableSDK, { Route } from "../src/index.js";
-import { bigintReplacer } from "../src/utils";
+import StableSDK, { Route } from "../index.js";
+import { bigintReplacer } from "../utils.js";
 
 dotenv.config();
 const privateKey = process.env.EVM_PRIVATE_KEY as Address;
@@ -31,7 +31,7 @@ const sdk = new StableSDK({
 const intent = {
   sourceChain: "Ethereum" as const,
   targetChain: "Optimism" as const,
-  amount: "0.31",
+  amount: "0.1",
   sender,
   recipient,
   // To receive gas tokens on the target. Increases the cost of the transfer.
@@ -42,7 +42,7 @@ const intent = {
 
 const routes = await sdk.findRoutes(intent);
 
-const selectedRoutes = [routes.fastest];
+const selectedRoutes = [routes.cheapest];
 
 for (const route of selectedRoutes) {
   const hasBalance = await sdk.checkHasEnoughFunds(route);
@@ -56,6 +56,10 @@ for (const route of selectedRoutes) {
     console.info(`Data: ${stringify(e.data)}\n`);
   });
 
+  route.progress.on("error", (e) => {
+    console.info(`Transfer failed on ${e.type.split("-")[0]} step.`);
+  });
+
   route.transactionListener.on("*", (e) => {
     console.info(`Transaction Event: ${e.name}.`);
     // console.info(`Data: ${stringify(e.data)}\n`);
@@ -67,16 +71,16 @@ for (const route of selectedRoutes) {
   const {
     transactions,
     attestations,
-    redeems,
+    receiveTxs,
     transferHash,
-    redeemHash,
+    receiveHash,
   } = await sdk.executeRoute(route);
 
   console.info(`Transfer Sent:`, getTestnetScannerTxUrl(route.intent.sourceChain, transferHash));
-  console.info(`Transfer Redeemed:`, getTestnetScannerTxUrl(route.intent.targetChain, redeemHash));
+  console.info(`Transfer Received:`, getTestnetScannerTxUrl(route.intent.targetChain, receiveHash));
 }
 
-function logRouteInfo(route: Route<any, any>) {
+function logRouteInfo(route: Route<any, any, any>) {
   console.info("");
   console.info(`Transferring from ${intent.sourceChain} to ${intent.targetChain}.`);
   console.info(`Sender: ${sender}`);

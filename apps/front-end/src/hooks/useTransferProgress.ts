@@ -18,8 +18,9 @@ interface UIStepsState {
 
 interface TransferState {
   uiSteps: UIStepsState;
-  isInProgress: boolean;
-  isTransferActive: boolean;
+  isCurrent: boolean;
+  isActive: boolean;
+  isTransferInProgress: boolean;
   timeRemaining: number;
 }
 
@@ -40,8 +41,9 @@ const initialUISteps: UIStepsState = {
 
 const initialTransferState: TransferState = {
   uiSteps: initialUISteps,
-  isInProgress: false,
-  isTransferActive: false,
+  isCurrent: false,
+  isActive: false,
+  isTransferInProgress: false,
   timeRemaining: 0,
 };
 
@@ -110,7 +112,7 @@ const setStepFailed = (state: UIStepsState): UIStepsState => {
 };
 
 type TransferAction =
-  | { type: "CLOSE_MODAL" }
+  | { type: "DISMISS" }
   | { type: "SET_TIME_REMAINING"; time: number }
   | { type: "RESET_TRANSFER"; estimatedDuration?: number }
   | { type: "TRANSFER_INITIATED" }
@@ -118,21 +120,21 @@ type TransferAction =
   | { type: "APPROVAL_SENT" }
   | { type: "TRANSFER_SENT" }
   | { type: "TRANSFER_CONFIRMED" }
-  | { type: "HOP_REDEEMED" }
+  | { type: "HOP_RECEIVED" }
   | { type: "HOP_CONFIRMED" }
-  | { type: "TRANSFER_REDEEMED" }
+  | { type: "TRANSFER_RECEIVED" }
   | { type: "TRANSFER_COMPLETED" }
-  | { type: "TRANSFER_FAILED" };
+  | { type: "TRANSFER_FAILED"; errorMessage: string };
 
 const transferReducer = (
   state: TransferState,
   action: TransferAction,
 ): TransferState => {
   switch (action.type) {
-    case "CLOSE_MODAL":
+    case "DISMISS":
       return {
         ...state,
-        isInProgress: false,
+        isCurrent: false,
       };
 
     case "SET_TIME_REMAINING":
@@ -150,7 +152,8 @@ const transferReducer = (
     case "TRANSFER_INITIATED":
       return {
         ...state,
-        isInProgress: true,
+        isCurrent: true,
+        isActive: true,
         uiSteps: setStepInProgress("authorization", state.uiSteps),
       };
 
@@ -161,7 +164,7 @@ const transferReducer = (
     case "TRANSFER_SENT":
       return {
         ...state,
-        isTransferActive: true,
+        isTransferInProgress: true,
         uiSteps: setStepInProgress("sending", state.uiSteps),
       };
 
@@ -171,24 +174,27 @@ const transferReducer = (
         uiSteps: setStepInProgress("moving", state.uiSteps),
       };
 
-    case "HOP_REDEEMED":
+    case "HOP_RECEIVED":
       return state;
 
     case "HOP_CONFIRMED":
       return state;
 
-    case "TRANSFER_REDEEMED":
+    case "TRANSFER_RECEIVED":
       return {
         ...state,
-        isTransferActive: false,
+        isActive: false,
+        isTransferInProgress: false,
         timeRemaining: 0,
         uiSteps: setStepCompleted("moving", state.uiSteps),
       };
 
     case "TRANSFER_FAILED":
+      console.error("Transfer Failed With Error:", action.errorMessage);
       return {
         ...state,
-        isTransferActive: false,
+        isActive: false,
+        isTransferInProgress: false,
         timeRemaining: 0,
         uiSteps: setStepFailed(state.uiSteps),
       };
@@ -200,7 +206,7 @@ const transferReducer = (
 
 interface UseTransferProgressReturn extends Omit<TransferState, "uiSteps"> {
   resetTransfer: () => void;
-  closeModal: () => void;
+  dismiss: () => void;
   steps: readonly UIStep[];
 }
 
@@ -214,35 +220,37 @@ export const useTransferProgress = <N extends Network>(
       throw new Error("resetTransfer can't be called without a route set");
     dispatch({
       type: "RESET_TRANSFER",
-      estimatedDuration: route.estimatedDuration.toUnit("sec").toNumber(),
+      estimatedDuration: Math.ceil(
+        route.estimatedDuration.toUnit("sec").toNumber(),
+      ),
     });
   }, [route]);
 
-  const closeModal = useCallback(() => {
-    dispatch({ type: "CLOSE_MODAL" });
+  const dismiss = useCallback(() => {
+    dispatch({ type: "DISMISS" });
   }, []);
 
   useEffect(() => {
     dispatch({
       type: "SET_TIME_REMAINING",
-      time: route?.estimatedDuration.toUnit("sec").toNumber() ?? 0,
+      time: Math.ceil(route?.estimatedDuration.toUnit("sec").toNumber() ?? 0),
     });
   }, [route?.estimatedDuration]);
 
   useEffect(() => {
-    if (!state.isTransferActive || state.timeRemaining <= 0) return;
+    if (!state.isTransferInProgress || state.timeRemaining <= 0) return;
 
     const interval = setInterval(() => {
       dispatch({
         type: "SET_TIME_REMAINING",
-        time: Math.max(0, state.timeRemaining - 1),
+        time: Math.ceil(Math.max(0, state.timeRemaining - 1)),
       });
     }, 1000);
 
     return (): void => {
       clearInterval(interval);
     };
-  }, [state.isTransferActive, state.timeRemaining]);
+  }, [state.isTransferInProgress, state.timeRemaining]);
 
   useEffect(() => {
     if (!route) return;
@@ -267,20 +275,21 @@ export const useTransferProgress = <N extends Network>(
       dispatch({ type: "TRANSFER_CONFIRMED" });
     };
 
-    const handleHopRedeemed = (): void => {
-      dispatch({ type: "HOP_REDEEMED" });
+    const handleHopReceived = (): void => {
+      dispatch({ type: "HOP_RECEIVED" });
     };
 
     const handleHopConfirmed = (): void => {
       dispatch({ type: "HOP_CONFIRMED" });
     };
 
-    const handleTransferRedeemed = (): void => {
-      dispatch({ type: "TRANSFER_REDEEMED" });
+    const handleTransferReceived = (): void => {
+      dispatch({ type: "TRANSFER_RECEIVED" });
     };
 
-    const handleTransferFailed = (): void => {
-      dispatch({ type: "TRANSFER_FAILED" });
+    const handleTransferFailed = (e: unknown): void => {
+      const errorMessage = e instanceof Error ? e.message : "unknown error";
+      dispatch({ type: "TRANSFER_FAILED", errorMessage });
     };
 
     route.progress.on("transfer-initiated", handleTransferInitiated);
@@ -288,9 +297,9 @@ export const useTransferProgress = <N extends Network>(
     route.progress.on("approval-sent", handleApprovalSent);
     route.progress.on("transfer-sent", handleTransferSent);
     route.progress.on("transfer-confirmed", handleTransferConfirmed);
-    route.progress.on("hop-redeemed", handleHopRedeemed);
+    route.progress.on("hop-received", handleHopReceived);
     route.progress.on("hop-confirmed", handleHopConfirmed);
-    route.progress.on("transfer-redeemed", handleTransferRedeemed);
+    route.progress.on("transfer-received", handleTransferReceived);
     route.progress.on("error", handleTransferFailed);
 
     return (): void => {
@@ -298,9 +307,9 @@ export const useTransferProgress = <N extends Network>(
       route.progress.off("approval-sent", handleApprovalSent);
       route.progress.off("transfer-sent", handleTransferSent);
       route.progress.off("transfer-confirmed", handleTransferConfirmed);
-      route.progress.off("hop-redeemed", handleHopRedeemed);
+      route.progress.off("hop-received", handleHopReceived);
       route.progress.off("hop-confirmed", handleHopConfirmed);
-      route.progress.off("transfer-redeemed", handleTransferRedeemed);
+      route.progress.off("transfer-received", handleTransferReceived);
       route.progress.off("error", handleTransferFailed);
     };
   }, [route]);
@@ -310,7 +319,7 @@ export const useTransferProgress = <N extends Network>(
   return {
     ...stateToExpose,
     resetTransfer,
-    closeModal,
+    dismiss,
     steps,
   };
 };

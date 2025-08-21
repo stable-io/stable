@@ -4,15 +4,15 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { WalletClient as ViemWalletClient } from "viem";
+import type { LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import type { Url } from "@stable-io/utils";
+import type { CctpAttestation } from "../methods/executeRoute/findTransferAttestation.js";
 import type { Address, Amount, Network, TxHash } from "./general.js";
 import type { UserIntent } from "./intent.js";
 import type { Route, SupportedRoute } from "./route.js";
 import type { EvmPlatformSigner } from "./signer.js";
-import type { Url } from "@stable-io/utils";
-import type { Redeem } from "./redeem.js";
-import type { CctpAttestation } from "../methods/executeRoute/findTransferAttestation.js";
-import type { LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Receive } from "./receive.js";
 
 export type { WalletClient as ViemWalletClient } from "viem";
 
@@ -27,18 +27,18 @@ export abstract class SDK<N extends Network> {
 
   public abstract getNetwork(): N;
 
-  public abstract findRoutes(
-    intent: UserIntent<N>,
-  ): Promise<RoutesResult<N, LoadedCctprDomain<N>, SupportedDomain<N>>>;
+  public abstract findRoutes<S extends LoadedCctprDomain<N>, D extends SupportedDomain<N>>(
+    intent: UserIntent<N, S, D>,
+  ): Promise<RoutesResult<N, LoadedCctprDomain<N>, D>>;
 
   public abstract checkHasEnoughFunds(route: SupportedRoute<N>): Promise<boolean>;
 
   public abstract executeRoute(route: SupportedRoute<N>): Promise<{
     transactions: TxHash[];
     attestations: CctpAttestation[];
-    redeems: Redeem[];
+    receiveTxs: Receive[];
     transferHash: TxHash;
-    redeemHash: TxHash;
+    receiveHash: TxHash;
   }>;
 
   public abstract getBalance(

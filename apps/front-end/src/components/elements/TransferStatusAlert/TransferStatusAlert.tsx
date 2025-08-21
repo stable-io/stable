@@ -4,13 +4,13 @@ import { getExplorerUrl } from "@/utils";
 
 interface TransferStatusAlertProps {
   transferTxHash: string;
-  redeemTxHash?: string;
+  receiveTxHash?: string;
   targetChain: string;
 }
 
 export const TransferStatusAlert = ({
   transferTxHash,
-  redeemTxHash,
+  receiveTxHash,
   targetChain,
 }: TransferStatusAlertProps): ReactElement => {
   const explorerUrl = transferTxHash
@@ -27,16 +27,16 @@ export const TransferStatusAlert = ({
         </a>
         .
       </p>
-      {/* @todo: Add proper redeem status alert */}
-      {redeemTxHash && (
+      {/* @todo: Add proper receive status alert */}
+      {receiveTxHash && (
         <p style={{ marginTop: "10px", fontSize: "14px", opacity: 0.8 }}>
-          <strong>Redeem Transaction:</strong>{" "}
+          <strong>Receive Transaction:</strong>{" "}
           <a
-            href={getExplorerUrl("Testnet", redeemTxHash)}
+            href={getExplorerUrl("Testnet", receiveTxHash)}
             target="_blank"
             style={{ fontFamily: "monospace" }}
           >
-            {redeemTxHash.slice(0, 10)}...{redeemTxHash.slice(-8)}
+            {receiveTxHash.slice(0, 10)}...{receiveTxHash.slice(-8)}
           </a>
         </p>
       )}

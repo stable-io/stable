@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { Url, BaseObject, encoding, deserializeBigints } from "@stable-io/utils";
+import { encoding, deserializeBigints } from "@stable-io/utils";
 import type { CctprRecipientAddress, Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import {
@@ -22,60 +22,7 @@ import {
 } from "@stable-io/cctp-sdk-definitions";
 import type { Permit } from "@stable-io/cctp-sdk-evm";
 import type { Network } from "../types/index.js";
-
-export const apiUrl = {
-  Mainnet: "", // TODO
-  Testnet: "http://localhost:4000", // won't be easy to work with the local quote api =(.
-} as const satisfies Record<Network, string>;
-
-export const apiEndpoint = <N extends Network>(network: N) => (
-  path: string,
-): Url => `${apiUrl[network]}/gasless-transfer/${path}` as Url;
-
-export const apiEndpointWithQuery = <N extends Network>(network: N) => (
-  path: string,
-  query: Readonly<Record<string, string>>,
-): Url => {
-  const queryParams = new URLSearchParams(query).toString();
-  const endpoint = apiEndpoint(network)(path);
-  return `${endpoint}?${queryParams}` as Url;
-};
-
-export type HTTPCode = 200 | 201 | 202 | 204 | 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
-export type APIResponse<S extends HTTPCode, V> = Readonly<{
-  status: S;
-  value: V;
-}>;
-
-export interface ApiRequestOptions {
-  method?: "GET" | "POST";
-  body?: BaseObject;
-  headers?: Record<string, string>;
-}
-
-const defaultHeaders = { "Content-Type": "application/json" };
-
-export async function apiRequest<T extends APIResponse<HTTPCode, BaseObject>>(
-  endpoint: Url,
-  options: ApiRequestOptions = {},
-): Promise<T> {
-  const { method = "GET", body, headers = {} } = options;
-
-  const requestOptions: RequestInit = {
-    method,
-    headers: { ...defaultHeaders, ...headers },
-  };
-
-  if (body && method === "POST") {
-    requestOptions.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(endpoint, requestOptions);
-  const status = response.status as HTTPCode;
-  const value = await response.json();
-
-  return { status, value } as T;
-}
+import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./base.js";
 
 export type GetQuoteParams<
   N extends Network,
@@ -106,7 +53,7 @@ export type GetQuoteResponse<
   permit2GaslessData: Permit2GaslessData;
   gaslessFee: Usdc;
   jwt: string;
-};
+} | undefined;
 
 export async function getTransferQuote<
   N extends Network,
@@ -118,17 +65,21 @@ export async function getTransferQuote<
 ): Promise<GetQuoteResponse<N, S, D>> {
   const apiParams: Record<string, string> = serializeQuoteRequest(quoteParams);
 
-  const endpoint = apiEndpointWithQuery(network)("quote", apiParams);
+  const endpoint = apiEndpointWithQuery(network)("gasless-transfer/quote", apiParams);
 
   const apiResponse = await apiRequest(endpoint, { method: "GET" });
 
   if (apiResponse.status >= 400) {
-    throw new Error(`Failed to get quote from API. Status Code: ${apiResponse.status}`);
+    console.error(`GET Quote failed with status ${apiResponse.status}`);
+    return undefined;
   }
 
   const jwt = extractJwtFromQuoteResponse(apiResponse.value);
 
   const payload = decodeAndDeserializeJwt(jwt);
+  if (payload.willRelay === false) {
+    return undefined;
+  }
 
   const quoteRequest = deserializeQuoteRequest<N, S, D>(
     payload.quoteRequest as Record<string, unknown>,
@@ -259,7 +210,7 @@ export async function postTransferRequest(
   network: Network,
   params: PostTransferParams,
 ): Promise<PostTransferResponse> {
-  const endpoint = apiEndpoint(network)("relay");
+  const endpoint = apiEndpoint(network)("gasless-transfer/relay");
   const { jwt, permit2Signature, permit } = params;
   const requestBody = {
     jwt: jwt,
@@ -279,7 +230,10 @@ export async function postTransferRequest(
   );
 
   if (apiResponse.status >= 400) {
-    throw new Error(`Gasless Transfer Request Failed. Status Code: ${apiResponse.status}.`);
+    throw new Error(`Gasless Transfer Request Failed.\
+      Status Code: ${apiResponse.status}.\
+      Error: ${JSON.stringify(apiResponse.value)}`,
+    );
   }
   return { txHash: apiResponse.value.data.hash as `0x${string}` };
 }

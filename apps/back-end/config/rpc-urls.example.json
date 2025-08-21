@@ -1,0 +1,28 @@
+{
+  "Mainnet": {
+    "Ethereum": null,
+    "Avalanche": null,
+    "Optimism": null,
+    "Arbitrum": null,
+    "Base": null,
+    "Polygon": null,
+    "Unichain": null,
+    "Linea": null,
+    "Codex": null,
+    "Sonic": null,
+    "Worldchain": null
+  },
+  "Testnet": {
+    "Ethereum": null,
+    "Avalanche": null,
+    "Optimism": null,
+    "Arbitrum": null,
+    "Base": null,
+    "Polygon": null,
+    "Unichain": null,
+    "Linea": null,
+    "Codex": null,
+    "Sonic": null,
+    "Worldchain": null
+  }
+}

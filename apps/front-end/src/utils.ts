@@ -1,4 +1,4 @@
-import type { Network } from "@stable-io/sdk";
+import type { Network, Route } from "@stable-io/sdk";
 import type { NextPage } from "next";
 import type { ReactElement, ReactNode } from "react";
 
@@ -14,6 +14,12 @@ export const formatNumber = (num: number): string =>
     maximumFractionDigits: 6,
     minimumFractionDigits: 0,
   });
+
+export const formatCost = (
+  cost: Route<any, any, any>["estimatedTotalCost"],
+): string => {
+  return `$${cost.toUnit("human").toFixed(2)}`;
+};
 
 const bigintReplacer = (key: string, value: unknown): unknown =>
   typeof value === "bigint" ? value.toString() : value;

@@ -5,10 +5,7 @@ export interface ApiResponseDto<T> {
   readonly data: T;
 }
 
-export type Domain = Exclude<
-  DomainsOf<"Evm">,
-  "Codex" | "Sonic" | "Worldchain"
->;
+export type Domain = DomainsOf<"Evm">;
 
 // @todo: Probably most things will be serializable as strings, so do this the other way around
 type SerializedAsString = Address | Amount<any>;

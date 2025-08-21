@@ -2,9 +2,56 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { ReactElement } from "react";
+import { useState } from "react";
+
+interface NavigationItem {
+  href: string;
+  label: string;
+  isExternal?: boolean;
+}
+
+const navigationItems: NavigationItem[] = [
+  { href: "/bridge", label: "USDC Bridge" },
+  {
+    href: "https://docs.stableit.com",
+    label: "Stableit SDK",
+    isExternal: true,
+  },
+  {
+    href: "https://blog.stableit.com",
+    label: "Why Stableit",
+    isExternal: true,
+  },
+  { href: "mailto:hello@stableit.com", label: "Reach out", isExternal: true },
+];
+
+interface NavigationItemsProps {
+  currentPath: string;
+}
+
+const NavigationItems = ({
+  currentPath,
+}: NavigationItemsProps): ReactElement => (
+  <>
+    {navigationItems.map((item) => (
+      <li key={item.href} className={currentPath === item.href ? "active" : ""}>
+        {item.isExternal ? (
+          <a href={item.href}>{item.label}</a>
+        ) : (
+          <Link href={item.href}>{item.label}</Link>
+        )}
+      </li>
+    ))}
+  </>
+);
 
 export const Header = (): ReactElement => {
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = (): void => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
     <div test-id="header" className="top-nav">
@@ -15,20 +62,9 @@ export const Header = (): ReactElement => {
       </div>
       <div className="right">
         <ul className="nav">
-          <li className={router.pathname === "/bridge" ? "active" : ""}>
-            <Link href="/bridge">USDC Bridge</Link>
-          </li>
-          <li>
-            <a href="https://docs.stableit.com">Stableit SDK</a>
-          </li>
-          <li>
-            <a href="https://blog.stableit.com">Why Stableit</a>
-          </li>
-          <li>
-            <a href="mailto:hello@stableit.com">Reach out</a>
-          </li>
+          <NavigationItems currentPath={router.pathname} />
         </ul>
-        <button className="hamburger-menu">
+        <button className="hamburger-menu" onClick={toggleMobileMenu}>
           <Image
             src="/imgs/hamburger-menu.svg"
             alt=""
@@ -38,6 +74,11 @@ export const Header = (): ReactElement => {
           />
         </button>
       </div>
+      {isMobileMenuOpen && (
+        <ul className="mobile-nav">
+          <NavigationItems currentPath={router.pathname} />
+        </ul>
+      )}
     </div>
   );
 };

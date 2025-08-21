@@ -9,13 +9,4 @@ export interface ChainConfig {
   chainId: WormholeChainId;
 }
 
-export interface VerificationApiKeys extends ChainConfig {
-  etherscan: string;
-  blockscout?: {
-    mainnet: string;
-    testnet: string;
-  };
-  sourcify?: string;
-}
-
 export type UncheckedConstructorArgs = readonly any[];

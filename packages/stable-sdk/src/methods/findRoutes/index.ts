@@ -2,13 +2,14 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { Amount } from "@stable-io/amount";
 import { init as initCctpr, Corridor, CorridorStats, LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { LoadedDomain, Usdc } from "@stable-io/cctp-sdk-definitions";
-import { UniversalAddress, gasTokenKindOf, isUsdc, platformAddress, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
+import type { LoadedDomain, Usdc, Percentage } from "@stable-io/cctp-sdk-definitions";
+import { UniversalAddress, gasTokenKindOf, isUsdc, platformAddress, platformOf, usdc, percentage } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { TODO } from "@stable-io/utils";
+import type { TODO } from "@stable-io/utils";
 import type {
   SDK,
   Route,
@@ -33,9 +34,10 @@ export const $findRoutes = <
     getNetwork,
     getRpcUrl,
   }: FindRoutesDeps<N>): SDK<N>["findRoutes"] =>
-  async (userIntent) => {
+  async <S extends LoadedCctprDomain<N>, D extends SupportedDomain<N>>(
+    userIntent: UserIntent<N, S, D>,
+  ) => {
     const intent = parseIntent(userIntent);
-
     const network = getNetwork();
     const rpcUrl = getRpcUrl(intent.sourceChain);
 
@@ -52,29 +54,39 @@ export const $findRoutes = <
       intent,
     );
 
-    const routes: SupportedRoute<N>[] = [];
+    const routes: SupportedRoute<N, S, D>[] = [];
 
     for (const corridor of corridors) {
-      const userTransferRoute = buildUserTransferRoute(network, intent, corridor);
-      const gaslessRoutes = intent.paymentToken === "usdc"
-        ? [buildGaslessRoute(viemEvmClient, intent, corridor)]
-        : [];
+      const userTransferRoute = await buildUserTransferRoute(
+        network, intent, corridor,
+      );
 
-      const corridorRoutes = await Promise.all([
-        ...gaslessRoutes,
-        userTransferRoute,
-      ]);
+      if (userTransferRoute !== undefined) {
+        routes.push(userTransferRoute);
+      }
 
-      routes.push(...corridorRoutes);
+      if (intent.paymentToken === "usdc") {
+        // since gasless has to be paid in a non native token,
+        // we only create the gasless route when paymentToken === usdc
+        const gaslessRoute = await buildGaslessRoute(
+          viemEvmClient as any, // TODO: remove cast
+          intent,
+          corridor,
+        );
+
+        if (gaslessRoute !== undefined) routes.push(gaslessRoute);
+      }
     }
 
     const { fastest, cheapest } = findBestRoutes(routes);
 
-    return {
+    const result = {
       all: routes,
       fastest,
       cheapest,
     };
+
+    return result;
   };
 
 async function getCorridors<N extends Network>(
@@ -95,19 +107,22 @@ async function getCorridors<N extends Network>(
   });
 }
 
-function parseIntent<N extends Network>(
-  userIntent: UserIntent<N>,
-): Intent<N, LoadedCctprDomain<N>, SupportedDomain<N>> {
+function parseIntent<N extends Network, S extends LoadedDomain, D extends SupportedDomain<N>>(
+  userIntent: UserIntent<N, S, D>,
+): Intent<N, S, D> {
   return {
     sourceChain: userIntent.sourceChain,
     targetChain: userIntent.targetChain,
     sender: platformAddress(userIntent.sourceChain, userIntent.sender),
-    recipient: new UniversalAddress(userIntent.recipient, platformOf(userIntent.targetChain)),
+    recipient: new UniversalAddress(
+      userIntent.recipient.toString(),
+      platformOf(userIntent.targetChain),
+    ),
     amount: parseAmount(userIntent.amount),
     usePermit: userIntent.usePermit ?? true,
     gasDropoffDesired: parseGasDropoff(userIntent),
     paymentToken: userIntent.paymentToken ?? "usdc",
-    relayFeeMaxChangeMargin: userIntent.relayFeeMaxChangeMargin ?? RELAY_FEE_MAX_CHANGE_MARGIN,
+    relayFeeMaxChangeMargin: parseRelayFeeChangeMargin(userIntent),
   };
 }
 
@@ -123,11 +138,27 @@ function toEvmAddress(address: string | EvmAddress): EvmAddress {
   throw new Error(`Unexpected value for evm address: ${typeof address}`);
 }
 
-function parseGasDropoff(intent: UserIntent<Network>): TODO {
+function parseGasDropoff<
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+>(intent: UserIntent<N, S, D>): TODO {
+  if (intent.gasDropoffDesired instanceof Amount) return intent.gasDropoffDesired;
   return Amount.ofKind(gasTokenKindOf(intent.targetChain))(
     intent.gasDropoffDesired ?? 0,
     "atomic",
   );
+}
+
+function parseRelayFeeChangeMargin<
+  N extends Network,
+  S extends LoadedDomain,
+  D extends SupportedDomain<N>,
+>(intent: UserIntent<N, S, D>): Percentage {
+  const { relayFeeMaxChangeMargin: rfcm } = intent;
+  if (rfcm instanceof Amount) return rfcm;
+  if (!rfcm) return percentage(RELAY_FEE_MAX_CHANGE_MARGIN);
+  return percentage(rfcm);
 }
 
 function findBestRoutes<

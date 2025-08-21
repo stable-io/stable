@@ -8,12 +8,12 @@ import { formatNumber } from "@/utils";
 
 interface TransferSummaryProps {
   estimatedDuration?: Duration;
-  amount: number;
+  receivedAmount: number;
 }
 
 export const TransferSummary = ({
   estimatedDuration,
-  amount,
+  receivedAmount,
 }: TransferSummaryProps): ReactElement => {
   const receiveValue = (
     <>
@@ -25,17 +25,21 @@ export const TransferSummary = ({
         height={32}
         width={32}
       />
-      {formatNumber(amount)} USDC
+      {formatNumber(receivedAmount)} USDC
     </>
   );
 
   return (
     <div className="summary">
-      <SummaryRow
-        label="Estimated time"
-        value={`~${estimatedDuration?.toString() ?? "???"} seconds`}
-      />
-      <SummaryRow label="Destination gas" value="$0.00" />
+      {estimatedDuration !== undefined && (
+        <>
+          <SummaryRow
+            label="Estimated time"
+            value={`~${estimatedDuration.toString()} seconds`}
+          />
+          <SummaryRow label="Destination gas" value="$0.00" />
+        </>
+      )}
       <SummaryRow label="You receive" value={receiveValue} isTotal={true} />
     </div>
   );

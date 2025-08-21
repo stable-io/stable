@@ -1,4 +1,4 @@
-import type { Duration } from "@stable-io/cctp-sdk-definitions";
+import type { Network, Route } from "@stable-io/sdk";
 import type { ReactElement } from "react";
 
 import {
@@ -13,7 +13,10 @@ import type { AvailableChains, GasDropoffLevel } from "@/constants";
 
 interface BridgeWidgetProps {
   amount: number;
+  amountInput: string;
   onAmountChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onMaxClick: () => void;
+  receivedAmount: number;
   gasDropoffLevel: GasDropoffLevel;
   onGasDropoffLevelSelect: (level: GasDropoffLevel) => void;
   sourceChain: AvailableChains;
@@ -23,14 +26,17 @@ interface BridgeWidgetProps {
   availableChains: readonly AvailableChains[];
   walletAddress?: string;
   balance: number;
-  route?: { corridor: string; estimatedDuration: Duration } | undefined;
+  route?: Route<Network, AvailableChains, AvailableChains>;
   isInProgress: boolean;
   onTransfer: () => void;
 }
 
 export const BridgeWidget = ({
   amount,
+  amountInput,
   onAmountChange,
+  onMaxClick,
+  receivedAmount,
   gasDropoffLevel,
   onGasDropoffLevelSelect,
   sourceChain,
@@ -44,6 +50,9 @@ export const BridgeWidget = ({
   isInProgress,
   onTransfer,
 }: BridgeWidgetProps): ReactElement => {
+  const transferEnabled =
+    !isInProgress && !!walletAddress && !!route && balance >= amount;
+
   return (
     <div className="bridge-widget content-box">
       <div className="widget-title">
@@ -54,8 +63,9 @@ export const BridgeWidget = ({
           sourceChain={sourceChain}
           onSelectSourceChain={onSelectSourceChain}
           availableChains={availableChains}
-          amount={amount}
+          amount={amountInput}
           onAmountChange={onAmountChange}
+          onMaxClick={onMaxClick}
           walletAddress={walletAddress}
           balance={balance}
         />
@@ -77,13 +87,14 @@ export const BridgeWidget = ({
 
         <TransferSummary
           estimatedDuration={route?.estimatedDuration}
-          amount={amount}
+          receivedAmount={receivedAmount}
         />
 
         <TransferButton
           onTransfer={onTransfer}
           isInProgress={isInProgress}
-          disabled={!route || isInProgress}
+          disabled={!transferEnabled}
+          walletAddress={walletAddress}
         />
       </div>
     </div>

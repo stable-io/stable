@@ -9,27 +9,17 @@ import {
   IsNumber,
   Min,
   validateSync,
-  IsStrongPassword,
   IsString,
 } from "class-validator";
 
 export class EnvironmentVariables {
   @IsPort()
   @IsOptional()
-  public PORT: string = "3001";
+  public PORT: string = "4000";
 
   @IsNotEmpty()
   @IsIn(networks)
   public NETWORK: Network = networks[0];
-
-  @IsStrongPassword({
-    minLength: 32,
-    minLowercase: 1,
-    minUppercase: 1,
-    minNumbers: 1,
-    minSymbols: 1,
-  })
-  public JWT_SECRET!: string;
 
   @IsNumber()
   @Min(1)
@@ -38,7 +28,7 @@ export class EnvironmentVariables {
 
   @IsNotEmpty()
   @IsString()
-  public TX_LANDING_API_KEY!: string;
+  public TX_LANDING_URL!: string;
 }
 
 export const validate = (

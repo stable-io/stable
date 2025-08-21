@@ -3,12 +3,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { ViemSigner } from "../src/signer/viemSigner.js";
+import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
-import StableSDK from "../src/index.js";
+import StableSDK from "../index.js";
 import { Address } from "viem";
 import dotenv from "dotenv";
-import { bigintReplacer } from "../src/utils";
+import { bigintReplacer } from "../utils.js";
 
 dotenv.config();
 const privateKey = process.env.EVM_PRIVATE_KEY as Address;
@@ -72,16 +72,16 @@ for (const route of selectedRoutes) {
   //   console.info("transfer included!");
   // });
 
-  // route.progress.on("hop-redeemed", () => {
-  //   console.info("hop redeemed!");
+  // route.progress.on("hop-received", () => {
+  //   console.info("hop received!");
   // });
 
-  // route.progress.on("hop-confirmed", () => {
+  // route.progress.on("hop-received", () => {
   //   console.info("hop confirmed");
   // });
 
-  // route.progress.on("transfer-redeemed", (e) => {
-  //   console.info("transfer redeemed!");
+  // route.progress.on("transfer-received", (e) => {
+  //   console.info("transfer received!");
   // });
 
   /**

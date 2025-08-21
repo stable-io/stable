@@ -102,6 +102,7 @@ import {
 
 //external consumers shouldn't really need these but exporting them just in case
 export * as layouts from "./layouts/index.js";
+export { extraDomains } from "./layouts/common.js";
 
 export type SupportedEvmDomain<N extends Network> =
   SupportedPlatformDomain<N, "Evm"> | (
@@ -136,6 +137,9 @@ export const parseTransferTxCalldata = <N extends Network>(network: N) =>
 
 export const parseGovernanceTxCalldata = <N extends Network>(network: N) =>
   (calldata: CallData) => parseExecCalldata(calldata, governanceCommandArrayLayout(network));
+
+const definedOrZero = (maybeAddress?: string) =>
+  maybeAddress ? new EvmAddress(maybeAddress) : EvmAddress.zeroAddress;
 
 export type GaslessWitness = {
   parameters: {
@@ -327,7 +331,7 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
           baseAmount: baseAmount.toUnit("atomic"),
           destinationDomain: domainIdOf(destination),
           mintRecipient: mintRecipient.toString(),
-          microGasDropoff: gasDropoff.toUnit("human").mul(1000).floor(),
+          microGasDropoff: gasDropoff.toUnit("human").mul(1000000).floor(),
           corridor: {
             v1:       "CCTPv1" as const,
             v2Direct: "CCTPv2" as const,
@@ -438,9 +442,6 @@ export class CctpRGovernance<
     priceOracle: EvmAddress,
     feeAdjustments: Record<FeeAdjustmentType, Partial<FeeAdjustments>>,
   ): Uint8Array {
-    const definedOrZero = (maybeAddress?: string) =>
-      maybeAddress ? new EvmAddress(maybeAddress) : EvmAddress.zeroAddress;
-
     const arrayFeeAdjustments = mapTo(range(CctpRGovernance.adjustmentSlots))(mappingIndex =>
       mapTo(feeAdjustmentTypes)(feeType => CctpRGovernance.feeAdjustmentsAtIndex(
         feeAdjustments[feeType], mappingIndex,
@@ -459,7 +460,7 @@ export class CctpRGovernance<
       domain as v2.SupportedDomain<Network>,
       "tokenMessenger",
     );
-    return serialize(constructorLayout(network), {
+    const serialized = serialize(constructorLayout(network), {
       owner,
       feeAdjuster,
       feeRecipient,
@@ -475,6 +476,9 @@ export class CctpRGovernance<
         feeAdjustments: arrayFeeAdjustments,
       },
     });
+    // This padding should be added by serialize but it is not implemented in the layout yet
+    const chainDataPostPadding = new Uint8Array(30);
+    return encoding.bytes.concat(serialized, chainDataPostPadding);
   }
 
   static avaxRouterConstructorCalldata(
@@ -498,16 +502,17 @@ export class CctpRGovernance<
     network: Network,
     domain: DomainsOf<"Evm">,
   ): Uint8Array {
-    const messageTransmitterV1 = v1.contractAddressOf(
+    const messageTransmitterV1 = definedOrZero(v1.contractAddressOf(
       network,
       domain as v1.SupportedDomain<Network>,
       "messageTransmitter",
-    );
-    const messageTransmitterV2 = v2.contractAddressOf(
+    ));
+    const messageTransmitterV2 = definedOrZero(v2.contractAddressOf(
       network,
       domain as v2.SupportedDomain<Network>,
       "messageTransmitter",
-    );
+    ));
+
     return serialize([
       { name: "messageTransmitterV1", ...paddedSlotItem(evmAddressItem) },
       { name: "messageTransmitterV2", ...paddedSlotItem(evmAddressItem) },
@@ -546,7 +551,6 @@ export class CctpRGovernance<
     //  than 12 extra chains but there's not really a reason to start cutting corners here.
 
     const extraChainIdsSlot = CctpRGovernance.mappings.indexOf("extraChainIds");
-
     const chainIdChunks = await Promise.all(range(CctpRGovernance.maxMappingIndex - 1).map(i =>
       this.getStorageAt(CctpRGovernance.slotOfKeyInMapping(extraChainIdsSlot, i + 1)).then(raw =>
         deserialize(chainIdsSlotItem, raw),
@@ -556,14 +560,13 @@ export class CctpRGovernance<
     return fromEntries(
       chainIdChunks
         .flat()
-        .slice(domains.length - chainIdsPerSlot)
+        .slice(0, domains.length - chainIdsPerSlot)
         .map((chainId, idx) => [domainOf((idx + chainIdsPerSlot) as DomainId), chainId]),
     );
   }
 
   async getFeeAdjustments(type: FeeAdjustmentType): Promise<FeeAdjustments> {
     const feeTypeMappingSlot = CctpRGovernance.mappings.indexOf(type);
-
     const feeAdjustmentChunks = await Promise.all(range(CctpRGovernance.maxMappingIndex).map(i =>
       this.getStorageAt(CctpRGovernance.slotOfKeyInMapping(feeTypeMappingSlot, i)).then(raw =>
         deserialize(feeAdjustmentsSlotItem, raw),
@@ -573,7 +576,7 @@ export class CctpRGovernance<
     return fromEntries(
       feeAdjustmentChunks
         .flat()
-        .slice(domains.length)
+        .slice(0, domains.length)
         .map((feeAdjustment, idx) => [domainOf(idx as DomainId), feeAdjustment]),
     );
   }

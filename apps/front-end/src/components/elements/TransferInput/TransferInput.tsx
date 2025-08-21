@@ -9,8 +9,9 @@ interface TransferInputProps {
   sourceChain: AvailableChains;
   onSelectSourceChain: (chain: AvailableChains) => void;
   availableChains: readonly AvailableChains[];
-  amount: number;
+  amount: string;
   onAmountChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onMaxClick: () => void;
   walletAddress?: string;
   balance: number;
 }
@@ -21,6 +22,7 @@ export const TransferInput = ({
   availableChains,
   amount,
   onAmountChange,
+  onMaxClick,
   walletAddress,
   balance,
 }: TransferInputProps): ReactElement => {
@@ -35,7 +37,11 @@ export const TransferInput = ({
         balance={balance}
       />
 
-      <AmountInput amount={amount} onAmountChange={onAmountChange} />
+      <AmountInput
+        amount={amount}
+        onAmountChange={onAmountChange}
+        onMaxClick={onMaxClick}
+      />
     </div>
   );
 };

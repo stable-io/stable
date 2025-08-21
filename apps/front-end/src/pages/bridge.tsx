@@ -1,4 +1,3 @@
-import type { Network, Route } from "@stable-io/sdk";
 import Head from "next/head";
 import { useState } from "react";
 import type { ReactElement } from "react";
@@ -17,9 +16,11 @@ import { availableChains } from "@/constants";
 import { useBalance, useRoutes, useTransferProgress } from "@/hooks";
 import { useStableContext } from "@/providers";
 import type { NextPageWithLayout } from "@/utils";
+import { formatCost } from "@/utils";
 
-const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
+const Bridge: NextPageWithLayout = (): ReactElement => {
   const [amount, setAmount] = useState(0);
+  const [amountInput, setAmountInput] = useState<string>("");
   const [gasDropoffLevel, setGasDropoffLevel] =
     useState<GasDropoffLevel>("zero");
   const [sourceChain, setSourceChain] = useState<AvailableChains>(
@@ -31,7 +32,7 @@ const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
 
   const { address, stable } = useStableContext();
   const { balance, updateBalance } = useBalance({ sourceChain });
-  const { route } = useRoutes({
+  const { route, findRoutes } = useRoutes({
     sourceChain,
     targetChain,
     amount,
@@ -39,25 +40,29 @@ const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
   });
 
   const {
-    isInProgress,
-    isTransferActive,
+    isCurrent,
+    isActive,
+    isTransferInProgress,
     timeRemaining,
     resetTransfer,
-    closeModal,
+    dismiss,
     steps,
   } = useTransferProgress(route);
 
-  const formatCost = (
-    cost: Route<N, AvailableChains, AvailableChains>["estimatedTotalCost"],
-  ): string => {
-    return `$${cost.toUnit("human")}`;
+  const handleMaxAmount = (): void => {
+    setAmount(balance);
+    setAmountInput(balance.toString());
   };
 
-  // @todo: Subtract expected fees
-  // const maxAmount = balance;
-  // const handleMaxAmount = () => {
-  //   setAmount(maxAmount);
-  // };
+  const receivedAmount = route
+    ? ((): number => {
+        const grossAmount = route.intent.amount.toUnit("human").toNumber();
+        const usdcFees = route.fees
+          .filter((fee) => fee.kind.name === "Usdc") // @todo: Handle gas token fees?
+          .reduce((total, fee) => total + fee.toUnit("human").toNumber(), 0);
+        return grossAmount - usdcFees;
+      })()
+    : 0;
 
   const handleSelectSourceChain = (chain: AvailableChains): void => {
     setSourceChain(chain);
@@ -74,8 +79,18 @@ const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const newAmount = Number.parseFloat(e.target.value) || 0;
-    setAmount(newAmount);
+    const { value } = e.target;
+    setAmountInput(value);
+
+    if (value === "" || value === ".") {
+      setAmount(0);
+      return;
+    }
+
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      setAmount(parsed);
+    }
   };
 
   const handleTransfer = (): void => {
@@ -91,6 +106,9 @@ const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
       })
       .catch((error: unknown) => {
         console.error(error);
+      })
+      .finally(() => {
+        void findRoutes();
       });
   };
 
@@ -101,19 +119,20 @@ const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
           Stableit | Move USDC across networks with high speed and minimal costs
         </title>
       </Head>
-      {address && route && isInProgress && (
+      {address && route && isCurrent && (
         <Overlay
           onClose={() => {
-            closeModal();
+            dismiss();
           }}
-          disableClose={isTransferActive}
+          disableClose={isActive}
         >
           <TransactionTrackingWidget
             sourceChain={sourceChain}
             targetChain={targetChain}
             amount={amount}
+            receivedAmount={receivedAmount}
             timeRemaining={timeRemaining}
-            isTransferActive={isTransferActive}
+            isTransferInProgress={isTransferInProgress}
             destinationWallet={address}
             routePath={route.corridor}
             estimatedCost={formatCost(route.estimatedTotalCost)}
@@ -124,7 +143,10 @@ const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
       <LeftSection>
         <BridgeWidget
           amount={amount}
+          amountInput={amountInput}
           onAmountChange={handleAmountChange}
+          onMaxClick={handleMaxAmount}
+          receivedAmount={receivedAmount}
           gasDropoffLevel={gasDropoffLevel}
           onGasDropoffLevelSelect={setGasDropoffLevel}
           sourceChain={sourceChain}
@@ -135,7 +157,7 @@ const Bridge: NextPageWithLayout = <N extends Network>(): ReactElement => {
           walletAddress={address}
           balance={balance}
           route={route}
-          isInProgress={isInProgress}
+          isInProgress={isCurrent}
           onTransfer={handleTransfer}
         />
       </LeftSection>
