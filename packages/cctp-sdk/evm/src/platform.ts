@@ -5,7 +5,7 @@
 
 import type { DeepReadonly } from "@stable-io/map-utils";
 import type { Brand, BrandedSubArray } from "@stable-io/utils";
-import type { EvmGasToken } from "@stable-io/cctp-sdk-definitions";
+import type { Client, DomainsOf, EvmGasToken, GasTokenOf, Network } from "@stable-io/cctp-sdk-definitions";
 import { type RawAddress, EvmAddress } from "./address.js";
 
 export type CallData    = Brand<BrandedSubArray<CallData>,    "CallData"   >;
@@ -92,3 +92,14 @@ export type Permit2WitnessTransferFromMessage<Witness> =
 
 export type Permit2WitnessTransferFromData<Witness> =
   Eip712Data<Permit2WitnessTransferFromMessage<Witness>>;
+
+export interface EvmClient<
+  N extends Network = Network,
+  D extends DomainsOf<"Evm"> = DomainsOf<"Evm">,
+> extends Client<N, "Evm", D> {
+  estimateGas:    (tx: BaseTx) => Promise<bigint>;
+  ethCall:        (tx: ContractTx) => Promise<Uint8Array>;
+  getStorageAt:   (contract: EvmAddress, slot: bigint) => Promise<Uint8Array>;
+  getBalance:     (address: EvmAddress) => Promise<GasTokenOf<D, DomainsOf<"Evm">>>;
+  getLatestBlock: () => Promise<bigint>;
+}

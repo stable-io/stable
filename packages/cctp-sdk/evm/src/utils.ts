@@ -4,12 +4,12 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { type Layout, serialize, deserialize } from "binary-layout";
-import { type KindWithAtomic, Amount } from "@stable-io/amount";
-import { type Network, amountItem } from "@stable-io/cctp-sdk-definitions";
 import { keccak256 } from "@stable-io/utils";
+import { type KindWithAtomic, Amount } from "@stable-io/amount";
+import type { Network, DistributiveAmount } from "@stable-io/cctp-sdk-definitions";
+import { amountItem } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "./address.js";
-import type { EvmClient } from "./client.js";
-import type { ContractTx, CallData } from "./platform.js";
+import type { EvmClient, ContractTx, CallData } from "./platform.js";
 import { wordSize, selectorItem, evmAddressItem, paddedSlotItem } from "./layoutItems.js";
 
 export async function getTokenBalance<const K extends KindWithAtomic>(
@@ -17,7 +17,7 @@ export async function getTokenBalance<const K extends KindWithAtomic>(
   token:  EvmAddress,
   owner:  EvmAddress,
   kind:   K,
-): Promise<Amount<K>> {
+): Promise<DistributiveAmount<K>> {
   const balanceOfLayout = [
     selectorItem("balanceOf(address)"),
     { name: "owner", ...paddedSlotItem(evmAddressItem) },

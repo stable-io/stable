@@ -209,7 +209,12 @@ export const apt = Amount.ofKind(Apt);
 //TODO introduce type aliasing like for domains to deal with large, ugly kind types
 
 export const nameKindAmountEntries = [
+  ["Percentage",      [Percentage,      percentage     ]],
   ["Duration",        [Duration,        duration       ]],
+  ["Gas",             [Gas,             gas            ]],
+  ["ComputeUnit",     [ComputeUnit,     computeUnit    ]],
+  ["Byte",            [Byte,            byte           ]],
+  ["Usd",             [Usd,             usd            ]],
   ["Usdc",            [Usdc,            usdc           ]],
   ["GenericGasToken", [GenericGasToken, genericGasToken]],
   ["EvmGasToken",     [EvmGasToken,     evmGasToken    ]],

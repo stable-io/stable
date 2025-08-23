@@ -380,7 +380,6 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         gasDropoffFee = CctpR.applyFeeAdjustment(
           feeAdjustments["gasDropoff"],
           gasDropoff.convert(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             Conversion.from(usdc((gasTokenPrice as any).toUnit("human", "human")), GenericGasToken),
           ),
         );

@@ -2,6 +2,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import type { TODO } from "@stable-io/utils";
 import type { GasTokenOf, Network } from "@stable-io/cctp-sdk-definitions";
 import {
@@ -14,6 +15,8 @@ import type {
   CctprRecipientAddress,
   InOrOut,
   SupportedDomain,
+  CorridorParamsBase,
+  QuoteBase,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   contractAddressOf,
@@ -28,7 +31,7 @@ import {
   getTokenAllowance,
   getTokenBalance,
 } from "@stable-io/cctp-sdk-evm";
-import type { SupportedEvmDomain, Quote, CorridorParams } from "./contractSdk/index.js";
+import type { SupportedEvmDomain } from "./contractSdk/index.js";
 import { CctpR } from "./contractSdk/index.js";
 
 export type TransferOptions = {
@@ -48,8 +51,8 @@ export async function* transfer<
   sender: EvmAddress,
   recipient: CctprRecipientAddress<N, D>,
   inOrOut: InOrOut,
-  corridor: CorridorParams<N, S, D>,
-  quote: Quote<N, S>,
+  corridor: CorridorParamsBase<N, "Evm", S, D>,
+  quote: QuoteBase<N, "Evm", S>,
   gasDropoff: GasTokenOf<D>,
   { usePermit = true }: TransferOptions = {},
 ): AsyncGenerator<TransferGeneratorT, TransferGeneratorTReturn> {
@@ -69,7 +72,7 @@ export async function* transfer<
     throw new Error("Insufficient USDC balance");
 
   if (!quoteIsInUsdc(quote) &&
-      gasTokenBalance.lt(quote.type === "onChain" ? quote.maxRelayFee as TODO : quote.relayFee as TODO))
+      gasTokenBalance.lt((quote.type === "onChain" ? quote.maxRelayFee : quote.relayFee) as TODO))
     throw new Error("Insufficient gas token balance");
 
   let permit: Permit | undefined;
