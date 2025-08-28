@@ -5,14 +5,15 @@
 
 import { registerPlatformAddress } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
-import { BaseTx } from "./platform.js";
+import type { SolanaClient, TxMsg, SignableTx } from "./platform.js";
 
 declare module "@stable-io/cctp-sdk-definitions" {
   export interface PlatformRegistry {
     Solana: {
+      Client: SolanaClient;
       Address: SolanaAddress;
-      UnsignedTx: BaseTx;
-      UnsignedMsg: never;
+      UnsignedTx: TxMsg;
+      UnsignedMsg: SignableTx;
     };
   }
 }

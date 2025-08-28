@@ -4,6 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { RoNeTuple, RoTuple, RoPair, HeadTail, Simplify, RoArray } from "./metaprogramming.js";
+import { isArray } from "./array.js";
 
 //TODO implement support for arrays (that aren't tuples)
 //  Right now, the typing prevents passing arrays to functions whose values are not known at
@@ -31,10 +32,8 @@ export function pick<const O extends PlainObject, const K extends KeyOrKeys<O>>(
   obj: O,
   keyOrKeys: K,
 ): Pick<O, ToKeyUnion<O, K>> {
-  if (Array.isArray(keyOrKeys)) {
-    const keys = keyOrKeys as Keys<O>;
-    return Object.fromEntries(keys.map(key => [key, obj[key]])) as any;
-  }
+  if (isArray(keyOrKeys))
+    return Object.fromEntries(keyOrKeys.map(key => [key, obj[key]])) as any;
 
   const key = keyOrKeys as keyof O;
   return { [key]: obj[key] } as any;
@@ -46,10 +45,9 @@ export function omit<const O extends PlainObject, const K extends KeyOrKeys<O>>(
   obj: O,
   keyOrKeys: K,
 ): Omit<O, ToKeyUnion<O, K>> {
-  if (Array.isArray(keyOrKeys)) {
-    const keys = keyOrKeys as Keys<O>;
+  if (isArray(keyOrKeys)) {
     const ret = { ...obj } as any;
-    for (const key of keys)
+    for (const key of keyOrKeys)
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete ret[key];
 
@@ -157,14 +155,14 @@ function deepOmitPath(obj: any, path: Path): any {
     else
       return ret;
   }
-  const lastKey = path.at(-1);
-  if (Array.isArray(lastKey))
+  const lastKey = path.at(-1)!;
+  if (isArray(lastKey))
     for (const key of lastKey)
       // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete cur[key];
   else
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete cur[lastKey as PropertyKey];
+    delete cur[lastKey];
 
   return ret;
 }
@@ -176,7 +174,7 @@ export function deepOmit<const O extends PlainObject, const P extends Paths>(
   if (pathOrPaths.length === 0)
     return obj as any;
 
-  if (Array.isArray(pathOrPaths[0]))
+  if (isArray(pathOrPaths[0]))
     return pathOrPaths.reduce<any>((acc, path) => deepOmitPath(acc, path as any), obj);
 
   return deepOmitPath(obj, pathOrPaths as any);

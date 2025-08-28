@@ -15,7 +15,6 @@ import { serialize, deserialize } from "binary-layout";
 import type { TODO, Text } from "@stable-io/utils";
 import { definedOrThrow, encoding } from "@stable-io/utils";
 import type { RoPair, RoArray } from "@stable-io/map-utils";
-import { mapTo } from "@stable-io/map-utils";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { contractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SolanaAddress, findPda } from "@stable-io/cctp-sdk-solana";

@@ -15,12 +15,18 @@ import { gasTokenKindOf, platformOf } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain } from "./constants.js";
 import { gasDropoffLimitOf } from "./constants.js";
 import type {
+  PlatformImplsOf,
   RegisteredCctprPlatform,
   LoadedCctprPlatformDomain,
   CctprRecipientAddress,
 } from "./registry.js";
 import { platformCctpr } from "./registry.js";
 import type { InOrOut, QuoteBase, CorridorParamsBase } from "./common.js";
+
+type AsyncGen<P extends RegisteredCctprPlatform> = AsyncGenerator<
+  PlatformImplsOf[P]["TransferGeneratorT"],
+  PlatformImplsOf[P]["TransferGeneratorTReturn"]
+>;
 
 export const transfer = <
   N extends Network,
@@ -37,18 +43,17 @@ export const transfer = <
   corridor: CorridorParamsBase<N, PlatformOf<S>, S, D>,
   quote: QuoteBase<N, PlatformOf<S>, S>,
   gasDropoff: GasTokenOf<D>,
-  options: TODO,
-): AsyncGenerator<TODO, TODO> => {
+  options: PlatformImplsOf[P]["TransferOptions"],
+): AsyncGen<P> => {
   const platform = platformOf(source);
   const gasDropoffLimit = Amount.ofKind(gasTokenKindOf(destination))(
     gasDropoffLimitOf[network][destination],
   );
-  if (gasDropoff.gt(gasDropoffLimit as TODO)) {
-    throw new Error("Gas Drop Off Limit Exceeded");
-  }
 
-  const cctprImpl = platformCctpr(platform);
-  return cctprImpl.transfer(
+  if (gasDropoff.gt(gasDropoffLimit as TODO))
+    throw new Error("Gas Drop Off Limit Exceeded");
+
+  return platformCctpr(platform).transfer(
     network,
     source,
     destination,

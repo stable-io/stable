@@ -62,7 +62,7 @@ const passThrough =
 const mapIfArray =
   <P, R>(f: (_: P) => R) =>
     <V extends P | readonly P[]>(v: V) =>
-      (Array.isArray(v) ? v.map(f) : f(v as P)) as P extends readonly P[] ? R[] : R;
+      (Array.isArray(v) ? v.map(f) : f(v as P)) as V extends readonly P[] ? R[] : R;
 
 const liteSvmAccountToKitAccount = passThrough(
   null,
