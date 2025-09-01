@@ -6649,7 +6649,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@solana/web3.js@npm:^1.32.0":
+"@solana/web3.js@npm:^1.32.0, @solana/web3.js@npm:^1.98.0":
   version: 1.98.4
   resolution: "@solana/web3.js@npm:1.98.4"
   dependencies:
@@ -6871,6 +6871,22 @@ __metadata:
     typescript: "npm:^5.8.2"
   peerDependencies:
     viem: ^2.23.12
+  languageName: unknown
+  linkType: soft
+
+"@stable-io/cctpr-solana-deployment@workspace:deployment/solana/cctpr":
+  version: 0.0.0-use.local
+  resolution: "@stable-io/cctpr-solana-deployment@workspace:deployment/solana/cctpr"
+  dependencies:
+    "@solana/web3.js": "npm:^1.98.0"
+    "@stable-io/cctp-sdk-cctpr-evm": "workspace:^"
+    "@stable-io/cctp-sdk-definitions": "workspace:^"
+    "@stable-io/utils": "workspace:^"
+    chalk: "npm:^5.4.1"
+    eslint: "npm:^9.22.0"
+    eslint-config: "workspace:^"
+    tsx: "npm:^4.19.3"
+    typescript: "npm:^5.8.2"
   languageName: unknown
   linkType: soft
 
@@ -19747,6 +19763,22 @@ __metadata:
   bin:
     tsx: dist/cli.mjs
   checksum: 10c0/6ff0d91ed046ec743fac7ed60a07f3c025e5b71a5aaf58f3d2a6b45e4db114c83e59ebbb078c8e079e48d3730b944a02bc0de87695088aef4ec8bbc705dc791b
+  languageName: node
+  linkType: hard
+
+"tsx@npm:^4.19.3":
+  version: 4.20.5
+  resolution: "tsx@npm:4.20.5"
+  dependencies:
+    esbuild: "npm:~0.25.0"
+    fsevents: "npm:~2.3.3"
+    get-tsconfig: "npm:^4.7.5"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    tsx: dist/cli.mjs
+  checksum: 10c0/70f9bf746be69281312a369c712902dbf9bcbdd9db9184a4859eb4859c36ef0c5a6d79b935c1ec429158ee73fd6584089400ae8790345dae34c5b0222bdb94f3
   languageName: node
   linkType: hard
 

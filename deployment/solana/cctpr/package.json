@@ -1,0 +1,29 @@
+{
+  "name": "@stable-io/cctpr-solana-deployment",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CCTPR Solana deployment scripts",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "build": "tsc --build"
+  },
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@solana/web3.js": "^1.98.0",
+    "chalk": "^5.4.1",
+    "eslint": "^9.22.0",
+    "eslint-config": "workspace:^",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@stable-io/cctp-sdk-solana": "workspace:^",
+    "@stable-io/cctp-sdk-evm": "workspace:^",
+    "@stable-io/cctp-sdk-cctpr-solana": "workspace:^",
+    "@stable-io/cctp-sdk-definitions": "workspace:^",
+    "@stable-io/utils": "workspace:^",
+    "@solana/kit": "^2.3.0"
+  }
+}
