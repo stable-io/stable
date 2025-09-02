@@ -32,6 +32,7 @@
     "packages/common/*",
     "packages/fork-svm",
     "packages/stable-sdk",
-    "contracts/cctpr/solana"
+    "contracts/cctpr/solana",
+    "deployment/solana/cctpr"
   ]
 }
