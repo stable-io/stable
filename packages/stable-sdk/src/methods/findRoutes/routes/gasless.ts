@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { TODO } from "@stable-io/utils";
-import { init as initDefinitions, usdc, Usdc, EvmDomains, LoadedDomain } from "@stable-io/cctp-sdk-definitions";
+import { init as initDefinitions, usdc, Usdc, EvmDomains, LoadedDomain, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
 import type { Corridor, CorridorStats, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
@@ -33,22 +33,25 @@ const PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD = 1_000_000_000;
  */
 export async function buildGaslessRoute<
   N extends Network,
+  P extends RegisteredPlatform,
   S extends LoadedDomain,
   D extends SupportedDomain<N>,
 >(
-  evmClient: ViemEvmClient<N, S>,
+  client: PlatformClient<N, P, S>, //ViemEvmClient<N, S>,
   intent: Intent<N, S, D>,
   corridor: CorridorStats<N, S, Corridor>,
 ): Promise<Route<N, S, D> | undefined> {
   if (intent.paymentToken !== "usdc")
     throw new Error("Gasless Transfer can't be paid in native token");
 
-  const permit2PermitRequired = await permit2RequiresAllowance(
-    evmClient,
-    intent.sourceChain,
-    intent.sender,
-    usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
-  );
+  const permit2PermitRequired = intent.sourceChain === "Solana"
+        ? false
+        : await permit2RequiresAllowance(
+          client,
+          intent.sourceChain,
+          intent.sender as EvmAddress,
+          usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
+        );
 
   const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(corridor.cost, intent);
 
@@ -67,7 +70,7 @@ export async function buildGaslessRoute<
   };
 
   const quote = await getTransferQuote(
-    evmClient.network,
+    client.network,
     transferParams,
   );
 
@@ -98,12 +101,12 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost(evmClient.network, routeSteps, fees),
+    estimatedTotalCost: await calculateTotalCost(client.network, routeSteps, fees),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(
-      evmClient,
-      evmClient.network,
+      client,
+      client.network,
       permit2PermitRequired,
       intent,
       quote.permit2GaslessData,

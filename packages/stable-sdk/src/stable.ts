@@ -6,6 +6,7 @@
 /* istanbul ignore file */
 import "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { viemChainOf } from "@stable-io/cctp-sdk-viem";
 import { Url } from "@stable-io/utils";
 
@@ -28,18 +29,30 @@ export class StableSDK<N extends Network> extends SDK<N> {
   /**
    * @returns The viem wallet client of the user
    */
-  public async getSigner(domain: keyof EvmDomains): ReturnType<SDK<N>["getSigner"]> {
-    const viemChain = viemChainOf[this.options.network][domain];
-    const rpcUrl = this.getRpcUrl(domain);
-    return this.options.signer.getWalletClient(viemChain, rpcUrl);
+  public async getSigner(domain: SupportedDomain<N>): ReturnType<SDK<N>["getSigner"]> {
+    if (domain === "Solana") {
+      throw new Error("Solana is not supported yet");
+    } 
+    // Some evm domain
+    else {
+      const viemChain = viemChainOf[this.options.network][domain as keyof EvmDomains];
+      const rpcUrl = this.getRpcUrl(domain);
+      return this.options.signer.getWalletClient(viemChain, rpcUrl);
+    }
   }
 
   /**
    * @returns The rpc url being used for the domain
    */
-  public getRpcUrl(domain: keyof EvmDomains): Url {
-    const viemChain = viemChainOf[this.options.network][domain];
-    return (this.options.rpcUrls?.[domain] ?? viemChain.rpcUrls.default.http[0]) as Url;
+  public getRpcUrl(domain: SupportedDomain<N>): Url {
+    if (domain === "Solana") {
+      throw new Error("Solana is not supported yet");
+    }
+    // Some evm domain
+    else {
+      const viemChain = viemChainOf[this.options.network][domain as keyof EvmDomains];
+      return (this.options.rpcUrls?.[domain] ?? viemChain.rpcUrls.default.http[0]) as Url;
+    }
   }
 
   public findRoutes = $findRoutes({
