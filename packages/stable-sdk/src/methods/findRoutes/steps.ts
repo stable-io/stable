@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Eip2612Message, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
 import { type Permit2GaslessData, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -15,7 +15,7 @@ export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "transf
 
 interface BaseRouteExecutionStep {
   type: StepType;
-  chain: keyof EvmDomains;
+  chain: LoadedDomain;
   platform: SupportedPlatform;
   // This is the estimated cost of executing this step on-chain.
   // value=0 might be cero if the step is not executed onchain directly
@@ -160,7 +160,7 @@ export function isTransferTx(subject: unknown): subject is TransferTx {
 export async function buildTransferStep(
   network: Network,
   corridor: Corridor,
-  sourceChain: keyof EvmDomains,
+  sourceChain: LoadedDomain,
   usesPermit: boolean,
 ): Promise<TransferStep> {
   const { v1, v2, permit } = await getPlatformExecutionCosts(network, "Evm");

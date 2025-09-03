@@ -27,12 +27,12 @@ export class StableSDK<N extends Network> extends SDK<N> {
   }
 
   /**
-   * @returns The viem wallet client of the user
+   * @returns The wallet client of the user
    */
   public async getSigner(domain: SupportedDomain<N>): ReturnType<SDK<N>["getSigner"]> {
     if (domain === "Solana") {
       throw new Error("Solana is not supported yet");
-    } 
+    }
     // Some evm domain
     else {
       const viemChain = viemChainOf[this.options.network][domain as keyof EvmDomains];

@@ -86,12 +86,13 @@ export async function buildGaslessRoute<
   if (intent.amount.le(totalFee)) return undefined;
 
   const tokenAllowanceSteps = permit2PermitRequired
-    ? [signPermitStep(intent.sourceChain)]
+    ? [signPermitStep(intent.sourceChain as keyof EvmDomains)]
     : [];
+
 
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
-    gaslessTransferStep(intent.sourceChain),
+    gaslessTransferStep(intent.sourceChain), // check if is evm exclusive or should be modified
   ];
 
   return {

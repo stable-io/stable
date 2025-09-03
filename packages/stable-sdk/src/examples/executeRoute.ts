@@ -5,11 +5,12 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { Network } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../index.js";
 import { bigintReplacer } from "../utils.js";
+import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 dotenv.config();
 const privateKey = process.env.EVM_PRIVATE_KEY as Address;
@@ -110,14 +111,17 @@ function stringify(obj: any) {
   return JSON.stringify(obj, bigintReplacer);
 }
 
-function getTestnetScannerTxUrl<D extends keyof EvmDomains>(
+function getTestnetScannerTxUrl<
+  N extends Network,
+  D extends SupportedDomain<N>,
+>(
   domain: D,
   txHash: string,
 ): string {
-  const scanners: Partial<Record<keyof EvmDomains, string>> = {
-    ["Ethereum"]: "https://sepolia.etherscan.io/tx/",
-    ["Arbitrum"]: "https://sepolia.arbiscan.io/tx/",
-    ["Optimism"]: "https://sepolia-optimism.etherscan.io/tx/",
+  const scanners: Partial<Record<D, string>> = {
+    ["Ethereum" as D]: "https://sepolia.etherscan.io/tx/",
+    ["Arbitrum" as D]: "https://sepolia.arbiscan.io/tx/",
+    ["Optimism" as D]: "https://sepolia-optimism.etherscan.io/tx/",
   };
 
   const baseUrl = scanners[domain];

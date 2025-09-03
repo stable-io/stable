@@ -5,13 +5,13 @@
 
 import { deserialize } from "binary-layout";
 import { Hex } from "viem";
-import { duration, EvmDomains, UniversalAddress, v1, v2 } from "@stable-io/cctp-sdk-definitions";
+import { duration, EvmDomains, LoadedDomain, UniversalAddress, v1, v2 } from "@stable-io/cctp-sdk-definitions";
 import type { Address, Network, TxHash } from "../../types/index.js";
 import { encoding, pollUntil, type PollingConfig } from "@stable-io/utils";
 
 export async function findTransferAttestation<N extends Network>(
   network: N,
-  sourceChain: keyof EvmDomains,
+  sourceChain: LoadedDomain,
   transactionHash: TxHash,
   config: PollingConfig = {},
 ): Promise<CctpAttestation> {
@@ -32,8 +32,8 @@ export type CctpV1Attestation = {
   sender: Address;
   recipient: Address;
   destinationCaller: Address;
-  sourceDomain: keyof EvmDomains;
-  targetDomain: keyof EvmDomains;
+  sourceDomain: LoadedDomain;
+  targetDomain: LoadedDomain;
   messageBody: {
     burnToken: Address;
     mintRecipient: Address;
@@ -50,8 +50,8 @@ function parseV1Attestation(message: v2.ApiResponseMessage): CctpV1Attestation {
     sender: toEvmAddress(attestation.sender),
     recipient: toEvmAddress(attestation.recipient),
     destinationCaller: toEvmAddress(attestation.destinationCaller),
-    sourceDomain: attestation.sourceDomain as keyof EvmDomains,
-    targetDomain: attestation.destinationDomain as keyof EvmDomains,
+    sourceDomain: attestation.sourceDomain as LoadedDomain,
+    targetDomain: attestation.destinationDomain as LoadedDomain,
     messageBody: {
       burnToken: toEvmAddress(attestation.messageBody.burnToken),
       mintRecipient: toEvmAddress(attestation.messageBody.mintRecipient),
@@ -70,8 +70,8 @@ export type CctpV2Attestation = {
   sender: Address;
   recipient: Address;
   destinationCaller: Address;
-  sourceDomain: keyof EvmDomains;
-  targetDomain: keyof EvmDomains;
+  sourceDomain: LoadedDomain;
+  targetDomain: LoadedDomain;
   messageBody: {
     burnToken: Address;
     mintRecipient: Address;
@@ -94,8 +94,8 @@ function parseV2Attestation(message: v2.ApiResponseMessage): CctpV2Attestation {
     sender: toEvmAddress(attestation.sender),
     recipient: toEvmAddress(attestation.recipient),
     destinationCaller: toEvmAddress(attestation.destinationCaller),
-    sourceDomain: attestation.sourceDomain as keyof EvmDomains,
-    targetDomain: attestation.destinationDomain as keyof EvmDomains,
+    sourceDomain: attestation.sourceDomain as LoadedDomain,
+    targetDomain: attestation.destinationDomain as LoadedDomain,
     minFinalityThreshold: attestation.minFinalityThreshold,
     finalityThresholdExecuted: attestation.finalityThresholdExecuted,
     messageBody: {

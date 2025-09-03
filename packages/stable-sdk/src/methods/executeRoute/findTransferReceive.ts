@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { domainIdOf, v1, v2, EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { domainIdOf, v1, v2, EvmDomains, LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { TODO, Url } from "@stable-io/utils";
 import type { Network } from "../../types/index.js";
 import type { CctpAttestation } from "./findTransferAttestation.js";
@@ -79,12 +79,12 @@ const v1MessageReceivedEvent = parseAbiItem(
 
 async function getV1ReceiveLogs<
   N extends Network,
-  D extends keyof EvmDomains,
+  D extends LoadedDomain,
 >(
   network: N,
   viemEvmClient: ViemEvmClient<N, D>,
   nonce: bigint,
-  targetChain: keyof EvmDomains,
+  targetChain: LoadedDomain,
   fromBlock: bigint,
 ) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call

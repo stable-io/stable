@@ -50,7 +50,7 @@ export async function buildUserTransferRoute<
 >(
   network: N,
   intent: Intent<N, S, D>,
-  corridor: CorridorStats<N, keyof EvmDomains, Corridor>,
+  corridor: CorridorStats<N, SupportedDomain<N>, Corridor>,
 ): Promise<Route<N, S, D> | undefined> {
   const platform = platformOf(intent.sourceChain);
   const cctprImpl = platformCctpr(platform);
@@ -86,8 +86,8 @@ export async function buildUserTransferRoute<
   const tokenAllowanceSteps = allowanceRequired
     ? [
         intent.usePermit
-          ? signPermitStep(intent.sourceChain)
-          : preApprovalStep(intent.sourceChain),
+          ? signPermitStep(intent.sourceChain as keyof EvmDomains)
+          : preApprovalStep(intent.sourceChain as keyof EvmDomains),
       ]
     : [];
 

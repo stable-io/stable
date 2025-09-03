@@ -3,7 +3,7 @@ import { composePermitMsg, EvmAddress, permit2Address, Permit, Eip2612Data } fro
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Network } from "src/types/general.js";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import type { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
+import type { LoadedDomain, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
@@ -13,10 +13,11 @@ import { GaslessTransferData } from "src/methods/findRoutes/steps.js";
 
 export async function* transferWithGaslessRelay<
   N extends Network,
+  P extends RegisteredPlatform,
   S extends LoadedDomain,
   D extends SupportedDomain<N>,
 >(
-  evmClient: ViemEvmClient<N, S>,
+  client: PlatformClient<N, P, S>, //ViemEvmClient<N, S>,
   network: N,
   permit2RequiresAllowance: boolean,
   intent: Intent<N, S, D>,
@@ -30,7 +31,7 @@ export async function* transferWithGaslessRelay<
   let permit: Permit | undefined;
   if (permit2RequiresAllowance) {
     permit = yield composePermitMsg(network)(
-      evmClient, usdcAddress, intent.sender, permit2Addr, maxUint256Usdc,
+      client, usdcAddress, intent.sender as EvmAddress, permit2Addr, maxUint256Usdc,
     );
   }
 

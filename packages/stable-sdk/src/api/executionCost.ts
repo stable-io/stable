@@ -1,4 +1,4 @@
-import { HTTPCode } from "@stable-io/cctp-sdk-definitions";
+import { HTTPCode, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { deserializeBigints, SerializedBigint } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { apiRequest, apiEndpoint, APIResponse } from "./base.js";
@@ -21,7 +21,7 @@ type SerializedEvmExecutionCosts = {
 
 export type ExecutionCostsResponse = EvmExecutionCosts; // | SolanaExecutionCosts...
 
-export async function getPlatformExecutionCosts<P extends "Evm">(
+export async function getPlatformExecutionCosts<P extends RegisteredPlatform>(
   network: Network,
   platformName: P,
 ): Promise<ExecutionCostsResponse> {
