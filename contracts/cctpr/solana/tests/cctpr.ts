@@ -275,7 +275,7 @@ describe("CctpR", function() {
     feePayer: KeyPairSigner,
     signers?: readonly KeyPairSigner[],
   ) => addLifetimeAndSendTx(
-    feePayerTxFromIxs(instructions, feePayer.address),
+    feePayerTxFromIxs(instructions, new SolanaAddress(feePayer.address)),
     signers ?? [feePayer],
   );
 
@@ -476,7 +476,7 @@ describe("CctpR", function() {
 
   describe("flow: quote -> transfer -> reclaim", () => {
     const cctpr = new CctpR(...cctprConstructorArgs);
-    const rentCustodian = findPda(["rent"], cctpr.client)[0];
+    const rentCustodian = findPda(["rent"], cctpr.address)[0];
     const userEvmAddress = new UniversalAddress("15130512".repeat(5), "Evm");
 
     const humanGasDropoff = 0.01; //25 dollars worth of gas on Ethereum
@@ -562,7 +562,7 @@ describe("CctpR", function() {
         const [mode, inOrOut, corridor, withGasDropoff, useOnChainQuote] = testCase;
         forkSvm.restoreFromSnapshot(snapshot);
         const eventDataSeed = serialize({ binary: "uint", size: 4 }, index);
-        const eventDataAddr = findPda([user, eventDataSeed], cctpr.client)[0];
+        const eventDataAddr = findPda([user, eventDataSeed], cctpr.address)[0];
         const gaslessFee = mode === "gasless" ? usdc(humanGaslessFee) : usdc(0);
 
         const gasDropoff = genericGasToken(withGasDropoff ? humanGasDropoff : 0);
