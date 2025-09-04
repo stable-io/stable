@@ -23,6 +23,7 @@ import type { SolanaClient, TxMsg } from "@stable-io/cctp-sdk-solana";
 import { SolanaAddress, findAta, getSolBalance, getTokenBalance } from "@stable-io/cctp-sdk-solana";
 import { CctpR } from "./contractSdk/index.js";
 import { ForeignDomain } from "./contractSdk/constants.js";
+import { TODO } from "@stable-io/utils";
 
 export type TransferOptions = Parameters<typeof CctpR.prototype.transferWithRelay>[7];
 export type TransferGeneratorT = never;
@@ -73,7 +74,7 @@ export async function* transfer<
     inOrOut,
     recipientUniversal,
     gasDropoff,
-    corridor,
+    corridor as TODO, // TODO: Why isn't this typing correctly?
     quote,
     sender,
     opts,

@@ -103,19 +103,9 @@ export async function getAccountInfo<const A extends MaybeArray<SolanaAddress>>(
   client: SolanaClient,
   addressEs: A,
 ): Promise<MapArrayness<A, AccountInfo | undefined>> {
-  const enc = { encoding: "base64" } as const;
-  const accInfos = (await (isArray(addressEs)
-    ? client.getMultipleAccounts(addressEs.map(addr => addr.unwrap()), enc)
-    : client.getAccountInfo(addressEs.unwrap(), enc)
-  ).send()).value;
-  return mapTo(accInfos)(accInfo =>
-    accInfo
-    ? { executable: accInfo.executable,
-        owner:      new SolanaAddress(accInfo.owner),
-        lamports:   sol(accInfo.lamports, "lamports"),
-        data:       encoding.base64.decode(accInfo.data[0]),
-      }
-    : undefined,
+  return await (isArray(addressEs)
+    ? client.getMultipleAccounts(addressEs)
+    : client.getAccountInfo(addressEs)
   ) as MapArrayness<A, AccountInfo | undefined>;
 }
 

@@ -6280,6 +6280,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@stable-io/cctp-sdk-solana-kit@workspace:packages/cctp-sdk/solana-kit":
+  version: 0.0.0-use.local
+  resolution: "@stable-io/cctp-sdk-solana-kit@workspace:packages/cctp-sdk/solana-kit"
+  dependencies:
+    "@stable-io/cctp-sdk-definitions": "workspace:^"
+    "@stable-io/cctp-sdk-solana": "workspace:^"
+    "@stable-io/utils": "workspace:^"
+    eslint: "npm:^9.22.0"
+    eslint-config: "workspace:^"
+    typescript: "npm:^5.8.2"
+  peerDependencies:
+    "@solana/kit": ^2.3.0
+  languageName: unknown
+  linkType: soft
+
 "@stable-io/cctp-sdk-solana@workspace:^, @stable-io/cctp-sdk-solana@workspace:packages/cctp-sdk/solana":
   version: 0.0.0-use.local
   resolution: "@stable-io/cctp-sdk-solana@workspace:packages/cctp-sdk/solana"
