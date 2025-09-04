@@ -21,7 +21,7 @@ import {
   Percentage,
   percentage,
   RegisteredPlatform,
-  usdc
+  usdc,
 } from "@stable-io/cctp-sdk-definitions";
 
 import type { Fee, Network, Intent } from "../../types/index.js";

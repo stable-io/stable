@@ -3,8 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import type { Network } from "@stable-io/cctp-sdk-definitions";
+import { platformClient, type Network } from "@stable-io/cctp-sdk-definitions";
 import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Route, SDK, Hex, SupportedRoute } from "../../types/index.js";
 
@@ -26,7 +25,7 @@ export const $executeRoute =
     const signer = await getSigner(sourceChain);
     const network = getNetwork();
     const rpcUrl = getRpcUrl(sourceChain);
-    const client = ViemEvmClient.fromNetworkAndDomain(
+    const client = platformClient(
       network,
       sourceChain,
       rpcUrl,
