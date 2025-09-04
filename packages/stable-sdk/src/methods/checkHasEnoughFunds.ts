@@ -43,15 +43,17 @@ export const $checkHasEnoughFunds =
     );
 
     const usdcAddr = new EvmAddress(usdcContracts.contractAddressOf[network][sourceChain]);
-    const [gasTokenBalance, usdcBalance] = client.platform === "Solana" ? await Promise.all([
-      getSolBalance(client, new SolanaAddress(sender as SolanaAddressish)).then(
-        balance => balance ?? sol(0)
-      ),
-      getUsdcBalance(client, new SolanaAddress(sender as SolanaAddressish)),
-    ]) : await Promise.all([
-      client.getBalance(new EvmAddress(sender as EvmAddressish)),
-      getTokenBalanceEvm(client, usdcAddr, new EvmAddress(sender as EvmAddressish), Usdc),
-    ]);
+    const [gasTokenBalance, usdcBalance] = client.platform === "Solana"
+      ? await Promise.all([
+          getSolBalance(client, new SolanaAddress(sender as SolanaAddressish)).then(
+            balance => balance ?? sol(0),
+          ),
+          getUsdcBalance(client, new SolanaAddress(sender as SolanaAddressish)),
+        ])
+      : await Promise.all([
+          client.getBalance(new EvmAddress(sender as EvmAddressish)),
+          getTokenBalanceEvm(client, usdcAddr, new EvmAddress(sender as EvmAddressish), Usdc),
+        ]);
 
     const hasEnoughUsdc = usdcBalance.ge(requiredBalance.usdc);
     const hasEnoughGas = gasTokenBalance.ge(requiredBalance.gasToken as TODO);

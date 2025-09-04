@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { TransactionMessage, createSolanaRpc, compileTransaction, Lamports, Address, Base64EncodedDataResponse } from "@solana/kit";
-import type { Client, Network, Sol } from "@stable-io/cctp-sdk-definitions";
+import type { Client, DomainsOf, GasTokenOf, Network, Sol } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
 import { RoArray } from "@stable-io/map-utils";
 
@@ -20,7 +20,9 @@ export type AccountInfo = {
 
 export interface SolanaClient<
   N extends Network = Network,
+  D extends DomainsOf<"Solana"> = DomainsOf<"Solana">,
 > extends Client<N, "Solana"> {
   getAccountInfo: (address: SolanaAddress) => Promise<AccountInfo | undefined>;
   getMultipleAccounts: (addresses: RoArray<SolanaAddress>) => Promise<(AccountInfo | undefined)[]>;
+  getBalance: (address: SolanaAddress) => Promise<GasTokenOf<D, DomainsOf<"Solana">>>;
 }

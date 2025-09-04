@@ -4,8 +4,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { type Base64EncodedDataResponse, type Lamports, type Address, createSolanaRpc } from "@solana/kit";
-import { Network, sol } from "@stable-io/cctp-sdk-definitions";
-import { SolanaAddress, type AccountInfo, type SolanaClient } from "@stable-io/cctp-sdk-solana";
+import { Network, Sol, sol } from "@stable-io/cctp-sdk-definitions";
+import { getSolBalance, SolanaAddress, type AccountInfo, type SolanaClient } from "@stable-io/cctp-sdk-solana";
 import { RoArray } from "@stable-io/map-utils";
 import { encoding, Url } from "@stable-io/utils";
 
@@ -69,5 +69,11 @@ export class SolanaKitClient<N extends Network = Network> implements SolanaClien
         { encoding: "base64" }
       ).send()
     ).value.map(toAccountInfo);
+  }
+
+  getBalance(
+    owner: SolanaAddress,
+  ): Promise<Sol> {
+    return getSolBalance(this, owner).then(balance => balance ?? sol(0));
   }
 }
