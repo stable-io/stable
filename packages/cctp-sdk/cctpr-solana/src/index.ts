@@ -4,4 +4,5 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 export * from "./registry.js";
+export * from "./utils.js";
 export * from "./contractSdk/index.js";

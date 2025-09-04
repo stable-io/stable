@@ -18,7 +18,6 @@ import { encoding, sha256, ed25519, throws, isUint8Array } from "@stable-io/util
 import type { RoArray, MaybeArray, MapArrayness, RoPair } from "@stable-io/map-utils";
 import { type KindWithAtomic } from "@stable-io/amount";
 import type { Byte, Sol, DistributiveAmount } from "@stable-io/cctp-sdk-definitions";
-import { sol } from "@stable-io/cctp-sdk-definitions";
 import {
   associatedTokenProgramId,
   tokenProgramId,

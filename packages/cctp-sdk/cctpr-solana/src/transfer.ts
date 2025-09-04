@@ -24,6 +24,7 @@ import { SolanaAddress, findAta, getSolBalance, getTokenBalance } from "@stable-
 import { CctpR } from "./contractSdk/index.js";
 import { ForeignDomain } from "./contractSdk/constants.js";
 import { TODO } from "@stable-io/utils";
+import { getUsdcBalance } from "./utils.js";
 
 export type TransferOptions = Parameters<typeof CctpR.prototype.transferWithRelay>[7];
 export type TransferGeneratorT = never;
@@ -47,15 +48,11 @@ export async function* transfer<
   gasDropoff: GasTokenOf<D>,
   opts?: TransferOptions,
 ): AsyncGenerator<never, TransferGeneratorTReturn> {
-  const userUsdc = opts?.userUsdc ?? findAta(
-    sender,
-    new SolanaAddress(usdcContracts.contractAddressOf[network][source]),
-  );
   const client = platformClient(network, source) as SolanaClient;
   const cctprSdk = new CctpR(network, client);
   const [solBalance, usdcBalance] = await Promise.all([
     getSolBalance(client, sender).then(balance => balance ?? sol(0)),
-    getTokenBalance(client, userUsdc, Usdc).then(balance => balance ?? usdc(0)),
+    getUsdcBalance(client, sender),
   ]);
 
   const [requiredUsc] = calcUsdcAmounts(inOrOut, corridor, quote, usdc(0));
