@@ -6,11 +6,10 @@
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
 import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import type { Network, EvmDomains, LoadedDomain, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
+import type { Network, EvmDomains, PlatformClient, RegisteredPlatform, DomainsOf } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
-import { parseTransferTxCalldata, Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
+import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
 import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
@@ -21,7 +20,7 @@ const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("ato
 export async function executeRouteSteps<
   N extends Network,
   P extends RegisteredPlatform,
-  D extends LoadedDomain,
+  D extends DomainsOf<P>,
 >(
   network: N,
   route: SupportedRoute<N>,
