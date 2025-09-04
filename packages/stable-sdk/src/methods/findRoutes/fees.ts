@@ -11,7 +11,6 @@ import type {
   SupportedDomain,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
-  EvmDomains,
   GasTokenKindOf,
   Usdc,
   usd,

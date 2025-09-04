@@ -4,10 +4,10 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { TODO } from "@stable-io/utils";
-import { init as initDefinitions, usdc, Usdc, EvmDomains, LoadedDomain, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
+import { init as initDefinitions, usdc, Usdc, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
-import type { Corridor, CorridorStats, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Corridor, CorridorStats, LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
@@ -34,7 +34,7 @@ const PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD = 1_000_000_000;
 export async function buildGaslessRoute<
   N extends Network,
   P extends RegisteredPlatform,
-  S extends LoadedDomain,
+  S extends LoadedCctprPlatformDomain<N, P>,
   D extends SupportedDomain<N>,
 >(
   client: PlatformClient<N, P, S>, //ViemEvmClient<N, S>,

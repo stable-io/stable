@@ -2,10 +2,9 @@ import { encoding } from "@stable-io/utils";
 import { composePermitMsg, EvmAddress, permit2Address, Permit, Eip2612Data } from "@stable-io/cctp-sdk-evm";
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Network } from "src/types/general.js";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import type { DomainsOf, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
+import type { PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
-import type { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 import { Intent } from "../types/index.js";
 import { postTransferRequest } from "../api/gasless.js";
@@ -14,7 +13,7 @@ import { GaslessTransferData } from "src/methods/findRoutes/steps.js";
 export async function* transferWithGaslessRelay<
   N extends Network,
   P extends RegisteredPlatform,
-  S extends DomainsOf<P>,
+  S extends LoadedCctprPlatformDomain<N, P>,
   D extends SupportedDomain<N>,
 >(
   client: PlatformClient<N, P, S>, //ViemEvmClient<N, S>,
