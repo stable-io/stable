@@ -8,6 +8,7 @@ import { customizableBytes } from "binary-layout";
 import { messageLayoutTemplate, burnMessageLayoutTemplate } from "../../messages.js";
 import { uint256Item, hashItem, amountItem } from "../../layoutItems.js";
 import { Usdc } from "../../constants/index.js";
+
 export const finalityThresholdItem = { binary: "uint", size: 4 } as const satisfies Item;
 
 const extraFields = [

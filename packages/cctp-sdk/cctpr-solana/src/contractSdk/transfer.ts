@@ -9,14 +9,7 @@ import type {
   TransactionMessageWithFeePayer,
   TransactionMessageWithDurableNonceLifetime,
 } from "@solana/kit";
-import {
-  AccountRole,
-  pipe,
-  createTransactionMessage,
-  setTransactionMessageFeePayer,
-  appendTransactionMessageInstructions,
-  setTransactionMessageLifetimeUsingDurableNonce,
-} from "@solana/kit";
+import { AccountRole, setTransactionMessageLifetimeUsingDurableNonce } from "@solana/kit";
 import { serialize, deserialize } from "binary-layout";
 import type { Text } from "@stable-io/utils";
 import { definedOrThrow, encoding } from "@stable-io/utils";
@@ -64,6 +57,7 @@ import {
   SolanaAddress,
   findPda,
   findAta,
+  feePayerTxFromIxs,
   systemProgramId,
   tokenProgramId,
   cctpAccounts,
@@ -308,11 +302,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
 
     const transferIx = this.composeIx(accounts, transferWithRelayParamsLayout, params);
 
-    return pipe(
-      createTransactionMessage({ version: 0 }),
-      tx => setTransactionMessageFeePayer(relayer.unwrap(), tx),
-      tx => appendTransactionMessageInstructions([transferIx], tx),
-    );
+    return feePayerTxFromIxs(transferIx, relayer);
   }
 
   //WARNING: does not include the rent rebate for user instantiated (i.e. not gasless) transfers

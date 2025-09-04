@@ -3,11 +3,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { TODO } from "@stable-io/utils";
 import type { GasTokenOf, Network, Sol } from "@stable-io/cctp-sdk-definitions";
 import {
   Usdc,
   usdc,
+  sol,
   platformClient,
   usdcContracts,
 } from "@stable-io/cctp-sdk-definitions";
@@ -53,8 +53,8 @@ export async function* transfer<
   const client = platformClient(network, source) as SolanaClient;
   const cctprSdk = new CctpR(network, client);
   const [solBalance, usdcBalance] = await Promise.all([
-    getSolBalance(client, sender),
-    getTokenBalance(client, userUsdc, Usdc),
+    getSolBalance(client, sender).then(balance => balance ?? sol(0)),
+    getTokenBalance(client, userUsdc, Usdc).then(balance => balance ?? usdc(0)),
   ]);
 
   const [requiredUsc] = calcUsdcAmounts(inOrOut, corridor, quote, usdc(0));

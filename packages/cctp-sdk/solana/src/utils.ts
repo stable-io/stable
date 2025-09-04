@@ -1,9 +1,22 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+import type { Instruction, TransactionMessage, TransactionMessageWithFeePayer } from "@solana/kit";
+import {
+  AccountRole,
+  pipe,
+  createTransactionMessage,
+  setTransactionMessageFeePayer,
+  appendTransactionMessageInstructions,
+} from "@solana/kit";
 import type { Layout, DeriveType } from "binary-layout";
-import { deserialize } from "binary-layout";
+import { deserialize, serialize } from "binary-layout";
 import { isArray, mapTo } from "@stable-io/map-utils";
 import { encoding, sha256, ed25519, throws, isUint8Array } from "@stable-io/utils";
-import type { RoArray, MaybeArray, MapArrayness } from "@stable-io/map-utils";
-import { type KindWithAtomic, Amount } from "@stable-io/amount";
+import type { RoArray, MaybeArray, MapArrayness, RoPair } from "@stable-io/map-utils";
+import { type KindWithAtomic } from "@stable-io/amount";
 import type { Byte, Sol, DistributiveAmount } from "@stable-io/cctp-sdk-definitions";
 import { sol } from "@stable-io/cctp-sdk-definitions";
 import {
@@ -11,6 +24,7 @@ import {
   tokenProgramId,
   rentCost,
   emptyAccountSize,
+  systemProgramId,
 } from "./constants.js";
 import { SolanaAddress } from "./address.js";
 import type { SolanaClient, AccountInfo } from "./platform.js";
@@ -123,9 +137,9 @@ export async function getSolBalance<
 >(
   client: SolanaClient,
   solAccs: A,
-): Promise<MapArrayness<A, Sol>> {
+): Promise<MapArrayness<A, Sol | undefined>> {
   return mapTo(await getAccountInfo(client, solAccs))(
-    accInfo => accInfo?.lamports ?? sol(0, "lamports"),
+    accInfo => accInfo?.lamports,
   ) as any;
 }
 
@@ -136,8 +150,57 @@ export async function getTokenBalance<
   client: SolanaClient,
   tokenAccs: A,
   kind: K,
-): Promise<MapArrayness<A, DistributiveAmount<K>>> {
+): Promise<MapArrayness<A, DistributiveAmount<K> | undefined>> {
   return mapTo(await getDeserializedAccount(client, tokenAccs, tokenAccountLayout(kind)))(
-    maybeToken => maybeToken?.amount ?? Amount.from(0, kind, "atomic"),
+    maybeToken => maybeToken?.amount,
   ) as any;
+}
+
+export type Ix = Required<Instruction>;
+export function composeIx<const L extends Layout>(
+  addrRoles: RoArray<RoPair<SolanaAddress, AccountRole>>,
+  layout: L,
+  params: DeriveType<L>,
+  programAddress: SolanaAddress,
+): Ix {
+  return {
+    accounts: addrRoles.map(([address, role]) => ({ address: address.unwrap(), role })),
+    data: serialize(layout, params),
+    programAddress: programAddress.unwrap(),
+  };
+}
+
+export function feePayerTxFromIxs(
+  ixs: Ix | readonly Ix[],
+  payer: SolanaAddress,
+  version: "legacy" | 0 = "legacy",
+): TransactionMessage & TransactionMessageWithFeePayer {
+  return pipe(
+    createTransactionMessage({ version }),
+    tx => setTransactionMessageFeePayer(payer.unwrap(), tx),
+    tx => appendTransactionMessageInstructions(isArray(ixs) ? ixs : [ixs], tx),
+  );
+}
+
+export function composeCreateAtaIx(
+  payer: SolanaAddress,
+  owner: SolanaAddress,
+  mint: SolanaAddress,
+  idempotent: boolean = true,
+  tokenProgram: SolanaAddress = tokenProgramId,
+): Ix {
+  const ata = findAta(owner, mint, tokenProgram);
+  const accounts = [
+    [payer,           AccountRole.WRITABLE_SIGNER],
+    [ata,             AccountRole.WRITABLE       ],
+    [owner,           AccountRole.READONLY       ],
+    [mint,            AccountRole.READONLY       ],
+    [systemProgramId, AccountRole.READONLY       ],
+    [tokenProgram,    AccountRole.READONLY       ],
+  ] as const;
+  return composeIx(accounts,
+    { binary: "uint", size: 1 }, //see https://docs.rs/spl-associated-token-account-interface/latest/spl_associated_token_account_interface/instruction/enum.AssociatedTokenAccountInstruction.html
+    idempotent ? 1 : 0,
+    associatedTokenProgramId,
+  );
 }

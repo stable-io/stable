@@ -16,7 +16,7 @@ import type {
 import { customizableBytes, boolItem, enumItem, setEndianness } from "binary-layout";
 import { valueIndexEntries } from "@stable-io/map-utils";
 import { KindWithAtomic } from "@stable-io/amount";
-import { paddingItem, amountItem, hashItem, Sol, sol } from "@stable-io/cctp-sdk-definitions";
+import { paddingItem, amountItem, hashItem, Sol, sol, Usdc } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
 import { type DiscriminatorType, discriminatorOf } from "./utils.js";
 

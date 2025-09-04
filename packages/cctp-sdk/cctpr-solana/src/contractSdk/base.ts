@@ -7,7 +7,6 @@ import type {
   Rpc,
   GetAccountInfoApi,
   GetMultipleAccountsApi,
-  Instruction,
 } from "@solana/kit";
 import { AccountRole } from "@solana/kit";
 import type { Layout, DeriveType } from "binary-layout";
@@ -17,7 +16,7 @@ import { definedOrThrow, encoding } from "@stable-io/utils";
 import type { RoPair, RoArray } from "@stable-io/map-utils";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { contractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { SolanaAddress, findPda } from "@stable-io/cctp-sdk-solana";
+import { type Ix, SolanaAddress, findPda, composeIx } from "@stable-io/cctp-sdk-solana";
 import { type ForeignDomain, oracleAddress } from "./constants.js";
 import type { Config } from "./layouts.js";
 import { foreignDomainItem, configLayout } from "./layouts.js";
@@ -27,8 +26,6 @@ import { chainItem as oracleChainItem } from "./oracleLayouts.js";
 type RpcType = Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;
 
 export type PriceAddresses = readonly [chainConfig: SolanaAddress, oraclePrices: SolanaAddress];
-
-export type Ix = Required<Instruction>;
 
 export class CctpRBase<N extends Network> {
   private static readonly cacheTtl = 60 * 1000; //60 seconds
@@ -130,10 +127,6 @@ export class CctpRBase<N extends Network> {
     layout: L,
     params: DeriveType<L>,
   ): Ix {
-    return {
-      accounts: addrRoles.map(([address, role]) => ({ address: address.unwrap(), role })),
-      data: serialize(layout, params),
-      programAddress: this.address.unwrap(),
-    };
+    return composeIx(addrRoles, layout, params, this.address);
   }
 }

@@ -53,6 +53,7 @@ import {
   SolanaAddress,
   findPda,
   findAta,
+  feePayerTxFromIxs,
   minimumBalanceForRentExemption,
   tokenAccountLayout,
   tokenProgramId,
@@ -273,11 +274,9 @@ describe("CctpR", function() {
     instructions: readonly Ix[],
     feePayer: KeyPairSigner,
     signers?: readonly KeyPairSigner[],
-  ) => pipe(
-    createTransactionMessage({ version: "legacy" }),
-    tx => setTransactionMessageFeePayer(feePayer.address, tx),
-    tx => appendTransactionMessageInstructions(instructions, tx),
-    tx => addLifetimeAndSendTx(tx, signers ?? [feePayer]),
+  ) => addLifetimeAndSendTx(
+    feePayerTxFromIxs(instructions, feePayer.address),
+    signers ?? [feePayer],
   );
 
   const addLifetimeAndSendTx = async (tx: TxMsg, signers?: readonly KeyPairSigner[]) => {
