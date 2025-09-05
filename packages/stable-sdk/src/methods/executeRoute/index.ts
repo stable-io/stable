@@ -65,9 +65,8 @@ export const $executeRoute =
      * receipt on avalanche.
      */
     const receive = await findTransferReceive(
-      network,
-      getRpcUrl(attestation.targetDomain),
-      attestation,
+      transferTx,
+      attestation.targetDomain,
       { timeoutMs: 180000 },
     ).catch((error: unknown) => {
       route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
@@ -108,9 +107,8 @@ export const $executeRoute =
       route.progress.emit("hop-confirmed", secondHopAttestation); // uses hop attestation
 
       const secondHopReceive = await findTransferReceive(
-        network,
-        getRpcUrl(secondHopAttestation.targetDomain),
-        secondHopAttestation,
+        receive.transactionHash,
+        secondHopAttestation.targetDomain,
         { timeoutMs: 180000 },
       ).catch((error: unknown) => {
         route.progress.emit("error", { type: "receive-failed", details: { txHash: receive.transactionHash } });
