@@ -11,7 +11,6 @@ import type {
   SupportedDomain,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
-  EvmDomains,
   GasTokenKindOf,
   Usdc,
   usd,
@@ -34,14 +33,14 @@ export function getCorridorFees<
   S extends LoadedCctprPlatformDomain<N, P>,
   D extends SupportedDomain<N>,
 >(
-  corridorCost: CorridorStats<N, keyof EvmDomains, Corridor>["cost"],
+  corridorCost: CorridorStats<N, D, Corridor>["cost"],
   intent: Intent<N, S, D>,
 ): { corridorFees: Fee[]; maxRelayFee: Fee; fastFeeRate: Percentage } {
   const corridorFees = [] as Fee[];
 
   const relayFee: Fee = intent.paymentToken === "usdc"
     ? corridorCost.relay[0]
-    : corridorCost.relay[1];
+    : corridorCost.relay[1] as Fee;
 
   const maxRelayFee = relayFee.mul(intent.relayFeeMaxChangeMargin.toUnit("%"));
 

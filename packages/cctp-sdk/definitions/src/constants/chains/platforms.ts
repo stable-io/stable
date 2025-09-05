@@ -48,13 +48,18 @@ export const platformOf = constMap(platformDomainEntries, [1, 0]);
 export type PlatformOf<D extends ExpandedDomain> = ReturnType<typeof platformOf<D>>;
 
 export interface EvmDomains extends SuppressExpansion<ExpandedDomainsOf<"Evm">> {}
+export interface SolanaDomains extends SuppressExpansion<ExpandedDomainsOf<"Solana">> {}
 
 export const isEvmDomain = (domain: Domain): domain is DomainsOf<"Evm"> =>
   (domainsOf("Evm") as RoArray<Domain>).includes(domain);
 
+export const isSolanaDomain = (domain: Domain): domain is DomainsOf<"Solana"> =>
+  (domainsOf("Solana") as RoArray<Domain>).includes(domain);
+
 declare module "../../registry.js" {
   export interface DomainAliases {
     EvmDomains: [ExpandedDomainsOf<"Evm">, EvmDomains];
+    SolanaDomains: [ExpandedDomainsOf<"Solana">, SolanaDomains];
   }
 }
 

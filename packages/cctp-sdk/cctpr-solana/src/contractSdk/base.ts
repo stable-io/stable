@@ -3,39 +3,27 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type {
-  Rpc,
-  GetAccountInfoApi,
-  GetMultipleAccountsApi,
-  Instruction,
-} from "@solana/kit";
 import { AccountRole } from "@solana/kit";
 import type { Layout, DeriveType } from "binary-layout";
 import { serialize, deserialize } from "binary-layout";
 import type { TODO, Text } from "@stable-io/utils";
-import { definedOrThrow, encoding } from "@stable-io/utils";
+import { definedOrThrow } from "@stable-io/utils";
 import type { RoPair, RoArray } from "@stable-io/map-utils";
-import { mapTo } from "@stable-io/map-utils";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { contractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { SolanaAddress, findPda } from "@stable-io/cctp-sdk-solana";
+import { type Ix, SolanaAddress, SolanaClient, findPda, composeIx } from "@stable-io/cctp-sdk-solana";
 import { type ForeignDomain, oracleAddress } from "./constants.js";
 import type { Config } from "./layouts.js";
 import { foreignDomainItem, configLayout } from "./layouts.js";
 import { chainItem as oracleChainItem } from "./oracleLayouts.js";
 
-//we could include the network parameter here but it's likely not worth the hassle
-type RpcType = Rpc<GetAccountInfoApi & GetMultipleAccountsApi>;
-
 export type PriceAddresses = readonly [chainConfig: SolanaAddress, oraclePrices: SolanaAddress];
-
-export type Ix = Required<Instruction>;
 
 export class CctpRBase<N extends Network> {
   private static readonly cacheTtl = 60 * 1000; //60 seconds
 
   public readonly network: N;
-  public readonly rpc: RpcType;
+  public readonly client: SolanaClient<N>;
   public readonly address: SolanaAddress;
   public readonly oracleAddress: SolanaAddress;
 
@@ -49,11 +37,11 @@ export class CctpRBase<N extends Network> {
 
   constructor(
     network: N,
-    rpc: RpcType,
+    client: SolanaClient<N>,
     addresses?: { cctpr?: SolanaAddress; oracle?: SolanaAddress },
   ) {
     this.network = network;
-    this.rpc = rpc;
+    this.client = client;
     this.address =
       addresses?.cctpr ?? new SolanaAddress(contractAddressOf(network, "Solana" as any));
     this.oracleAddress =
@@ -120,10 +108,8 @@ export class CctpRBase<N extends Network> {
     address: SolanaAddress,
     layout: L,
   ): Promise<DeriveType<L> | undefined> {
-    const data = (await this.rpc.getAccountInfo(address.unwrap(), { encoding: "base64" }).send())
-      .value?.data[0];
-
-    return data ? deserialize(layout, encoding.base64.decode(data)) : undefined;
+    const data = (await this.client.getAccountInfo(address))?.data;
+    return data ? deserialize(layout, data) : undefined;
   }
 
   protected composeIx<const L extends Layout>(
@@ -131,10 +117,6 @@ export class CctpRBase<N extends Network> {
     layout: L,
     params: DeriveType<L>,
   ): Ix {
-    return {
-      accounts: addrRoles.map(([address, role]) => ({ address: address.unwrap(), role })),
-      data: serialize(layout, params),
-      programAddress: this.address.unwrap(),
-    };
+    return composeIx(addrRoles, layout, params, this.address);
   }
 }

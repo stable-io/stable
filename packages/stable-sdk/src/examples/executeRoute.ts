@@ -5,11 +5,12 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { Domain, Network } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../index.js";
 import { bigintReplacer } from "../utils.js";
+import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 dotenv.config();
 const privateKey = process.env.EVM_PRIVATE_KEY as Address;
@@ -110,19 +111,18 @@ function stringify(obj: any) {
   return JSON.stringify(obj, bigintReplacer);
 }
 
-function getTestnetScannerTxUrl<D extends keyof EvmDomains>(
-  domain: D,
+function getTestnetScannerTxUrl(
+  domain: Domain,
   txHash: string,
 ): string {
-  const scanners: Partial<Record<keyof EvmDomains, string>> = {
-    ["Ethereum"]: "https://sepolia.etherscan.io/tx/",
-    ["Arbitrum"]: "https://sepolia.arbiscan.io/tx/",
-    ["Optimism"]: "https://sepolia-optimism.etherscan.io/tx/",
+  const scanners: Partial<Record<Domain, string>> = {
+    ["Ethereum"]: "https://sepolia.etherscan.io/tx/{tx}",
+    ["Arbitrum"]: "https://sepolia.arbiscan.io/tx/{tx}",
+    ["Optimism"]: "https://sepolia-optimism.etherscan.io/tx/{tx}",
+    ["Solana"]: "https://explorer.solana.com/tx/{tx}?cluster=devnet",
   };
-
   const baseUrl = scanners[domain];
-
-  if (!baseUrl) return "unknown scanner address";
-
-  return `${baseUrl}${txHash}`;
+  if (!baseUrl)
+    return "unknown scanner address";
+  return baseUrl.replace("{tx}", txHash);
 }

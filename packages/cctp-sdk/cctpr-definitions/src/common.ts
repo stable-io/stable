@@ -1,4 +1,5 @@
 import { Simplify } from "@stable-io/map-utils";
+import type { Amount, Kind } from "@stable-io/amount";
 import { Rational } from "@stable-io/amount";
 import type {
   DomainsOf,
@@ -22,40 +23,25 @@ export type InOrOut = {
   type: "in" | "out";
 };
 
-type QtOnChain = { readonly type: "onChain" };
-type QtOffChain = { readonly type: "offChain" };
+type QtOnChain<A extends Amount<Kind>> =
+  { type: "onChain"; maxRelayFee: A };
 
-type ExtraFields<QT> =
-  QT extends QtOnChain
-  ? unknown
-  : Readonly<{
-    expirationTime: Date;
-    quoterSignature: Uint8Array;
-  }>;
+type QtOffChain<A extends Amount<Kind>, WEF extends boolean> =
+  { type: "offChain"; relayFee: A } &
+  (WEF extends true ? { expirationTime: Date; quoterSignature: Uint8Array } : unknown);
 
-type RelayFieldName<T, U> = Readonly<T extends QtOnChain ? { maxRelayFee: U } : { relayFee: U }>;
-type QuoteTypeImpl<
-  WEF extends boolean, //with extra fields
-  GT = never,
-> = Simplify<
-  QtOnChain | QtOffChain extends infer QT
-  ? QT extends any
-    ? (QT & (WEF extends true ? ExtraFields<QT> : unknown)) extends infer Q
-      ? Q & RelayFieldName<Q, Usdc | GT>
-      : never
-    : never
-  : never
->;
+type QuoteTypeImpl<WEF extends boolean, A extends Amount<Kind>> = //WEF = with extra fields
+  Simplify<Readonly<QtOnChain<A> | QtOffChain<A, WEF>>>;
 
 export type QuoteBase<
   N extends Network,
   P extends Platform,
   SD, //SD = source domain
-> = SD extends SupportedPlatformDomain<N, P> //SD = source domain
-  ? QuoteTypeImpl<true, GasTokenOf<SD, DomainsOf<P>>>
+> = [SD] extends [SupportedPlatformDomain<N, P>] //SD = source domain
+  ? QuoteTypeImpl<true, Usdc | GasTokenOf<SD, DomainsOf<P>>>
   : never;
-export type UsdcQuote     = QuoteTypeImpl<true>;
-export type UsdcQuoteBase = QuoteTypeImpl<false>;
+export type UsdcQuote     = QuoteTypeImpl<true, Usdc>;
+export type UsdcQuoteBase = QuoteTypeImpl<false, Usdc>;
 type ErasedQuoteBase      = QuoteTypeImpl<false, any>;
 
 export type CorridorParamsBase<
@@ -97,7 +83,7 @@ export function toCorridorVariant(
     : { type: corridor.type, maxFastFeeUsdc: calcFastFee(burnAmount, corridor.fastFeeRate) };
 }
 
-export function quoteIsInUsdc(quote: ErasedQuoteBase): quote is UsdcQuote {
+export function quoteIsInUsdc(quote: ErasedQuoteBase): quote is UsdcQuoteBase {
   return (
     (quote.type === "offChain" && quote.relayFee.kind.name === "Usdc") ||
     (quote.type === "onChain" && quote.maxRelayFee.kind.name === "Usdc")

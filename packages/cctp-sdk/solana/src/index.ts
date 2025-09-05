@@ -10,6 +10,8 @@ import * as platform from "./platform.js";
 import * as layoutItems from "./layoutItems.js";
 import * as utils from "./utils.js";
 
+import "./registry.js";
+
 export * from "./address.js";
 export * from "./cctpAccounts.js";
 export * from "./constants.js";

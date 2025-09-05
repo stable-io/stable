@@ -12,5 +12,6 @@ declare module "./registry.js" {
 
   export interface PlatformRegistry {
     Evm: any;
+    Solana: any;
   }
 }

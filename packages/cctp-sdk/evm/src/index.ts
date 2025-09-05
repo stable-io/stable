@@ -12,7 +12,6 @@ import * as permit from "./permit.js";
 import "./registry.js";
 
 export * from "./address.js";
-export * from "./client.js";
 export * from "./constants.js";
 export * from "./layoutItems.js";
 export * from "./platform.js";

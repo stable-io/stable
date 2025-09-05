@@ -3,8 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import type { Network } from "@stable-io/cctp-sdk-definitions";
+import { platformClient, type Network } from "@stable-io/cctp-sdk-definitions";
 import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Route, SDK, Hex, SupportedRoute } from "../../types/index.js";
 
@@ -26,7 +25,7 @@ export const $executeRoute =
     const signer = await getSigner(sourceChain);
     const network = getNetwork();
     const rpcUrl = getRpcUrl(sourceChain);
-    const client = ViemEvmClient.fromNetworkAndDomain(
+    const client = platformClient(
       network,
       sourceChain,
       rpcUrl,
@@ -66,9 +65,8 @@ export const $executeRoute =
      * receipt on avalanche.
      */
     const receive = await findTransferReceive(
-      network,
-      getRpcUrl(attestation.targetDomain),
-      attestation,
+      transferTx,
+      attestation.targetDomain,
       { timeoutMs: 180000 },
     ).catch((error: unknown) => {
       route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
@@ -109,9 +107,8 @@ export const $executeRoute =
       route.progress.emit("hop-confirmed", secondHopAttestation); // uses hop attestation
 
       const secondHopReceive = await findTransferReceive(
-        network,
-        getRpcUrl(secondHopAttestation.targetDomain),
-        secondHopAttestation,
+        receive.transactionHash,
+        secondHopAttestation.targetDomain,
         { timeoutMs: 180000 },
       ).catch((error: unknown) => {
         route.progress.emit("error", { type: "receive-failed", details: { txHash: receive.transactionHash } });

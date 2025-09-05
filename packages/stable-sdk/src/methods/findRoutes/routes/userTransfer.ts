@@ -16,7 +16,7 @@ import {
   platformOf,
   usdc,
 } from "@stable-io/cctp-sdk-definitions";
-import { getTokenAllowance } from "@stable-io/cctp-sdk-evm";
+import { EvmAddress, getTokenAllowance } from "@stable-io/cctp-sdk-evm";
 import { init as initCctpr, platformCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   Corridor,
@@ -50,7 +50,7 @@ export async function buildUserTransferRoute<
 >(
   network: N,
   intent: Intent<N, S, D>,
-  corridor: CorridorStats<N, keyof EvmDomains, Corridor>,
+  corridor: CorridorStats<N, SupportedDomain<N>, Corridor>,
 ): Promise<Route<N, S, D> | undefined> {
   const platform = platformOf(intent.sourceChain);
   const cctprImpl = platformCctpr(platform);
@@ -86,8 +86,8 @@ export async function buildUserTransferRoute<
   const tokenAllowanceSteps = allowanceRequired
     ? [
         intent.usePermit
-          ? signPermitStep(intent.sourceChain)
-          : preApprovalStep(intent.sourceChain),
+          ? signPermitStep(intent.sourceChain as keyof EvmDomains)
+          : preApprovalStep(intent.sourceChain as keyof EvmDomains),
       ]
     : [];
 
@@ -171,9 +171,9 @@ async function cctprRequiresAllowance<
 
   const allowance = await getTokenAllowance(
     client,
-    usdcAddress,
-    sender,
-    cctprAddress,
+    usdcAddress as EvmAddress,
+    sender as EvmAddress,
+    cctprAddress as EvmAddress,
     Usdc,
   );
 

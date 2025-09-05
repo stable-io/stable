@@ -6,20 +6,27 @@
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
 import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import type { Network, EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import type { Network, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
-import { parseTransferTxCalldata, Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
+import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
 import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
+import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
 
-export async function executeRouteSteps<N extends Network, D extends keyof EvmDomains>(
-  network: N, route: SupportedRoute<N>, signer: ViemWalletClient, client: ViemEvmClient<N, D>,
+export async function executeRouteSteps<
+  N extends Network,
+  P extends RegisteredPlatform,
+  D extends LoadedCctprPlatformDomain<N, P>,
+>(
+  network: N,
+  route: SupportedRoute<N>,
+  signer: ViemWalletClient, // support generic signer
+  client: PlatformClient<N, P, D>,
 ): Promise<TxHash[]> {
   const txHashes = [] as string[];
   let permit: Permit | undefined = undefined;
@@ -38,7 +45,7 @@ export async function executeRouteSteps<N extends Network, D extends keyof EvmDo
         contractTx,
         signer.chain!,
         signer.account!,
-        buildGasOverrides(route.intent.sourceChain),
+        buildEvmGasOverrides(route.intent.sourceChain as keyof EvmDomains),
       );
       const tx = await signer.sendTransaction(txParameters);
 
@@ -223,7 +230,7 @@ export type GasOverrides = {
   maxPriorityFeePerGas?: bigint;
 };
 
-export function buildGasOverrides(
+export function buildEvmGasOverrides(
   chain: keyof EvmDomains,
 ): GasOverrides {
   switch (chain) {

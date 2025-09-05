@@ -1,10 +1,10 @@
-import type { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import type { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { deserializeBigints, SerializedBigint } from "@stable-io/utils";
 import type { Network } from "../types/index.js";
 import { apiEndpointWithQuery, apiRequest, APIResponse, HTTPCode } from "./base.js";
 
 export type GetDomainPricesParams = {
-  domain: keyof EvmDomains;
+  domain: LoadedDomain;
 };
 
 export type DomainPrices = {

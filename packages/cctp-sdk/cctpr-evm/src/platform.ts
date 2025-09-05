@@ -5,11 +5,11 @@
 
 import type { PlatformCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { registerPlatformCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { getCorridorCosts } from "./getCorridorCosts.js";
+import { getRelayCosts } from "./getRelayCosts.js";
 import { transfer } from "./transfer.js";
 
 const EvmCctpr: PlatformCctpr<"Evm"> = {
-  getCorridorCosts,
+  getRelayCosts,
   transfer,
 };
 

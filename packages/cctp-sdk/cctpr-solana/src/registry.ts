@@ -3,10 +3,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type {} from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { TransferOptions, TransferGeneratorT, TransferGeneratorTReturn } from "./transfer.js";
 
 declare module "@stable-io/cctp-sdk-cctpr-definitions" {
   export interface PlatformImplsOf {
-    Solana: never;
+    Solana: {
+      TransferOptions: TransferOptions;
+      TransferGeneratorT: TransferGeneratorT;
+      TransferGeneratorTReturn: TransferGeneratorTReturn;
+    };
   }
 }

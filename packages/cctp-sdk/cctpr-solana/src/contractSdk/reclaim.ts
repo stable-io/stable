@@ -5,9 +5,9 @@
 
 import { AccountRole } from "@solana/kit";
 import type { Network } from "@stable-io/cctp-sdk-definitions";
-import { SolanaAddress, cctpAccounts, systemProgramId } from "@stable-io/cctp-sdk-solana";
+import { type Ix, SolanaAddress, cctpAccounts, systemProgramId } from "@stable-io/cctp-sdk-solana";
 import { reclaimRentParamsLayout, transferSurplusSolParamsLayout } from "./layouts.js";
-import { type Ix, CctpRBase } from "./base.js";
+import { CctpRBase } from "./base.js";
 
 export class CctpRReclaim<N extends Network> extends CctpRBase<N> {
   //async (though currently not necessary) for consistency and future-proofing

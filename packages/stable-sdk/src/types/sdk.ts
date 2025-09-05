@@ -5,7 +5,6 @@
 
 import type { WalletClient as ViemWalletClient } from "viem";
 import type { LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import type { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import type { Url } from "@stable-io/utils";
 import type { CctpAttestation } from "../methods/executeRoute/findTransferAttestation.js";
 import type { Address, Amount, Network, TxHash } from "./general.js";
@@ -19,7 +18,7 @@ export type { WalletClient as ViemWalletClient } from "viem";
 export interface SDKOptions<N extends Network> {
   network: N;
   signer: EvmPlatformSigner;
-  rpcUrls?: Partial<Record<keyof EvmDomains, string>>;
+  rpcUrls?: Partial<Record<SupportedDomain<N>, string>>;
 }
 
 export abstract class SDK<N extends Network> {
@@ -43,13 +42,13 @@ export abstract class SDK<N extends Network> {
 
   public abstract getBalance(
     address: Address,
-    chains: (keyof EvmDomains)[],
-  ): Promise<Record<keyof EvmDomains, Amount>>;
+    chains: (SupportedDomain<N>)[],
+  ): Promise<Record<SupportedDomain<N>, Amount>>;
 
   public abstract setSigner(signer: SDKOptions<N>["signer"]): void;
-  public abstract getSigner(chain: keyof EvmDomains): Promise<ViemWalletClient>;
+  public abstract getSigner(chain: SupportedDomain<N>): Promise<ViemWalletClient>;
 
-  public abstract getRpcUrl(domain: keyof EvmDomains): Url;
+  public abstract getRpcUrl(domain: SupportedDomain<N>): Url;
 }
 
 export interface RoutesResult <

@@ -168,6 +168,8 @@ const [finalityThresholdVals, finalityThresholdNames] =
   deepReadonly(zip(finalityThresholdEntries));
 export type FinalityTresholdName = typeof finalityThresholdNames[number];
 
+export const finalityThresholdValOf = constMap(finalityThresholdEntries, [1, 0]);
+
 //return the name of the finality threshold which is >= the given threshold
 // i.e. 500 -> "TokenMessengerMin", 501 -> "Confirmed", 1001+ -> "Finalized"
 export const finalityThresholdNameOf = (finalityThreshold: number): FinalityTresholdName => {
