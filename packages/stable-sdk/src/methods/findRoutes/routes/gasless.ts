@@ -5,7 +5,7 @@
 
 import { TODO } from "@stable-io/utils";
 import { init as initDefinitions, usdc, Usdc, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
-import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { init as initEvm, permit2Address, EvmAddress, EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
 import type { Corridor, CorridorStats, LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -47,13 +47,16 @@ export async function buildGaslessRoute<
   const permit2PermitRequired = intent.sourceChain === "Solana"
         ? false
         : await permit2RequiresAllowance(
-          client,
+          client as EvmClient<N, SupportedEvmDomain<N>>,
           intent.sourceChain,
           intent.sender as EvmAddress,
           usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
         );
 
-  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(corridor.cost, intent);
+  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
+    corridor.cost, 
+    intent as Intent<N, LoadedCctprPlatformDomain<N, P>, SupportedDomain<N>>
+  );
 
   const transferParams: GetQuoteParams<N, S, D> = {
     sourceChain: intent.sourceChain,
@@ -92,7 +95,7 @@ export async function buildGaslessRoute<
 
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
-    gaslessTransferStep(intent.sourceChain), // check if is evm exclusive or should be modified
+    gaslessTransferStep(intent.sourceChain),
   ];
 
   return {
@@ -120,7 +123,7 @@ async function permit2RequiresAllowance<
   N extends Network,
   S extends SupportedEvmDomain<N>,
 >(
-  evmClient: ViemEvmClient<N, S>,
+  evmClient: EvmClient<N, S>,
   sourceChain: keyof EvmDomains,
   sender: EvmAddress,
   totalUsdcValue: Usdc,

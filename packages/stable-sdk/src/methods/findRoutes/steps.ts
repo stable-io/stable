@@ -214,9 +214,9 @@ export function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
   };
 }
 
-export function gaslessTransferStep(sourceChain: keyof EvmDomains): GaslessTransferStep {
+export function gaslessTransferStep(sourceChain: LoadedDomain): GaslessTransferStep {
   return {
-    platform: "Evm",
+    platform: sourceChain === "Solana" ? "Solana" : "Evm",
     chain: sourceChain,
     type: "gasless-transfer",
     gasCostEstimation: 0n,
