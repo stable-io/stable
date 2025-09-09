@@ -4,15 +4,14 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { TODO } from "@stable-io/utils";
-import { init as initDefinitions, usdc, Usdc, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
+import { init as initDefinitions, usdc, Usdc, EvmDomains, PlatformClient, RegisteredPlatform, Client } from "@stable-io/cctp-sdk-definitions";
 import { init as initEvm, permit2Address, EvmAddress, EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
 import type { Corridor, CorridorStats, LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
-import { GetQuoteParams, GetQuoteResponse, getTransferQuote } from "../../../api/gasless.js";
+import { GetQuoteParams, getTransferQuote } from "../../../api/gasless.js";
 import { transferWithGaslessRelay } from "../../../gasless/transfer.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
@@ -37,7 +36,7 @@ export async function buildGaslessRoute<
   S extends LoadedCctprPlatformDomain<N, P>,
   D extends SupportedDomain<N>,
 >(
-  client: PlatformClient<N, P, S>, //ViemEvmClient<N, S>,
+  client: PlatformClient<N, P, S>,
   intent: Intent<N, S, D>,
   corridor: CorridorStats<N, S, Corridor>,
 ): Promise<Route<N, S, D> | undefined> {
@@ -73,7 +72,7 @@ export async function buildGaslessRoute<
   };
 
   const quote = await getTransferQuote(
-    client.network,
+    (client as Client<N, P>).network,
     transferParams,
   );
 
@@ -105,12 +104,12 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost(client.network, routeSteps, fees),
+    estimatedTotalCost: await calculateTotalCost((client as Client<N, P>).network, routeSteps, fees),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(
       client,
-      client.network,
+      (client as Client<N, P>).network,
       permit2PermitRequired,
       intent,
       quote.permit2GaslessData,
