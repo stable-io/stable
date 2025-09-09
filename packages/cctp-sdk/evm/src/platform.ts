@@ -7,6 +7,7 @@ import type { DeepReadonly } from "@stable-io/map-utils";
 import type { Brand, BrandedSubArray } from "@stable-io/utils";
 import type { Client, DomainsOf, EvmGasToken, GasTokenOf, Network } from "@stable-io/cctp-sdk-definitions";
 import { type RawAddress, EvmAddress } from "./address.js";
+import { TransactionReceipt } from "viem";
 
 export type CallData    = Brand<BrandedSubArray<CallData>,    "CallData"   >;
 export type ReturnData  = Brand<BrandedSubArray<ReturnData>,  "ReturnData" >;
@@ -102,4 +103,5 @@ export interface EvmClient<
   getStorageAt:   (contract: EvmAddress, slot: bigint) => Promise<Uint8Array>;
   getBalance:     (address: EvmAddress) => Promise<GasTokenOf<D, DomainsOf<"Evm">>>;
   getLatestBlock: () => Promise<bigint>;
+  waitForTransactionReceipt: (txHash: string) => Promise<TransactionReceipt>;
 }

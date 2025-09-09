@@ -16,7 +16,7 @@ import {
   platformOf,
   usdc,
 } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, getTokenAllowance } from "@stable-io/cctp-sdk-evm";
+import { EvmAddress, EvmClient, getTokenAllowance } from "@stable-io/cctp-sdk-evm";
 import { init as initCctpr, platformCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   Corridor,
@@ -170,7 +170,7 @@ async function cctprRequiresAllowance<
   );
 
   const allowance = await getTokenAllowance(
-    client,
+    client as EvmClient,
     usdcAddress as EvmAddress,
     sender as EvmAddress,
     cctprAddress as EvmAddress,

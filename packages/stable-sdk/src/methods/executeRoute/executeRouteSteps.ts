@@ -8,7 +8,7 @@ import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctio
 import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
 import type { Network, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
-import { encoding } from "@stable-io/utils";
+import { encoding, TODO } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
 import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData } from "../findRoutes/steps.js";
@@ -51,7 +51,7 @@ export async function executeRouteSteps<
 
       route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
 
-      const receipt = await client.client.waitForTransactionReceipt({ hash: tx });
+      const receipt = await (client as TODO).waitForTransactionReceipt({ hash: tx });
       txHashes.push(tx);
 
       route.transactionListener.emit("transaction-included", receipt);
