@@ -6,3 +6,4 @@
 export * from "./registry.js";
 export * from "./utils.js";
 export * from "./contractSdk/index.js";
+export * from "./platform.js";
