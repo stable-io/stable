@@ -3,9 +3,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { type Base64EncodedDataResponse, type Lamports, type Address, createSolanaRpc } from "@solana/kit";
+import { type Base64EncodedDataResponse, type Lamports, type Address, createSolanaRpc, Base64EncodedWireTransaction } from "@solana/kit";
 import { Network, Sol, sol } from "@stable-io/cctp-sdk-definitions";
-import { getSolBalance, SolanaAddress, type AccountInfo, type SolanaClient } from "@stable-io/cctp-sdk-solana";
+import { BlockHashInfo, getSolBalance, SolanaAddress, type AccountInfo, type SolanaClient } from "@stable-io/cctp-sdk-solana";
 import { RoArray } from "@stable-io/map-utils";
 import { encoding, Url } from "@stable-io/utils";
 
@@ -35,7 +35,7 @@ export class SolanaKitClient<N extends Network = Network> implements SolanaClien
   readonly domain = "Solana";
   readonly client: SolanaRpcClient;
 
-  private static readonly defaultRpcs: Record<Network, Url> = {
+  public static readonly defaultRpcs: Record<Network, Url> = {
     Mainnet: "https://api.mainnet-beta.solana.com" as Url,
     Testnet: "https://api.devnet.solana.com" as Url,
   };
@@ -71,9 +71,11 @@ export class SolanaKitClient<N extends Network = Network> implements SolanaClien
     ).value.map(toAccountInfo);
   }
 
-  getBalance(
-    owner: SolanaAddress,
-  ): Promise<Sol> {
-    return getSolBalance(this, owner).then(balance => balance ?? sol(0));
+  async getLatestBlockhash(): Promise<BlockHashInfo> {
+    return this.client.getLatestBlockhash().send().then(res => res.value);
+  }
+
+  async sendTransaction(wireTx: Base64EncodedWireTransaction): Promise<string> {
+    return this.client.sendTransaction(wireTx, { encoding: "base64" }).send();
   }
 }

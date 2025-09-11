@@ -7,111 +7,127 @@ import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctio
 
 import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
 import type { Network, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
-import { evmGasToken, usdc } from "@stable-io/cctp-sdk-definitions";
+import { evmGasToken, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding, TODO } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ViemWalletClient, TxHash, Hex, SupportedRoute } from "../../types/index.js";
-import { getStepType, PRE_APPROVE, TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData } from "../findRoutes/steps.js";
+import { TxHash, Hex, SupportedRoute, ViemWalletClient, SolanaKeyPairSigner } from "../../types/index.js";
+import { getStepType, PRE_APPROVE, EVM_TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import { addLifetimeAndSendTx, TxMsgWithFeePayer } from "@stable-io/cctp-sdk-solana";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
 
 export async function executeRouteSteps<
   N extends Network,
   P extends RegisteredPlatform,
-  D extends LoadedCctprPlatformDomain<N, P>,
+  S extends LoadedCctprPlatformDomain<N, P>,
 >(
   network: N,
-  route: SupportedRoute<N>,
-  signer: ViemWalletClient, // support generic signer
-  client: PlatformClient<N, P, D>,
+  route: SupportedRoute<N, S>,
+  signer: ViemWalletClient | SolanaKeyPairSigner,
+  client: PlatformClient<N, P, S>,
 ): Promise<TxHash[]> {
   const txHashes = [] as string[];
-  let permit: Permit | undefined = undefined;
-  while (true) {
-    const { value: stepData, done } = await route.workflow.next(permit);
-    permit = undefined;
+  if (platformOf(route.intent.sourceChain) === "Evm") {
+    const evmSigner = signer as ViemWalletClient;
+    let permit: Permit | undefined = undefined;
+    while (true) {
+      const { value: stepData, done } = await route.workflow.next(permit);
+      permit = undefined;
 
-    const stepType = getStepType(stepData);
+      const stepType = getStepType(stepData);
 
-    switch (stepType) {
-    case PRE_APPROVE:
-    case TRANSFER: {
-      const contractTx = stepData as ContractTx;
+      switch (stepType) {
+      case PRE_APPROVE:
+      case EVM_TRANSFER: {
+        const contractTx = stepData as ContractTx;
 
-      const txParameters = buildEvmTxParameters(
-        contractTx,
-        signer.chain!,
-        signer.account!,
-        buildEvmGasOverrides(route.intent.sourceChain as keyof EvmDomains),
-      );
-      const tx = await signer.sendTransaction(txParameters);
+        const txParameters = buildEvmTxParameters(
+          contractTx,
+          evmSigner.chain!,
+          evmSigner.account!,
+          buildEvmGasOverrides(route.intent.sourceChain as keyof EvmDomains),
+        );
+        const tx = await evmSigner.sendTransaction(txParameters);
 
-      route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
+        route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
 
-      const receipt = await (client as TODO).waitForTransactionReceipt({ hash: tx });
-      txHashes.push(tx);
+        const receipt = await (client as TODO).waitForTransactionReceipt({ hash: tx });
+        txHashes.push(tx);
 
-      route.transactionListener.emit("transaction-included", receipt);
+        route.transactionListener.emit("transaction-included", receipt);
 
-      if (receipt.status === "reverted")
-          throw new Error(`Execution Reverted. Tx: ${receipt.transactionHash}`);
+        if (receipt.status === "reverted")
+            throw new Error(`Execution Reverted. Tx: ${receipt.transactionHash}`);
 
-      const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
-      route.progress.emit(eventName, eventData);
+        const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
+        route.progress.emit(eventName, eventData);
 
-    break;
+      break;
+      }
+      case SIGN_PERMIT:
+      case SIGN_PERMIT_2: {
+        const typedMessage = stepData as Eip2612Data;
+
+        const signature = await evmSigner.signTypedData({
+          account: evmSigner.account!,
+          ...typedMessage,
+        });
+
+        permit = {
+          signature: encoding.hex.decode(signature),
+          // It's possible to override the following values by changing them
+          // before signing the message.
+          // We need to pass them back to the cctp-sdk so that it can know
+          // what changes we made.
+          // We don't modify them rn, so we give it back what it gave us.
+          value: typedMessage.message.value,
+          deadline: typedMessage.message.deadline,
+        };
+
+        route.progress.emit("message-signed", {
+          signer: evmSigner.account!.address,
+          signature,
+          messageSigned: typedMessage,
+        });
+
+      break;
+      }
+      case GASLESS_TRANSFER: {
+        const transferData = stepData as GaslessTransferData;
+        const transferParameters = transferData.permit2GaslessData.message.parameters;
+        route.progress.emit("transfer-sent", {
+          transactionHash: transferData.txHash,
+          approvalType: "Gasless",
+          gasDropOff: transferParameters.microGasDropoff,
+          usdcAmount: usdc(transferParameters.baseAmount),
+          recipient: transferParameters.mintRecipient,
+          quoted: "onChainUsdc",
+        });
+
+        txHashes.push(transferData.txHash);
+
+      break;
+      }
+      // No default
+      }
+
+      if (done) break;
     }
-    case SIGN_PERMIT:
-    case SIGN_PERMIT_2: {
-      const typedMessage = stepData as Eip2612Data;
-
-      const signature = await signer.signTypedData({
-        account: signer.account!,
-        ...typedMessage,
-      });
-
-      permit = {
-        signature: encoding.hex.decode(signature),
-        // It's possible to override the following values by changing them
-        // before signing the message.
-        // We need to pass them back to the cctp-sdk so that it can know
-        // what changes we made.
-        // We don't modify them rn, so we give it back what it gave us.
-        value: typedMessage.message.value,
-        deadline: typedMessage.message.deadline,
-      };
-
-      route.progress.emit("message-signed", {
-        signer: signer.account!.address,
-        signature,
-        messageSigned: typedMessage,
-      });
-
-    break;
+  } else {
+    while (true) {
+      const solanaSigner = signer as SolanaKeyPairSigner;
+      const { value: stepData, done } = await route.workflow.next();
+      const stepType = getStepType(stepData);
+      if (stepType === SOLANA_TRANSFER) {
+        const transferData = { ...stepData, version: "legacy" } as TxMsgWithFeePayer;
+        const tx = await addLifetimeAndSendTx(client, transferData, [solanaSigner]);
+        txHashes.push(tx);
+      }
+      if (done) break;
     }
-    case GASLESS_TRANSFER: {
-      const transferData = stepData as GaslessTransferData;
-      const transferParameters = transferData.permit2GaslessData.message.parameters;
-      route.progress.emit("transfer-sent", {
-        transactionHash: transferData.txHash,
-        approvalType: "Gasless",
-        gasDropOff: transferParameters.microGasDropoff,
-        usdcAmount: usdc(transferParameters.baseAmount),
-        recipient: transferParameters.mintRecipient,
-        quoted: "onChainUsdc",
-      });
-
-      txHashes.push(transferData.txHash);
-
-    break;
-    }
-    // No default
-    }
-
-    if (done) break;
   }
 
   return txHashes;

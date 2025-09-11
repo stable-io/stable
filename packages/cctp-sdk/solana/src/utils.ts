@@ -3,13 +3,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { Instruction, TransactionMessage, TransactionMessageWithFeePayer } from "@solana/kit";
+import type { Base64EncodedWireTransaction, Instruction, KeyPairSigner, TransactionMessage, TransactionMessageWithFeePayer } from "@solana/kit";
 import {
   AccountRole,
   pipe,
   createTransactionMessage,
   setTransactionMessageFeePayer,
   appendTransactionMessageInstructions,
+  setTransactionMessageLifetimeUsingBlockhash,
+  signTransaction,
+  getBase64EncodedWireTransaction,
+  compileTransaction,
 } from "@solana/kit";
 import type { Layout, DeriveType } from "binary-layout";
 import { deserialize, serialize } from "binary-layout";
@@ -26,7 +30,7 @@ import {
   systemProgramId,
 } from "./constants.js";
 import { SolanaAddress } from "./address.js";
-import type { SolanaClient, AccountInfo } from "./platform.js";
+import type { SolanaClient, AccountInfo, TxMsg, SignableTxMsg, TxMsgWithFeePayer } from "./platform.js";
 import { tokenAccountLayout } from "./layoutItems.js";
 
 const discriminatorTypeConverter = {
@@ -192,4 +196,20 @@ export function composeCreateAtaIx(
     idempotent ? 1 : 0,
     associatedTokenProgramId,
   );
+}
+
+export async function addLifetimeAndSendTx(client: SolanaClient, tx: TxMsgWithFeePayer, signers: readonly KeyPairSigner[]) {
+  const { blockhash, lastValidBlockHeight } = await client.getLatestBlockhash();
+  const txWithLifetime = setTransactionMessageLifetimeUsingBlockhash(
+    { blockhash, lastValidBlockHeight },
+    tx
+  );
+  return sendTx(client, txWithLifetime, signers);
+}
+
+async function sendTx(client: SolanaClient, tx: SignableTxMsg, signers: readonly KeyPairSigner[]) {
+  const compiledTx = compileTransaction(tx);
+  const signedTx = await signTransaction(signers.map(kp => kp.keyPair), compiledTx);
+  const wireTx: Base64EncodedWireTransaction = getBase64EncodedWireTransaction(signedTx);
+  return client.sendTransaction(wireTx);
 }

@@ -23,6 +23,11 @@ export const $executeRoute =
   async (route: SupportedRoute<N>) => {
     const { sourceChain } = route.intent;
     const signer = await getSigner(sourceChain);
+
+    if (signer === undefined) {
+      throw new Error(`Signer not set for domain: ${sourceChain}`);
+    }
+
     const network = getNetwork();
     const rpcUrl = getRpcUrl(sourceChain);
     const client = platformClient(

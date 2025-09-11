@@ -9,21 +9,22 @@ import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { viemChainOf } from "@stable-io/cctp-sdk-viem";
 import { Url } from "@stable-io/utils";
-
 import { $checkHasEnoughFunds } from "./methods/checkHasEnoughFunds.js";
 import { $executeRoute } from "./methods/executeRoute/index.js";
 import { $findRoutes } from "./methods/findRoutes/index.js";
 import { $getBalance } from "./methods/getBalance.js";
-import { SDK, SDKOptions } from "./types/sdk.js";
+import { SDK } from "./types/sdk.js";
 import { Network } from "./types/general.js";
+import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
+import { EvmPlatformSigner, PlatformSigner, SolanaPlatformSigner } from "./types/signer.js";
 
 export class StableSDK<N extends Network> extends SDK<N> {
   public getNetwork(): N {
     return this.options.network;
   }
 
-  public setSigner(signer: SDKOptions<N>["signer"]): void {
-    this.options = { ...this.options, signer };
+  public setSigner(signer: PlatformSigner): void {
+    this.options = { ...this.options, signer: { [signer.platform]: signer } };
   }
 
   /**
@@ -31,14 +32,14 @@ export class StableSDK<N extends Network> extends SDK<N> {
    */
   public async getSigner(domain: SupportedDomain<N>): ReturnType<SDK<N>["getSigner"]> {
     if (domain === "Solana") {
-      throw new Error("Solana is not supported yet");
+      const solanaSigner = this.options.signer["Solana"] as SolanaPlatformSigner;
+      return solanaSigner.getKeyPairSigner();
     }
     // Some evm domain
-    else {
-      const viemChain = viemChainOf[this.options.network][domain as keyof EvmDomains];
-      const rpcUrl = this.getRpcUrl(domain);
-      return this.options.signer.getWalletClient(viemChain, rpcUrl);
-    }
+    const viemChain = viemChainOf[this.options.network][domain as keyof EvmDomains];
+    const rpcUrl = this.getRpcUrl(domain);
+    const evmSigner = this.options.signer["Evm"] as EvmPlatformSigner;
+    return evmSigner.getWalletClient(viemChain, rpcUrl);
   }
 
   /**
@@ -46,7 +47,10 @@ export class StableSDK<N extends Network> extends SDK<N> {
    */
   public getRpcUrl(domain: SupportedDomain<N>): Url {
     if (domain === "Solana") {
-      throw new Error("Solana is not supported yet");
+      return (
+        this.options.rpcUrls?.["Solana"] ?? 
+        SolanaKitClient.defaultRpcs[this.options.network]
+      ) as Url;
     }
     // Some evm domain
     else {

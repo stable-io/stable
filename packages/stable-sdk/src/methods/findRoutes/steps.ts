@@ -11,7 +11,8 @@ import { SupportedPlatform } from "../../types/signer.js";
 import { encoding } from "@stable-io/utils";
 import { Network } from "../../types/general.js";
 import { getPlatformExecutionCosts } from "../../api/executionCost.js";
-export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "transfer" | "gasless-transfer";
+import { TxMsg } from "@stable-io/cctp-sdk-solana";
+export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "transfer" | "gasless-transfer" | "solana-transfer";
 
 interface BaseRouteExecutionStep {
   type: StepType;
@@ -27,7 +28,8 @@ interface BaseRouteExecutionStep {
 export type RouteExecutionStep = SignPermitStep
   | PreApproveStep
   | TransferStep
-  | GaslessTransferStep;
+  | GaslessTransferStep
+  | SolanaTransferStep;
 
 export const SIGN_PERMIT = "sign-permit" as const;
 export interface SignPermitStep extends BaseRouteExecutionStep {
@@ -44,9 +46,9 @@ export interface PreApproveStep extends BaseRouteExecutionStep {
   type: typeof PRE_APPROVE;
 };
 
-export const TRANSFER = "transfer" as const;
+export const EVM_TRANSFER = "transfer" as const;
 export interface TransferStep extends BaseRouteExecutionStep {
-  type: typeof TRANSFER;
+  type: typeof EVM_TRANSFER;
 };
 
 export const GASLESS_TRANSFER = "gasless-transfer" as const;
@@ -54,16 +56,22 @@ export interface GaslessTransferStep extends BaseRouteExecutionStep {
   type: typeof GASLESS_TRANSFER;
 };
 
+export const SOLANA_TRANSFER = "solana-transfer" as const;
+export interface SolanaTransferStep extends BaseRouteExecutionStep {
+  type: typeof SOLANA_TRANSFER;
+};
+
 /**
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
-export function getStepType(txOrSig: ContractTx | Eip712Data | GaslessTransferData): StepType {
+export function getStepType(txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
   if (isEip2612Data(txOrSig)) return SIGN_PERMIT;
-  if (isTransferTx(txOrSig)) return TRANSFER;
+  if (isTransferTx(txOrSig)) return EVM_TRANSFER;
   if (isApprovalTx(txOrSig)) return PRE_APPROVE;
+  if (isTxMsg(txOrSig)) return SOLANA_TRANSFER;
   throw new Error("Unknown Step Type");
 }
 
@@ -155,6 +163,10 @@ export function isTransferTx(subject: unknown): subject is TransferTx {
     subject.data.subarray(0, execSelector.length),
     execSelector,
   );
+}
+
+export function isTxMsg(subject: unknown): subject is TxMsg {
+  return isObjectWithKeys(subject, ["instructions", "accountKeys", "header"]);
 }
 
 export async function buildTransferStep(

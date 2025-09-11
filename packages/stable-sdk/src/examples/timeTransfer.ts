@@ -29,7 +29,9 @@ const rpcUrls = {
 
 const sdk = new StableSDK({
   network: "Mainnet",
-  signer: new ViemSigner(account),
+  signer: {
+    Evm: new ViemSigner(account),
+  },
   rpcUrls,
 });
 

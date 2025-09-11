@@ -3,6 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import type { KeyPairSigner as SolanaKeyPairSigner } from "@solana/kit";
 import type { WalletClient as ViemWalletClient } from "viem";
 import type { LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { Url } from "@stable-io/utils";
@@ -10,14 +11,14 @@ import type { CctpAttestation } from "../methods/executeRoute/findTransferAttest
 import type { Address, Amount, Network, TxHash } from "./general.js";
 import type { UserIntent } from "./intent.js";
 import type { Route, SupportedRoute } from "./route.js";
-import type { EvmPlatformSigner } from "./signer.js";
+import type { PlatformSigner, SupportedPlatform } from "./signer.js";
 import type { Receive } from "./receive.js";
-
 export type { WalletClient as ViemWalletClient } from "viem";
+export type { KeyPairSigner as SolanaKeyPairSigner } from "@solana/kit";
 
 export interface SDKOptions<N extends Network> {
   network: N;
-  signer: EvmPlatformSigner;
+  signer: Partial<Record<SupportedPlatform, PlatformSigner>>;
   rpcUrls?: Partial<Record<SupportedDomain<N>, string>>;
 }
 
@@ -45,8 +46,10 @@ export abstract class SDK<N extends Network> {
     chains: (SupportedDomain<N>)[],
   ): Promise<Record<SupportedDomain<N>, Amount>>;
 
-  public abstract setSigner(signer: SDKOptions<N>["signer"]): void;
-  public abstract getSigner(chain: SupportedDomain<N>): Promise<ViemWalletClient>;
+  public abstract setSigner(signer: PlatformSigner): void;
+  public abstract getSigner(chain: SupportedDomain<N>): Promise<
+    ViemWalletClient | SolanaKeyPairSigner | undefined
+  >;
 
   public abstract getRpcUrl(domain: SupportedDomain<N>): Url;
 }

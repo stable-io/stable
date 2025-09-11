@@ -38,7 +38,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@solana/kit": "^2.3.0"
+    "@solana/kit": "^3.0.2"
   },
   "devDependencies": {
     "eslint": "^9.22.0",
