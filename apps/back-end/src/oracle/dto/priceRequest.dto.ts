@@ -1,10 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsIn } from "class-validator";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
-import type { Domain } from "../../common/types";
+import type { Domain, Network } from "../../common/types";
+import { networks } from "../../common/types";
 
-const domains = domainsOf("Evm").filter((domain) => domain !== "Codex");
-
+const domains = ["Solana", "Sui"].concat(domainsOf("Evm").filter((domain) => domain !== "Codex"));
 export class PriceRequestDto {
   /**
    * The blockchain domain to get price information for
@@ -16,4 +16,12 @@ export class PriceRequestDto {
   })
   @IsIn(domains)
   domain!: Domain;
+
+  @ApiProperty({
+    enum: networks,
+    description: "The blockchain network to get price information for",
+    default: "Mainnet",
+  })
+  @IsIn(networks)
+  network!: Network;
 }

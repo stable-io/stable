@@ -18717,6 +18717,7 @@ __metadata:
     "@solana-program/system": "npm:^0.7.0"
     "@solana/kit": "npm:^2.3.0"
     "@stable-io/cctp-sdk-cctpr-solana": "workspace:^"
+    "@stable-io/cctp-sdk-solana-kit": "workspace:^"
     "@stable-io/fork-svm": "workspace:^"
     "@types/node": "npm:^24.1.0"
     tsx: "npm:4.20.3"

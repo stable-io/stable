@@ -10,8 +10,8 @@
   "devDependencies": {
     "@solana-program/system": "^0.7.0",
     "@solana/kit": "^2.3.0",
-    "@stable-io/cctp-sdk-solana-kit": "workspace:^",
     "@stable-io/cctp-sdk-cctpr-solana": "workspace:^",
+    "@stable-io/cctp-sdk-solana-kit": "workspace:^",
     "@stable-io/fork-svm": "workspace:^",
     "@types/node": "^24.1.0",
     "tsx": "4.20.3",

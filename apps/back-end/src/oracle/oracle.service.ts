@@ -15,7 +15,6 @@ import {
   amountItem,
   Domain,
   domainOfWormholeChainId,
-  DomainsOf,
   EvmGasToken,
   Network,
   percentage,
@@ -76,6 +75,28 @@ const priceQueryLayout = {
   ],
 } as const satisfies Layout;
 type PriceQuery = DeriveType<typeof priceQueryLayout>;
+
+export type EvmPriceResult = {
+  gasTokenPrice: Usdc;
+  gasPrice: EvmGasToken;
+  pricePerTxByte: EvmGasToken;
+}
+
+export type SolanaPriceResult = {
+  gasTokenPrice: Usdc;
+  pricePerAccountByte: Sol;
+  signaturePrice: Sol;
+  computationPrice: Sol;
+}
+
+export type SuiPriceResult = {
+  gasTokenPrice: Usdc;
+  computationPrice: Sui;
+  storagePrice: Sui;
+  storageRebate: Percentage;
+}
+
+type PriceResult = EvmPriceResult | SolanaPriceResult | SuiPriceResult;
 
 const subArrayLayout = <const N extends string, const L extends Layout>(
   name: N,
@@ -259,10 +280,14 @@ export class OracleService {
   }
 
   public async getPrices(
-    domains: DomainsOf<"Evm">[],
-  ): Promise<{ gasTokenPrice: Usdc; gasPrice: EvmGasToken }[]> {
-    const { network } = this.configService;
-    const { client } = this.blockchainClientService.getClient("Avalanche");
+    domains: (SupportedDomain<Network> | "Sui")[],
+    network: Network,
+  ): Promise<PriceResult[]> {
+    // TODO: RPC Urls? Create clients at startup?
+    const client = ViemEvmClient.fromNetworkAndDomain(
+      network,
+      "Avalanche",
+    ).client;
     const oracle = new EvmAddress(avalancheOracleAddress[network]);
     const queries = [
       {
@@ -274,10 +299,33 @@ export class OracleService {
       },
     ] satisfies RoArray<RootQuery>;
     const results = await this.query(client, oracle, queries);
-    return results.map((result) => ({
-      gasTokenPrice: result.result.gasTokenPrice,
-      gasPrice: result.result.gasPrice,
-    }));
+    return results.map((result) => {
+      if (result.chain.domain === "Solana") {
+        const price = result.result as SolanaFeeParams;
+        return {
+          gasTokenPrice: price.gasTokenPrice,
+          pricePerAccountByte: sol(price.pricePerAccountByte, "lamports"),
+          signaturePrice: sol(price.signaturePrice, "lamports"),
+          // TODO: Fix this division using units properly
+          computationPrice: sol(price.computationPrice / 1000, "lamports"),
+        };
+      } else if (result.chain.domain === "Sui") {
+        const price = result.result as SuiFeeParams;
+        return {
+          gasTokenPrice: result.result.gasTokenPrice,
+          computationPrice: sui(price.computationPrice, "MIST"),
+          storagePrice: sui(price.storagePrice, "MIST"),
+          storageRebate: percentage(price.storageRebate, "scalar"),
+        };
+      } else {
+        const price = result.result as EvmFeeParams;
+        return {
+          gasTokenPrice: price.gasTokenPrice,
+          gasPrice: price.gasPrice,
+          pricePerTxByte: price.pricePerTxByte,
+        };
+      }
+    });
   }
 
   private async query<const Q extends RoArray<RootQuery>>(
@@ -337,79 +385,4 @@ export class OracleService {
 
     return decodedResults as QueryResults<Q>;
   }
-}
-
-// TODO: This should be done by the layout decoding
-// But honestly this file will be deleted eventually once we have proper pricing
-
-export type EvmPriceResult = {
-  gasTokenPrice: Usdc;
-  gasPrice: EvmGasToken;
-  pricePerTxByte: EvmGasToken;
-}
-
-export type SolanaPriceResult = {
-  gasTokenPrice: Usdc;
-  pricePerAccountByte: Sol;
-  signaturePrice: Sol;
-  computationPrice: Sol;
-}
-
-export type SuiPriceResult = {
-  gasTokenPrice: Usdc;
-  computationPrice: Sui;
-  storagePrice: Sui;
-  storageRebate: Percentage;
-}
-
-export type PriceResult = EvmPriceResult | SolanaPriceResult | SuiPriceResult;
-
-// TODO: For now we assume the domains are all EVM domains
-export async function getPrices(
-  domains: (SupportedDomain<Network> | "Sui")[],
-  network: Network,
-): Promise<PriceResult[]> {
-  // TODO: RPC Urls? Create clients at startup?
-  const client = ViemEvmClient.fromNetworkAndDomain(
-    network,
-    "Avalanche",
-  ).client;
-  const oracle = new EvmAddress(avalancheOracleAddress[network]);
-  const queries = [
-    {
-      query: "Price",
-      queries: domains.map((domain) => ({
-        query: "FeeParams",
-        chain: { domain, network },
-      })),
-    },
-  ] satisfies RoArray<RootQuery>;
-  const results = await query(client, oracle, queries);
-  return results.map((result) => {
-    if (result.chain.domain === "Solana") {
-      const price = result.result as SolanaFeeParams;
-      return {
-        gasTokenPrice: price.gasTokenPrice,
-        pricePerAccountByte: sol(price.pricePerAccountByte, "lamports"),
-        signaturePrice: sol(price.signaturePrice, "lamports"),
-        // TODO: Fix this division using units properly
-        computationPrice: sol(price.computationPrice / 1000, "lamports"),
-      };
-    } else if (result.chain.domain === "Sui") {
-      const price = result.result as SuiFeeParams;
-      return {
-        gasTokenPrice: result.result.gasTokenPrice,
-        computationPrice: sui(price.computationPrice, "MIST"),
-        storagePrice: sui(price.storagePrice, "MIST"),
-        storageRebate: percentage(price.storageRebate, "scalar"),
-      };
-    } else {
-      const price = result.result as EvmFeeParams;
-      return {
-        gasTokenPrice: price.gasTokenPrice,
-        gasPrice: price.gasPrice,
-        pricePerTxByte: price.pricePerTxByte,
-      };
-    }
-  });
 }
