@@ -31,7 +31,7 @@ export const contractAddressEntries = [[
     ["Optimism",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Arbitrum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Base",       "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    ["Solana",     ""],
+    ["Solana",     "CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM"],
     ["Polygon",    "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
