@@ -318,7 +318,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
 
     //determine the addresses of their associated oracle and cctpr price accounts
     const priceAddresses = involvedDomains
-      .flatMap(d => this.priceAddresses(d))
+      .flatMap(d => this.priceAddresses(d));
 
     //fetch all price accounts + the oracle config (which contains the sol price) in a single call,
     //  ensure that they all exist, and base64-decode them

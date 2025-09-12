@@ -18,15 +18,17 @@ export type RpcAccountInfo = (Readonly<{
   rentEpoch: bigint;
   space: bigint;
   data: Base64EncodedDataResponse;
-}>) | null
+}>) | null;
 
 function toAccountInfo(accInfo: RpcAccountInfo): AccountInfo | undefined {
-  return accInfo ? { 
+  return accInfo
+? {
     executable: accInfo.executable,
     owner:      new SolanaAddress(accInfo.owner),
     lamports:   sol(accInfo.lamports, "lamports"),
     data:       encoding.base64.decode(accInfo.data[0]),
-  } : undefined;
+  }
+: undefined;
 }
 
 export class SolanaKitClient<N extends Network = Network> implements SolanaClient<N> {
@@ -56,17 +58,17 @@ export class SolanaKitClient<N extends Network = Network> implements SolanaClien
 
   async getAccountInfo(address: SolanaAddress): Promise<AccountInfo | undefined> {
     return toAccountInfo(
-      (await this.client.getAccountInfo(address.unwrap(), { encoding: "base64" }).send()).value
+      (await this.client.getAccountInfo(address.unwrap(), { encoding: "base64" }).send()).value,
     );
   }
 
   async getMultipleAccounts(
-    addresses: RoArray<SolanaAddress>
+    addresses: RoArray<SolanaAddress>,
   ): Promise<(AccountInfo | undefined)[]> {
     return (
       await this.client.getMultipleAccounts(
         addresses.map(addr => addr.unwrap()),
-        { encoding: "base64" }
+        { encoding: "base64" },
       ).send()
     ).value.map(toAccountInfo);
   }

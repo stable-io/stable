@@ -57,7 +57,7 @@ export const $findRoutes = <
 
     for (const corridor of corridors) {
       const userTransferRoute = await buildUserTransferRoute(
-        network as Network, intent, corridor,
+        network, intent, corridor,
       );
 
       if (userTransferRoute !== undefined) {

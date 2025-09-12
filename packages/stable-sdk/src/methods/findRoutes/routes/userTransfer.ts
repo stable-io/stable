@@ -160,7 +160,7 @@ async function cctprRequiresAllowance<
 
   const usdcAddress = platformAddress(
     sourceChain,
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
     definitions.usdcContracts.contractAddressOf[sourceChain],
   );
   const cctprAddress = platformAddress(
@@ -169,7 +169,7 @@ async function cctprRequiresAllowance<
      * @todo: type system thinks contractAddressOf is not callable,
      *        but at runtime it is. Figure out what's up.
      */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
     (cctpr.contractAddressOf as TODO)(sourceChain),
   );
 

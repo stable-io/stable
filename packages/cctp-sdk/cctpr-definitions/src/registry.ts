@@ -40,12 +40,13 @@ declare module "@stable-io/cctp-sdk-definitions" {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type RegisteredCctprPlatform = RegisteredPlatform & keyof PlatformImplsOf;
 export type LoadedCctprDomain<N extends Network> =
-  LoadedDomain
-  & DomainsOf<RegisteredCctprPlatform>
-  & SupportedDomain<N>;
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+  LoadedDomain & DomainsOf<RegisteredCctprPlatform> & SupportedDomain<N>;
 export type LoadedCctprPlatformDomain<N extends Network, P extends RegisteredCctprPlatform> =
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   LoadedCctprDomain<N> & DomainsOf<P>;
 
 export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N>> =

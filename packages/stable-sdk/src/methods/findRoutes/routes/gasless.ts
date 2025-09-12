@@ -53,8 +53,8 @@ export async function buildGaslessRoute<
         );
 
   const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
-    corridor.cost, 
-    intent as Intent<N, LoadedCctprPlatformDomain<N, P>, SupportedDomain<N>>
+    corridor.cost,
+    intent as Intent<N, LoadedCctprPlatformDomain<N, P>, SupportedDomain<N>>,
   );
 
   const transferParams: GetQuoteParams<N, S, D> = {
@@ -91,7 +91,6 @@ export async function buildGaslessRoute<
     ? [signPermitStep(intent.sourceChain as keyof EvmDomains)]
     : [];
 
-
   const routeSteps: RouteExecutionStep[] = [
     ...tokenAllowanceSteps,
     gaslessTransferStep(intent.sourceChain),
@@ -104,7 +103,9 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost((client as Client<N, P>).network, routeSteps, fees),
+    estimatedTotalCost: await calculateTotalCost(
+      (client as Client<N, P>).network, routeSteps, fees,
+    ),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(

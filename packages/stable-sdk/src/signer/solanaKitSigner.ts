@@ -15,10 +15,10 @@ export class SolanaKitSigner implements SolanaPlatformSigner {
 
   public static async loadKeyPairSigner(filePath: string): Promise<KeyPairSigner> {
     const resolvedPath = path.resolve(
-      filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath
+      filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath,
     );
     const loadedKeyBytes = Uint8Array.from(
-      JSON.parse(fs.readFileSync(resolvedPath, "utf8"))
+      JSON.parse(fs.readFileSync(resolvedPath, "utf8")),
     );
     return createKeyPairSignerFromBytes(loadedKeyBytes);
   }

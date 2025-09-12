@@ -33,7 +33,9 @@ export const $getBalance =
       }
       else {
         const contract = definitions.usdcContracts.contractAddressOf[domain];
-        balance = await getTokenBalanceEvm(client, new EvmAddress(contract), new EvmAddress(address), Usdc);
+        balance = await getTokenBalanceEvm(
+          client, new EvmAddress(contract), new EvmAddress(address), Usdc,
+        );
       }
 
       return [domain, balance.toUnit("human").toString()];

@@ -80,8 +80,10 @@ export class GaslessTransferService {
   }
 
   public async quoteSolanaGaslessTransfer(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     request: QuoteRequestDto<"Solana">,
   ): Promise<QuoteDto> {
+    await Promise.resolve();
     return { jwt: "0x1234567890abcdef" };
   }
 
@@ -123,8 +125,10 @@ export class GaslessTransferService {
   }
 
   public async initiateSolanaGaslessTransfer(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     request: RelayRequestDto<"Solana">,
   ): Promise<RelayTx> {
+    await Promise.resolve();
     return { hash: "0x1234567890abcdef" };
   }
 

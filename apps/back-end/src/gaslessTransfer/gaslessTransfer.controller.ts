@@ -4,8 +4,6 @@ import {
   Get,
   Post,
   Query,
-  BadRequestException,
-  UnprocessableEntityException,
 } from "@nestjs/common";
 import { ApiResponse as SwaggerApiResponse } from "@nestjs/swagger";
 import {

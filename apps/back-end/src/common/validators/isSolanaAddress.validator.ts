@@ -20,6 +20,7 @@ export class IsSolanaAddressConstraint implements ValidatorConstraintInterface {
       return false;
     }
   }
+
   defaultMessage() {
     return "Address must be a valid Solana address";
   }

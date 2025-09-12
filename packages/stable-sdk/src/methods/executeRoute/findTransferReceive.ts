@@ -10,8 +10,8 @@ import type { Receive } from "src/types/receive.js";
 import { pollUntil, type PollingConfig } from "@stable-io/utils";
 
 const EXPLORER_API_BY_NETWORK = {
-  "Mainnet": "https://api.explorer.stableit.com/api/v1beta",
-  "Testnet": "https://api.explorer.stableit.com/api/v1beta",
+  Mainnet: "https://api.explorer.stableit.com/api/v1beta",
+  Testnet: "https://api.explorer.stableit.com/api/v1beta",
 };
 
 const DEFAULT_POLLING: PollingConfig = {

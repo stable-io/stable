@@ -62,7 +62,9 @@ export async function executeRouteSteps<
         if (receipt.status === "reverted")
             throw new Error(`Execution Reverted. Tx: ${receipt.transactionHash}`);
 
-        const { eventName, eventData } = buildTransactionEventData(network, stepType, contractTx, tx);
+        const { eventName, eventData } = buildTransactionEventData(
+          network, stepType, contractTx, tx,
+        );
         route.progress.emit(eventName, eventData);
 
       break;

@@ -1,5 +1,4 @@
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
-import { usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import { IsNotEmpty, IsObject, ValidateNested } from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";

@@ -65,7 +65,9 @@ export interface SolanaTransferStep extends BaseRouteExecutionStep {
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
-export function getStepType(txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg): StepType {
+export function getStepType(
+  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg,
+): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
   if (isEip2612Data(txOrSig)) return SIGN_PERMIT;
@@ -121,9 +123,11 @@ export type GaslessTransferData = {
 };
 export function isGaslessTransferData(subject: unknown): subject is GaslessTransferData {
   if (typeof subject !== "object" || subject === null) return false;
-  if (!("permit2GaslessData" in subject) || !isPermit2GaslessData(subject.permit2GaslessData)) return false;
+  if (!("permit2GaslessData" in subject) || !isPermit2GaslessData(subject.permit2GaslessData))
+    return false;
   if (!("txHash" in subject) || typeof subject.txHash !== "string") return false;
-  if (!("permit2Signature" in subject) || typeof subject.permit2Signature !== "string") return false;
+  if (!("permit2Signature" in subject) || typeof subject.permit2Signature !== "string")
+    return false;
   if (("permit" in subject) && !isPermit(subject.permit)) return false;
 
   return true;

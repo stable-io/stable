@@ -48,7 +48,7 @@ export class StableSDK<N extends Network> extends SDK<N> {
   public getRpcUrl(domain: SupportedDomain<N>): Url {
     if (domain === "Solana") {
       return (
-        this.options.rpcUrls?.["Solana"] ?? 
+        this.options.rpcUrls?.["Solana"] ??
         SolanaKitClient.defaultRpcs[this.options.network]
       ) as Url;
     }

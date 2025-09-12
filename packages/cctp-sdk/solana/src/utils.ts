@@ -198,11 +198,15 @@ export function composeCreateAtaIx(
   );
 }
 
-export async function addLifetimeAndSendTx(client: SolanaClient, tx: TxMsgWithFeePayer, signers: readonly KeyPairSigner[]) {
+export async function addLifetimeAndSendTx(
+  client: SolanaClient,
+  tx: TxMsgWithFeePayer,
+  signers: readonly KeyPairSigner[],
+): Promise<string> {
   const { blockhash, lastValidBlockHeight } = await client.getLatestBlockhash();
   const txWithLifetime = setTransactionMessageLifetimeUsingBlockhash(
     { blockhash, lastValidBlockHeight },
-    tx
+    tx,
   );
   return sendTx(client, txWithLifetime, signers);
 }

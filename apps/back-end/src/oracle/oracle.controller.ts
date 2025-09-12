@@ -1,8 +1,7 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse } from "@nestjs/swagger";
 import { OracleService } from "./oracle.service";
-import { PriceRequestDto, PriceResponseDto, PriceDto } from "./dto";
-import { serializeBigints } from "@stable-io/utils";
+import { PriceRequestDto, PriceResponseDto } from "./dto";
 
 @Controller("oracle")
 export class OracleController {

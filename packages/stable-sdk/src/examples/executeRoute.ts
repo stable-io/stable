@@ -19,7 +19,7 @@ if (!evmPrivateKey) {
 }
 const evmAccount = privateKeyToAccount(evmPrivateKey);
 
-const solanaPrivateKeyFile = process.env.SOLANA_PRIVATE_KEY_FILE as string | undefined;
+const solanaPrivateKeyFile = process.env.SOLANA_PRIVATE_KEY_FILE;
 if (!solanaPrivateKeyFile) {
   throw new Error("SOLANA_PRIVATE_KEY_FILE is not set");
 }
