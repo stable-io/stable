@@ -149,6 +149,10 @@ async function cctprRequiresAllowance<
   sender: PlatformAddress<P>,
   totalUsdcValue: Usdc,
 ): Promise<boolean> {
+  const platform = platformOf(sourceChain);
+  if (platform === "Solana") {
+    return false;
+  }
   const client = platformClient(network, sourceChain);
   // TODO: This probably should also be dependency injected?
   const definitions = initDefinitions(network);
@@ -157,7 +161,7 @@ async function cctprRequiresAllowance<
   const usdcAddress = platformAddress(
     sourceChain,
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    definitions.usdcContracts.contractAddressOf[network as Network][sourceChain],
+    definitions.usdcContracts.contractAddressOf[sourceChain],
   );
   const cctprAddress = platformAddress(
     sourceChain,

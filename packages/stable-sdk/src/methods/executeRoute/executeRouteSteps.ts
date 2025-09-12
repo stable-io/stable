@@ -173,7 +173,7 @@ function buildEvmTxParameters(
 
 function buildTransactionEventData(
   network: Network,
-  stepType: "pre-approve" | "transfer",
+  stepType: "pre-approve" | "evm-transfer",
   contractTx: ContractTx,
   txHash: Hex,
 ): {

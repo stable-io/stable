@@ -383,6 +383,19 @@ export class OracleService {
         throw new Error("Query response too short");
     };
 
+    for (const rootQuery of queries)
+      for (const query of rootQuery.queries)
+        deserializeResult(
+          query,
+          query.chain.domain === "Solana"
+            ? solanaFeeParamsLayout
+            : query.chain.domain === "Sui"
+              ? suiFeeParamsLayout
+              : evmFeeParamsLayout,
+        );
+
+    if (offset < header.length) throw new Error("Query response too long")
+
     return decodedResults as QueryResults<Q>;
   }
 }

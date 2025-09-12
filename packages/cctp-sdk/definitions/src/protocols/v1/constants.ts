@@ -112,7 +112,8 @@ export const attestationTimeEstimates = {
     Polygon:     69.08,
     Unichain:    1604.94,
     // Codex:       20,
-    // Solana:      25, // TODO
+    // TODO Add a proper value for Solana
+    Solana:      25,
     // Sui:         20, // TODO
     // Aptos:       20, // TODO
   },
@@ -125,7 +126,7 @@ export const attestationTimeEstimates = {
     Polygon:     12.07, // TODO
     Unichain:    20, // TODO
     // Noble:       20, // TODO
-    Solana:      25, // TODO
+    Solana:      25,
     Sui:         20, // TODO
     Aptos:       20, // TODO
   },

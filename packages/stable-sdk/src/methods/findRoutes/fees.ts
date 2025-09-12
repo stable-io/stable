@@ -60,9 +60,7 @@ export async function calculateTotalCost(
   fees: Fee[],
 ): Promise<Usd> {
   const domain = steps[0].chain;
-  const domainPrices = await getDomainPrices(network, {
-    domain,
-  });
+  const domainPrices = await getDomainPrices(network, { domain });
   const gasTokenKind = gasTokenKindOf(domain);
   const gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
   // @todo: get the USDC price from the oracle

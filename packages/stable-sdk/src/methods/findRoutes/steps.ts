@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains, LoadedDomain } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, LoadedDomain, platformOf } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Eip2612Message, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
 import { type Permit2GaslessData, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -12,7 +12,7 @@ import { encoding } from "@stable-io/utils";
 import { Network } from "../../types/general.js";
 import { getPlatformExecutionCosts } from "../../api/executionCost.js";
 import { TxMsg } from "@stable-io/cctp-sdk-solana";
-export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "transfer" | "gasless-transfer" | "solana-transfer";
+export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer";
 
 interface BaseRouteExecutionStep {
   type: StepType;
@@ -27,7 +27,7 @@ interface BaseRouteExecutionStep {
 
 export type RouteExecutionStep = SignPermitStep
   | PreApproveStep
-  | TransferStep
+  | EvmTransferStep
   | GaslessTransferStep
   | SolanaTransferStep;
 
@@ -46,8 +46,8 @@ export interface PreApproveStep extends BaseRouteExecutionStep {
   type: typeof PRE_APPROVE;
 };
 
-export const EVM_TRANSFER = "transfer" as const;
-export interface TransferStep extends BaseRouteExecutionStep {
+export const EVM_TRANSFER = "evm-transfer" as const;
+export interface EvmTransferStep extends BaseRouteExecutionStep {
   type: typeof EVM_TRANSFER;
 };
 
@@ -166,7 +166,7 @@ export function isTransferTx(subject: unknown): subject is TransferTx {
 }
 
 export function isTxMsg(subject: unknown): subject is TxMsg {
-  return isObjectWithKeys(subject, ["instructions", "accountKeys", "header"]);
+  return isObjectWithKeys(subject, ["instructions"]);
 }
 
 export async function buildTransferStep(
@@ -174,12 +174,13 @@ export async function buildTransferStep(
   corridor: Corridor,
   sourceChain: LoadedDomain,
   usesPermit: boolean,
-): Promise<TransferStep> {
-  const { v1, v2, permit } = await getPlatformExecutionCosts(network, "Evm");
+): Promise<EvmTransferStep | SolanaTransferStep> {
+  const platform = platformOf(sourceChain);
+  const { v1, v2, permit } = await getPlatformExecutionCosts(network, platform);
   const sharedTxData = {
-    platform: "Evm" as const,
+    platform,
     chain: sourceChain,
-    type: "transfer" as const,
+    type: platform === "Evm" ? EVM_TRANSFER : SOLANA_TRANSFER,
   };
   switch (corridor) {
     /**

@@ -86,7 +86,7 @@ async function executeRouteWithTiming(
   // if you want only gasless:
   .filter(
     r => r.steps.some(
-      s => (scriptConfig.gasless ? s.type === "gasless-transfer" : s.type === "transfer"),
+      s => (scriptConfig.gasless ? s.type === "gasless-transfer" : s.type === "evm-transfer" || s.type === "solana-transfer"),
     ),
   );
 

@@ -5,9 +5,14 @@
 
 import { LoadedDomain, fetchApiResponse, duration } from "@stable-io/cctp-sdk-definitions";
 import { TODO, Url } from "@stable-io/utils";
-import type { TxHash } from "../../types/index.js";
+import type { Network, TxHash } from "../../types/index.js";
 import type { Receive } from "src/types/receive.js";
 import { pollUntil, type PollingConfig } from "@stable-io/utils";
+
+const EXPLORER_API_BY_NETWORK = {
+  "Mainnet": "https://api.explorer.stableit.com/api/v1beta",
+  "Testnet": "https://api.explorer.stableit.com/api/v1beta",
+};
 
 const DEFAULT_POLLING: PollingConfig = {
   baseDelayMs: 300,
@@ -15,12 +20,13 @@ const DEFAULT_POLLING: PollingConfig = {
 };
 
 export async function findTransferReceive(
-  transactionHash: TxHash,
+  network: Network,
   targetDomain: LoadedDomain,
+  transactionHash: TxHash,
   config: PollingConfig = {},
 ): Promise<Receive> {
   const cfg = { ...DEFAULT_POLLING, ...config };
-  const endpoint = `${process.env.EXPLORER_API}/operations?tx_hash=${transactionHash}`;
+  const endpoint = `${EXPLORER_API_BY_NETWORK[network]}/operations?tx_hash=${transactionHash}`;
 
   const query = async (): Promise<Receive | undefined> => {
     const { status, value } = await fetchApiResponse(

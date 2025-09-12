@@ -70,8 +70,9 @@ export const $executeRoute =
      * receipt on avalanche.
      */
     const receive = await findTransferReceive(
-      transferTx,
+      network,
       attestation.targetDomain,
+      transferTx,
       { timeoutMs: 180000 },
     ).catch((error: unknown) => {
       route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
@@ -112,8 +113,9 @@ export const $executeRoute =
       route.progress.emit("hop-confirmed", secondHopAttestation); // uses hop attestation
 
       const secondHopReceive = await findTransferReceive(
-        receive.transactionHash,
+        network,
         secondHopAttestation.targetDomain,
+        receive.transactionHash,
         { timeoutMs: 180000 },
       ).catch((error: unknown) => {
         route.progress.emit("error", { type: "receive-failed", details: { txHash: receive.transactionHash } });
