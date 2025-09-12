@@ -57,7 +57,8 @@ export const $findRoutes = <
 
     for (const corridor of corridors) {
       const userTransferRoute = await buildUserTransferRoute(
-        network, intent, corridor,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        network as Network, intent, corridor,
       );
 
       if (userTransferRoute !== undefined) {
