@@ -23,11 +23,13 @@
     "clean": "rm -rf ./dist"
   },
   "dependencies": {
+    "@solana/kit": "^3.0.2",
     "@stable-io/amount": "workspace:^",
     "@stable-io/cctp-sdk-cctpr-definitions": "workspace:^",
     "@stable-io/cctp-sdk-cctpr-evm": "workspace:^",
     "@stable-io/cctp-sdk-definitions": "workspace:^",
     "@stable-io/cctp-sdk-evm": "workspace:^",
+    "@stable-io/cctp-sdk-solana-kit": "workspace:^",
     "@stable-io/cctp-sdk-viem": "workspace:^",
     "@stable-io/map-utils": "workspace:^",
     "@stable-io/utils": "workspace:^",

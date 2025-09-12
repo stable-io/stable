@@ -4,12 +4,14 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import type { Network } from "@stable-io/cctp-sdk-definitions";
-import { gasTokenOf, isUsdc, Usdc, usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
-import { EvmAddress, getTokenBalance } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
+import { gasTokenOf, isUsdc, platformClient, sol } from "@stable-io/cctp-sdk-definitions";
+import { EvmAddress, EvmAddressish } from "@stable-io/cctp-sdk-evm";
 import { TODO } from "@stable-io/utils";
 import { SDK } from "../types/index.js";
 import { SupportedRoute } from "../types/route.js";
+import { SolanaAddress, SolanaAddressish, getSolBalance } from  "@stable-io/cctp-sdk-solana";
+import { getUsdcBalance as getUsdcBalanceSolana } from "@stable-io/cctp-sdk-cctpr-solana";
+import { getUsdcBalance as getUsdcBalanceEvm } from "@stable-io/cctp-sdk-cctpr-evm";
 
 export type CheckHasEnoughFundsDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
@@ -21,13 +23,13 @@ export const $checkHasEnoughFunds =
     const { intent: { sourceChain, sender, amount }, fees } = route;
     const network = getNetwork();
     const rpcUrl = getRpcUrl(sourceChain);
-    const client = ViemEvmClient.fromNetworkAndDomain(
+
+    const client = platformClient(
       network,
       sourceChain,
       rpcUrl,
     );
-    const senderAddr = new EvmAddress(sender);
-    const usdcAddr = new EvmAddress(usdcContracts.contractAddressOf[network][sourceChain]);
+
     const gasToken = gasTokenOf(sourceChain);
 
     const requiredGasFromSteps = route.steps.reduce(
@@ -41,12 +43,19 @@ export const $checkHasEnoughFunds =
       { gasToken: requiredGasFromSteps, usdc: amount },
     );
 
-    const [gasTokenBalance, usdcBalance] = await Promise.all([
-      client.getBalance(senderAddr),
-      getTokenBalance(client, usdcAddr, senderAddr, Usdc),
-    ]);
+    const [gasTokenBalance, usdcBalance] = client.platform === "Solana"
+      ? await Promise.all([
+          getSolBalance(client, new SolanaAddress(sender as SolanaAddressish)).then(
+            balance => balance ?? sol(0),
+          ),
+          getUsdcBalanceSolana(client, new SolanaAddress(sender as SolanaAddressish)),
+        ])
+      : await Promise.all([
+          client.getBalance(new EvmAddress(sender as EvmAddressish)),
+          getUsdcBalanceEvm(client, sourceChain, new EvmAddress(sender as EvmAddressish)),
+        ]);
 
     const hasEnoughUsdc = usdcBalance.ge(requiredBalance.usdc);
     const hasEnoughGas = gasTokenBalance.ge(requiredBalance.gasToken as TODO);
     return hasEnoughUsdc && hasEnoughGas;
-  };
+};

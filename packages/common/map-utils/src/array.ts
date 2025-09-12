@@ -9,9 +9,14 @@ import type {
   RoTuple,
   RoArray,
   HeadTail,
-  Extends,
   IsAny,
 } from "./metaprogramming.js";
+
+export function isArray<T>(x: T | RoArray<T>): x is RoArray<T>;
+export function isArray<T>(x: T | T[]): x is T[];
+export function isArray(x: unknown): x is RoArray<unknown> {
+  return Array.isArray(x);
+}
 
 export type RoTuple2D<T = unknown> = RoTuple<RoTuple<T>>;
 export type RoArray2D<T = unknown> = RoArray<RoArray<T>>;
@@ -49,6 +54,33 @@ export type RoTupleWithLength<T, L extends number> = Readonly<TupleWithLength<T,
 
 export const range = <const L extends number>(length: L) =>
   [...Array.from({ length }).keys()] as Range<L>;
+
+export type MaybeArray<T> = T | RoArray<T>;
+
+type MapTuple<A extends RoTuple, R> =
+  [...{ [K in keyof A]: K extends `${number}` ? R : never }];
+export type MapArrayness<P, R> =
+  P extends RoArray
+  ? PreserveReadonly<P, P extends RoTuple ? MapTuple<P, R> : R[]>
+  : R;
+
+type ElementOf<P> = P extends RoArray<infer T> ? T : P;
+type MapFunc<P> = (value: ElementOf<P>) => unknown;
+type MappedRet<P, F extends MapFunc<P>> = MapArrayness<P, ReturnType<F>>;
+export type MapTo<P> = <F extends MapFunc<P>>(f: F) => MappedRet<P, F>;
+//normal tuple.map does not yield a tuple, but an array, i.e.:
+//  const func = (x: number) => x.toString();
+//  const tup = [1, 2, 3] as const;
+//  tup.map(func); // => string[], not readonly [string, string, string]
+//with mapTo, however:
+//  mapTo(tup)(func); // => readonly [string, string, string]
+//and of course:
+//  mapTo(tup as number[])(func); // => string[]
+//and finally, mapTo can also be used with a single value too:
+//  mapTo(1)(func); // => string
+export const mapTo = <const P>(p: P): MapTo<P> =>
+  <F extends MapFunc<P>>(f: F): MappedRet<P, F> =>
+    (isArray(p) ? (p as RoArray<ElementOf<P>>).map(f) : f(p as ElementOf<P>)) as any;
 
 //capitalization to highlight that this is intended to be a literal or a union of literals
 export type IndexEs = number;
@@ -249,24 +281,6 @@ export type Cartesian<L, R> =
   : R extends RoArray
   ? [...{ [K in keyof R]: K extends `${number}` ? [L, R[K]] : never }]
   : [L, R];
-
-type MapToTuple<A extends RoArray, R> =
-  [...{ [K in keyof A]: K extends `${number}` ? R : never }];
-type MapToImpl<A extends RoArray, R> =
-  PreserveReadonly<A, A extends RoTuple ? MapToTuple<A, R> : R[]>;
-type MappingFunc<A extends RoArray, F> =
-  MapToImpl<A, F extends (value: A[number]) => infer R ? R : never>;
-
-export type MapTo<A extends RoArray> =
-  <F extends (value: A[number]) => unknown>(f: F) =>
-    MappingFunc<A, F>;
-//normal tuple.map does not yield a tuple, but an array, i.e.
-// const test = [1, 2, 3] as const;
-// test.map(x => x * 2) // => number[]
-// mapTo(test)(x => x * 2) // => readonly [number, number, number]
-export const mapTo = <const A extends RoArray>(arr: A): MapTo<A> =>
-  <F extends (value: A[number]) => unknown>(f: F): MappingFunc<A, F> =>
-    arr.map(f) as any;
 
 export type TupleFilter<T extends RoTuple, Include> =
   T extends HeadTail<T, infer Head, infer Tail>

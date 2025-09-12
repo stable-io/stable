@@ -18,7 +18,7 @@ import type {
 } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain } from "./constants.js";
 import type { InOrOut, QuoteBase, CorridorParamsBase } from "./common.js";
-import type { CorridorCost, SensibleCorridor } from "./getCorridors.js";
+import type { RelayCost, SensibleCorridor } from "./getCorridors.js";
 
 export interface PlatformImplsOf extends BaseObject {
   // Platform packages will extend this via declaration merging
@@ -40,12 +40,13 @@ declare module "@stable-io/cctp-sdk-definitions" {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type RegisteredCctprPlatform = RegisteredPlatform & keyof PlatformImplsOf;
 export type LoadedCctprDomain<N extends Network> =
-  LoadedDomain
-  & DomainsOf<RegisteredCctprPlatform>
-  & SupportedDomain<N>;
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+  LoadedDomain & DomainsOf<RegisteredCctprPlatform> & SupportedDomain<N>;
 export type LoadedCctprPlatformDomain<N extends Network, P extends RegisteredCctprPlatform> =
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   LoadedCctprDomain<N> & DomainsOf<P>;
 
 export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N>> =
@@ -54,7 +55,7 @@ export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N
 export interface PlatformCctpr<
   P extends RegisteredPlatform,
 > {
-  getCorridorCosts: <
+  getRelayCosts: <
     N extends Network,
     S extends LoadedCctprPlatformDomain<N, P>,
     D extends SupportedDomain<N>,
@@ -64,7 +65,7 @@ export interface PlatformCctpr<
     destination: D,
     corridors: RoArray<SensibleCorridor<N, S, D>>,
     gasDropoff?: GasTokenOf<D>,
-  ) => Promise<RoArray<CorridorCost<N, S>>>;
+  ) => Promise<RoArray<RelayCost<N, S>>>;
 
   transfer: <
     N extends Network,

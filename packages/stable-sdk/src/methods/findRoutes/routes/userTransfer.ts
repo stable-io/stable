@@ -16,7 +16,7 @@ import {
   platformOf,
   usdc,
 } from "@stable-io/cctp-sdk-definitions";
-import { getTokenAllowance } from "@stable-io/cctp-sdk-evm";
+import { EvmAddress, EvmClient, getTokenAllowance } from "@stable-io/cctp-sdk-evm";
 import { init as initCctpr, platformCctpr } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   Corridor,
@@ -50,7 +50,7 @@ export async function buildUserTransferRoute<
 >(
   network: N,
   intent: Intent<N, S, D>,
-  corridor: CorridorStats<N, keyof EvmDomains, Corridor>,
+  corridor: CorridorStats<N, SupportedDomain<N>, Corridor>,
 ): Promise<Route<N, S, D> | undefined> {
   const platform = platformOf(intent.sourceChain);
   const cctprImpl = platformCctpr(platform);
@@ -86,8 +86,8 @@ export async function buildUserTransferRoute<
   const tokenAllowanceSteps = allowanceRequired
     ? [
         intent.usePermit
-          ? signPermitStep(intent.sourceChain)
-          : preApprovalStep(intent.sourceChain),
+          ? signPermitStep(intent.sourceChain as keyof EvmDomains)
+          : preApprovalStep(intent.sourceChain as keyof EvmDomains),
       ]
     : [];
 
@@ -149,6 +149,10 @@ async function cctprRequiresAllowance<
   sender: PlatformAddress<P>,
   totalUsdcValue: Usdc,
 ): Promise<boolean> {
+  const platform = platformOf(sourceChain);
+  if (platform === "Solana") {
+    return false;
+  }
   const client = platformClient(network, sourceChain);
   // TODO: This probably should also be dependency injected?
   const definitions = initDefinitions(network);
@@ -156,8 +160,8 @@ async function cctprRequiresAllowance<
 
   const usdcAddress = platformAddress(
     sourceChain,
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    definitions.usdcContracts.contractAddressOf[network as Network][sourceChain],
+
+    definitions.usdcContracts.contractAddressOf[sourceChain],
   );
   const cctprAddress = platformAddress(
     sourceChain,
@@ -165,15 +169,15 @@ async function cctprRequiresAllowance<
      * @todo: type system thinks contractAddressOf is not callable,
      *        but at runtime it is. Figure out what's up.
      */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
     (cctpr.contractAddressOf as TODO)(sourceChain),
   );
 
   const allowance = await getTokenAllowance(
-    client,
-    usdcAddress,
-    sender,
-    cctprAddress,
+    client as EvmClient,
+    usdcAddress as EvmAddress,
+    sender as EvmAddress,
+    cctprAddress as EvmAddress,
     Usdc,
   );
 

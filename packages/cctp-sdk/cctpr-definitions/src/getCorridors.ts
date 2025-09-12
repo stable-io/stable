@@ -7,9 +7,9 @@ import type {
   Usdc,
   Percentage,
 } from "@stable-io/cctp-sdk-definitions";
-import { platformOf, duration, v1, v2 } from "@stable-io/cctp-sdk-definitions";
+import { platformOf, duration, v1, v2, genericGasToken } from "@stable-io/cctp-sdk-definitions";
 
-import { type SupportedDomain, relayOverheadOf } from "./constants.js";
+import { type SupportedDomain, gasDropoffLimitOf, relayOverheadOf } from "./constants.js";
 import type { RegisteredCctprPlatform, LoadedCctprPlatformDomain } from "./registry.js";
 import { platformCctpr } from "./registry.js";
 import type { Corridor } from "./layouts.js";
@@ -44,8 +44,11 @@ export type SensibleCorridor<
   D extends SupportedDomain<N>,
 > = SupportedV1Corridor<N, S, D> | SensibleV2Corridor<N, S, D>;
 
+export type RelayCost<N extends Network, S extends SupportedDomain<N>> =
+  readonly [usdcCost: Usdc, gasCost: GasTokenOf<S>];
+
 export type CorridorCost<N extends Network, S extends SupportedDomain<N>> = {
-  relay: readonly [usdcCost: Usdc, gasCost: GasTokenOf<S>];
+  relay: RelayCost<N, S>;
   fast?: Percentage;
 };
 
@@ -161,19 +164,33 @@ export const getCorridors = async <
   const platform = platformOf(source);
   const cctprImpl = platformCctpr(platform);
   const corridors = getSensibleCorridors(network, source, destination);
-  const [{ allowance: fastBurnAllowance }, costs] = await Promise.all([
+
+  const gasDropoffRequest = genericGasToken(gasDropoff ? gasDropoff.toUnit("human") : 0);
+
+  const gasDropoffLimit = genericGasToken(
+    gasDropoffLimitOf[network][destination],
+  );
+  if (gasDropoffRequest.gt(gasDropoffLimit))
+    throw new Error("Gas Drop Off Limit Exceeded");
+
+  const fastCostsPromise = Promise.all(corridors.map(corridor =>
+    corridor === "v1"
+      ? undefined
+      : getFastCost(network, source, destination, corridor),
+  ));
+
+  const [{ allowance: fastBurnAllowance }, fastCosts, relayCosts] = await Promise.all([
     v2.fetchFastBurnAllowanceFactory(network)(),
-    cctprImpl.getCorridorCosts(network, source, destination, corridors, gasDropoff),
+    fastCostsPromise,
+    cctprImpl.getRelayCosts(network, source, destination, corridors, gasDropoff),
   ]);
   const stats = corridors.map((corridor, i) => ({
     corridor,
-    cost: costs[i]!, // @todo: handle undefined
+    cost: { relay: relayCosts[i]!, ...(fastCosts[i] ? { fast: fastCosts[i] } : {}) },
     transferTime: calculateSpeed(network, source, destination, corridor),
-  }));
-  return {
-    fastBurnAllowance,
-    stats,
-  };
+  })) as RoArray<CorridorStats<N, S, SensibleCorridor<N, S, D>>>;
+
+  return { fastBurnAllowance, stats };
 };
 
 export function checkIsSensibleCorridor<N extends Network>(

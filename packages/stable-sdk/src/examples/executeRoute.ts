@@ -5,31 +5,45 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { Domain, Network } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../index.js";
 import { bigintReplacer } from "../utils.js";
+import { SolanaKitSigner } from "../signer/solanaKitSigner.js";
 
 dotenv.config();
-const privateKey = process.env.EVM_PRIVATE_KEY as Address;
-const account = privateKeyToAccount(privateKey);
+const evmPrivateKey = process.env.EVM_PRIVATE_KEY as Address | undefined;
+if (!evmPrivateKey) {
+  throw new Error("EVM_PRIVATE_KEY is not set");
+}
+const evmAccount = privateKeyToAccount(evmPrivateKey);
 
-const sender = account.address;
-const recipient = account.address;
+const solanaPrivateKeyFile = process.env.SOLANA_PRIVATE_KEY_FILE;
+if (!solanaPrivateKeyFile) {
+  throw new Error("SOLANA_PRIVATE_KEY_FILE is not set");
+}
+const solanaAccount = await SolanaKitSigner.loadKeyPairSigner(solanaPrivateKeyFile);
+
+const sender = solanaAccount.address;
+const recipient = evmAccount.address;
 
 const rpcUrls = {
   Ethereum: "https://dimensional-solemn-scion.ethereum-sepolia.quiknode.pro/585eb5fde76eda6d2b9e4f6a150ec7bf4df12af1/",
+  Solana: "https://api.devnet.solana.com",
 };
 
 const sdk = new StableSDK({
   network: "Testnet",
-  signer: new ViemSigner(account),
+  signer: {
+    Evm: new ViemSigner(evmAccount),
+    Solana: new SolanaKitSigner(solanaAccount),
+  },
   rpcUrls,
 });
 
 const intent = {
-  sourceChain: "Ethereum" as const,
+  sourceChain: "Solana" as const,
   targetChain: "Optimism" as const,
   amount: "0.1",
   sender,
@@ -110,19 +124,18 @@ function stringify(obj: any) {
   return JSON.stringify(obj, bigintReplacer);
 }
 
-function getTestnetScannerTxUrl<D extends keyof EvmDomains>(
-  domain: D,
+function getTestnetScannerTxUrl(
+  domain: Domain,
   txHash: string,
 ): string {
-  const scanners: Partial<Record<keyof EvmDomains, string>> = {
-    ["Ethereum"]: "https://sepolia.etherscan.io/tx/",
-    ["Arbitrum"]: "https://sepolia.arbiscan.io/tx/",
-    ["Optimism"]: "https://sepolia-optimism.etherscan.io/tx/",
+  const scanners: Partial<Record<Domain, string>> = {
+    ["Ethereum"]: "https://sepolia.etherscan.io/tx/{tx}",
+    ["Arbitrum"]: "https://sepolia.arbiscan.io/tx/{tx}",
+    ["Optimism"]: "https://sepolia-optimism.etherscan.io/tx/{tx}",
+    ["Solana"]: "https://explorer.solana.com/tx/{tx}?cluster=devnet",
   };
-
   const baseUrl = scanners[domain];
-
-  if (!baseUrl) return "unknown scanner address";
-
-  return `${baseUrl}${txHash}`;
+  if (!baseUrl)
+    return "unknown scanner address";
+  return baseUrl.replace("{tx}", txHash);
 }

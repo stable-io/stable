@@ -5,8 +5,7 @@
 
 import { registerPlatformAddress } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "./address.js";
-import { EvmClient } from "./client.js";
-import { BaseTx, Eip712Data } from "./platform.js";
+import type { EvmClient, BaseTx, Eip712Data } from "./platform.js";
 
 declare module "@stable-io/cctp-sdk-definitions" {
   export interface PlatformRegistry {

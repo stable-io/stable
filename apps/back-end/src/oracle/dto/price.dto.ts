@@ -1,6 +1,7 @@
-import { SerializedBigint } from "@stable-io/utils";
+import {
+  EvmPriceResult,
+  SolanaPriceResult,
+  SuiPriceResult,
+} from "../oracle.service";
 
-export type PriceDto = {
-  gasTokenPriceAtomicUsdc: SerializedBigint;
-  gasPriceAtomic: SerializedBigint;
-};
+export type PriceDto = (EvmPriceResult | SolanaPriceResult | SuiPriceResult)[];

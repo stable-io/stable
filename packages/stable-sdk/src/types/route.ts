@@ -18,6 +18,7 @@ import type { Intent } from "./intent.js";
 import type { TransferProgressEventEmitter } from "../progressEmitter.js";
 import type { TransactionEventEmitter } from "../transactionEmitter.js";
 import type { RouteExecutionStep, GaslessTransferData } from "../methods/findRoutes/steps.js";
+import { TxMsg } from "@stable-io/cctp-sdk-solana";
 
 export type Fee = Usdc | GasTokenOf<LoadedDomain>;
 
@@ -67,7 +68,7 @@ export interface Route<
   // of step we'll be executing.
   workflow: AsyncGenerator<
     ContractTx | Eip2612Data | Permit2GaslessData | GaslessTransferData,
-    ContractTx,
+    ContractTx | TxMsg,
     Permit | undefined
   >;
 

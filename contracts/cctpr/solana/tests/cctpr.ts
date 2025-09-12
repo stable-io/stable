@@ -10,11 +10,7 @@ import type {
   TransactionMessageWithFeePayer,
 } from "@solana/kit";
 import {
-  pipe,
   generateKeyPairSigner,
-  createTransactionMessage,
-  setTransactionMessageFeePayer,
-  appendTransactionMessageInstructions,
   setTransactionMessageLifetimeUsingBlockhash,
   compileTransaction,
   signTransaction,
@@ -53,6 +49,7 @@ import {
   SolanaAddress,
   findPda,
   findAta,
+  feePayerTxFromIxs,
   minimumBalanceForRentExemption,
   tokenAccountLayout,
   tokenProgramId,
@@ -89,6 +86,7 @@ import type {
   Snapshot,
 } from "@stable-io/fork-svm";
 import { ForkSvm, createForkRpc } from "@stable-io/fork-svm";
+import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
 
 //prevent truncation of objects in error messages
 util.inspect.defaultOptions = {
@@ -162,7 +160,7 @@ describe("CctpR", function() {
   const destinationDomain = "Ethereum" as const;
 
   const cctprConstructorArgs =
-    [network, forkRpc, { cctpr: cctprProgramId, oracle: oracleProgramId }] as const;
+    [network, new SolanaKitClient(network, forkRpc), { cctpr: cctprProgramId, oracle: oracleProgramId }] as const;
 
   const feeAdjustments = {
     v1:         { absolute: usdc(1), relative: percentage(101) },
@@ -273,11 +271,9 @@ describe("CctpR", function() {
     instructions: readonly Ix[],
     feePayer: KeyPairSigner,
     signers?: readonly KeyPairSigner[],
-  ) => pipe(
-    createTransactionMessage({ version: "legacy" }),
-    tx => setTransactionMessageFeePayer(feePayer.address, tx),
-    tx => appendTransactionMessageInstructions(instructions, tx),
-    tx => addLifetimeAndSendTx(tx, signers ?? [feePayer]),
+  ) => addLifetimeAndSendTx(
+    feePayerTxFromIxs(instructions, new SolanaAddress(feePayer.address)),
+    signers ?? [feePayer],
   );
 
   const addLifetimeAndSendTx = async (tx: TxMsg, signers?: readonly KeyPairSigner[]) => {
@@ -348,7 +344,7 @@ describe("CctpR", function() {
   const setupCctpr = async () => {
     forkSvm.addProgramFromFile(cctprProgramId.unwrap(), cctprPath);
 
-    const cctprGovernance = new CctpRGovernance(network, forkRpc, {
+    const cctprGovernance = new CctpRGovernance(network, new SolanaKitClient(network, forkRpc), {
       cctpr: cctprProgramId,
       oracle: oracleProgramId,
     });

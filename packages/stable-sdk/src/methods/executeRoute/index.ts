@@ -3,8 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import type { Network } from "@stable-io/cctp-sdk-definitions";
+import { platformClient, type Network } from "@stable-io/cctp-sdk-definitions";
 import { avaxRouterContractAddress } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Route, SDK, Hex, SupportedRoute } from "../../types/index.js";
 
@@ -24,9 +23,14 @@ export const $executeRoute =
   async (route: SupportedRoute<N>) => {
     const { sourceChain } = route.intent;
     const signer = await getSigner(sourceChain);
+
+    if (signer === undefined) {
+      throw new Error(`Signer not set for domain: ${sourceChain}`);
+    }
+
     const network = getNetwork();
     const rpcUrl = getRpcUrl(sourceChain);
-    const client = ViemEvmClient.fromNetworkAndDomain(
+    const client = platformClient(
       network,
       sourceChain,
       rpcUrl,
@@ -67,8 +71,8 @@ export const $executeRoute =
      */
     const receive = await findTransferReceive(
       network,
-      getRpcUrl(attestation.targetDomain),
-      attestation,
+      attestation.targetDomain,
+      transferTx,
       { timeoutMs: 180000 },
     ).catch((error: unknown) => {
       route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
@@ -110,8 +114,8 @@ export const $executeRoute =
 
       const secondHopReceive = await findTransferReceive(
         network,
-        getRpcUrl(secondHopAttestation.targetDomain),
-        secondHopAttestation,
+        secondHopAttestation.targetDomain,
+        receive.transactionHash,
         { timeoutMs: 180000 },
       ).catch((error: unknown) => {
         route.progress.emit("error", { type: "receive-failed", details: { txHash: receive.transactionHash } });

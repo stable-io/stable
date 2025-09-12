@@ -3,6 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import { KeyPairSigner } from "@solana/kit";
 import { Url } from "@stable-io/utils";
 import type { WalletClient } from "viem";
 import { Chain } from "viem/chains";
@@ -12,10 +13,15 @@ export interface EvmPlatformSigner extends BasePlatformSigner {
   getWalletClient(viemChain: Chain, url: Url): Promise<WalletClient>;
 }
 
+export interface SolanaPlatformSigner extends BasePlatformSigner {
+  platform: "Solana";
+  getKeyPairSigner(): KeyPairSigner;
+}
+
 export type SupportedPlatform = "Evm" | "Solana";
 
 export interface BasePlatformSigner {
   platform: SupportedPlatform;
 }
 
-export type PlatformSigner = EvmPlatformSigner;
+export type PlatformSigner = EvmPlatformSigner | SolanaPlatformSigner;

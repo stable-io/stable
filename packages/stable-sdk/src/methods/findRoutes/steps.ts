@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, LoadedDomain, platformOf } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Eip2612Message, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
 import { type Permit2GaslessData, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -11,11 +11,12 @@ import { SupportedPlatform } from "../../types/signer.js";
 import { encoding } from "@stable-io/utils";
 import { Network } from "../../types/general.js";
 import { getPlatformExecutionCosts } from "../../api/executionCost.js";
-export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "transfer" | "gasless-transfer";
+import { TxMsg } from "@stable-io/cctp-sdk-solana";
+export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer";
 
 interface BaseRouteExecutionStep {
   type: StepType;
-  chain: keyof EvmDomains;
+  chain: LoadedDomain;
   platform: SupportedPlatform;
   // This is the estimated cost of executing this step on-chain.
   // value=0 might be cero if the step is not executed onchain directly
@@ -26,8 +27,9 @@ interface BaseRouteExecutionStep {
 
 export type RouteExecutionStep = SignPermitStep
   | PreApproveStep
-  | TransferStep
-  | GaslessTransferStep;
+  | EvmTransferStep
+  | GaslessTransferStep
+  | SolanaTransferStep;
 
 export const SIGN_PERMIT = "sign-permit" as const;
 export interface SignPermitStep extends BaseRouteExecutionStep {
@@ -44,9 +46,9 @@ export interface PreApproveStep extends BaseRouteExecutionStep {
   type: typeof PRE_APPROVE;
 };
 
-export const TRANSFER = "transfer" as const;
-export interface TransferStep extends BaseRouteExecutionStep {
-  type: typeof TRANSFER;
+export const EVM_TRANSFER = "evm-transfer" as const;
+export interface EvmTransferStep extends BaseRouteExecutionStep {
+  type: typeof EVM_TRANSFER;
 };
 
 export const GASLESS_TRANSFER = "gasless-transfer" as const;
@@ -54,16 +56,24 @@ export interface GaslessTransferStep extends BaseRouteExecutionStep {
   type: typeof GASLESS_TRANSFER;
 };
 
+export const SOLANA_TRANSFER = "solana-transfer" as const;
+export interface SolanaTransferStep extends BaseRouteExecutionStep {
+  type: typeof SOLANA_TRANSFER;
+};
+
 /**
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
-export function getStepType(txOrSig: ContractTx | Eip712Data | GaslessTransferData): StepType {
+export function getStepType(
+  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg,
+): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
   if (isEip2612Data(txOrSig)) return SIGN_PERMIT;
-  if (isTransferTx(txOrSig)) return TRANSFER;
+  if (isTransferTx(txOrSig)) return EVM_TRANSFER;
   if (isApprovalTx(txOrSig)) return PRE_APPROVE;
+  if (isTxMsg(txOrSig)) return SOLANA_TRANSFER;
   throw new Error("Unknown Step Type");
 }
 
@@ -113,9 +123,11 @@ export type GaslessTransferData = {
 };
 export function isGaslessTransferData(subject: unknown): subject is GaslessTransferData {
   if (typeof subject !== "object" || subject === null) return false;
-  if (!("permit2GaslessData" in subject) || !isPermit2GaslessData(subject.permit2GaslessData)) return false;
+  if (!("permit2GaslessData" in subject) || !isPermit2GaslessData(subject.permit2GaslessData))
+    return false;
   if (!("txHash" in subject) || typeof subject.txHash !== "string") return false;
-  if (!("permit2Signature" in subject) || typeof subject.permit2Signature !== "string") return false;
+  if (!("permit2Signature" in subject) || typeof subject.permit2Signature !== "string")
+    return false;
   if (("permit" in subject) && !isPermit(subject.permit)) return false;
 
   return true;
@@ -157,17 +169,22 @@ export function isTransferTx(subject: unknown): subject is TransferTx {
   );
 }
 
+export function isTxMsg(subject: unknown): subject is TxMsg {
+  return isObjectWithKeys(subject, ["instructions"]);
+}
+
 export async function buildTransferStep(
   network: Network,
   corridor: Corridor,
-  sourceChain: keyof EvmDomains,
+  sourceChain: LoadedDomain,
   usesPermit: boolean,
-): Promise<TransferStep> {
-  const { v1, v2, permit } = await getPlatformExecutionCosts(network, "Evm");
+): Promise<EvmTransferStep | SolanaTransferStep> {
+  const platform = platformOf(sourceChain);
+  const { v1, v2, permit } = await getPlatformExecutionCosts(network, platform);
   const sharedTxData = {
-    platform: "Evm" as const,
+    platform,
     chain: sourceChain,
-    type: "transfer" as const,
+    type: platform === "Evm" ? EVM_TRANSFER : SOLANA_TRANSFER,
   };
   switch (corridor) {
     /**
@@ -214,9 +231,9 @@ export function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
   };
 }
 
-export function gaslessTransferStep(sourceChain: keyof EvmDomains): GaslessTransferStep {
+export function gaslessTransferStep(sourceChain: LoadedDomain): GaslessTransferStep {
   return {
-    platform: "Evm",
+    platform: sourceChain === "Solana" ? "Solana" : "Evm",
     chain: sourceChain,
     type: "gasless-transfer",
     gasCostEstimation: 0n,

@@ -3,10 +3,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import { Network, SDK } from "../types/index.js";
-import { EvmAddress, getTokenBalance } from "@stable-io/cctp-sdk-evm";
-import { init as initDefinitions, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { EvmAddress, getTokenBalance as getTokenBalanceEvm } from "@stable-io/cctp-sdk-evm";
+import { init as initDefinitions, platformClient, Usdc } from "@stable-io/cctp-sdk-definitions";
+import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
+import { getUsdcBalance } from "@stable-io/cctp-sdk-cctpr-solana";
 
 export type getBalanceDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
@@ -18,16 +19,25 @@ export const $getBalance =
   async (address, domains): ReturnType<SDK<N>["getBalance"]> => {
     const network = getNetwork();
     const definitions = initDefinitions(network);
-    const evmAddress = new EvmAddress(address);
     const balances = await Promise.all(domains.map(async (domain) => {
       const rpcUrl = getRpcUrl(domain);
-      const viemEvmClient = ViemEvmClient.fromNetworkAndDomain(
+      const client = platformClient(
         network,
         domain,
         rpcUrl,
       );
-      const contract = new EvmAddress(definitions.usdcContracts.contractAddressOf[domain]);
-      const balance = await getTokenBalance(viemEvmClient, contract, evmAddress, Usdc);
+      let balance: Usdc;
+
+      if (client.platform === "Solana") {
+        balance = await getUsdcBalance(client, new SolanaAddress(address));
+      }
+      else {
+        const contract = definitions.usdcContracts.contractAddressOf[domain];
+        balance = await getTokenBalanceEvm(
+          client, new EvmAddress(contract), new EvmAddress(address), Usdc,
+        );
+      }
+
       return [domain, balance.toUnit("human").toString()];
     }));
     return Object.fromEntries(balances);

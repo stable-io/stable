@@ -141,6 +141,8 @@ export const attestationTimeEstimates = {
     Sonic:      3.32,
     Codex:      10,    // TODO
     Sei:        10,    // TODO
+    // TODO Add a proper value for Solana
+    Solana:     8,
   },
   Testnet: {
     Ethereum:   16.76,
@@ -155,6 +157,7 @@ export const attestationTimeEstimates = {
     Sonic:      8, // TODO
     Codex:      8, // TODO
     Sei:        8, // TODO
+    Solana:     8,
   },
 } as const satisfies Record<Network, Record<string, number>>;
 
@@ -167,6 +170,8 @@ export const finalityThresholdEntries = [
 const [finalityThresholdVals, finalityThresholdNames] =
   deepReadonly(zip(finalityThresholdEntries));
 export type FinalityTresholdName = typeof finalityThresholdNames[number];
+
+export const finalityThresholdValOf = constMap(finalityThresholdEntries, [1, 0]);
 
 //return the name of the finality threshold which is >= the given threshold
 // i.e. 500 -> "TokenMessengerMin", 501 -> "Confirmed", 1001+ -> "Finalized"

@@ -6,7 +6,7 @@
 import type { KindWithAtomic } from "@stable-io/amount";
 import { Amount } from "@stable-io/amount";
 import { EvmAddress } from "./address.js";
-import type { EvmClient } from "./client.js";
+import type { EvmClient } from "./platform.js";
 import {
   composeApproveTx,
   dateToUnixTimestamp,

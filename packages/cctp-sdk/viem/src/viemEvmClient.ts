@@ -20,7 +20,7 @@ import type {
   StorageData,
 } from "@stable-io/cctp-sdk-evm";
 import { wordSize } from "@stable-io/cctp-sdk-evm";
-import type { AccessList as ViemAccessList } from "viem";
+import type { TransactionReceipt, AccessList as ViemAccessList } from "viem";
 import { createPublicClient, http, parseAbiItem } from "viem";
 import {
   type Chain as ViemChain,
@@ -165,6 +165,10 @@ export class ViemEvmClient<N extends Network, D extends DomainsOf<"Evm">> implem
       accessList: this.toViemAccessList(tx.accessList),
     } as const;
     return this.client.estimateGas(txArgs as TODO);
+  }
+
+  async waitForTransactionReceipt(txHash: string): Promise<TransactionReceipt> {
+    return this.client.waitForTransactionReceipt({ hash: txHash as `0x${string}` });
   }
 
   private gasToken(amount: bigint): GasTokenOf<D> {

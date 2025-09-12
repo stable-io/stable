@@ -16,8 +16,7 @@ import type { TODO } from "@stable-io/utils";
 import { keccak256, encoding } from "@stable-io/utils";
 import type { RoTuple, RoArray, TupleWithLength, HeadTail, Simplify } from "@stable-io/map-utils";
 import { EvmAddress } from "./address.js";
-import type { EvmClient } from "./client.js";
-import type { CallData, Eip2612Data } from "./platform.js";
+import type { EvmClient, CallData, Eip2612Data } from "./platform.js";
 import {
   wordSize,
   selectorItem,

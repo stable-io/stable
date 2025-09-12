@@ -4,15 +4,14 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { TODO } from "@stable-io/utils";
-import { init as initDefinitions, usdc, Usdc, EvmDomains, LoadedDomain } from "@stable-io/cctp-sdk-definitions";
-import { init as initEvm, permit2Address, EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { init as initDefinitions, usdc, Usdc, EvmDomains, PlatformClient, RegisteredPlatform, Client } from "@stable-io/cctp-sdk-definitions";
+import { init as initEvm, permit2Address, EvmAddress, EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Route, Network, Intent } from "../../../types/index.js";
-import type { Corridor, CorridorStats, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Corridor, CorridorStats, LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 
 import { RouteExecutionStep, gaslessTransferStep, signPermitStep } from "../steps.js";
-import { GetQuoteParams, GetQuoteResponse, getTransferQuote } from "../../../api/gasless.js";
+import { GetQuoteParams, getTransferQuote } from "../../../api/gasless.js";
 import { transferWithGaslessRelay } from "../../../gasless/transfer.js";
 import { calculateTotalCost, getCorridorFees } from "../fees.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
@@ -33,24 +32,30 @@ const PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD = 1_000_000_000;
  */
 export async function buildGaslessRoute<
   N extends Network,
-  S extends LoadedDomain,
+  P extends RegisteredPlatform,
+  S extends LoadedCctprPlatformDomain<N, P>,
   D extends SupportedDomain<N>,
 >(
-  evmClient: ViemEvmClient<N, S>,
+  client: PlatformClient<N, P, S>,
   intent: Intent<N, S, D>,
   corridor: CorridorStats<N, S, Corridor>,
 ): Promise<Route<N, S, D> | undefined> {
   if (intent.paymentToken !== "usdc")
     throw new Error("Gasless Transfer can't be paid in native token");
 
-  const permit2PermitRequired = await permit2RequiresAllowance(
-    evmClient,
-    intent.sourceChain,
-    intent.sender,
-    usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
-  );
+  const permit2PermitRequired = intent.sourceChain === "Solana"
+        ? false
+        : await permit2RequiresAllowance(
+          client as EvmClient<N, SupportedEvmDomain<N>>,
+          intent.sourceChain,
+          intent.sender as EvmAddress,
+          usdc(PERMIT2_ALLOWANCE_RENEWAL_THRESHOLD),
+        );
 
-  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(corridor.cost, intent);
+  const { corridorFees, maxRelayFee, fastFeeRate } = getCorridorFees(
+    corridor.cost,
+    intent as Intent<N, LoadedCctprPlatformDomain<N, P>, SupportedDomain<N>>,
+  );
 
   const transferParams: GetQuoteParams<N, S, D> = {
     sourceChain: intent.sourceChain,
@@ -67,7 +72,7 @@ export async function buildGaslessRoute<
   };
 
   const quote = await getTransferQuote(
-    evmClient.network,
+    (client as Client<N, P>).network,
     transferParams,
   );
 
@@ -83,7 +88,7 @@ export async function buildGaslessRoute<
   if (intent.amount.le(totalFee)) return undefined;
 
   const tokenAllowanceSteps = permit2PermitRequired
-    ? [signPermitStep(intent.sourceChain)]
+    ? [signPermitStep(intent.sourceChain as keyof EvmDomains)]
     : [];
 
   const routeSteps: RouteExecutionStep[] = [
@@ -98,12 +103,14 @@ export async function buildGaslessRoute<
     corridor: corridor.corridor,
     requiresMessageSignature: true,
     steps: routeSteps,
-    estimatedTotalCost: await calculateTotalCost(evmClient.network, routeSteps, fees),
+    estimatedTotalCost: await calculateTotalCost(
+      (client as Client<N, P>).network, routeSteps, fees,
+    ),
     transactionListener: new TransactionEmitter(),
     progress: new TransferProgressEmitter(),
     workflow: transferWithGaslessRelay(
-      evmClient,
-      evmClient.network,
+      client,
+      (client as Client<N, P>).network,
       permit2PermitRequired,
       intent,
       quote.permit2GaslessData,
@@ -116,7 +123,7 @@ async function permit2RequiresAllowance<
   N extends Network,
   S extends SupportedEvmDomain<N>,
 >(
-  evmClient: ViemEvmClient<N, S>,
+  evmClient: EvmClient<N, S>,
   sourceChain: keyof EvmDomains,
   sender: EvmAddress,
   totalUsdcValue: Usdc,

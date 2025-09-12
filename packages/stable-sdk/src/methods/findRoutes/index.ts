@@ -6,9 +6,8 @@
 import { Amount } from "@stable-io/amount";
 import { init as initCctpr, Corridor, CorridorStats, LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { LoadedDomain, Usdc, Percentage } from "@stable-io/cctp-sdk-definitions";
-import { UniversalAddress, gasTokenKindOf, isUsdc, platformAddress, platformOf, usdc, percentage } from "@stable-io/cctp-sdk-definitions";
+import { UniversalAddress, gasTokenKindOf, isUsdc, platformAddress, platformOf, usdc, percentage, platformClient } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
 import type { TODO } from "@stable-io/utils";
 import type {
   SDK,
@@ -41,7 +40,7 @@ export const $findRoutes = <
     const network = getNetwork();
     const rpcUrl = getRpcUrl(intent.sourceChain);
 
-    const viemEvmClient = ViemEvmClient.fromNetworkAndDomain(
+    const client = platformClient(
       network,
       intent.sourceChain,
       rpcUrl,
@@ -58,7 +57,8 @@ export const $findRoutes = <
 
     for (const corridor of corridors) {
       const userTransferRoute = await buildUserTransferRoute(
-        network, intent, corridor,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        network as Network, intent, corridor,
       );
 
       if (userTransferRoute !== undefined) {
@@ -69,7 +69,7 @@ export const $findRoutes = <
         // since gasless has to be paid in a non native token,
         // we only create the gasless route when paymentToken === usdc
         const gaslessRoute = await buildGaslessRoute(
-          viemEvmClient as any, // TODO: remove cast
+          client as any, // TODO: remove cast
           intent,
           corridor,
         );

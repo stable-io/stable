@@ -7,11 +7,11 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { Network, registerPlatformClient, avax, EvmDomains } from "@stable-io/cctp-sdk-definitions";
 import type { EvmClient, ContractTx } from "@stable-io/cctp-sdk-evm";
-import { getCorridorCosts } from "./getCorridorCosts.js";
+import { getRelayCosts } from "./getRelayCosts.js";
 import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Url } from "@stable-io/utils";
 
-describe("getCorridorCosts", () => {
+describe("getRelayCosts", () => {
   const network = "Testnet";
   const sourceDomain = "Ethereum";
   const destinationDomain = "Avalanche";
@@ -67,7 +67,6 @@ describe("getCorridorCosts", () => {
       destinationDomain: "Ethereum" as const,
       expectedUsdcCost: 0.334538,
       expectedGasCost: 0.000107569911611929,
-      hasFastCost: false,
     },
     {
       corridor: "v2Direct" as const,
@@ -75,7 +74,6 @@ describe("getCorridorCosts", () => {
       destinationDomain: "Arbitrum" as const,
       expectedUsdcCost: 0.334538,
       expectedGasCost: 0.000107569911611929,
-      hasFastCost: true,
     },
     // Currently no route uses avax hop
     // {
@@ -84,25 +82,18 @@ describe("getCorridorCosts", () => {
     //   destinationDomain: "Polygon" as const,
     //   expectedUsdcCost: 0.308127,
     //   expectedGasCost: 0.000099077550168882,
-    //   hasFastCost: true,
     // },
-  ])("calculates correct costs for $corridor", async ({ sourceDomain, destinationDomain, corridor, expectedUsdcCost, expectedGasCost, hasFastCost }) => {
-    const results = await getCorridorCosts(network, sourceDomain, destinationDomain, [corridor]);
+  ])("calculates correct costs for $corridor", async ({ sourceDomain, destinationDomain, corridor, expectedUsdcCost, expectedGasCost }) => {
+    const results = await getRelayCosts(network, sourceDomain, destinationDomain, [corridor]);
     const result = results[0]!;
-    expect(result.relay[0].toUnit("USDC").toNumber()).toBe(expectedUsdcCost);
-    expect(result.relay[1].toUnit("human").toNumber()).toBe(expectedGasCost);
-
-    if (hasFastCost) {
-      expect(result.fast?.toUnit("bp").toNumber()).toBe(minimumFee);
-    } else {
-      expect(result.fast).toBeUndefined();
-    }
+    expect(result[0].toUnit("USDC").toNumber()).toBe(expectedUsdcCost);
+    expect(result[1].toUnit("human").toNumber()).toBe(expectedGasCost);
   });
 
   it("handles optional gasDropoff parameter", async () => {
     const gasDropoff = avax(0.001);
-    const resultWithoutGasDropoff = await getCorridorCosts(network, sourceDomain, destinationDomain, ["v1"]);
-    const resultWithGasDropoff = await getCorridorCosts(network, sourceDomain, destinationDomain, ["v1"], gasDropoff);
+    const resultWithoutGasDropoff = await getRelayCosts(network, sourceDomain, destinationDomain, ["v1"]);
+    const resultWithGasDropoff = await getRelayCosts(network, sourceDomain, destinationDomain, ["v1"], gasDropoff);
     expect(resultWithGasDropoff).toHaveLength(resultWithoutGasDropoff.length);
     // TODO: Verify that the gasDropoff is used in the cost calculation
   });

@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, ValidateNested, IsNotEmpty } from "class-validator";
 import { Transform, Type } from "class-transformer";
 
-import type { ParsedSignature } from "../../common/types";
+import type { Domain, ParsedSignature } from "../../common/types";
 import { IsSignature } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
@@ -48,7 +48,7 @@ export class PermitDto {
   deadline!: bigint;
 }
 
-export class RelayRequestDto {
+export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   /**
    * Server-signed JWT containing the permit2 permit data for the user to sign as well as the quote data
    * @example "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
@@ -58,7 +58,7 @@ export class RelayRequestDto {
     format: "jwt",
   })
   @IsSignedJwt()
-  jwt!: JwtPayloadDto;
+  jwt!: JwtPayloadDto<SourceDomain>;
 
   /**
    * User's signature of the permit2 message

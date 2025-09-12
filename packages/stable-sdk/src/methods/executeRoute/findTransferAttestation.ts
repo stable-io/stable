@@ -5,13 +5,13 @@
 
 import { deserialize } from "binary-layout";
 import { Hex } from "viem";
-import { duration, EvmDomains, UniversalAddress, v1, v2 } from "@stable-io/cctp-sdk-definitions";
+import { duration, EvmDomains, LoadedDomain, platformOf, UniversalAddress, v1, v2 } from "@stable-io/cctp-sdk-definitions";
 import type { Address, Network, TxHash } from "../../types/index.js";
 import { encoding, pollUntil, type PollingConfig } from "@stable-io/utils";
 
 export async function findTransferAttestation<N extends Network>(
   network: N,
-  sourceChain: keyof EvmDomains,
+  sourceChain: LoadedDomain,
   transactionHash: TxHash,
   config: PollingConfig = {},
 ): Promise<CctpAttestation> {
@@ -32,8 +32,8 @@ export type CctpV1Attestation = {
   sender: Address;
   recipient: Address;
   destinationCaller: Address;
-  sourceDomain: keyof EvmDomains;
-  targetDomain: keyof EvmDomains;
+  sourceDomain: LoadedDomain;
+  targetDomain: LoadedDomain;
   messageBody: {
     burnToken: Address;
     mintRecipient: Address;
@@ -44,22 +44,24 @@ export type CctpV1Attestation = {
 
 function parseV1Attestation(message: v2.ApiResponseMessage): CctpV1Attestation {
   const attestation = deserialize(v1.burnMessageLayout(), message.message);
+  const source = attestation.sourceDomain as LoadedDomain;
+  const destination = attestation.destinationDomain as LoadedDomain;
   return {
     cctpVersion: 1,
     nonce: attestation.nonce,
-    sender: toEvmAddress(attestation.sender),
-    recipient: toEvmAddress(attestation.recipient),
-    destinationCaller: toEvmAddress(attestation.destinationCaller),
-    sourceDomain: attestation.sourceDomain as keyof EvmDomains,
-    targetDomain: attestation.destinationDomain as keyof EvmDomains,
+    sender: toDomainAddress(attestation.sender, source),
+    recipient: toDomainAddress(attestation.recipient, destination),
+    destinationCaller: toDomainAddress(attestation.destinationCaller, destination),
+    sourceDomain: source,
+    targetDomain: destination,
     messageBody: {
-      burnToken: toEvmAddress(attestation.messageBody.burnToken),
-      mintRecipient: toEvmAddress(attestation.messageBody.mintRecipient),
+      burnToken: toDomainAddress(attestation.messageBody.burnToken, source),
+      mintRecipient: toDomainAddress(attestation.messageBody.mintRecipient, destination),
       /**
        * @todo: check that this units make sense.
        */
       amount: attestation.messageBody.amount.toString(),
-      messageSender: toEvmAddress(attestation.messageBody.messageSender),
+      messageSender: toDomainAddress(attestation.messageBody.messageSender, source),
     },
   };
 };
@@ -70,8 +72,8 @@ export type CctpV2Attestation = {
   sender: Address;
   recipient: Address;
   destinationCaller: Address;
-  sourceDomain: keyof EvmDomains;
-  targetDomain: keyof EvmDomains;
+  sourceDomain: LoadedDomain;
+  targetDomain: LoadedDomain;
   messageBody: {
     burnToken: Address;
     mintRecipient: Address;
@@ -88,21 +90,23 @@ export type CctpV2Attestation = {
 
 function parseV2Attestation(message: v2.ApiResponseMessage): CctpV2Attestation {
   const attestation = deserialize(v2.burnMessageLayout(), message.message);
+  const source = attestation.sourceDomain as LoadedDomain;
+  const destination = attestation.destinationDomain as LoadedDomain;
   return {
     cctpVersion: 2,
     nonce: `0x${encoding.hex.encode(attestation.nonce)}`,
-    sender: toEvmAddress(attestation.sender),
-    recipient: toEvmAddress(attestation.recipient),
-    destinationCaller: toEvmAddress(attestation.destinationCaller),
-    sourceDomain: attestation.sourceDomain as keyof EvmDomains,
-    targetDomain: attestation.destinationDomain as keyof EvmDomains,
+    sender: toDomainAddress(attestation.sender, source),
+    recipient: toDomainAddress(attestation.recipient, destination),
+    destinationCaller: toDomainAddress(attestation.destinationCaller, destination),
+    sourceDomain: source,
+    targetDomain: destination,
     minFinalityThreshold: attestation.minFinalityThreshold,
     finalityThresholdExecuted: attestation.finalityThresholdExecuted,
     messageBody: {
-      burnToken: toEvmAddress(attestation.messageBody.burnToken),
-      mintRecipient: toEvmAddress(attestation.messageBody.mintRecipient),
+      burnToken: toDomainAddress(attestation.messageBody.burnToken, source),
+      mintRecipient: toDomainAddress(attestation.messageBody.mintRecipient, destination),
       amount: attestation.messageBody.amount.toString(),
-      messageSender: toEvmAddress(attestation.messageBody.messageSender),
+      messageSender: toDomainAddress(attestation.messageBody.messageSender, source),
       maxFee: attestation.messageBody.maxFee.toString(),
       feeExecuted: attestation.messageBody.feeExecuted.toString(),
       expirationBlock: attestation.messageBody.expirationBlock.toString(),
@@ -111,6 +115,7 @@ function parseV2Attestation(message: v2.ApiResponseMessage): CctpV2Attestation {
   };
 };
 
-function toEvmAddress(address: UniversalAddress): Address {
-  return address.toPlatformAddress("Evm").toString();
+function toDomainAddress(address: UniversalAddress, domain: LoadedDomain): Address {
+  const platform = platformOf(domain);
+  return address.toPlatformAddress(platform).toString();
 }

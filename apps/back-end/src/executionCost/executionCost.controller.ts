@@ -24,7 +24,7 @@ export class ExecutionCostController {
   @ApiParam({
     name: "platform",
     description: "The blockchain platform to get execution costs for",
-    enum: ["Evm"],
+    enum: ["Evm", "Solana"],
     example: "Evm",
   })
   @SwaggerApiResponse({
@@ -32,6 +32,7 @@ export class ExecutionCostController {
     description: "Execution cost estimates for the specified platform",
     schema: {
       type: "object",
+      required: ["v1", "v2", "v1Gasless", "v2Gasless"],
       properties: {
         permit: {
           type: "string",

@@ -9,14 +9,7 @@ import type {
   TransactionMessageWithFeePayer,
   TransactionMessageWithDurableNonceLifetime,
 } from "@solana/kit";
-import {
-  AccountRole,
-  pipe,
-  createTransactionMessage,
-  setTransactionMessageFeePayer,
-  appendTransactionMessageInstructions,
-  setTransactionMessageLifetimeUsingDurableNonce,
-} from "@solana/kit";
+import { AccountRole, setTransactionMessageLifetimeUsingDurableNonce } from "@solana/kit";
 import { serialize, deserialize } from "binary-layout";
 import type { Text } from "@stable-io/utils";
 import { definedOrThrow, encoding } from "@stable-io/utils";
@@ -64,6 +57,7 @@ import {
   SolanaAddress,
   findPda,
   findAta,
+  feePayerTxFromIxs,
   systemProgramId,
   tokenProgramId,
   cctpAccounts,
@@ -308,11 +302,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
 
     const transferIx = this.composeIx(accounts, transferWithRelayParamsLayout, params);
 
-    return pipe(
-      createTransactionMessage({ version: 0 }),
-      tx => setTransactionMessageFeePayer(relayer.unwrap(), tx),
-      tx => appendTransactionMessageInstructions([transferIx], tx),
-    );
+    return feePayerTxFromIxs(transferIx, relayer);
   }
 
   //WARNING: does not include the rent rebate for user instantiated (i.e. not gasless) transfers
@@ -328,27 +318,24 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
 
     //determine the addresses of their associated oracle and cctpr price accounts
     const priceAddresses = involvedDomains
-      .flatMap(d => this.priceAddresses(d))
-      .map(a => a.unwrap());
+      .flatMap(d => this.priceAddresses(d));
 
     //fetch all price accounts + the oracle config (which contains the sol price) in a single call,
     //  ensure that they all exist, and base64-decode them
     const [oracleConfigRawData, ...flatPriceAccountsRawData] =
-      (await this.rpc.getMultipleAccounts(
-          [this.oracleConfigAddress().unwrap(), ...priceAddresses],
-          { encoding: "base64" },
-        ).send()
-      ).value.map((account, i) => encoding.base64.decode(definedOrThrow(
-        account?.data[0],
+      (await this.client.getMultipleAccounts(
+          [this.oracleConfigAddress(), ...priceAddresses],
+        )
+      ).map((account, i) => definedOrThrow(
+        account?.data,
         i === 0
         ? `Failed to fetch oracle config account` as Text
         : `Failed to fetch ${["cctpr", "oracle"][(i-1)%2]} price account for domain ` +
           `${involvedDomains[Math.floor((i-1)/priceAccountsPerDomain)]}` as Text,
-      )));
-
-    //group them by domain and deserialize them
-    const { solPrice } = deserialize(oracleConfigLayout, oracleConfigRawData!);
+      ));
+    const [{ solPrice }] = deserialize(oracleConfigLayout, oracleConfigRawData!, false);
     const priceAccountsRawData = chunk(flatPriceAccountsRawData, priceAccountsPerDomain);
+    // Group them by domain and deserialize them
     const domainPriceAccounts = fromEntries(zip([involvedDomains, priceAccountsRawData])
       .map(([domain, [chainConfig, oraclePrices]]) => [
         domain,
@@ -380,7 +367,6 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         gasDropoffFee = CctpR.applyFeeAdjustment(
           feeAdjustments["gasDropoff"],
           gasDropoff.convert(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             Conversion.from(usdc((gasTokenPrice as any).toUnit("human", "human")), GenericGasToken),
           ),
         );

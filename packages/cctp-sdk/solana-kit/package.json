@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@stable-io/cctp-sdk-solana-kit",
+  "version": "0.2.0",
+  "type": "module",
+  "license": "MPL-2.0",
+  "author": "Stable Technologies",
+  "description": "Solana Kit support for the CCTP SDK",
+  "keywords": [
+    "typescript",
+    "cctp",
+    "sdk"
+  ],
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js",
+    "default": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "!*.test.*",
+    "README.md"
+  ],
+  "scripts": {
+    "prepublishOnly": "eslint . && tsc",
+    "build": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "echo \"No tests yet\" && exit 0",
+    "clean": "rm -rf ./dist"
+  },
+  "dependencies": {
+    "@stable-io/cctp-sdk-definitions": "workspace:^",
+    "@stable-io/cctp-sdk-solana": "workspace:^",
+    "@stable-io/utils": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@solana/kit": "^3.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^9.22.0",
+    "eslint-config": "workspace:^",
+    "typescript": "^5.8.2"
+  }
+}
