@@ -28,8 +28,12 @@ export class ExecutionCostService {
    */
   public getKnownEstimates(platform: "Evm"): EvmExecutionCosts;
   public getKnownEstimates(platform: "Solana"): SolanaExecutionCosts;
-  public getKnownEstimates(platform: Platform): EvmExecutionCosts | SolanaExecutionCosts | undefined;
-  public getKnownEstimates(platform: Platform): EvmExecutionCosts | SolanaExecutionCosts | undefined {
+  public getKnownEstimates(
+    platform: Platform,
+  ): EvmExecutionCosts | SolanaExecutionCosts | undefined;
+  public getKnownEstimates(
+    platform: Platform,
+  ): EvmExecutionCosts | SolanaExecutionCosts | undefined {
     switch (platform) {
       case "Evm":
         return EVM_KNOWN_EXECUTION_COSTS;

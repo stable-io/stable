@@ -36,4 +36,4 @@ export function IsSolanaAddress(validationOptions?: ValidationOptions) {
       validator: IsSolanaAddressConstraint,
     });
   };
-} 
+}

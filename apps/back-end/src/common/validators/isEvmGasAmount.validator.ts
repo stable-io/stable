@@ -8,7 +8,7 @@ export const evmGasTokenAmountProperties: AmountProperties<EvmGasToken> = {
   decimals: 18,
   createAmount: (value: Rationalish | string) => evmGasToken(value),
   typeName: "gas token",
-}
+};
 
 export function IsEvmGasTokenAmount(
   options: AmountBounds = {},

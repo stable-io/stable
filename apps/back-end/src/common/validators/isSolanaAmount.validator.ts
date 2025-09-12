@@ -7,7 +7,7 @@ export const solanaAmountProperties: AmountProperties<Sol> = {
   decimals: 9,
   createAmount: (value: Rationalish | string) => sol(value),
   typeName: "Solana",
-}
+};
 
 export function IsSolanaAmount(
   options: AmountBounds = {},
@@ -20,4 +20,4 @@ export function IsSolanaAmount(
     },
     validationOptions,
   );
-} 
+}

@@ -80,21 +80,21 @@ export type EvmPriceResult = {
   gasTokenPrice: Usdc;
   gasPrice: EvmGasToken;
   pricePerTxByte: EvmGasToken;
-}
+};
 
 export type SolanaPriceResult = {
   gasTokenPrice: Usdc;
   pricePerAccountByte: Sol;
   signaturePrice: Sol;
   computationPrice: Sol;
-}
+};
 
 export type SuiPriceResult = {
   gasTokenPrice: Usdc;
   computationPrice: Sui;
   storagePrice: Sui;
   storageRebate: Percentage;
-}
+};
 
 export type PriceResult = EvmPriceResult | SolanaPriceResult | SuiPriceResult;
 
@@ -394,7 +394,7 @@ export class OracleService {
               : evmFeeParamsLayout,
         );
 
-    if (offset < header.length) throw new Error("Query response too long")
+    if (offset < header.length) throw new Error("Query response too long");
 
     return decodedResults as QueryResults<Q>;
   }

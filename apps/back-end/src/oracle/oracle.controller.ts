@@ -36,7 +36,10 @@ export class OracleController {
     @Query() request: PriceRequestDto,
   ): Promise<PriceResponseDto> {
     return {
-      data: await this.oracleService.getPrices([request.domain], request.network)
+      data: await this.oracleService.getPrices(
+        [request.domain],
+        request.network,
+      ),
     } as PriceResponseDto;
   }
 }

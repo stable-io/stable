@@ -19,8 +19,9 @@ export interface AmountProperties<T extends Amount<Kind>> {
   typeName: string;
 }
 
-export interface AmountOptions<T extends Amount<Kind>> 
-  extends AmountBounds, AmountProperties<T> {}
+export interface AmountOptions<T extends Amount<Kind>>
+  extends AmountBounds,
+    AmountProperties<T> {}
 
 @ValidatorConstraint({ name: "isAmount", async: false })
 export class IsAmountConstraint<T extends Amount<Kind>>
@@ -37,8 +38,10 @@ export class IsAmountConstraint<T extends Amount<Kind>>
     try {
       const amount = options.createAmount(value);
 
-      if (options.min && amount.lt(options.createAmount(options.min))) return false;
-      if (options.max && amount.gt(options.createAmount(options.max))) return false;
+      if (options.min && amount.lt(options.createAmount(options.min)))
+        return false;
+      if (options.max && amount.gt(options.createAmount(options.max)))
+        return false;
 
       // @note: This transforms the value
       (args.object as any)[args.property] = amount;

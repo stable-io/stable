@@ -4,7 +4,9 @@ import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 import type { Domain, Network } from "../../common/types";
 import { networks } from "../../common/types";
 
-const domains = ["Solana", "Sui"].concat(domainsOf("Evm").filter((domain) => domain !== "Codex"));
+const domains = ["Solana", "Sui"].concat(
+  domainsOf("Evm").filter((domain) => domain !== "Codex"),
+);
 export class PriceRequestDto {
   /**
    * The blockchain domain to get price information for

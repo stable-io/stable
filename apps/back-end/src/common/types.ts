@@ -1,4 +1,8 @@
-import type { Address, EvmGasToken, Sol } from "@stable-io/cctp-sdk-definitions";
+import type {
+  Address,
+  EvmGasToken,
+  Sol,
+} from "@stable-io/cctp-sdk-definitions";
 import type { Amount } from "@stable-io/amount";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
@@ -21,14 +25,11 @@ export const supportedEvmDomains = [
   "Worldchain",
 ] as const;
 
-export const supportedDomains = [
-  ...supportedEvmDomains,
-  "Solana",
-] as const;
+export const supportedDomains = [...supportedEvmDomains, "Solana"] as const;
 
-export type SupportedEvmDomain = typeof supportedEvmDomains[number];
+export type SupportedEvmDomain = (typeof supportedEvmDomains)[number];
 
-export type Domain = typeof supportedDomains[number];
+export type Domain = (typeof supportedDomains)[number];
 
 export type SupportedAddress = EvmAddress | SolanaAddress;
 export type SupportedAmount = EvmGasToken | Sol;
@@ -41,7 +42,7 @@ export type PlainDto<T> = {
 };
 
 export const networks = ["Testnet", "Mainnet"] as const;
-export type Network = typeof networks[number];
+export type Network = (typeof networks)[number];
 
 export interface ParsedSignature {
   v: bigint;

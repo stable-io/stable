@@ -18,7 +18,10 @@ import { CctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
-import { QuoteRequestDto, QuoteSupportedDomain } from "../gaslessTransfer/dto/quoteRequest.dto";
+import {
+  QuoteRequestDto,
+  QuoteSupportedDomain,
+} from "../gaslessTransfer/dto/quoteRequest.dto";
 import { Network } from "../common/types";
 import type { ParsedSignature } from "../common/types";
 import type { Permit2Nonce } from "../common/utils";
@@ -51,7 +54,7 @@ export class CctpRService {
   ): Promise<Permit2GaslessData> {
     if (quoteRequest.sourceDomain === "Solana") {
       throw new Error("Solana is not supported");
-    } else {  
+    } else {
       const sender = quoteRequest.sender as EvmAddress;
       const cctpr = this.contractInterface(quoteRequest.sourceDomain);
       return cctpr.composeGaslessTransferMessage(
@@ -80,7 +83,7 @@ export class CctpRService {
   ): ContractTx {
     if (quoteRequest.sourceDomain === "Solana") {
       throw new Error("Solana is not supported");
-    } else {  
+    } else {
       const sender = quoteRequest.sender as EvmAddress;
       const cctpr = this.contractInterface(quoteRequest.sourceDomain);
       return cctpr.transferGasless(
@@ -111,7 +114,10 @@ export class CctpRService {
     return new Date(Date.now() + this.configService.jwtExpiresInSeconds * 1000);
   }
 
-  private async getNextNonce(domain: DomainsOf<"Evm">, sender: EvmAddress): Promise<Permit2Nonce> {
+  private async getNextNonce(
+    domain: DomainsOf<"Evm">,
+    sender: EvmAddress,
+  ): Promise<Permit2Nonce> {
     const domainNonceCache = this.nonceCache[domain];
     const { client } = this.blockchainClientService.getClient(domain);
 

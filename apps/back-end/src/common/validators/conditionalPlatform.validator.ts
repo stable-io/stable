@@ -10,7 +10,7 @@ import { platformOf } from "@stable-io/cctp-sdk-definitions";
 export type DomainField = {
   // The domain field name from the object
   domainField: string;
-}
+};
 
 export type ValidatorWithConstraints<T> = {
   validator: ValidatorConstraintInterface;
@@ -24,21 +24,25 @@ type PlatformValidationOptions<T, U> = DomainField & {
 };
 
 @ValidatorConstraint({ name: "conditionalPlatformValidation", async: false })
-export class ConditionalPlatformValidationConstraint<T, U> implements ValidatorConstraintInterface {
+export class ConditionalPlatformValidationConstraint<T, U>
+  implements ValidatorConstraintInterface
+{
   static getPlatform<T, U>(
     options: PlatformValidationOptions<T, U>,
-    object: Record<string, any>
+    object: Record<string, any>,
   ): string | undefined {
     const domain = object[options.domainField];
-    if (!domain)
-        return undefined
+    if (!domain) return undefined;
     return platformOf(domain);
   }
 
   validate(value: unknown, args: ValidationArguments) {
     const [options] = args.constraints as [PlatformValidationOptions<T, U>];
     const object = args.object as Record<string, any>;
-    const platform = ConditionalPlatformValidationConstraint.getPlatform(options, object);
+    const platform = ConditionalPlatformValidationConstraint.getPlatform(
+      options,
+      object,
+    );
     if (!platform) {
       return false;
     }
@@ -48,7 +52,9 @@ export class ConditionalPlatformValidationConstraint<T, U> implements ValidatorC
     }
     return validator.validator.validate(value, {
       ...args,
-      constraints: [{...options.generalConstraints, ...validator.constraints}]
+      constraints: [
+        { ...options.generalConstraints, ...validator.constraints },
+      ],
     });
   }
 
@@ -56,7 +62,10 @@ export class ConditionalPlatformValidationConstraint<T, U> implements ValidatorC
     const [options] = args.constraints as [PlatformValidationOptions<T, U>];
     const object = args.object as Record<string, any>;
 
-    const platform = ConditionalPlatformValidationConstraint.getPlatform(options, object);
+    const platform = ConditionalPlatformValidationConstraint.getPlatform(
+      options,
+      object,
+    );
     if (!platform) {
       return `Couldn't derive platform`;
     }
@@ -65,8 +74,9 @@ export class ConditionalPlatformValidationConstraint<T, U> implements ValidatorC
     if (!validator) {
       return `Platform ${platform} not supported`;
     }
-    return validator.validator.defaultMessage ? 
-      validator.validator.defaultMessage(args) : `Invalid value for platform ${platform}`;
+    return validator.validator.defaultMessage
+      ? validator.validator.defaultMessage(args)
+      : `Invalid value for platform ${platform}`;
   }
 }
 
@@ -90,4 +100,4 @@ export function ConditionalPlatformValidation<T, U>(
       validator: ConditionalPlatformValidationConstraint<T, U>,
     });
   };
-} 
+}

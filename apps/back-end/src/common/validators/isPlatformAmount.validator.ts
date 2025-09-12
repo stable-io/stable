@@ -1,5 +1,9 @@
 import { ConditionalPlatformValidation } from "./conditionalPlatform.validator";
-import { AmountBounds, AmountProperties, IsAmountConstraint } from "./isAmount.validator";
+import {
+  AmountBounds,
+  AmountProperties,
+  IsAmountConstraint,
+} from "./isAmount.validator";
 import type { ValidationOptions } from "class-validator";
 import { evmGasTokenAmountProperties } from "./isEvmGasAmount.validator";
 import { Amount, Kind } from "@stable-io/amount";
@@ -17,7 +21,10 @@ export function IsPlatformAmount(
   generalConstraints?: AmountBounds,
   validationOptions?: ValidationOptions,
 ) {
-  return ConditionalPlatformValidation<AmountProperties<Amount<Kind>>, AmountBounds>(
+  return ConditionalPlatformValidation<
+    AmountProperties<Amount<Kind>>,
+    AmountBounds
+  >(
     {
       domainField,
       generalConstraints,
@@ -28,10 +35,10 @@ export function IsPlatformAmount(
         },
         Solana: {
           validator: new IsAmountConstraint(),
-          constraints: solanaAmountProperties ,
+          constraints: solanaAmountProperties,
         },
       },
     },
     validationOptions,
   );
-} 
+}
