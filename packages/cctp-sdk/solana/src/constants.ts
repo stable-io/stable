@@ -6,7 +6,7 @@
 import { mapTo } from "@stable-io/map-utils";
 import { Byte, byte, sol } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
-import { Conversion } from "../../../common/amount/dist/conversion.js";
+import { Conversion } from "@stable-io/amount";
 
 export const [
   systemProgramId,
