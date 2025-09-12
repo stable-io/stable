@@ -333,10 +333,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
         : `Failed to fetch ${["cctpr", "oracle"][(i-1)%2]} price account for domain ` +
           `${involvedDomains[Math.floor((i-1)/priceAccountsPerDomain)]}` as Text,
       ));
-    // TODO: Oracle config deserialization is broken
-    // console.log("oracleConfigRawData", Buffer.from(oracleConfigRawData!).toString("hex"));
-    // const { solPrice } = deserialize(oracleConfigLayout, oracleConfigRawData!);
-    const solPrice = Conversion.from(usdc(1), sol(1));
+    const [{ solPrice }] = deserialize(oracleConfigLayout, oracleConfigRawData!, false);
     const priceAccountsRawData = chunk(flatPriceAccountsRawData, priceAccountsPerDomain);
     // Group them by domain and deserialize them
     const domainPriceAccounts = fromEntries(zip([involvedDomains, priceAccountsRawData])
