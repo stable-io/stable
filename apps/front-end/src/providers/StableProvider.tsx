@@ -51,7 +51,9 @@ export const StableProvider = ({
       signer
         ? new Stable({
             network: "Mainnet",
-            signer,
+            signer: {
+              Evm: signer,
+            },
           })
         : undefined,
     [signer],
