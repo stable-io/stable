@@ -18,7 +18,7 @@ import { CctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
-import { QuoteRequestDto } from "../gaslessTransfer/dto/quoteRequest.dto";
+import { QuoteRequestDto, QuoteSupportedDomain } from "../gaslessTransfer/dto/quoteRequest.dto";
 import { Network } from "../common/types";
 import type { ParsedSignature } from "../common/types";
 import type { Permit2Nonce } from "../common/utils";
@@ -72,8 +72,8 @@ export class CctpRService {
     }
   }
 
-  public gaslessTransferTx(
-    quoteRequest: QuoteRequestDto<SupportedEvmDomain>,
+  public gaslessTransferTx<N extends Network>(
+    quoteRequest: QuoteRequestDto<QuoteSupportedDomain<N>>,
     permit2GaslessData: Permit2GaslessData,
     permit2Signature: ParsedSignature,
     gaslessFee: Usdc,

@@ -1,8 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, IsIn, ValidateIf, Validate } from "class-validator";
 import { Percentage } from "@stable-io/cctp-sdk-definitions";
-import type { Usdc, EvmGasToken } from "@stable-io/cctp-sdk-definitions";
-import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Usdc, EvmGasToken, Network } from "@stable-io/cctp-sdk-definitions";
+import type { Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { corridors } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Transform } from "class-transformer";
 import { AMOUNT_PATTERNS } from "../../common/utils";
@@ -20,6 +20,8 @@ import {
   IsPercentage,
   IsPlatformAmount,
 } from "../../common/validators";
+
+export type QuoteSupportedDomain<N extends Network> = Exclude<SupportedDomain<N>, "Codex">;
 
 export class QuoteRequestDto<
   SourceDomain extends Domain = Domain,
