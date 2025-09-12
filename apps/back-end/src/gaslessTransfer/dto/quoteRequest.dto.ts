@@ -7,6 +7,7 @@ import { corridors } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Transform } from "class-transformer";
 import { AMOUNT_PATTERNS } from "../../common/utils";
 import { 
+  networks,
   supportedDomains, 
   type Domain, 
   type SupportedAddress,
@@ -34,6 +35,18 @@ export class QuoteRequestDto<
   @ApiProperty({ enum: supportedDomains })
   @IsIn(supportedDomains)
   sourceDomain!: SourceDomain;
+
+  /**
+   * The blockchain network for the source domain
+   * @example "Mainnet"
+   */
+  @ApiProperty({
+    enum: networks,
+    description: "The blockchain network to get price information for",
+    default: "Mainnet",
+  })
+  @IsIn(networks)
+  sourceDomainNetwork!: Network;
 
   /**
    * The target blockchain for the transfer

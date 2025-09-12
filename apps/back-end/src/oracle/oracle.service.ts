@@ -96,7 +96,7 @@ export type SuiPriceResult = {
   storageRebate: Percentage;
 }
 
-type PriceResult = EvmPriceResult | SolanaPriceResult | SuiPriceResult;
+export type PriceResult = EvmPriceResult | SolanaPriceResult | SuiPriceResult;
 
 const subArrayLayout = <const N extends string, const L extends Layout>(
   name: N,

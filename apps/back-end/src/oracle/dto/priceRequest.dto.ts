@@ -17,6 +17,10 @@ export class PriceRequestDto {
   @IsIn(domains)
   domain!: Domain;
 
+  /**
+   * The blockchain network for the domain
+   * @example "Mainnet"
+   */
   @ApiProperty({
     enum: networks,
     description: "The blockchain network to get price information for",

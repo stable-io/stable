@@ -23,7 +23,7 @@ import { JwtService } from "../auth/jwt.service";
 import { ConfigService } from "../config/config.service";
 import { CctpRService } from "../cctpr/cctpr.service";
 import { TxLandingService } from "../txLanding/txLanding.service";
-import { OracleService } from "../oracle/oracle.service";
+import { EvmPriceResult, OracleService, PriceResult } from "../oracle/oracle.service";
 import { ExecutionCostService } from "../executionCost/executionCost.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
@@ -130,15 +130,15 @@ export class GaslessTransferService {
 
   private async getPricesForRequest(
     request: QuoteRequestDto,
-  ): Promise<{ gasTokenPrice: Usdc; gasPrice: EvmGasToken }> {
-    const prices = await this.oracleService.getPrices([request.sourceDomain]);
+  ): Promise<PriceResult> {
+    const prices = await this.oracleService.getPrices([request.sourceDomain], request.sourceDomainNetwork);
     return prices[0]!;
   }
 
   private async calculateEvmGaslessFee(
     request: QuoteRequestDto<SupportedEvmDomain>
   ): Promise<Usdc> {
-    const prices = await this.getPricesForRequest(request);
+    const prices = (await this.getPricesForRequest(request)) as EvmPriceResult;
     const evmGasCostEstimations =
       this.executionCostService.getKnownEstimates("Evm");
     const costs = Object.entries(evmGasCostEstimations).reduce(
