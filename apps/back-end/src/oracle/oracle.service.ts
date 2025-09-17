@@ -6,7 +6,6 @@ import {
   calcStaticSize,
   DeriveType,
   deserialize,
-  Item,
   Layout,
   ProperLayout,
   serialize,
@@ -17,13 +16,10 @@ import {
   domainOfWormholeChainId,
   EvmGasToken,
   Network,
-  percentage,
   Percentage,
   Platform,
   PlatformOf,
-  sol,
   Sol,
-  sui,
   Sui,
   Usdc,
   wormholeChainIdOf,
@@ -147,27 +143,14 @@ const pricePerTxByteItem = amountItem(
   mweiToGwei,
 );
 const gasPriceItem = amountItem(4, EvmGasToken, "nEvmGasToken", mweiToGwei);
-const pricePerAccountByteItem = {
-  binary: "uint",
-  size: 4,
-} as const satisfies Item;
-const solanaComputationPriceItem = {
-  binary: "uint",
-  size: 4,
-} as const satisfies Item;
-const signaturePriceItem = {
-  binary: "uint",
-  size: 4,
-} as const satisfies Item;
-const suiComputationPriceItem = solanaComputationPriceItem;
-const storagePriceItem = {
-  binary: "uint",
-  size: 4,
-} as const satisfies Item;
-const storageRebateItem = {
-  binary: "uint",
-  size: 1,
-} as const satisfies Item;
+
+const pricePerAccountByteItem = amountItem(4, Sol, "lamports");
+const solanaComputationPriceItem = amountItem(4, Sol, "µlamports");
+const signaturePriceItem = amountItem(4, Sol, "lamports");
+
+const suiComputationPriceItem = amountItem(4, Sui, "MIST");
+const storagePriceItem = amountItem(4, Sui, "MIST");
+const storageRebateItem = amountItem(1, Percentage, "scalar");
 
 const slotSize = 32;
 const fullSlotLayout = <const L extends ProperLayout>(layout: L) =>
@@ -299,33 +282,7 @@ export class OracleService {
       },
     ] satisfies RoArray<RootQuery>;
     const results = await this.query(client, oracle, queries);
-    return results.map((result) => {
-      if (result.chain.domain === "Solana") {
-        const price = result.result as SolanaFeeParams;
-        return {
-          gasTokenPrice: price.gasTokenPrice,
-          pricePerAccountByte: sol(price.pricePerAccountByte, "lamports"),
-          signaturePrice: sol(price.signaturePrice, "lamports"),
-          // TODO: Fix this division using units properly
-          computationPrice: sol(price.computationPrice / 1000, "lamports"),
-        };
-      } else if (result.chain.domain === "Sui") {
-        const price = result.result as SuiFeeParams;
-        return {
-          gasTokenPrice: result.result.gasTokenPrice,
-          computationPrice: sui(price.computationPrice, "MIST"),
-          storagePrice: sui(price.storagePrice, "MIST"),
-          storageRebate: percentage(price.storageRebate, "scalar"),
-        };
-      } else {
-        const price = result.result as EvmFeeParams;
-        return {
-          gasTokenPrice: price.gasTokenPrice,
-          gasPrice: price.gasPrice,
-          pricePerTxByte: price.pricePerTxByte,
-        };
-      }
-    });
+    return results.map((result) => result.result);
   }
 
   private async query<const Q extends RoArray<RootQuery>>(

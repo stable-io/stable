@@ -181,7 +181,7 @@ export const sonic = Amount.ofKind(Sonic);
 
 export const Sol = {
   name: "Sol",
-  units: [unit("SOL", 1n), unit("lamports", oom(-9))],
+  units: [unit("SOL", 1n), unit("lamports", oom(-9)), unit("µlamports", oom(-15))],
   human: "SOL",
   atomic: "lamports",
 } as const satisfies Kind;
