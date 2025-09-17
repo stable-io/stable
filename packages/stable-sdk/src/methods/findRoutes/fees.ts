@@ -60,26 +60,36 @@ export async function calculateTotalCost(
   fees: Fee[],
 ): Promise<Usd> {
   const domain = steps[0].chain;
-  const domainPrices = await getDomainPrices(network, { domain });
-  const gasTokenKind = gasTokenKindOf(domain);
-  const gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
   // @todo: get the USDC price from the oracle
   const usdPerUsdc = 1;
   const usdcPrice = Conversion.from(usd(usdPerUsdc), Usdc);
+  const totalCost = usd(0);
+  let gasTokenPriceUsdc: Usdc;
 
-  const stepsCost = steps.reduce((subtotal, step) => {
-    const gasTokenCost: Amount<typeof gasTokenKind> = gasTokenOf(domain)(
-      domainPrices.gasPriceAtomic,
-      "atomic",
-    ).mul(step.gasCostEstimation);
+  if (domain === "Solana") {
+    const domainPrices = await getDomainPrices(network, { domain, network });
+    gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
+    // TODO: Add the step cost for solana
+    totalCost.add(usd(0));
+  } else {
+    const domainPrices = await getDomainPrices(network, { domain, network });
+    const gasTokenKind = gasTokenKindOf(domain);
+    gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
+    const stepsCost = steps.reduce((subtotal, step) => {
+      const gasTokenCost: Amount<typeof gasTokenKind> = gasTokenOf(domain)(
+        domainPrices.gasPriceAtomic,
+        "atomic",
+      ).mul(step.gasCostEstimation);
 
-    const gasTokenPrice = Conversion.from<
-      Usd["kind"],
-      GasTokenKindOf<typeof domain>
-    >(usd(gasTokenPriceUsdc.toUnit("human")), gasTokenKind);
-    const usdCost = gasTokenCost.convert(gasTokenPrice);
-    return subtotal.add(usdCost);
-  }, usd(0));
+      const gasTokenPrice = Conversion.from<
+        Usd["kind"],
+        GasTokenKindOf<typeof domain>
+      >(usd(gasTokenPriceUsdc.toUnit("human")), gasTokenKind);
+      const usdCost = gasTokenCost.convert(gasTokenPrice);
+      return subtotal.add(usdCost);
+    }, usd(0));
+    totalCost.add(stepsCost);
+  }
 
   const feesCost = fees.reduce((subtotal, fee) => {
     const conversion: Conversion<Usd["kind"], typeof fee.kind> =
@@ -93,5 +103,5 @@ export async function calculateTotalCost(
     return subtotal.add(usdCost);
   }, usd(0));
 
-  return stepsCost.add(feesCost);
+  return totalCost.add(feesCost);
 }
