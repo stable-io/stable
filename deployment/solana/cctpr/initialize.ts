@@ -29,8 +29,8 @@ async function initializeCctpr(
   feeRecipient: SolanaAddress,
   offChainQuoter: Uint8Array,
 ) {
-  const solanaClient = SolanaKitClient.fromNetworkAndDomain(network, "Solana");
-  const cctprGovernance = new CctpRGovernance(network, solanaClient, {
+  const client = SolanaKitClient.fromNetworkAndDomain(network, "Solana");
+  const cctprGovernance = new CctpRGovernance(network, client, {
     cctpr: cctprProgramId,
     oracle: new SolanaAddress(new Uint8Array(32)),
   });
@@ -42,30 +42,30 @@ async function initializeCctpr(
     feeRecipient,
     offChainQuoter,
   );
-  const initTx = await assertSuccess(createAndSendTx(solanaClient, [initIx], owner, [owner]));
-  console.log("Initialize transaction sent:", initTx);
+  const initTx = await assertSuccess(createAndSendTx(client, [initIx], owner, [owner]));
+  console.info("Initialize transaction sent:", initTx);
 
   const domains = domainsOf("Evm");
   const registerIxs = await Promise.all(
-    domains.map(domain => cctprGovernance.composeRegisterChainIx(domain))
+    domains.map(domain => cctprGovernance.composeRegisterChainIx(domain)),
   );
 
-  const registerTx = await assertSuccess(createAndSendTx(solanaClient, registerIxs, owner, [owner]));
-  console.log("Register transaction sent:", registerTx);
+  const registerTx = await assertSuccess(createAndSendTx(client, registerIxs, owner, [owner]));
+  console.info("Register transaction sent:", registerTx);
 
   const updateFeeAdjustmentIxs = await Promise.all(
     feeAdjustmentTypes.map(type => [type, feeAdjustments[type]] as const)
       .flatMap(([corridor, feeAdjustment]) =>
         domains.map(domain =>
-          cctprGovernance.composeUpdateFeeAdjustmentIx("owner", domain, corridor, feeAdjustment)
-        )
-      )
+          cctprGovernance.composeUpdateFeeAdjustmentIx("owner", domain, corridor, feeAdjustment),
+        ),
+      ),
   );
   // The instructions are too heavy so we'll do them in chunks of 24
   const txs = await Promise.all(chunk(updateFeeAdjustmentIxs, 24).map(instructions =>
-    assertSuccess(createAndSendTx(solanaClient, instructions, owner, [owner]))
+    assertSuccess(createAndSendTx(client, instructions, owner, [owner])),
   ));
-  console.log("Update fee adjustments transactions sent:", txs);
+  console.info("Update fee adjustments transactions sent:", txs);
 }
 
 async function main() {
@@ -83,9 +83,9 @@ async function main() {
     cctprOwner,
     feeAdjuster,
     feeRecipient,
-    offChainQuoter
+    offChainQuoter,
   );
 }
 
 await main();
-console.log('Done!');
+console.info("Done!");

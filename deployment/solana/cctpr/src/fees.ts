@@ -6,32 +6,32 @@
 import { Connection, PublicKey, RecentPrioritizationFees } from "@solana/web3.js";
 
 export const DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS = 100000;
-export type PriorityFeePolicy = 'max' | 'high' | 'normal' | 'low';
+export type PriorityFeePolicy = "max" | "high" | "normal" | "low";
 
 /**
  * Get the prioritization fee in microlamports from the network using a given policy.
  * If no prioritization fee is found, return the default fee.
- * 
+ *
  * @param connection - The connection to the network.
  * @param lockedWritableAccounts - The locked writable accounts.
  * @param priorityFeePolicy - The policy to use to get the prioritization fee.
  * @param defaultFee - The default fee to return if no prioritization fee is found.
  * @returns The prioritization fee.
  */
-export async function getPrioritizationFee(connection: Connection, 
-  lockedWritableAccounts: PublicKey[], 
-  priorityFeePolicy: PriorityFeePolicy, 
-  defaultFee: number = DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS
+export async function getPrioritizationFee(connection: Connection,
+  lockedWritableAccounts: PublicKey[],
+  priorityFeePolicy: PriorityFeePolicy,
+  defaultFee: number = DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS,
 ): Promise<number> {
   const sortedFeeList = await getSortedPrioritizationFeeList(
-    connection, lockedWritableAccounts
+    connection, lockedWritableAccounts,
   );
   if (sortedFeeList.length === 0) {
     return defaultFee;
   }
   return getPrioritizationFeeFromList(sortedFeeList, priorityFeePolicy);
 }
-  
+
 /**
  * Get the sorted prioritization fee list, in ascending order.
  * @param connection - The connection to the network.
@@ -44,12 +44,11 @@ export async function getSortedPrioritizationFeeList(
 ): Promise<RecentPrioritizationFees[]> {
   const feeConfig = {
     lockedWritableAccounts: lockedWritableAccounts,
-  }
+  };
   const fees = await connection.getRecentPrioritizationFees(feeConfig);
-  const nonZeroFees = fees.filter((entry) => entry.prioritizationFee > 0);
+  const nonZeroFees = fees.filter(entry => entry.prioritizationFee > 0);
   return nonZeroFees.sort((a, b) => a.prioritizationFee - b.prioritizationFee);
 }
-  
 
 /**
  * Get the prioritization fee from a sorted list of prioritization fees and a given policy.
@@ -66,17 +65,17 @@ export function getPrioritizationFeeFromList(
   }
   const getFee = (index: number) => sortedPrioritizationFeeList[index]!.prioritizationFee;
   switch (priorityFeePolicy) {
-    case 'max':
+    case "max":
       return getFee(sortedPrioritizationFeeList.length - 1);
-    case 'high':
+    case "high":
       return getFee(Math.floor(sortedPrioritizationFeeList.length * 0.95));
-    case 'normal':
+    case "normal":
       return getFee(Math.floor(sortedPrioritizationFeeList.length * 0.87));
-    case 'low':
+    case "low":
       return getFee(Math.floor(sortedPrioritizationFeeList.length * 0.5));
     default:
       throw new Error(`
-        Invalid priorityFeePolicy: ${priorityFeePolicy} must be one of: max, high, normal, low`
+        Invalid priorityFeePolicy: ${priorityFeePolicy} must be one of: max, high, normal, low`,
       );
   }
 }

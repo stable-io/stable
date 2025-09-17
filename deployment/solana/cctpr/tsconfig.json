@@ -6,7 +6,10 @@
     "rootDir": "."
   },
   "include": [
-    "analyze-fees.ts",
+    "setFeeRecipient.ts",
+    "avaxRouterAddress.ts",
+    "transferTest.ts",
+    "analyzeFees.ts",
     "initialize.ts",
     "src/**/*"
   ]

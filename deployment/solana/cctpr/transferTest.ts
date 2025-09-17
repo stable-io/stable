@@ -5,15 +5,16 @@
 
 import { CctpR } from "@stable-io/cctp-sdk-cctpr-solana";
 import { avax, genericGasToken, Network, percentage, Sol, sol, usdc } from "@stable-io/cctp-sdk-definitions";
-import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
+import { addLifetimeAndSendTx, SolanaAddress } from "@stable-io/cctp-sdk-solana";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { createKeyPairSignerFromBytes, KeyPairSigner } from "@solana/kit";
-import { assertSuccess, SolanaRpc } from "./src/rpc.js";
-import fs from "fs";
-import path from "path";
-import os from "os";
-import process from "process";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import process from "node:process";
 import { Conversion } from "@stable-io/amount";
+import { assertSuccess } from "./src/utils.js";
+import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
 
 async function transfer(
   network: Network,
@@ -23,13 +24,13 @@ async function transfer(
   user: KeyPairSigner,
   dest: EvmAddress,
 ) {
-  const rpc = new SolanaRpc(rpcUrl);
-  const cctpr = new CctpR(network, rpc.rpc, {
+  const client = SolanaKitClient.fromNetworkAndDomain(network, "Solana");
+  const cctpr = new CctpR(network, client, {
     cctpr: cctprProgramId,
     oracle: oracleProgramId,
   });
 
-  const mode = "usdc" as string
+  const mode = "usdc" as string;
   const amount = usdc("0.1");
   const fastFeeRate = percentage(5, "bp");
   const solPrice = Conversion.from(usdc(0.1), Sol);
@@ -42,8 +43,8 @@ async function transfer(
     ? relayFeeSol.sub(rentRebate)
     : relayFeeUsdc.sub(rentRebate.convert(solPrice));
   const maxRelayFee = exactRelayFee;
-  const quoteVariant = { type: "onChain", maxRelayFee } as const
-  const destinationDomain = "Avalanche"
+  const quoteVariant = { type: "onChain", maxRelayFee } as const;
+  const destinationDomain = "Avalanche";
   // const queries = [{ destinationDomain, corridor: "v2Direct", gasDropoff }] as const;
 
   const sharedTransferArgs = [
@@ -56,21 +57,21 @@ async function transfer(
     new SolanaAddress(user.address),
   ] as const;
 
-  const tx = await assertSuccess(rpc.addLifetimeAndSendTx({
+  const tx = await assertSuccess(addLifetimeAndSendTx(client, {
     ...(await cctpr.transferWithRelay(...sharedTransferArgs)),
     version: "legacy",
   }, [user]));
-  console.log("Transfer transaction sent:", tx);
+  console.info("Transfer transaction sent:", tx);
 }
 
 export async function loadKeypairFromFile(
-  filePath: string
+  filePath: string,
 ): Promise<KeyPairSigner<string>> {
   const resolvedPath = path.resolve(
-    filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath
+    filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath,
   );
   const loadedKeyBytes = Uint8Array.from(
-    JSON.parse(fs.readFileSync(resolvedPath, "utf8"))
+    JSON.parse(fs.readFileSync(resolvedPath, "utf8")),
   );
   return createKeyPairSignerFromBytes(loadedKeyBytes);
 }
@@ -82,9 +83,9 @@ async function main() {
   const dest = new EvmAddress("0x6862bE596a57E92c9FEB36f95582F6409d9B6cf9");
   const ownerKeyFile = process.env["OWNER_WALLET_FILE"];
   if (ownerKeyFile === undefined) {
-    throw new Error("ENV variable OWNER_WALLET_FILE not set")
+    throw new Error("ENV variable OWNER_WALLET_FILE not set");
   }
-  const user = await loadKeypairFromFile(ownerKeyFile)
+  const user = await loadKeypairFromFile(ownerKeyFile);
 
   await transfer(
     "Testnet",
@@ -97,4 +98,4 @@ async function main() {
 }
 
 await main();
-console.log('Done!');
+console.info("Done!");

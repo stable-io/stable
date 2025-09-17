@@ -25,14 +25,14 @@ async function setFeeRecipient(
 
   const updateIx = await cctprGovernance.composeUpdateFeeRecipientIx(feeRecipient);
   const feeTx = await assertSuccess(createAndSendTx(solanaClient, [updateIx], owner, [owner]));
-  console.log("Set Fee recipient transaction sent:", feeTx);
+  console.info("Set Fee recipient transaction sent:", feeTx);
 }
 
 async function main() {
   const cctprProgramId = new SolanaAddress("CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM");
   const feeRecipient = new SolanaAddress("AdAVF5KmmGmpNQhjY7FL96wZLEynD6Mx3VXJTZf2yFps");
   const owner = await loadOwnerKeypair();
-  
+
   await setFeeRecipient(
     "Testnet",
     cctprProgramId,
@@ -42,4 +42,4 @@ async function main() {
 }
 
 await main();
-console.log('Done!');
+console.info("Done!");
