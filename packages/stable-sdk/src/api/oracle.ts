@@ -37,7 +37,9 @@ type SerializedDomainPrices<D extends LoadedDomain> = {
 };
 
 type ErrorResponse = APIResponse<Exclude<HTTPCode, 200>, { message: string }>;
-type SuccessResponse<D extends LoadedDomain> = APIResponse<200, { data: SerializedDomainPrices<D> }>;
+type SuccessResponse<D extends LoadedDomain> =
+  APIResponse<200, { data: SerializedDomainPrices<D> }>;
+type Response<D extends LoadedDomain> = SuccessResponse<D> | ErrorResponse;
 
 export async function getDomainPrices<D extends LoadedDomain>(
   network: Network,
@@ -45,7 +47,7 @@ export async function getDomainPrices<D extends LoadedDomain>(
 ): Promise<DomainPrices<D>> {
   const endpoint = apiEndpointWithQuery(network)(`oracle/price`, params);
 
-  const apiResponse = await apiRequest<SuccessResponse<D> | ErrorResponse>(endpoint, { method: "GET" });
+  const apiResponse = await apiRequest<Response<D>>(endpoint, { method: "GET" });
 
   if (apiResponse.status != 200) {
     const details = `Status Code: ${apiResponse.status} Message: ${apiResponse.value.message}`;

@@ -1,6 +1,10 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse } from "@nestjs/swagger";
-import { EvmPriceResult, OracleService, SolanaPriceResult, SuiPriceResult } from "./oracle.service";
+import {
+  EvmPriceResult,
+  OracleService,
+  SolanaPriceResult,
+} from "./oracle.service";
 import { PriceDto, PriceRequestDto, PriceResponseDto } from "./dto";
 import { serializeBigints } from "@stable-io/utils";
 
@@ -36,15 +40,21 @@ export class OracleController {
   public async getPrice(
     @Query() request: PriceRequestDto,
   ): Promise<PriceResponseDto> {
-    const prices = await this.oracleService.getPrices([request.domain], request.network);
+    const prices = await this.oracleService.getPrices(
+      [request.domain],
+      request.network,
+    );
     if (request.domain === "Solana") {
       const priceData = prices[0]! as SolanaPriceResult;
       return {
         data: serializeBigints({
           gasTokenPriceAtomicUsdc: priceData.gasTokenPrice.toUnit("atomic"),
-          pricePerAccountByteAtomicLamports: priceData.pricePerAccountByte.toUnit("lamports"),
-          signaturePriceAtomicLamports: priceData.signaturePrice.toUnit("lamports"),
-          computationPriceAtomicMicroLamports: priceData.computationPrice.toUnit("µlamports"),
+          pricePerAccountByteAtomicLamports:
+            priceData.pricePerAccountByte.toUnit("lamports"),
+          signaturePriceAtomicLamports:
+            priceData.signaturePrice.toUnit("lamports"),
+          computationPriceAtomicMicroLamports:
+            priceData.computationPrice.toUnit("µlamports"),
         }) as PriceDto,
       };
     }

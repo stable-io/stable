@@ -6,7 +6,6 @@ import {
   calcStaticSize,
   DeriveType,
   deserialize,
-  Item,
   Layout,
   ProperLayout,
   serialize,
@@ -17,13 +16,10 @@ import {
   domainOfWormholeChainId,
   EvmGasToken,
   Network,
-  percentage,
   Percentage,
   Platform,
   PlatformOf,
-  sol,
   Sol,
-  sui,
   Sui,
   Usdc,
   wormholeChainIdOf,
@@ -140,7 +136,12 @@ const mweiToGwei = {
 };
 
 const gasTokenPriceItem = amountItem(6, Usdc, "µUSDC");
-const pricePerTxByteItem = amountItem(4, EvmGasToken, "nEvmGasToken", mweiToGwei);
+const pricePerTxByteItem = amountItem(
+  4,
+  EvmGasToken,
+  "nEvmGasToken",
+  mweiToGwei,
+);
 const gasPriceItem = amountItem(4, EvmGasToken, "nEvmGasToken", mweiToGwei);
 
 const pricePerAccountByteItem = amountItem(4, Sol, "lamports");
@@ -281,7 +282,7 @@ export class OracleService {
       },
     ] satisfies RoArray<RootQuery>;
     const results = await this.query(client, oracle, queries);
-    return results.map(result => result.result);
+    return results.map((result) => result.result);
   }
 
   private async query<const Q extends RoArray<RootQuery>>(
