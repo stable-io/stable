@@ -26,6 +26,7 @@
     "@stable-io/amount": "workspace:^",
     "@stable-io/cctp-sdk-cctpr-definitions": "workspace:^",
     "@stable-io/cctp-sdk-cctpr-evm": "workspace:^",
+    "@stable-io/cctp-sdk-cctpr-solana": "workspace:^",
     "@stable-io/cctp-sdk-definitions": "workspace:^",
     "@stable-io/cctp-sdk-evm": "workspace:^",
     "@stable-io/cctp-sdk-viem": "workspace:^",

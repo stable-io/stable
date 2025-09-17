@@ -10,7 +10,7 @@ import { type Permit2GaslessData, execSelector } from "@stable-io/cctp-sdk-cctpr
 import { SupportedPlatform } from "../../types/signer.js";
 import { encoding } from "@stable-io/utils";
 import { Network } from "../../types/general.js";
-import { getPlatformExecutionCosts } from "../../api/executionCost.js";
+import { EvmExecutionCosts, getPlatformExecutionCosts } from "../../api/executionCost.js";
 import { TxMsg } from "@stable-io/cctp-sdk-solana";
 export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer";
 
@@ -180,7 +180,9 @@ export async function buildTransferStep(
   usesPermit: boolean,
 ): Promise<EvmTransferStep | SolanaTransferStep> {
   const platform = platformOf(sourceChain);
-  const { v1, v2, permit } = await getPlatformExecutionCosts(network, platform);
+  const costs = await getPlatformExecutionCosts(network, platform);
+  const { v1, v2 } = costs;
+  const permit = platform === "Evm" ? (costs as EvmExecutionCosts).permit : 0n;
   const sharedTxData = {
     platform,
     chain: sourceChain,
