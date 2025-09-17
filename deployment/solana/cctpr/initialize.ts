@@ -6,14 +6,12 @@
 import { CctpRGovernance } from "@stable-io/cctp-sdk-cctpr-solana";
 import { domainsOf, Network, percentage, usdc } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
-import { createKeyPairSignerFromBytes, KeyPairSigner } from "@solana/kit";
+import { KeyPairSigner } from "@solana/kit";
 import { feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { assertSuccess, SolanaRpc } from "./src/rpc.js";
-import fs from "fs";
-import path from "path";
-import os from "os";
-import process from "process";
+import { assertSuccess, createAndSendTx } from "./src/utils.js";
 import { chunk } from "@stable-io/map-utils";
+import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
+import { loadOwnerKeypair } from "./src/env.js";
 
 const feeAdjustments = {
   v1:         { absolute: usdc(0), relative: percentage(100) },
@@ -24,7 +22,6 @@ const feeAdjustments = {
 
 async function initializeCctpr(
   network: Network,
-  rpcUrl: string,
   cctprProgramId: SolanaAddress,
   owner: KeyPairSigner,
   newOwner: SolanaAddress,
@@ -32,8 +29,8 @@ async function initializeCctpr(
   feeRecipient: SolanaAddress,
   offChainQuoter: Uint8Array,
 ) {
-  const rpc = new SolanaRpc(rpcUrl);
-  const cctprGovernance = new CctpRGovernance(network, rpc.rpc, {
+  const solanaClient = SolanaKitClient.fromNetworkAndDomain(network, "Solana");
+  const cctprGovernance = new CctpRGovernance(network, solanaClient, {
     cctpr: cctprProgramId,
     oracle: new SolanaAddress(new Uint8Array(32)),
   });
@@ -45,7 +42,7 @@ async function initializeCctpr(
     feeRecipient,
     offChainQuoter,
   );
-  const initTx = await assertSuccess(rpc.createAndSendTx([initIx], owner, [owner]));
+  const initTx = await assertSuccess(createAndSendTx(solanaClient, [initIx], owner, [owner]));
   console.log("Initialize transaction sent:", initTx);
 
   const domains = domainsOf("Evm");
@@ -53,7 +50,7 @@ async function initializeCctpr(
     domains.map(domain => cctprGovernance.composeRegisterChainIx(domain))
   );
 
-  const registerTx = await assertSuccess(rpc.createAndSendTx(registerIxs, owner, [owner]));
+  const registerTx = await assertSuccess(createAndSendTx(solanaClient, registerIxs, owner, [owner]));
   console.log("Register transaction sent:", registerTx);
 
   const updateFeeAdjustmentIxs = await Promise.all(
@@ -66,39 +63,21 @@ async function initializeCctpr(
   );
   // The instructions are too heavy so we'll do them in chunks of 24
   const txs = await Promise.all(chunk(updateFeeAdjustmentIxs, 24).map(instructions =>
-    assertSuccess(rpc.createAndSendTx(instructions, owner, [owner]))
+    assertSuccess(createAndSendTx(solanaClient, instructions, owner, [owner]))
   ));
   console.log("Update fee adjustments transactions sent:", txs);
 }
 
-export async function loadKeypairFromFile(
-  filePath: string
-): Promise<KeyPairSigner<string>> {
-  const resolvedPath = path.resolve(
-    filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath
-  );
-  const loadedKeyBytes = Uint8Array.from(
-    JSON.parse(fs.readFileSync(resolvedPath, "utf8"))
-  );
-  return createKeyPairSignerFromBytes(loadedKeyBytes);
-}
-
 async function main() {
-  const rpcUrl = "https://api.devnet.solana.com";
   const cctprProgramId = new SolanaAddress("CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM");
   const cctprOwner = new SolanaAddress("tMPpewA8FGoqDh8RqvVH1rZERCjBD7V7BSCmDn7bkxs");
   const feeAdjuster = new SolanaAddress("tMPpewA8FGoqDh8RqvVH1rZERCjBD7V7BSCmDn7bkxs");
   const feeRecipient = new SolanaAddress("CvsvkFX4xpr92uJbCiez91Keqpp9UNpAfY7nD3TChVg");
   const offChainQuoter = new Uint8Array(20);
-  const ownerKeyFile = process.env["OWNER_WALLET_FILE"];
-  if (ownerKeyFile === undefined) {
-    throw new Error("ENV variable OWNER_WALLET_FILE not set")
-  }
-  const owner = await loadKeypairFromFile(ownerKeyFile)
+  const owner = await loadOwnerKeypair();
 
   await initializeCctpr(
     "Testnet",
-    rpcUrl,
     cctprProgramId,
     owner,
     cctprOwner,

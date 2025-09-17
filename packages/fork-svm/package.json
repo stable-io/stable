@@ -37,7 +37,7 @@
     "clean": "rm -rf ./dist"
   },
   "dependencies": {
-    "@solana/kit": "^2.3.0",
+    "@solana/kit": "^3.0.3",
     "@solana/rpc-spec": "^2.3.0",
     "@solana/rpc-spec-types": "^2.3.0"
   },

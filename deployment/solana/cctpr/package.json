@@ -19,11 +19,12 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@stable-io/cctp-sdk-solana": "workspace:^",
-    "@stable-io/cctp-sdk-evm": "workspace:^",
+    "@solana/kit": "^3.0.3",
     "@stable-io/cctp-sdk-cctpr-solana": "workspace:^",
     "@stable-io/cctp-sdk-definitions": "workspace:^",
-    "@stable-io/utils": "workspace:^",
-    "@solana/kit": "^2.3.0"
+    "@stable-io/cctp-sdk-evm": "workspace:^",
+    "@stable-io/cctp-sdk-solana": "workspace:^",
+    "@stable-io/cctp-sdk-solana-kit": "workspace:^",
+    "@stable-io/utils": "workspace:^"
   }
 }
