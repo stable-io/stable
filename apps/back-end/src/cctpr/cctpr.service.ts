@@ -7,15 +7,16 @@ import type {
   EvmDomains,
 } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
-import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   CorridorParams,
   Permit2GaslessData,
   SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
-import { CctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { CctpR as EvmCctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
+import { CctpR as SolanaCctpR } from "@stable-io/cctp-sdk-cctpr-solana";
+import { ContractTx, EvmAddress, EvmClient } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
 import {
@@ -56,7 +57,7 @@ export class CctpRService {
       throw new Error("Solana is not supported");
     } else {
       const sender = quoteRequest.sender as EvmAddress;
-      const cctpr = this.contractInterface(quoteRequest.sourceDomain);
+      const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;
       return cctpr.composeGaslessTransferMessage(
         quoteRequest.targetDomain,
         this.contractAddress(quoteRequest.sourceDomain),
@@ -85,7 +86,7 @@ export class CctpRService {
       throw new Error("Solana is not supported");
     } else {
       const sender = quoteRequest.sender as EvmAddress;
-      const cctpr = this.contractInterface(quoteRequest.sourceDomain);
+      const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;
       return cctpr.transferGasless(
         quoteRequest.targetDomain,
         { amount: quoteRequest.amount, type: "in" },
@@ -103,11 +104,15 @@ export class CctpRService {
     }
   }
 
-  private contractInterface<D extends keyof EvmDomains>(
+  private contractInterface<D extends SupportedDomain<Network>>(
     domain: D,
-  ): CctpR<Network, D> {
+  ): EvmCctpR<Network, Exclude<D, "Solana">> | SolanaCctpR<Network> {
     const client = this.blockchainClientService.getClient(domain);
-    return new CctpR(client);
+
+    if (domain === "Solana")
+      return new SolanaCctpR(client.network, client as TODO, {});
+
+    return new EvmCctpR(client as EvmClient) as EvmCctpR<Network, Exclude<D, "Solana">>;
   }
 
   private getDeadline(): Date {

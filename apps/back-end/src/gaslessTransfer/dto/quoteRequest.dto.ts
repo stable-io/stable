@@ -5,6 +5,7 @@ import type {
   Usdc,
   EvmGasToken,
   Network,
+  Sol,
 } from "@stable-io/cctp-sdk-definitions";
 import type {
   Corridor,
@@ -113,21 +114,21 @@ export class QuoteRequestDto<
 
   /**
    * Amount of native gas token desired on target chain for gas dropoff
-   * Specified in native token units (e.g., ETH, MATIC, AVAX)
+   * Specified in native token units (e.g., ETH, MATIC, AVAX, SOL)
    * Supports up to 18 decimal places, use "0" if no gas dropoff is desired
    * @example "0.01"
    */
   @ApiProperty({
     type: String,
     format: "amount",
-    pattern: AMOUNT_PATTERNS.EVM_GAS_TOKEN,
+    pattern: AMOUNT_PATTERNS.EVM_GAS_TOKEN_OR_SOL,
   })
   @ValidateIf(({ targetDomain }: { targetDomain?: any }) =>
     supportedDomains.includes(targetDomain),
   )
   @IsPlatformAmount("targetDomain", { min: 0 })
   @Transform(
-    ({ value }: { value: EvmGasToken }) => value.toUnit("human").toFixed(18),
+    ({ value }: { value: EvmGasToken | Sol }) => value.toUnit("human").toFixed(18),
     {
       toPlainOnly: true,
     },

@@ -6,6 +6,7 @@ import {
   EvmGasToken,
   Usdc,
   usdc,
+  Sol,
 } from "@stable-io/cctp-sdk-definitions";
 import {
   ContractTx,
@@ -27,6 +28,7 @@ import {
   EvmPriceResult,
   OracleService,
   PriceResult,
+  SolanaPriceResult,
 } from "../oracle/oracle.service";
 import { ExecutionCostService } from "../executionCost/executionCost.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
@@ -179,6 +181,41 @@ export class GaslessTransferService {
     })();
     if (request.permit2PermitRequired)
       corridorCost = corridorCost.add(costs.permit).add(costs.multiCall);
+    return usdc(corridorCost.toUnit("atomic"), "atomic");
+  }
+
+  private async calculateSolanaGaslessFee(
+    request: QuoteRequestDto<"Solana">,
+  ): Promise<Usdc> {
+    const prices = (await this.getPricesForRequest(request)) as SolanaPriceResult;
+    const solanaGasCostEstimations =
+      this.executionCostService.getKnownEstimates("Solana");
+    const costs = Object.entries(solanaGasCostEstimations).reduce(
+      (acc, [key, value]) => {
+        const gasCostInNative = prices.computationPrice.mul(value);
+        const gasTokenPriceInUsdc = Conversion.from(
+          prices.gasTokenPrice,
+          Sol,
+        );
+        const usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc);
+        acc[key as keyof typeof solanaGasCostEstimations] = usdcCost;
+        return acc;
+      },
+      {} as Record<keyof typeof solanaGasCostEstimations, Usdc>,
+    );
+    const corridorCost = ((): Usdc => {
+      switch (request.corridor) {
+        case "v1":
+          return costs.v1Gasless;
+        case "v2Direct":
+          return costs.v2Gasless;
+        // case "avaxHop":
+        // return costs.v2Gasless;
+        default:
+          throw new Error(`Invalid corridor: ${request.corridor}`);
+      }
+    })();
+
     return usdc(corridorCost.toUnit("atomic"), "atomic");
   }
 
