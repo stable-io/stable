@@ -3,15 +3,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { TransactionMessage, createSolanaRpc, compileTransaction, Lamports, Address, Base64EncodedDataResponse, Blockhash, Base64EncodedWireTransaction, TransactionMessageWithFeePayer } from "@solana/kit";
-import type { Client, DomainsOf, GasTokenOf, Network, Sol } from "@stable-io/cctp-sdk-definitions";
+import type {
+  TransactionMessage,
+  compileTransaction,
+  Blockhash,
+  Base64EncodedWireTransaction,
+  TransactionMessageWithFeePayer,
+  TransactionWithLifetime,
+} from "@solana/kit";
+import type { Client, Network, Sol } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "./address.js";
 import { RoArray } from "@stable-io/map-utils";
 
 export type TxMsg = TransactionMessage;
 export type TxMsgWithFeePayer = TransactionMessage & TransactionMessageWithFeePayer;
 export type SignableTx = ReturnType<typeof compileTransaction>;
-export type SignableTxMsg = Parameters<typeof compileTransaction>[0];
+export type TxWithLifetime = Parameters<typeof compileTransaction>[0] & TransactionWithLifetime;
 
 export type AccountInfo = {
   executable: boolean;

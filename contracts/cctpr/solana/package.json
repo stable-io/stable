@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@solana-program/system": "^0.7.0",
-    "@solana/kit": "^2.3.0",
+    "@solana/kit": "^3.0.3",
     "@stable-io/cctp-sdk-cctpr-solana": "workspace:^",
     "@stable-io/cctp-sdk-solana-kit": "workspace:^",
     "@stable-io/fork-svm": "workspace:^",
