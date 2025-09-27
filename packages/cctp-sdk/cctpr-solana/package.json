@@ -42,6 +42,6 @@
   "devDependencies": {
     "eslint": "^9.22.0",
     "eslint-config": "workspace:^",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.2"
   }
 }
