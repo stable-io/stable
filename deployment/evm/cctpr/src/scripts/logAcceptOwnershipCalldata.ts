@@ -4,8 +4,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Network, wormholeChainIdOf } from "@stable-io/cctp-sdk-definitions";
-import { getCctpRGovernance } from "./src/cctpr.js";
-import { init, getViemClient, getNetwork, getChain } from "./src/common.js";
+import { getCctpRGovernance } from "../helpers/cctpr.js";
+import { init, getViemClient, getNetwork, getChain } from "../helpers/common.js";
 import { GovernanceCommand } from "@stable-io/cctp-sdk-cctpr-evm";
 import { encoding } from "@stable-io/utils";
 
@@ -17,7 +17,7 @@ function run() {
   const avalancheChain = getChain(wormholeChainIdOf(network, "Avalanche"));
   const viemClient = getViemClient(network, avalancheChain);
   const cctpr = getCctpRGovernance(viemClient, avalancheChain);
-  const commands: GovernanceCommand<Network>[] = [{
+  const commands: GovernanceCommand[] = [{
     command: "acceptOwnershipTransfer",
   }];
   const partialTx = cctpr.execGovernance(commands);

@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Network } from "@stable-io/cctp-sdk-definitions";
-import { getCctpRGovernance } from "./src/cctpr.js";
+import { getCctpRGovernance } from "../helpers/cctpr.js";
 import {
   init,
   ChainInfo,
@@ -13,7 +13,7 @@ import {
   getNetwork,
   buildOverridesWithGas,
   getViemSigner,
-} from "./src/common.js";
+} from "../helpers/common.js";
 import {
   GovernanceCommand,
 } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -33,17 +33,17 @@ const waitForInput = async () => {
 };
 
 async function run() {
-  const newOwnerAddressValue = process.env["NEW_OWNER_ADDRESS"];
-  if (newOwnerAddressValue === undefined) {
+  const newFeeAdjusterValue = process.env["NEW_FEE_ADJUSTER"];
+  if (newFeeAdjusterValue === undefined) {
     throw new Error("NEW_OWNER_ADDRESS environment variable needs to be set");
   }
   if (process.env["WALLET_KEY"] === undefined) {
     throw new Error("WALLET_KEY environment variable needs to be set");
   }
-  const newOwnerAddress = new EvmAddress(newOwnerAddressValue);
-  console.info(`TRANSFERING OWNERSHIP TO: ${newOwnerAddressValue}`);
+  const newOwnerAddress = new EvmAddress(newFeeAdjusterValue);
+  console.info(`TRANSFERING FEE ADJUSTER TO: ${newFeeAdjusterValue}`);
 
-  console.info(`Press any key to initiate the ownership transfer...\n`);
+  console.info(`Press any key to initiate the fee adjuster role transfer...\n`);
   await waitForInput();
 
   const updateTasks = operatingChains.map(chain =>
@@ -67,12 +67,10 @@ async function run() {
     console.error(`\nOwnership transfer failed on ${failedDomains.join(", ")}`);
   } else {
     console.info(`\nOwnership transfer successful on all domains.`);
-    console.info(`IMPORTANT: The new owner (${newOwnerAddressValue})`);
-    console.info(`must now call acceptOwnershipTransfer on all domains to complete the transfer.`);
   }
 }
 
-async function transferOwnership(chain: ChainInfo, newOwnerAddress: EvmAddress) {
+async function transferOwnership(chain: ChainInfo, newFeeAdjusterAddress: EvmAddress) {
   const network = getNetwork();
   const signer = getViemSigner(network, chain);
   const viemClient = getViemClient(network, chain);
@@ -81,12 +79,12 @@ async function transferOwnership(chain: ChainInfo, newOwnerAddress: EvmAddress) 
   // Check current owner
   const currentOwner = await cctpr.getRole("owner");
   console.info(`Current owner on ${chain.domain}: ${currentOwner.toString()}`);
-  console.info(`Transferring ownership to: ${newOwnerAddress.toString()}`);
+  console.info(`Transferring fee adjuster role to: ${newFeeAdjusterAddress.toString()}`);
 
   // Create ownership transfer command
-  const commands: GovernanceCommand<Network>[] = [{
-    command: "proposeOwnershipTransfer",
-    address: newOwnerAddress,
+  const commands: GovernanceCommand[] = [{
+    command: "updateFeeAdjuster",
+    address: newFeeAdjusterAddress,
   }];
 
   const partialTx = cctpr.execGovernance(commands);

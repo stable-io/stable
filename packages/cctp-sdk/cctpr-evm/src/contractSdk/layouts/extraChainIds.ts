@@ -30,8 +30,8 @@ export const chainIdsSlotItem = {
   custom: { to: reverseChainIds, from: reverseChainIds },
  } as const satisfies Item;
 
-export const extraDomains = <N extends Network>(network: N) =>
+export const extraDomains = (network: Network) =>
   difference(bakedInDomains, supportedPlatformDomains(network, "Evm"));
-export type ExtraDomain<N extends Network> = ReturnType<typeof extraDomains<N>>[number];
+export type ExtraDomain = ReturnType<typeof extraDomains>[number];
 
-export type ExtraChainIds<N extends Network> = Partial<Record<ExtraDomain<N>, number>>;
+export type ExtraChainIds = Partial<Record<ExtraDomain, number>>;
