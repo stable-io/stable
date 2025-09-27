@@ -33,6 +33,7 @@
     "packages/fork-svm",
     "packages/stable-sdk",
     "contracts/cctpr/solana",
-    "deployment/solana/cctpr"
+    "deployment/solana/cctpr",
+    "deployment/evm/cctpr"
   ]
 }

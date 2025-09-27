@@ -7,12 +7,12 @@ import {
   avaxRouterName,
   cctprName,
   deployAvaxRouter,
-} from "./src/cctpr.js";
+} from "../helpers/cctpr.js";
 import {
   init,
   saveDeployments,
   SerializedDeployment,
-} from "./src/common.js";
+} from "../helpers/common.js";
 
 const processName = "deployAvaxRouter";
 init();

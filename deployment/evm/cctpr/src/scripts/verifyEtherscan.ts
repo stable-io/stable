@@ -9,12 +9,12 @@ import {
   generateGasDropoffVerifyCommand,
   type VerificationResult,
   type CctpRConfig,
-} from "./src/cctpr.js";
+} from "../helpers/cctpr.js";
 import {
   getOperatingChains,
   init,
   loadScriptConfig,
-} from "./src/common.js";
+} from "../helpers/common.js";
 
 init();
 const operatingChains = getOperatingChains();

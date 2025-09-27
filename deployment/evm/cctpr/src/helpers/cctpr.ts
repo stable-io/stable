@@ -156,7 +156,7 @@ export async function deployCctpR(
 export function getCctpRGovernance(
   client: ViemEvmClient<Network, keyof EvmDomains>,
   chain: ChainInfo,
-) {
+): CctpRGovernance {
   const address = loadAddress(cctprName, chain.chainId);
   if (address === undefined) {
     throw new Error(`Chain ${chain.chainId} does not have a ${cctprName} deployment.`);

@@ -4,7 +4,7 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { DomainsOf, Network } from "@stable-io/cctp-sdk-definitions";
-import { getCctpRGovernance, loadFeeAdjustments, adjustmentEquals } from "./src/cctpr.js";
+import { getCctpRGovernance, loadFeeAdjustments, adjustmentEquals } from "../helpers/cctpr.js";
 import {
   init,
   ChainInfo,
@@ -13,11 +13,11 @@ import {
   getNetwork,
   buildOverridesWithGas,
   getViemSigner,
-} from "./src/common.js";
+} from "../helpers/common.js";
+import { FeeAdjustmentType } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   CctpRGovernance,
   FeeAdjustment,
-  FeeAdjustmentType,
   GovernanceCommand,
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import { encoding } from "@stable-io/utils";
@@ -44,12 +44,12 @@ async function run() {
       // Note that we assume that this update element was added because
       // some modification was requested to the contract.
       // This depends on the behaviour of the process functions.
-      printUpdate(result.value.commands, result.value.chain);
+      printUpdate(result.value.commands as any, result.value.chain);
     }
   }
 }
 
-function printUpdate<N extends Network>(commands: GovernanceCommand<N>[], { chainId }: ChainInfo) {
+function printUpdate(commands: GovernanceCommand[], { chainId }: ChainInfo) {
   const messages: string[] = [];
 
   // TODO: implement command explanation
@@ -64,7 +64,7 @@ async function updateCctpRConfiguration(chain: ChainInfo) {
   const network = getNetwork();
   const signer = getViemSigner(network, chain);
   const viemClient = getViemClient(network, chain);
-  const cctpr = getCctpRGovernance(viemClient, chain);
+  const cctpr = getCctpRGovernance(viemClient, chain) as any;
 
   const commands = await processFeeAdjustments(cctpr);
 
@@ -73,7 +73,7 @@ async function updateCctpRConfiguration(chain: ChainInfo) {
     return { commands, chain };
   }
 
-  const partialTx = cctpr.execGovernance(commands);
+  const partialTx = cctpr.execGovernance(commands) as any;
 
   console.info(`Sending update tx for operating chain ${chain.chainId}.`);
   console.info(`Updates: ${JSON.stringify(commands)}`);
@@ -121,10 +121,10 @@ export function adjustmentDiffers(current: FeeAdjustment[], expected: FeeAdjustm
   return false;
 }
 
-async function processFeeAdjustments<N extends Network, S extends DomainsOf<"Evm">>(
-  cctpr: CctpRGovernance<N, S>,
+async function processFeeAdjustments(
+  cctpr: CctpRGovernance,
 ) {
-  const commands = [] as GovernanceCommand<N>[];
+  const commands = [] as GovernanceCommand[];
   for (const [type, expectedAdjustments] of Object.entries(loadFeeAdjustments())) {
     const currentAdjustments = await cctpr.getFeeAdjustments(type as FeeAdjustmentType);
     for (let mappingIndex = 0; mappingIndex < CctpRGovernance.adjustmentSlots; ++mappingIndex) {

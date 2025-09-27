@@ -101,7 +101,8 @@ import {
 
 //external consumers shouldn't really need these but exporting them just in case
 export * as layouts from "./layouts/index.js";
-export { extraDomains } from "./layouts/common.js";
+export type { FeeAdjustment, GovernanceCommand } from "./layouts/index.js";
+export { extraDomains } from "./layouts/extraChainIds.js";
 
 export type SupportedEvmDomain<N extends Network> =
   SupportedPlatformDomain<N, "Evm"> | (
@@ -156,7 +157,27 @@ export type GaslessWitness = {
 
 export type Permit2GaslessData = Permit2WitnessTransferFromData<GaslessWitness>;
 
-export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
+// export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
+//   public readonly client: EvmClient<N, SD>;
+//   public readonly address: EvmAddress;
+
+//   constructor(client: EvmClient<N, SD>) {
+//     this.client = client;
+//     this.address = new EvmAddress((contractAddressOf as TODO)(
+//       this.client.network, this.client.domain,
+//     ));
+//   }
+
+//   protected execTx(value: EvmGasToken, commandData: CallData): ContractTx {
+//     return {
+//       to: this.address,
+//       value,
+//       data: encoding.bytes.concat(execSelector, commandData),
+//     };
+//   }
+// }
+
+export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> {
   public readonly client: EvmClient<N, SD>;
   public readonly address: EvmAddress;
 
@@ -174,9 +195,7 @@ export class CctpRBase<N extends Network, SD extends SupportedEvmDomain<N>> {
       data: encoding.bytes.concat(execSelector, commandData),
     };
   }
-}
 
-export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends CctpRBase<N, SD> {
   //On-chain quotes should always allow for a safety margin of at least a few percent to make sure a
   //  submitted transfer tx does not fail if fees in the oracle get updated while the tx is pending.
   async quoteOnChainRelay(
@@ -401,10 +420,25 @@ export class CctpR<N extends Network, SD extends SupportedEvmDomain<N>> extends 
 
 export type FeeAdjustments = Record<Domain, FeeAdjustment>;
 
-export class CctpRGovernance<
-  N extends Network,
-  SD extends SupportedEvmDomain<N>,
-> extends CctpRBase<N, SD> {
+export class CctpRGovernance {
+  public readonly client: EvmClient<any, any>;
+  public readonly address: EvmAddress;
+
+  constructor(client: EvmClient<any, any>) {
+    this.client = client;
+    this.address = new EvmAddress((contractAddressOf as TODO)(
+      this.client.network, this.client.domain,
+    ));
+  }
+
+  protected execTx(value: EvmGasToken, commandData: CallData): ContractTx {
+    return {
+      to: this.address,
+      value,
+      data: encoding.bytes.concat(execSelector, commandData),
+    };
+  }
+
   static adjustmentSlots = Math.ceil(domains.length / feeAdjustmentsPerSlot);
 
   //Since the implementation of CctpR has the assumption baked into the contract that new domain
@@ -423,8 +457,8 @@ export class CctpRGovernance<
     });
   }
 
-  static extraChainsArray<N extends Network>(network: N) {
-    return mapTo(chunk(extraDomains(network) as ExtraDomain<N>[], chainIdsPerSlot))(domains =>
+  static extraChainsArray(network: Network) {
+    return mapTo(chunk(extraDomains(network) as ExtraDomain[], chainIdsPerSlot))(domains =>
       mapTo(range(chainIdsPerSlot))(i =>
         i < domains.length ? wormholeChainIdOf(network, domains[i]! as TODO) : 0,
       ),
@@ -531,7 +565,8 @@ export class CctpRGovernance<
   static readonly relayAtCostFeeAdjustment =
     { absoluteUsdc: usdc(0), relativePercent: 100 } as const satisfies FeeAdjustment;
 
-  execGovernance(commands: RoArray<GovernanceCommand<N>>): ContractTx {
+
+  execGovernance(commands: RoArray<GovernanceCommand>): ContractTx {
     return this.execTx(
       evmGasToken(0),
       serialize(governanceCommandArrayLayout(this.client.network), commands) as CallData,
@@ -545,7 +580,7 @@ export class CctpRGovernance<
     return deserialize(paddedSlotItem(evmAddressItem), await this.getStorageAt(slot));
   }
 
-  async getRegisteredChainId(): Promise<ExtraChainIds<N>> {
+  async getRegisteredChainId(): Promise<ExtraChainIds> {
     //This entire implementation is overkill, seeing how we'll almost certainly never have more
     //  than 12 extra chains but there's not really a reason to start cutting corners here.
 
