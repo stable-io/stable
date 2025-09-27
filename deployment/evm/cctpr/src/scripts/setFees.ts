@@ -73,7 +73,7 @@ async function updateCctpRConfiguration(chain: ChainInfo) {
     return { commands, chain };
   }
 
-  const partialTx = cctpr.execGovernance(commands) as any;
+  const partialTx = cctpr.execGovernance(commands);
 
   console.info(`Sending update tx for operating chain ${chain.chainId}.`);
   console.info(`Updates: ${JSON.stringify(commands)}`);

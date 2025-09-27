@@ -565,7 +565,6 @@ export class CctpRGovernance {
   static readonly relayAtCostFeeAdjustment =
     { absoluteUsdc: usdc(0), relativePercent: 100 } as const satisfies FeeAdjustment;
 
-
   execGovernance(commands: RoArray<GovernanceCommand>): ContractTx {
     return this.execTx(
       evmGasToken(0),
