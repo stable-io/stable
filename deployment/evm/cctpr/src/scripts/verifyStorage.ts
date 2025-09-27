@@ -9,21 +9,20 @@ import {
   loadFeeAdjustments,
   adjustmentEquals,
   loadCctpRAddress,
-} from "./src/cctpr.js";
+} from "../helpers/cctpr.js";
 import {
   getOperatingChains,
   init,
   loadScriptConfig,
   getNetwork,
   getViemClient,
-} from "./src/common.js";
+} from "../helpers/common.js";
+import { FeeAdjustmentType, feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
 import {
   CctpRGovernance,
   extraDomains,
-  FeeAdjustment,
-  feeAdjustmentTypes,
+  type FeeAdjustment,
   type FeeAdjustments,
-  type FeeAdjustmentType,
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import { Usdc, wormholeChainIdOf, type Domain } from "@stable-io/cctp-sdk-definitions";
 

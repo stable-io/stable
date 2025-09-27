@@ -3,20 +3,10 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "composite": true
   },
   "include": [
-    "deployCctpr.ts",
-    "deployAvaxRouter.ts",
-    "setFees.ts",
-    "verifyBytecode.ts",
-    "verifyEtherscan.ts",
-    "verifyStorage.ts",
-    "transferOwnership.ts",
-    "acceptOwnership.ts",
-    "logAcceptOwnershipCalldata.ts",
-    "cancelOwnershipTransfer.ts",
-    "transferFeeAdjuster.ts",
-    "src/**/*"
+    "src"
   ]
 }
