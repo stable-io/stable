@@ -16,7 +16,7 @@
     "eslint": "^9.22.0",
     "eslint-config": "workspace:^",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@solana/kit": "^3.0.3",
