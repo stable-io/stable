@@ -17,7 +17,7 @@ import { feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { feeAdjustmentsSlotItem } from "./feeAdjustments.js";
 import { extraDomains } from "./extraChainIds.js";
 
-const domainChainIdPairLayout = <N extends Network>(network: N) => [
+const domainChainIdPairLayout = (network: Network) => [
   { name: "domain", ...domainItem(extraDomains(network)) },
   { name: "chainId", binary: "uint", size: 2             },
 ] as const satisfies Layout;
@@ -40,7 +40,7 @@ const feeAdjustmentCommandLayout = [
   { name: "adjustments", ...feeAdjustmentsSlotItem },
 ] as const satisfies Layout;
 
-const governanceVariants = <N extends Network>(network: N) => [
+const governanceVariants = (network: Network) => [
   [[0x11, "updateFeeAdjustments"    ], feeAdjustmentCommandLayout      ],
   [[0x12, "sweepTokens"             ], sweepTokensLayout               ],
   [[0x13, "updateFeeRecipient"      ], evmAddressLayout                ],
@@ -51,10 +51,10 @@ const governanceVariants = <N extends Network>(network: N) => [
   [[0x18, "cancelOwnershipTransfer" ], []                              ],
   [[0x19, "setChainIdForDomain"     ], domainChainIdPairLayout(network)],
 ] as const;
-export const governanceCommandLayout = <N extends Network>(network: N) =>
+export const governanceCommandLayout = (network: Network) =>
   byteSwitchItem("command", governanceVariants(network));
-export type GovernanceCommand<N extends Network> =
-  DeriveType<ReturnType<typeof governanceCommandLayout<N>>>;
+export type GovernanceCommand =
+  DeriveType<ReturnType<typeof governanceCommandLayout>>;
 
 export const governanceCommandArrayLayout = <N extends Network>(network: N) =>
   ({ binary: "array", layout: governanceCommandLayout(network) } as const);

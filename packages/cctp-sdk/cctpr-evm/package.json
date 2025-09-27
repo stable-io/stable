@@ -12,9 +12,9 @@
     "sdk"
   ],
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js",
-    "default": "./dist/index.js"
+    "types": "./dist/src/index.d.ts",
+    "import": "./dist/src/index.js",
+    "default": "./dist/src/index.js"
   },
   "files": [
     "dist/**/*",
@@ -22,8 +22,8 @@
     "README.md"
   ],
   "scripts": {
-    "prepublishOnly": "eslint . && jest && tsc",
-    "build": "tsc",
+    "prepublishOnly": "yarn lint && jest && yarn build",
+    "build": "tsc --build",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "jest --coverage",

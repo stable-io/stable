@@ -12,7 +12,7 @@ import {
   deployGasDropoff,
   loadCctpGasDropoffAddress,
   loadCctpRAddress,
-} from "./src/cctpr.js";
+} from "../helpers/cctpr.js";
 import {
   getChainConfig,
   getOperatingChains,
@@ -20,7 +20,7 @@ import {
   saveDeployments,
   SerializedDeployment,
   toReadable,
-} from "./src/common.js";
+} from "../helpers/common.js";
 
 const processName = "deployCctpR";
 init();
