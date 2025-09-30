@@ -4,8 +4,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { type Base64EncodedDataResponse, type Lamports, type Address, createSolanaRpc, Base64EncodedWireTransaction } from "@solana/kit";
-import { Network, Sol, sol } from "@stable-io/cctp-sdk-definitions";
-import { BlockHashInfo, getSolBalance, SolanaAddress, type AccountInfo, type SolanaClient } from "@stable-io/cctp-sdk-solana";
+import { Network, sol } from "@stable-io/cctp-sdk-definitions";
+import { BlockHashInfo, SolanaAddress, type AccountInfo, type SolanaClient } from "@stable-io/cctp-sdk-solana";
 import { RoArray } from "@stable-io/map-utils";
 import { encoding, Url } from "@stable-io/utils";
 

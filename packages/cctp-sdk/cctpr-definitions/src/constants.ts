@@ -24,6 +24,12 @@ export const contractAddressEntries = [[
     ["Codex",      undefined],
     ["Sonic",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Worldchain", "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Sei",        undefined],
+    ["BNB",        undefined],
+    ["XDC",        undefined],
+    ["HyperEVM",   undefined],
+    ["Ink",        undefined],
+    ["Plume",      undefined],
   ]], [
   "Testnet", [
     ["Ethereum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
@@ -31,7 +37,7 @@ export const contractAddressEntries = [[
     ["Optimism",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Arbitrum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     ["Base",       "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    ["Solana",     "CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM"],
+    ["Solana",     "CCTPRRdPEWfVWc6drxFzkf4pbstJNvvPcRq49dQJ1rRc"],
     ["Polygon",    "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
@@ -40,6 +46,12 @@ export const contractAddressEntries = [[
     ["Codex",      undefined],
     ["Sonic",      undefined],
     ["Worldchain", undefined],
+    ["Sei",        undefined],
+    ["BNB",        undefined],
+    ["XDC",        undefined],
+    ["HyperEVM",   undefined],
+    ["Ink",        undefined],
+    ["Plume",      undefined],
   ]],
 ] as const satisfies MapLevels<[Network, Domain, string | undefined]>;
 
@@ -88,22 +100,34 @@ export const relayOverheadOf = {
     Codex:      6, // TODO: Adjust
     Sonic:      6.95,
     Worldchain: 6.59,
+    Sei:        6, // TODO: Adjust
+    BNB:        6, // TODO: Adjust
+    XDC:        6, // TODO: Adjust
+    HyperEVM:   6, // TODO: Adjust
+    Ink:        6, // TODO: Adjust
+    Plume:      6, // TODO: Adjust
   },
   Testnet: {
-    Ethereum:  13.2,
-    Avalanche: 5.27,
-    Optimism:  3.05,
-    Arbitrum:  2.78,
-    Base:      3.11,
-    Solana:    6, // TODO: Adjust
-    Polygon:   3.49,
-    Sui:       6, // TODO: Adjust
-    Aptos:     6, // TODO: Adjust
-    Unichain:  7.73,
-    Linea:     6.06,
+    Ethereum:   13.2,
+    Avalanche:  5.27,
+    Optimism:   3.05,
+    Arbitrum:   2.78,
+    Base:       3.11,
+    Solana:     6, // TODO: Adjust
+    Polygon:    3.49,
+    Sui:        6, // TODO: Adjust
+    Aptos:      6, // TODO: Adjust
+    Unichain:   7.73,
+    Linea:      6.06,
     Codex:      6, // TODO: Adjust
     Sonic:      6.95,
     Worldchain: 6.59,
+    Sei:        6, // TODO: Adjust
+    BNB:        6, // TODO: Adjust
+    XDC:        6, // TODO: Adjust
+    HyperEVM:   6, // TODO: Adjust
+    Ink:        6, // TODO: Adjust
+    Plume:      6, // TODO: Adjust
   },
 } as const satisfies Record<Network, Record<string, number>>;
 
@@ -123,6 +147,12 @@ export const gasDropoffLimitOf = {
     Codex:      0.00151,
     Sonic:      0.00151,
     Worldchain: 0.00151,
+    Sei:        0.00151,
+    BNB:        0.00151,
+    XDC:        0.00151,
+    HyperEVM:   0.00151,
+    Ink:        0.00151,
+    Plume:      0.00151,
   },
   Testnet: {
     Ethereum:   0.00151,
@@ -139,6 +169,12 @@ export const gasDropoffLimitOf = {
     Codex:      0.00151,
     Sonic:      0.00151,
     Worldchain: 0.00151,
+    Sei:        0.00151,
+    BNB:        0.00151,
+    XDC:        0.00151,
+    HyperEVM:   0.00151,
+    Ink:        0.00151,
+    Plume:      0.00151,
   },
 } as const satisfies Record<Network, Record<SupportedDomain<Network>, number>>;
 

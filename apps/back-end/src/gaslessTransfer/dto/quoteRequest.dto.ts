@@ -31,7 +31,7 @@ import {
 
 export type QuoteSupportedDomain<N extends Network> = Exclude<
   SupportedDomain<N>,
-  "Codex"
+  "Codex" | "Sei" | "BNB" | "XDC" | "HyperEVM" | "Ink" | "Plume"
 >;
 
 export class QuoteRequestDto<

@@ -20,6 +20,12 @@ export const platformDomainEntries = [[
     "Codex",
     "Sonic",
     "Worldchain",
+    "Sei",
+    "BNB",
+    "XDC",
+    "HyperEVM",
+    "Ink",
+    "Plume",
   ]], [
   "Cosmwasm", [
     "Noble",
@@ -32,7 +38,12 @@ export const platformDomainEntries = [[
   ]], [
   "Aptos", [
     "Aptos",
-  ]],
+  ]], [
+  // TODO: Fix these domains once we know what they are
+  "Unknown", [
+    "Domain15",
+    "Domain20",
+  ]]
 ] as const;
 
 export const platforms = deepReadonly(column(platformDomainEntries, 0));
@@ -70,6 +81,7 @@ const platformAddressFormatEntries = [
   ["Solana",   [32, "base58"]],
   ["Sui",      [32, "hex"]],
   ["Aptos",    [32, "hex"]],
+  ["Unknown",  [32, "hex"]],
 ] as const satisfies [Platform, [byteSize: number, format: string]][];
 
 export const addressFormatOf = constMap(platformAddressFormatEntries);

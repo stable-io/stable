@@ -9,7 +9,8 @@ import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
 import { KeyPairSigner } from "@solana/kit";
 import { assertSuccess, createAndSendTx } from "./src/utils.js";
 import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
-import { loadOwnerKeypair } from "./src/env.js";
+import { getNetwork } from "./src/env.js";
+import { getDeploymentConfig, loadDeployerKeyPair } from "./src/deploy_config.js";
 
 async function setFeeRecipient(
   network: Network,
@@ -29,14 +30,16 @@ async function setFeeRecipient(
 }
 
 async function main() {
-  const cctprProgramId = new SolanaAddress("CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM");
+  const network = getNetwork();
+  const config = getDeploymentConfig(network);
+  const cctprProgramId = new SolanaAddress(config.cctpr_program);
+  const deployer = await loadDeployerKeyPair(network);
   const feeRecipient = new SolanaAddress("AdAVF5KmmGmpNQhjY7FL96wZLEynD6Mx3VXJTZf2yFps");
-  const owner = await loadOwnerKeypair();
 
   await setFeeRecipient(
     "Testnet",
     cctprProgramId,
-    owner,
+    deployer,
     feeRecipient,
   );
 }

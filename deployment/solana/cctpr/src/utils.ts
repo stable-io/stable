@@ -62,3 +62,13 @@ export async function loadKeypairFromFile(
   );
   return createKeyPairSignerFromBytes(loadedKeyBytes);
 }
+
+export async function waitForInput(): Promise<string> {
+  return new Promise(resolve => {
+      process.stdin.resume();
+      process.stdin.once("data", (data) => {
+          process.stdin.pause();
+          resolve(data.toString().trim());
+      });
+  });
+}

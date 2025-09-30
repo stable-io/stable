@@ -39,6 +39,12 @@ export class TxLandingService {
       Codex: "Codex",
       Sonic: "Sonic",
       Worldchain: "Worldchain",
+      Sei: "Sei",
+      BNB: "BNB",
+      XDC: "XDC",
+      HyperEVM: "HyperEVM",
+      Ink: "Ink",
+      Plume: "Plume",
     },
     Mainnet: {
       Ethereum: "Ethereum",
@@ -52,6 +58,12 @@ export class TxLandingService {
       Codex: "Codex",
       Sonic: "Sonic",
       Worldchain: "Worldchain",
+      Sei: "Sei",
+      BNB: "BNB",
+      XDC: "XDC",
+      HyperEVM: "HyperEVM",
+      Ink: "Ink",
+      Plume: "Plume",
     },
   } satisfies { [K in Network]: { [key in keyof EvmDomains]: string } };
 
