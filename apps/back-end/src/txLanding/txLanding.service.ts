@@ -1,13 +1,19 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { v4 as uuid } from "uuid";
-import { TxLandingClient, TxStatus, TransactionParams, SolanaTxType } from "@stable-io/tx-landing-client";
+import { TxLandingClient, TxStatus, TransactionParams } from "@stable-io/tx-landing-client";
 import { encoding, pollUntil } from "@stable-io/utils";
 import { ConfigService } from "../config/config.service.js";
 import { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
-import { TransferGaslessMessage } from "@stable-io/cctp-sdk-cctpr-solana";
+import {
+  type TransactionMessage,
+  type TransactionMessageWithFeePayer,
+  type TransactionMessageWithDurableNonceLifetime,
+  compileTransaction,
+  ReadonlyUint8Array,
+} from "@solana/kit";
 
 type GetTransactionStatusResponse = Awaited<
   ReturnType<TxLandingClient["getTransactionStatus"]>
@@ -24,6 +30,11 @@ type Some<T, U extends T> = [...(T | U)[]];
 type ConfirmedTransactionStatusResponse = GetTransactionStatusResponse & {
   statuses: Some<TransactionStatus, ConfirmedTransactionStatus>;
 };
+
+type TransferGaslessMessage = 
+  TransactionMessage & 
+  TransactionMessageWithFeePayer & 
+  TransactionMessageWithDurableNonceLifetime;
 
 @Injectable()
 export class TxLandingService {
@@ -82,8 +93,8 @@ export class TxLandingService {
 
     transactionParams.txRequests = domain === "Solana" ? [
         {
-          type: SolanaTxType.LEGACY,
-          serializedTx: Uint8Array.from("")
+          type: "legacy",
+          serializedTx: compileTransaction(txDetails as TransferGaslessMessage).messageBytes as ReadonlyUint8Array,
         },
       ] as TransactionParams[] : [
         {

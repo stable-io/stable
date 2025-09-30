@@ -5,6 +5,7 @@ import type {
   Percentage,
   Usdc,
   EvmDomains,
+  LoadedDomain,
 } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
@@ -16,7 +17,6 @@ import type {
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CctpR as EvmCctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CctpR as SolanaCctpR } from "@stable-io/cctp-sdk-cctpr-solana";
-import type { TransferGaslessMessage, TransferMessage } from "@stable-io/cctp-sdk-cctpr-solana";
 import { ContractTx, EvmAddress, EvmClient } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
@@ -53,10 +53,10 @@ export class CctpRService {
     private readonly blockchainClientService: BlockchainClientService,
   ) {}
 
-  public contractAddress<D extends keyof EvmDomains>(domain: D): EvmAddress {
+  public contractAddress<D extends LoadedDomain>(domain: D): EvmAddress | SolanaAddress {
     const addr = cctprContractAddressOf(this.configService.network, domain);
     if (!addr) throw new Error("CCTPR Address Not Found");
-    return new EvmAddress(addr);
+    return domain === 'Solana' ? new SolanaAddress(addr) : new EvmAddress(addr);
   }
 
   public async composeGaslessTransferMessage(
@@ -70,7 +70,7 @@ export class CctpRService {
       const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;
       return cctpr.composeGaslessTransferMessage(
         quoteRequest.targetDomain,
-        this.contractAddress(quoteRequest.sourceDomain),
+        this.contractAddress(quoteRequest.sourceDomain) as EvmAddress,
         { amount: quoteRequest.amount, type: "in" },
         quoteRequest.recipient.toUniversalAddress(),
         quoteRequest.gasDropoff as TODO,
