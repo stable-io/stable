@@ -3,11 +3,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { readFileSync, writeFileSync } from 'fs';
-import { Network } from '@stable-io/cctp-sdk-definitions';
-import { getEnv, getNetwork } from './env.js';
-import { KeyPairSigner } from '@solana/kit';
-import { loadKeypairFromFile } from './utils.js';
+import { readFileSync, writeFileSync } from "node:fs";
+import { Network } from "@stable-io/cctp-sdk-definitions";
+import { KeyPairSigner } from "@solana/kit";
+import { loadKeypairFromFile } from "./utils.js";
 
 export type DeployAccountType = "cctpr_buffer" | "cctpr_program" | "cctpr_deployer";
 
@@ -22,11 +21,11 @@ export interface DeploymentConfig {
 
 export function readJsonFile(filePath: string): DeploymentConfig {
   try {
-    const fileContent = readFileSync(filePath, 'utf-8');
+    const fileContent = readFileSync(filePath, "utf8");
     return JSON.parse(fileContent);
   } catch (error) {
     console.error(`Error reading JSON file: ${error}`);
-    process.exit(1);
+    throw error;
   }
 }
 
@@ -40,7 +39,7 @@ export function getPrivateKeyFilename(environment: Network, account: DeployAccou
 }
 
 export function saveJsonFile(filePath: string, data: DeploymentConfig) {
-  writeFileSync(filePath, JSON.stringify(data, null, 2));
+  writeFileSync(filePath, JSON.stringify(data, undefined, 2));
 }
 
 export function getDeploymentConfig(network: Network) {

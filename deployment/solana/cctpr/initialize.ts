@@ -12,7 +12,7 @@ import { assertSuccess, createAndSendTx, waitForInput } from "./src/utils.js";
 import { chunk } from "@stable-io/map-utils";
 import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
 import { getNetwork } from "./src/env.js";
-import { getDeploymentConfig, loadDeployerKeyPair } from "./src/deploy_config.js";
+import { getDeploymentConfig, loadDeployerKeyPair } from "./src/deployConfig.js";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 
 const feeAdjustments = {
@@ -47,7 +47,7 @@ async function initializeCctpr(
   const initTx = await assertSuccess(createAndSendTx(client, [initIx], owner, [owner]));
   console.info("Initialize transaction sent:", initTx);
 
-  const domains = domainsOf("Evm").filter(domain => wormholeChainIdOf(network,domain) !== 0);
+  const domains = domainsOf("Evm").filter(domain => wormholeChainIdOf(network, domain) !== 0);
   const registerIxs = await Promise.all(
     domains.map(domain => cctprGovernance.composeRegisterChainIx(domain)),
   );
@@ -98,7 +98,7 @@ async function main() {
   const answer = await waitForInput();
   if (answer !== "yes") {
     console.error("Aborting...");
-    process.exit(1);
+    return;
   }
 
   await initializeCctpr(

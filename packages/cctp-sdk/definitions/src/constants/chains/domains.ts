@@ -30,7 +30,7 @@ export const domains = [
   "HyperEVM",
   "Domain20",
   "Ink",
-  "Plume"
+  "Plume",
 ] as const;
 
 export type ExpandedDomain = typeof domains[number];

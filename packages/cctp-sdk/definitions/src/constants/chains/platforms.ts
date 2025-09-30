@@ -43,7 +43,7 @@ export const platformDomainEntries = [[
   "Unknown", [
     "Domain15",
     "Domain20",
-  ]]
+  ]],
 ] as const;
 
 export const platforms = deepReadonly(column(platformDomainEntries, 0));

@@ -10,7 +10,7 @@ import { KeyPairSigner } from "@solana/kit";
 import { assertSuccess, createAndSendTx } from "./src/utils.js";
 import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
 import { getNetwork } from "./src/env.js";
-import { getDeploymentConfig, loadDeployerKeyPair } from "./src/deploy_config.js";
+import { getDeploymentConfig, loadDeployerKeyPair } from "./src/deployConfig.js";
 
 async function setFeeRecipient(
   network: Network,
