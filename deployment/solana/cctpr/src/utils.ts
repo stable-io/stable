@@ -40,7 +40,9 @@ export async function createAndSendTx(
   );
 }
 
-export const assertSuccess = async (txResult: Promise<TransactionMetadata>) => {
+export async function assertSuccess(
+  txResult: Promise<TransactionMetadata>
+): Promise<TransactionMetadata> {
   try {
     return await txResult;
   }
