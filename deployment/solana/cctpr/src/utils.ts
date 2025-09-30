@@ -41,7 +41,7 @@ export async function createAndSendTx(
 }
 
 export async function assertSuccess(
-  txResult: Promise<TransactionMetadata>
+  txResult: Promise<TransactionMetadata>,
 ): Promise<TransactionMetadata> {
   try {
     return await txResult;
@@ -66,7 +66,7 @@ export async function loadKeypairFromFile(
 }
 
 export async function waitForInput(): Promise<string> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
       process.stdin.resume();
       process.stdin.once("data", (data) => {
           process.stdin.pause();

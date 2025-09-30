@@ -11,7 +11,7 @@ import {
   PriorityFeePolicy,
 } from "./src/fees.js";
 import { getNetwork, getRpcUrl } from "./src/env.js";
-import { getDeploymentFilename, getDeploymentConfig, setDeploymentConfig } from "./src/deploy_config.js";
+import { getDeploymentFilename, getDeploymentConfig, setDeploymentConfig } from "./src/deployConfig.js";
 
 const connectionCommitmentLevel = (
   process.env["solana_commitment"] || "confirmed"
@@ -22,11 +22,11 @@ export type AnalyzeFeesResult = {
   high: number;
   normal: number;
   low: number;
-}
+};
 
 export async function analyzeFees(
   connection: Connection,
-  lockedWritableAccounts: PublicKey[]
+  lockedWritableAccounts: PublicKey[],
 ): Promise<AnalyzeFeesResult | undefined> {
   const sortedList = await getSortedPrioritizationFeeList(connection, lockedWritableAccounts);
   if (sortedList.length === 0) {
@@ -50,14 +50,14 @@ async function main() {
       console.info(`\nNo prioritization fees found in recent blocks.`);
       console.info(`${DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS} microLamports will be used.`);
     }
-    const prioritization_fee = result?.max ?? DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS; 
+    const prioritization_fee = result?.max ?? DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS;
     setDeploymentConfig(network, { prioritization_fee });
     console.info(`Saved fee to ${configFile}: ${prioritization_fee} microLamports`);
   } else {
     const result = await analyzeFees(connection, lockedWritableAccounts);
     if (!result) {
-      console.info(`\nNo prioritization fees found in recent blocks. Use either `);
-      console.info(`   - ${DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS} as minimum recommended value, or `);
+      console.info(`\nNo prioritization fees found in recent blocks. Use either`);
+      console.info(`   - ${DEFAULT_COMPUTE_BUDGET_MICROLAMPORTS} as minimum recommended value, or`);
       console.info(`   - "analyze-fees <account1> <account2> ..." to analyze specific accounts`);
       return;
     }
