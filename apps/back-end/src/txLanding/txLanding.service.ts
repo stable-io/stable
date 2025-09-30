@@ -1,11 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { v4 as uuid } from "uuid";
-import { TxLandingClient, TxStatus } from "@stable-io/tx-landing-client";
+import { TxLandingClient, TxStatus, TransactionParams, SolanaTxType } from "@stable-io/tx-landing-client";
 import { encoding, pollUntil } from "@stable-io/utils";
 import { ConfigService } from "../config/config.service.js";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
+import { TransferGaslessMessage } from "@stable-io/cctp-sdk-cctpr-solana";
 
 type GetTransactionStatusResponse = Awaited<
   ReturnType<TxLandingClient["getTransactionStatus"]>
@@ -39,6 +41,7 @@ export class TxLandingService {
       Codex: "Codex",
       Sonic: "Sonic",
       Worldchain: "Worldchain",
+      Solana: "Solana",
     },
     Mainnet: {
       Ethereum: "Ethereum",
@@ -52,8 +55,9 @@ export class TxLandingService {
       Codex: "Codex",
       Sonic: "Sonic",
       Worldchain: "Worldchain",
+      Solana: "Solana",
     },
-  } satisfies { [K in Network]: { [key in keyof EvmDomains]: string } };
+  } satisfies { [K in Network]: { [key in LoadedDomain]: string } };
 
   private readonly client!: TxLandingClient;
   constructor(private readonly configService: ConfigService) {
@@ -64,23 +68,30 @@ export class TxLandingService {
   }
 
   public async sendTransaction(
-    to: EvmAddress,
-    domain: keyof EvmDomains,
-    txDetails: ContractTx,
+    to: EvmAddress | SolanaAddress,
+    domain: LoadedDomain,
+    txDetails: ContractTx | TransferGaslessMessage,
   ): Promise<`0x${string}`> {
     const traceId = uuid();
     const transactionParams = {
       traceId,
       chain: this.toChain(domain),
-      txRequests: [
-        {
-          to: to.toString(),
-          value: txDetails.value?.toUnit("atomic") ?? 0n,
-          data: encoding.hex.encode(txDetails.data, true),
-        },
-      ],
+      txRequests: [] as TransactionParams[],
       network: this.mappedNetwork(),
     };
+
+    transactionParams.txRequests = domain === "Solana" ? [
+        {
+          type: SolanaTxType.LEGACY,
+          serializedTx: Uint8Array.from("")
+        },
+      ] as TransactionParams[] : [
+        {
+          to: to.toString(),
+          value: (txDetails as ContractTx).value?.toUnit("atomic") ?? 0n,
+          data: encoding.hex.encode((txDetails as ContractTx).data, true),
+        },
+      ] as TransactionParams[];
 
     this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
 
@@ -138,7 +149,7 @@ export class TxLandingService {
     return match ? (match[0].toLowerCase() as `0x${string}`) : undefined;
   }
 
-  private toChain(domain: keyof EvmDomains): string {
+  private toChain(domain: LoadedDomain): string {
     const chain =
       this.cctpSdkDomainsToChains[this.configService.network][domain];
     if (!chain) {

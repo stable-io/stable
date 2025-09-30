@@ -68,9 +68,10 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
     type: String,
     format: "hex",
     pattern: "^0x[a-fA-F0-9]{130}$",
+    required: false,
   })
   @IsSignature()
-  permit2Signature!: ParsedSignature;
+  permit2Signature?: ParsedSignature;
 
   /**
    * User's permit data including signature, value, and deadline
@@ -84,4 +85,19 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   @Type(() => PermitDto)
   @ValidatePermitSignature()
   permit?: PermitDto;
+
+  /**
+   * Deadline as string representation of bigint, used for Solana gasless transfers
+   * @example "1704067200"
+   */
+  @ApiProperty({
+    type: String,
+    description: "Deadline as string representation of bigint",
+    required: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    return BigInt(value);
+  })
+  deadline?: bigint;
 }

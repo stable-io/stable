@@ -35,6 +35,7 @@ import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 import { Conversion } from "@stable-io/amount";
 import { SupportedEvmDomain } from "../common/types";
+import { TransferGaslessMessage } from "@stable-io/cctp-sdk-cctpr-solana";
 
 @Injectable()
 export class GaslessTransferService {
@@ -101,21 +102,20 @@ export class GaslessTransferService {
       permit2Signature,
       permit,
     } = request;
-    const gaslessTxDetails = this.cctpRService.gaslessTransferTx(
+    const gaslessTxDetails = await this.cctpRService.gaslessTransferTx(
       quoteRequest,
-      permit2GaslessData,
-      permit2Signature,
       gaslessFee,
+      { permit2GaslessData, permit2Signature: permit2Signature! }
     );
 
     const txDetails = quoteRequest.permit2PermitRequired
       ? this.multiCallWithPermit(
-          gaslessTxDetails,
+          gaslessTxDetails as ContractTx,
           // @note: permitSignature is guaranteed to be present in this case by validation
           permit!,
           quoteRequest,
         )
-      : gaslessTxDetails;
+      : gaslessTxDetails as ContractTx;
 
     const toAddress = quoteRequest.permit2PermitRequired
       ? new EvmAddress(multicall3Address)
@@ -131,11 +131,28 @@ export class GaslessTransferService {
   }
 
   public async initiateSolanaGaslessTransfer(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     request: RelayRequestDto<"Solana">,
   ): Promise<RelayTx> {
-    await Promise.resolve();
-    return { hash: "0x1234567890abcdef" };
+    const {
+      jwt: { quoteRequest, gaslessFee },
+      deadline,
+    } = request;
+    const gaslessTxDetails = await this.cctpRService.gaslessTransferTx(
+      quoteRequest,
+      gaslessFee,
+      { deadline: deadline! }
+    ) as TransferGaslessMessage;
+
+    const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
+
+    const txHash = await this.txLandingService.sendTransaction(
+      toAddress,
+      quoteRequest.sourceDomain,
+      gaslessTxDetails,
+    );
+
+
+    return { hash: txHash };
   }
 
   private async getPricesForRequest(

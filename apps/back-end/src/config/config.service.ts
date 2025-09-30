@@ -55,6 +55,14 @@ export class ConfigService {
     return this.env.getOrThrow("TX_LANDING_URL");
   }
 
+  public get solanaRelayerAddress(): EnvironmentVariables["SOLANA_RELAYER_ADDRESS"] {
+    return this.env.getOrThrow("SOLANA_RELAYER_ADDRESS");
+  }
+
+  public get nonceAccount(): EnvironmentVariables["NONCE_ACCOUNT"] {
+    return this.env.getOrThrow("NONCE_ACCOUNT");
+  }
+
   public getRpcUrl<D extends SupportedDomain<Network>>(domain: D): string | undefined {
     return this.rpcUrlConfig[this.network][domain];
   }

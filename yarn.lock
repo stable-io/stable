@@ -6707,7 +6707,7 @@ __metadata:
     "@stable-io/cctp-sdk-definitions": "workspace:^"
     "@stable-io/cctp-sdk-evm": "workspace:^"
     "@stable-io/cctp-sdk-viem": "workspace:^"
-    "@stable-io/tx-landing-client": "git+ssh://git@github.com:stable-io/transaction-landing#workspace=@stable-io/tx-landing-client&commit=2c71ee0a5aaae9e7e0983eaa33670745fa55ae55"
+    "@stable-io/tx-landing-client": "git+ssh://git@github.com:stable-io/transaction-landing#workspace=@stable-io/tx-landing-client&commit=9b036cebb66c1819e377cacee0ccb112444f9ca0"
     "@stable-io/utils": "workspace:^"
     "@swc/cli": "npm:^0.7.7"
     "@swc/core": "npm:^1.11.31"
@@ -6959,14 +6959,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@stable-io/tx-landing-client@git+ssh://git@github.com:stable-io/transaction-landing#workspace=@stable-io/tx-landing-client&commit=2c71ee0a5aaae9e7e0983eaa33670745fa55ae55":
-  version: 1.0.33
-  resolution: "@stable-io/tx-landing-client@git+ssh://git@github.com:stable-io/transaction-landing#workspace=%40stable-io%2Ftx-landing-client&commit=2c71ee0a5aaae9e7e0983eaa33670745fa55ae55"
+"@stable-io/tx-landing-client@git+ssh://git@github.com:stable-io/transaction-landing#workspace=@stable-io/tx-landing-client&commit=9b036cebb66c1819e377cacee0ccb112444f9ca0":
+  version: 1.1.5
+  resolution: "@stable-io/tx-landing-client@git+ssh://git@github.com:stable-io/transaction-landing#workspace=%40stable-io%2Ftx-landing-client&commit=9b036cebb66c1819e377cacee0ccb112444f9ca0"
   dependencies:
     "@grpc/grpc-js": "npm:^1.13.3"
     ts-proto: "npm:^2.7.0"
     typescript: "npm:^5.8.3"
-  checksum: 10c0/80e2ab8edee9aa7abd2e75853b487deef510f524b8416ec96483ff267a6f1baf18f714d6406138a29acf029507c5600b30335a201897a8d39a8a4038f550c77f
+  checksum: 10c0/d971a29221affc17d5ad4949895e6e187bccc26adcdb8f24f5eb602a24fdcef3d057cc53bed43702cb44ce4be04e8ae6d39a9d6cb13bbaa82b2cdafec81ccc85
   languageName: node
   linkType: hard
 
