@@ -134,23 +134,16 @@ export class GaslessTransferService {
     request: RelayRequestDto<"Solana">,
   ): Promise<RelayTx> {
     const {
-      jwt: { quoteRequest, gaslessFee },
-      deadline,
+      jwt: { quoteRequest },
+      serializedTxBase64,
     } = request;
-    const gaslessTxDetails = await this.cctpRService.gaslessTransferTx(
-      quoteRequest,
-      gaslessFee,
-      { deadline: deadline! }
-    ) as TransferGaslessMessage;
 
     const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
-
     const txHash = await this.txLandingService.sendTransaction(
       toAddress,
       quoteRequest.sourceDomain,
-      gaslessTxDetails,
+      serializedTxBase64!,
     );
-
 
     return { hash: txHash };
   }

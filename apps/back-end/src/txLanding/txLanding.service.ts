@@ -7,13 +7,6 @@ import { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
-import {
-  type TransactionMessage,
-  type TransactionMessageWithFeePayer,
-  type TransactionMessageWithDurableNonceLifetime,
-  compileTransaction,
-  ReadonlyUint8Array,
-} from "@solana/kit";
 
 type GetTransactionStatusResponse = Awaited<
   ReturnType<TxLandingClient["getTransactionStatus"]>
@@ -31,10 +24,7 @@ type ConfirmedTransactionStatusResponse = GetTransactionStatusResponse & {
   statuses: Some<TransactionStatus, ConfirmedTransactionStatus>;
 };
 
-type TransferGaslessMessage = 
-  TransactionMessage & 
-  TransactionMessageWithFeePayer & 
-  TransactionMessageWithDurableNonceLifetime;
+type SerializedTxBase64 = string; 
 
 @Injectable()
 export class TxLandingService {
@@ -81,7 +71,7 @@ export class TxLandingService {
   public async sendTransaction(
     to: EvmAddress | SolanaAddress,
     domain: LoadedDomain,
-    txDetails: ContractTx | TransferGaslessMessage,
+    txDetails: ContractTx | SerializedTxBase64,
   ): Promise<`0x${string}`> {
     const traceId = uuid();
     const transactionParams = {
@@ -94,7 +84,7 @@ export class TxLandingService {
     transactionParams.txRequests = domain === "Solana" ? [
         {
           type: "legacy",
-          serializedTx: compileTransaction(txDetails as TransferGaslessMessage).messageBytes as ReadonlyUint8Array,
+          serializedTx: Buffer.from(txDetails as SerializedTxBase64, 'base64'),
         },
       ] as TransactionParams[] : [
         {

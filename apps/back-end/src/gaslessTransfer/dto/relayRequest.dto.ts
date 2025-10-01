@@ -60,6 +60,8 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   @IsSignedJwt()
   jwt!: JwtPayloadDto<SourceDomain>;
 
+  /// ------------------- Evm specific fields -------------------
+
   /**
    * User's signature of the permit2 message
    * @example "0x1234567890abcdef..."
@@ -86,6 +88,8 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   @ValidatePermitSignature()
   permit?: PermitDto;
 
+  /// ------------------- Solana specific fields -------------------
+
   /**
    * Deadline as string representation of bigint, used for Solana gasless transfers
    * @example "1704067200"
@@ -100,4 +104,13 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
     return BigInt(value);
   })
   deadline?: bigint;
+
+  @ApiProperty({
+    type: String,
+    format: "base64",
+    required: false,
+    description: 'Base64 serialized transaction for Solana gasless transfers',
+  })
+  @IsOptional()
+  serializedTxBase64?: string;
 }
