@@ -135,14 +135,14 @@ export class GaslessTransferService {
   ): Promise<RelayTx> {
     const {
       jwt: { quoteRequest },
-      serializedTxBase64,
+      serializedTx,
     } = request;
 
     const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
     const txHash = await this.txLandingService.sendTransaction(
       toAddress,
       quoteRequest.sourceDomain,
-      serializedTxBase64!,
+      serializedTx!,
     );
 
     return { hash: txHash };

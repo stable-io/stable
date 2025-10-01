@@ -24,7 +24,7 @@ type ConfirmedTransactionStatusResponse = GetTransactionStatusResponse & {
   statuses: Some<TransactionStatus, ConfirmedTransactionStatus>;
 };
 
-type SerializedTxBase64 = string; 
+type SerializedTx = string; 
 
 @Injectable()
 export class TxLandingService {
@@ -71,7 +71,7 @@ export class TxLandingService {
   public async sendTransaction(
     to: EvmAddress | SolanaAddress,
     domain: LoadedDomain,
-    txDetails: ContractTx | SerializedTxBase64,
+    txDetails: ContractTx | SerializedTx,
   ): Promise<`0x${string}`> {
     const traceId = uuid();
     const transactionParams = {

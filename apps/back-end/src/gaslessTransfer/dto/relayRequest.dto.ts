@@ -112,5 +112,5 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
     description: 'Base64 serialized transaction for Solana gasless transfers',
   })
   @IsOptional()
-  serializedTxBase64?: string;
+  serializedTx?: string;
 }
