@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
+import type { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 import {
   usdcContracts,
   evmGasToken,
@@ -34,8 +35,7 @@ import { ExecutionCostService } from "../executionCost/executionCost.service";
 import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 import { Conversion } from "@stable-io/amount";
-import { SupportedEvmDomain } from "../common/types";
-import { TransferGaslessMessage } from "@stable-io/cctp-sdk-cctpr-solana";
+import { SupportedBackendEvmDomain } from "../common/types";
 
 @Injectable()
 export class GaslessTransferService {
@@ -50,7 +50,7 @@ export class GaslessTransferService {
   ) {}
 
   public async quoteEvmGaslessTransfer(
-    request: QuoteRequestDto<SupportedEvmDomain>,
+    request: QuoteRequestDto<SupportedBackendEvmDomain>,
   ): Promise<QuoteDto> {
     const gaslessFee = await this.calculateEvmGaslessFee(request);
 
@@ -58,7 +58,7 @@ export class GaslessTransferService {
 
     try {
       permit2GaslessData =
-        await this.cctpRService.composeGaslessTransferMessage(
+        await this.cctpRService.composeEvmGaslessTransferMessage(
           request,
           gaslessFee,
         );
@@ -90,12 +90,42 @@ export class GaslessTransferService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     request: QuoteRequestDto<"Solana">,
   ): Promise<QuoteDto> {
-    await Promise.resolve();
-    return { jwt: "0x1234567890abcdef" };
+    const gaslessFee = await this.calculateSolanaGaslessFee(request);
+
+    let solanaMessage: SignableEncodedBase64Message | undefined;
+
+    try {
+      solanaMessage =
+        await this.cctpRService.composeSolanaGaslessTransferMessage(
+          request,
+          gaslessFee,
+        );
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) throw error;
+
+      if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
+        solanaMessage = undefined;
+        this.logger.log(
+          `Transfer Amount Less or Equal to 0 After Fees. Amount: ${
+            request.amount
+          }. Gasless Fee: ${gaslessFee}. Request: ${JSON.stringify(request)}`,
+        );
+      } else throw error;
+    }
+
+    const jwtPayload: JwtPayload = {
+      willRelay: solanaMessage !== undefined,
+      solanaMessage,
+      quoteRequest: instanceToPlain(request),
+      gaslessFee: gaslessFee.toUnit("human").toString(),
+    };
+
+    const jwt = await this.jwtService.signAsync(jwtPayload);
+    return { jwt };
   }
 
   public async initiateEvmGaslessTransfer(
-    request: RelayRequestDto<SupportedEvmDomain>,
+    request: RelayRequestDto<SupportedBackendEvmDomain>,
   ): Promise<RelayTx> {
     const {
       jwt: { quoteRequest, permit2GaslessData, gaslessFee },
@@ -159,7 +189,7 @@ export class GaslessTransferService {
   }
 
   private async calculateEvmGaslessFee(
-    request: QuoteRequestDto<SupportedEvmDomain>,
+    request: QuoteRequestDto<SupportedBackendEvmDomain>,
   ): Promise<Usdc> {
     const prices = (await this.getPricesForRequest(request)) as EvmPriceResult;
     const evmGasCostEstimations =

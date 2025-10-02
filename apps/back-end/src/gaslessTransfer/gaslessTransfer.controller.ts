@@ -7,7 +7,7 @@ import {
   RelayResponseDto,
 } from "./dto";
 import { GaslessTransferService } from "./gaslessTransfer.service";
-import { SupportedEvmDomain } from "../common/types";
+import { SupportedBackendEvmDomain } from "../common/types";
 
 @Controller("gasless-transfer")
 export class GaslessTransferController {
@@ -41,7 +41,7 @@ export class GaslessTransferController {
             request as QuoteRequestDto<"Solana">,
           )
         : await this.gaslessTransferService.quoteEvmGaslessTransfer(
-            request as QuoteRequestDto<SupportedEvmDomain>,
+            request as QuoteRequestDto<SupportedBackendEvmDomain>,
           );
     return { data };
   }
@@ -69,7 +69,7 @@ export class GaslessTransferController {
             request as RelayRequestDto<"Solana">,
           )
         : await this.gaslessTransferService.initiateEvmGaslessTransfer(
-            request as RelayRequestDto<SupportedEvmDomain>,
+            request as RelayRequestDto<SupportedBackendEvmDomain>,
           );
     return { data };
   }

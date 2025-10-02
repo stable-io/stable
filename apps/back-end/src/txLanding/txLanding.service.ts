@@ -84,7 +84,7 @@ export class TxLandingService {
     transactionParams.txRequests = domain === "Solana" ? [
         {
           type: "legacy",
-          serializedTx: Buffer.from(txDetails as SerializedTxBase64, 'base64'),
+          serializedTx: Buffer.from(txDetails as SerializedTx, 'base64'),
         },
       ] as TransactionParams[] : [
         {

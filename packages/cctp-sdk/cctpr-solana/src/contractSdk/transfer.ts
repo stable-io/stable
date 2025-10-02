@@ -8,6 +8,7 @@ import type {
   Nonce,
   TransactionMessageWithFeePayer,
   TransactionMessageWithDurableNonceLifetime,
+  Base64EncodedBytes,
 } from "@solana/kit";
 import { AccountRole, setTransactionMessageLifetimeUsingDurableNonce } from "@solana/kit";
 import { serialize, deserialize } from "binary-layout";
@@ -92,6 +93,10 @@ export type OnChainRelayQueryResult = RoPair<RoArray<Usdc>, Conversion<typeof Us
 
 export type TransferMessage = TransactionMessage & TransactionMessageWithFeePayer;
 export type TransferGaslessMessage = TransferMessage & TransactionMessageWithDurableNonceLifetime;
+
+export type SignableEncodedBase64Message = {
+  solanaMessage: Base64EncodedBytes;
+};
 
 //TODO: remove this and all its mentions once Sui is actually a legitimate foreign domain
 //  (The code here already supports Sui, but Sui is not yet part of the supported domains of CctpR
