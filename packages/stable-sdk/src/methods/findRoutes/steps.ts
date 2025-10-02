@@ -12,7 +12,8 @@ import { encoding } from "@stable-io/utils";
 import { Network } from "../../types/general.js";
 import { EvmExecutionCosts, getPlatformExecutionCosts } from "../../api/executionCost.js";
 import { TxMsg } from "@stable-io/cctp-sdk-solana";
-export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
+export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer" | "solana-sign-tx";
 
 interface BaseRouteExecutionStep {
   type: StepType;
@@ -44,7 +45,8 @@ export type RouteExecutionStep = SignPermitStep
   | PreApproveStep
   | EvmTransferStep
   | GaslessTransferStep
-  | SolanaTransferStep;
+  | SolanaTransferStep
+  | SolanaSignTxStep;
 
 export const SIGN_PERMIT = "sign-permit" as const;
 export interface SignPermitStep extends BaseRouteExecutionStep {
@@ -76,12 +78,17 @@ export interface SolanaTransferStep extends BaseRouteExecutionStep {
   type: typeof SOLANA_TRANSFER;
 };
 
+export const SOLANA_SIGN_TX = "solana-sign-tx" as const;
+export interface SolanaSignTxStep extends BaseRouteExecutionStep {
+  type: typeof SOLANA_SIGN_TX;
+}
+
 /**
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
 export function getStepType(
-  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg,
+  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg | SignableEncodedBase64Message,
 ): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
@@ -89,6 +96,7 @@ export function getStepType(
   if (isTransferTx(txOrSig)) return EVM_TRANSFER;
   if (isApprovalTx(txOrSig)) return PRE_APPROVE;
   if (isTxMsg(txOrSig)) return SOLANA_TRANSFER;
+  if (isSignableSolanaTx(txOrSig)) return SOLANA_SIGN_TX;
   throw new Error("Unknown Step Type");
 }
 
@@ -188,6 +196,10 @@ export function isTxMsg(subject: unknown): subject is TxMsg {
   return isObjectWithKeys(subject, ["instructions"]);
 }
 
+export function isSignableSolanaTx(subject: unknown): subject is SignableEncodedBase64Message {
+  return isObjectWithKeys(subject, ["solanaMessage"]);
+}
+
 export async function buildTransferStep(
   network: Network,
   corridor: Corridor,
@@ -211,7 +223,7 @@ export async function buildTransferStep(
       return {
         ...sharedTxData,
         costEstimation: {
-          sourceChain: { gasCostEstimation: v1 as bigint + (usesPermit ? permit : 0n) } 
+          sourceChain: { gasCostEstimation: v1 as bigint + (usesPermit ? permit : 0n) },
         },
       };
 

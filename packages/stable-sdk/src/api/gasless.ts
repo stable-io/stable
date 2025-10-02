@@ -23,6 +23,7 @@ import {
 import type { Permit } from "@stable-io/cctp-sdk-evm";
 import type { Network } from "../types/index.js";
 import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./base.js";
+import type { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 export type GetQuoteParams<
   N extends Network,
@@ -50,9 +51,10 @@ export type GetQuoteResponse<
   iat: number;
   exp: number;
   quoteRequest: GetQuoteParams<N, S, D>;
-  permit2GaslessData: Permit2GaslessData;
   gaslessFee: Usdc;
   jwt: string;
+  permit2GaslessData?: Permit2GaslessData;
+  solanaMessage?: SignableEncodedBase64Message;
 } | undefined;
 
 export async function getTransferQuote<
@@ -88,10 +90,11 @@ export async function getTransferQuote<
   return {
     iat: payload.iat as number,
     exp: payload.exp as number,
-    permit2GaslessData: payload.permit2GaslessData as Permit2GaslessData,
     quoteRequest,
     gaslessFee,
     jwt,
+    solanaMessage: quoteParams.sourceChain === "Solana" ? payload.solanaMessage as SignableEncodedBase64Message : undefined,
+    permit2GaslessData: quoteParams.sourceChain === "Solana" ? undefined : payload.permit2GaslessData as Permit2GaslessData,
   };
 }
 
@@ -213,7 +216,7 @@ export async function postTransferRequest(
   const endpoint = apiEndpoint(network)("gasless-transfer/relay");
   const { jwt, permit2Signature, permit } = params;
   const requestBody = {
-    jwt: jwt,
+    jwt,
     permit2Signature: encoding.hex.encode(permit2Signature, true),
     ...(permit
 ? { permit: {

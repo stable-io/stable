@@ -18,7 +18,8 @@ import type { Intent } from "./intent.js";
 import type { TransferProgressEventEmitter } from "../progressEmitter.js";
 import type { TransactionEventEmitter } from "../transactionEmitter.js";
 import type { RouteExecutionStep, GaslessTransferData } from "../methods/findRoutes/steps.js";
-import { TxMsg } from "@stable-io/cctp-sdk-solana";
+import { TxMsg, SignableTx } from "@stable-io/cctp-sdk-solana";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 export type Fee = Usdc | GasTokenOf<LoadedDomain>;
 
@@ -67,9 +68,13 @@ export interface Route<
   // See `executeRouteSteps` where we need to do duck-typing to understand what kind
   // of step we'll be executing.
   workflow: AsyncGenerator<
-    ContractTx | Eip2612Data | Permit2GaslessData | GaslessTransferData,
+    ContractTx |
+    Eip2612Data |
+    Permit2GaslessData |
+    GaslessTransferData |
+    SignableEncodedBase64Message,
     ContractTx | TxMsg,
-    Permit | undefined
+    Permit | SignableTx | undefined
   >;
 
   /**
