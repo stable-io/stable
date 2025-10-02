@@ -31,7 +31,7 @@
     "clean": "rm -rf ./dist"
   },
   "dependencies": {
-    "@solana/kit": "^2.3.0",
+    "@solana/kit": "^3.0.3",
     "@stable-io/cctp-sdk-definitions": "workspace:^",
     "@stable-io/map-utils": "workspace:^",
     "@stable-io/utils": "workspace:^",

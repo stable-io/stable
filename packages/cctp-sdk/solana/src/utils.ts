@@ -3,8 +3,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { Base64EncodedWireTransaction, Instruction, KeyPairSigner, TransactionMessage, TransactionMessageWithFeePayer } from "@solana/kit";
 import {
+  type Base64EncodedWireTransaction,
+  type Instruction,
+  type KeyPairSigner,
+  type TransactionMessage,
+  type TransactionMessageWithFeePayer,
   AccountRole,
   pipe,
   createTransactionMessage,
@@ -15,8 +19,7 @@ import {
   getBase64EncodedWireTransaction,
   compileTransaction,
 } from "@solana/kit";
-import type { Layout, DeriveType } from "binary-layout";
-import { deserialize, serialize } from "binary-layout";
+import { type Layout, type DeriveType, deserialize, serialize } from "binary-layout";
 import { isArray, mapTo } from "@stable-io/map-utils";
 import { encoding, sha256, ed25519, throws, isUint8Array } from "@stable-io/utils";
 import type { RoArray, MaybeArray, MapArrayness, RoPair } from "@stable-io/map-utils";
@@ -30,7 +33,7 @@ import {
   systemProgramId,
 } from "./constants.js";
 import { SolanaAddress } from "./address.js";
-import type { SolanaClient, AccountInfo, TxMsg, SignableTxMsg, TxMsgWithFeePayer } from "./platform.js";
+import type { SolanaClient, AccountInfo, TxMsgWithFeePayer, TxWithLifetime } from "./platform.js";
 import { tokenAccountLayout } from "./layoutItems.js";
 
 const discriminatorTypeConverter = {
@@ -211,7 +214,7 @@ export async function addLifetimeAndSendTx(
   return sendTx(client, txWithLifetime, signers);
 }
 
-async function sendTx(client: SolanaClient, tx: SignableTxMsg, signers: readonly KeyPairSigner[]) {
+async function sendTx(client: SolanaClient, tx: TxWithLifetime, signers: readonly KeyPairSigner[]) {
   const compiledTx = compileTransaction(tx);
   const signedTx = await signTransaction(signers.map(kp => kp.keyPair), compiledTx);
   const wireTx: Base64EncodedWireTransaction = getBase64EncodedWireTransaction(signedTx);
