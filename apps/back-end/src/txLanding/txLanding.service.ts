@@ -7,6 +7,7 @@ import { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
+import { Base64EncodedBytes } from "@solana/kit";
 
 type GetTransactionStatusResponse = Awaited<
   ReturnType<TxLandingClient["getTransactionStatus"]>
@@ -23,8 +24,6 @@ type Some<T, U extends T> = [...(T | U)[]];
 type ConfirmedTransactionStatusResponse = GetTransactionStatusResponse & {
   statuses: Some<TransactionStatus, ConfirmedTransactionStatus>;
 };
-
-type SerializedTx = string; 
 
 @Injectable()
 export class TxLandingService {
@@ -71,7 +70,7 @@ export class TxLandingService {
   public async sendTransaction(
     to: EvmAddress | SolanaAddress,
     domain: LoadedDomain,
-    txDetails: ContractTx | SerializedTx,
+    txDetails: ContractTx | Base64EncodedBytes,
   ): Promise<`0x${string}`> {
     const traceId = uuid();
     const transactionParams = {
@@ -81,18 +80,7 @@ export class TxLandingService {
       network: this.mappedNetwork(),
     };
 
-    transactionParams.txRequests = domain === "Solana" ? [
-        {
-          type: "legacy",
-          serializedTx: Buffer.from(txDetails as SerializedTx, 'base64'),
-        },
-      ] as TransactionParams[] : [
-        {
-          to: to.toString(),
-          value: (txDetails as ContractTx).value?.toUnit("atomic") ?? 0n,
-          data: encoding.hex.encode((txDetails as ContractTx).data, true),
-        },
-      ] as TransactionParams[];
+    transactionParams.txRequests = this.buildTxRequests(to, domain, txDetails);
 
     this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
 
@@ -132,6 +120,55 @@ export class TxLandingService {
       this.logger.error("Failed to send transaction:", error);
       throw error;
     }
+  }
+
+  public async signTransaction(    
+    to: EvmAddress | SolanaAddress,
+    domain: LoadedDomain,
+    txDetails: ContractTx | Base64EncodedBytes,
+    signer?: string,
+  ): Promise<string[]> {
+    const traceId = uuid();
+    const transactionParams = {
+      traceId,
+      chain: this.toChain(domain),
+      txRequests: [] as TransactionParams[],
+      network: this.mappedNetwork(),
+      ...(signer ? { walletQuery: { address: signer } } : {}),
+    };
+
+    transactionParams.txRequests = this.buildTxRequests(to, domain, txDetails);
+
+    this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
+    try {
+      const response = await this.client.signTransaction(transactionParams);
+
+      return response.signatures;
+    } catch (error) {
+      this.logger.error("Failed to send transaction:", error);
+      throw error;
+    }
+  }
+
+  private buildTxRequests(
+    to: EvmAddress | SolanaAddress,
+    domain: LoadedDomain,
+    txDetails: ContractTx | Base64EncodedBytes,
+  ): TransactionParams[] {
+    return domain === "Solana"
+      ? [
+          {
+            type: "legacy",
+            serializedTx: Buffer.from(txDetails as Base64EncodedBytes, 'base64'),
+          },
+        ] as TransactionParams[]
+      : [
+          {
+            to: to.toString(),
+            value: (txDetails as ContractTx).value?.toUnit("atomic") ?? 0n,
+            data: encoding.hex.encode((txDetails as ContractTx).data, true),
+          },
+        ] as TransactionParams[];
   }
 
   /**

@@ -6,7 +6,6 @@ import type {
   Usdc,
   EvmDomains,
   LoadedDomain,
-  PlatformOf,
 } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
@@ -34,10 +33,12 @@ import { ForeignDomain } from "../../../../packages/cctp-sdk/cctpr-solana/dist/c
 import { PublicClient } from "viem";
 import type {
   Base64EncodedBytes,
+  SignatureBytes,
   TransactionMessage,
 } from "@solana/kit";
-import { compileTransaction, ReadonlyUint8Array } from "@solana/kit";
+import { compileTransaction, getTransactionEncoder, ReadonlyUint8Array,  } from "@solana/kit";
 import type { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
+import { TxLandingService } from "../txLanding/txLanding.service";
 
 export type OnchainGaslessQuote = layouts.GaslessQuoteVariant & {
   type: "onChainUsdc";
@@ -55,6 +56,7 @@ export class CctpRService {
   constructor(
     private readonly configService: ConfigService,
     private readonly blockchainClientService: BlockchainClientService,
+    private readonly txLandingService: TxLandingService,
   ) {}
 
   public contractAddress<D extends LoadedDomain>(domain: D): EvmAddress | SolanaAddress {
@@ -93,8 +95,8 @@ export class CctpRService {
     const sender = quoteRequest.sender as SolanaAddress;
     const cctpr = this.contractInterface(quoteRequest.sourceDomain) as SolanaCctpR<Network>;
     const targetDomain = quoteRequest.targetDomain as Exclude<SupportedDomain<Network>, "Solana">;
-    const nonceAccount = new SolanaAddress(await this.configService.nonceAccount);
-    const relayer = new SolanaAddress(await this.configService.solanaRelayerAddress);
+    const nonceAccount = new SolanaAddress(this.configService.nonceAccount);
+    const relayer = new SolanaAddress(this.configService.solanaRelayerAddress);
     const tx = await cctpr.transferGasless(
       targetDomain,
       { amount: quoteRequest.amount, type: "in" },
@@ -110,10 +112,24 @@ export class CctpRService {
       relayer,
       nonceAccount,
     );
-    // WARNING TODO FIXME: We probably need to sign the message here
-    // This way we don't need to check the data at relay
-    const messageBytes = compileTransaction(tx).messageBytes as ReadonlyUint8Array as Uint8Array;
-    const solanaMessage = encoding.base64.encode(messageBytes) as Base64EncodedBytes;
+    const compiledTransaction = compileTransaction(tx);
+    const messageBytes = compiledTransaction.messageBytes as ReadonlyUint8Array as Uint8Array;
+    const signatures = await this.txLandingService.signTransaction(
+      quoteRequest.recipient, 
+      "Solana", 
+      encoding.base64.encode(messageBytes) as Base64EncodedBytes,
+      relayer.toString()
+    );
+
+    const serializedTx = getTransactionEncoder().encode({ 
+      ...compiledTransaction, 
+      signatures: {
+        // TODO: We need to check if this is correct
+        [relayer.toString()]: Buffer.from(signatures[0]!, "base64") as unknown as SignatureBytes,
+      }
+    }) as Uint8Array;
+    const solanaMessage = encoding.base64.encode(serializedTx) as Base64EncodedBytes;
+
     return { solanaMessage };
   }
 
