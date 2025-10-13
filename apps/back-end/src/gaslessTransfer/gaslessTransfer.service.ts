@@ -36,6 +36,7 @@ import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 import { Conversion } from "@stable-io/amount";
 import { SupportedBackendEvmDomain } from "../common/types";
+import { Base64EncodedBytes, decompileTransactionMessage, getCompiledTransactionMessageDecoder } from "@solana/kit";
 
 @Injectable()
 export class GaslessTransferService {
@@ -87,7 +88,6 @@ export class GaslessTransferService {
   }
 
   public async quoteSolanaGaslessTransfer(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     request: QuoteRequestDto<"Solana">,
   ): Promise<QuoteDto> {
     const gaslessFee = await this.calculateSolanaGaslessFee(request);
@@ -165,14 +165,23 @@ export class GaslessTransferService {
   ): Promise<RelayTx> {
     const {
       jwt: { quoteRequest },
-      serializedTx,
+      solanaMsg,
     } = request;
+
+    const msgBytes = Buffer.from((solanaMsg as unknown as SignableEncodedBase64Message).solanaMessage, "base64");
+    const compiledMsg = getCompiledTransactionMessageDecoder().decode(msgBytes);
+    const txMessage = decompileTransactionMessage(compiledMsg);
+    const feePayer = this.configService.solanaRelayerAddress;
+    if (txMessage.feePayer.address !== feePayer.toString())
+      throw new Error("FeePayer mismatch");
+
+    // TODO: more verifications?
 
     const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
     const txHash = await this.txLandingService.sendTransaction(
       toAddress,
       quoteRequest.sourceDomain,
-      serializedTx!,
+      solanaMsg! as Base64EncodedBytes,
     );
 
     return { hash: txHash };

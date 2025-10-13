@@ -16,7 +16,7 @@ import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmit
 import { TxSentEventData } from "../../transactionEmitter.js";
 import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { addLifetimeAndSendTx, SignableTx, TxMsgWithFeePayer } from "@stable-io/cctp-sdk-solana";
-import { compileTransaction, decompileTransactionMessage, getCompiledTransactionMessageDecoder,  partiallySignTransaction } from "@solana/kit";
+import { compileTransaction, decompileTransactionMessage, getCompiledTransactionMessageDecoder, signTransaction } from "@solana/kit";
 import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
@@ -136,7 +136,7 @@ export async function executeRouteSteps<
         const compiledMsg = getCompiledTransactionMessageDecoder().decode(msgBytes);
         const txMessage = decompileTransactionMessage(compiledMsg);
         const compiledTx = compileTransaction(txMessage);
-        signedTx = await partiallySignTransaction(
+        signedTx = await signTransaction(
           [(signer as SolanaKeyPairSigner).keyPair],
           compiledTx,
         );

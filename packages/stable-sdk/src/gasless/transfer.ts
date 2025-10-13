@@ -10,6 +10,7 @@ import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 import { Intent } from "../types/index.js";
 import { postTransferRequest } from "../api/gasless.js";
 import { GaslessTransferData } from "src/methods/findRoutes/steps.js";
+import { getTransactionEncoder } from "@solana/kit";
 
 export async function* transferWithGaslessRelay<
   N extends Network,
@@ -34,19 +35,23 @@ export async function* transferWithGaslessRelay<
   any,
   any
 > {
-  const usdcAddress = new EvmAddress(usdcContracts.contractAddressOf[network][intent.sourceChain]);
-  const permit2Addr = new EvmAddress(permit2Address);
-  const maxUint256Usdc = usdc(2n ** 256n - 1n, "atomic");
   const args: any = {};
-
   if (permit2RequiresAllowance) {
+    const usdcAddress = new EvmAddress(
+      usdcContracts.contractAddressOf[network][intent.sourceChain],
+    );
+    const permit2Addr = new EvmAddress(permit2Address);
+    const maxUint256Usdc = usdc(2n ** 256n - 1n, "atomic");
     args.permit = yield composePermitMsg(network)(
       client, usdcAddress, intent.sender as EvmAddress, permit2Addr, maxUint256Usdc,
     );
   }
 
-  if (intent.sourceChain === "Solana")
-    args.solanaMessage = yield opts.solanaMessage!;
+  if (intent.sourceChain === "Solana") {
+    const signedMsg = yield opts.solanaMessage!;
+    const encodedMsg = getTransactionEncoder().encode(signedMsg) as Uint8Array;
+    args.solanaMessage = encoding.base64.encode(encodedMsg);
+  }
   else
     args.permit2Signature = (yield opts.permit2GaslessData!).signature;
 
@@ -55,7 +60,7 @@ export async function* transferWithGaslessRelay<
   return {
     txHash,
     ...(intent.sourceChain === "Solana" ?
-      { solanaMessage: opts.solanaMessage } :
+      { solanaMessage: args.solanaMessage } :
       { permit2GaslessData: opts.permit2GaslessData,
         permit2Signature: encoding.hex.encode(args.permit2Signature, true),
         ...args.permit }
