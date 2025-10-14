@@ -11,14 +11,14 @@ import { createKeyPairSignerFromBytes, KeyPairSigner } from "@solana/kit";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import process from "node:process";
 import { Conversion } from "@stable-io/amount";
 import { assertSuccess } from "./src/utils.js";
 import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
+import { getDeploymentConfig, loadDeployerKeyPair } from "./src/deployConfig.js";
+import { getNetwork } from "./src/env.js";
 
 async function transfer(
   network: Network,
-  rpcUrl: string,
   cctprProgramId: SolanaAddress,
   oracleProgramId: SolanaAddress,
   user: KeyPairSigner,
@@ -77,22 +77,18 @@ export async function loadKeypairFromFile(
 }
 
 async function main() {
-  const rpcUrl = "https://api.devnet.solana.com";
-  const cctprProgramId = new SolanaAddress("CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM");
+  const network = getNetwork();
+  const config = getDeploymentConfig(network);
+  const cctprProgramId = new SolanaAddress(config.cctpr_program);
   const oracleProgramId = new SolanaAddress("xpo8sHWHkfS6NpVsYwE2t5pTvvdTHSdWUdxh2RtsT1H");
+  const deployer = await loadDeployerKeyPair(network);
   const dest = new EvmAddress("0x6862bE596a57E92c9FEB36f95582F6409d9B6cf9");
-  const ownerKeyFile = process.env["OWNER_WALLET_FILE"];
-  if (ownerKeyFile === undefined) {
-    throw new Error("ENV variable OWNER_WALLET_FILE not set");
-  }
-  const user = await loadKeypairFromFile(ownerKeyFile);
 
   await transfer(
-    "Testnet",
-    rpcUrl,
+    network,
     cctprProgramId,
     oracleProgramId,
-    user,
+    deployer,
     dest,
   );
 }
