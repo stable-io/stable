@@ -111,10 +111,13 @@ export async function buildGaslessRoute<
     workflow: transferWithGaslessRelay(
       client,
       (client as Client<N, P>).network,
-      permit2PermitRequired,
       intent,
-      quote.permit2GaslessData,
       quote.jwt,
+      permit2PermitRequired,
+      {
+        permit2GaslessData: intent.sourceChain === "Solana" ? undefined : quote.permit2GaslessData,
+        solanaMessage: intent.sourceChain === "Solana" ? quote.solanaMessage : undefined,
+      },
     ),
   };
 }

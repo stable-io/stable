@@ -1,11 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { v4 as uuid } from "uuid";
-import { TxLandingClient, TxStatus } from "@stable-io/tx-landing-client";
+import { TxLandingClient, TxStatus, TransactionParams } from "@stable-io/tx-landing-client";
 import { encoding, pollUntil } from "@stable-io/utils";
 import { ConfigService } from "../config/config.service.js";
-import { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
+import { Base64EncodedBytes } from "@solana/kit";
 
 type GetTransactionStatusResponse = Awaited<
   ReturnType<TxLandingClient["getTransactionStatus"]>
@@ -39,6 +41,7 @@ export class TxLandingService {
       Codex: "Codex",
       Sonic: "Sonic",
       Worldchain: "Worldchain",
+      Solana: "Solana",
       Sei: "Sei",
       BNB: "BNB",
       XDC: "XDC",
@@ -58,6 +61,7 @@ export class TxLandingService {
       Codex: "Codex",
       Sonic: "Sonic",
       Worldchain: "Worldchain",
+      Solana: "Solana",
       Sei: "Sei",
       BNB: "BNB",
       XDC: "XDC",
@@ -65,7 +69,7 @@ export class TxLandingService {
       Ink: "Ink",
       Plume: "Plume",
     },
-  } satisfies { [K in Network]: { [key in keyof EvmDomains]: string } };
+  } satisfies { [K in Network]: { [key in LoadedDomain]: string } };
 
   private readonly client!: TxLandingClient;
   constructor(private readonly configService: ConfigService) {
@@ -76,23 +80,19 @@ export class TxLandingService {
   }
 
   public async sendTransaction(
-    to: EvmAddress,
-    domain: keyof EvmDomains,
-    txDetails: ContractTx,
+    to: EvmAddress | SolanaAddress,
+    domain: LoadedDomain,
+    txDetails: ContractTx | Base64EncodedBytes,
   ): Promise<`0x${string}`> {
     const traceId = uuid();
     const transactionParams = {
       traceId,
       chain: this.toChain(domain),
-      txRequests: [
-        {
-          to: to.toString(),
-          value: txDetails.value?.toUnit("atomic") ?? 0n,
-          data: encoding.hex.encode(txDetails.data, true),
-        },
-      ],
+      txRequests: [] as TransactionParams[],
       network: this.mappedNetwork(),
     };
+
+    transactionParams.txRequests = this.buildTxRequests(to, domain, txDetails);
 
     this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
 
@@ -134,6 +134,55 @@ export class TxLandingService {
     }
   }
 
+  public async signTransaction(    
+    to: EvmAddress | SolanaAddress,
+    domain: LoadedDomain,
+    txDetails: ContractTx | Base64EncodedBytes,
+    signer?: string,
+  ): Promise<string[]> {
+    const traceId = uuid();
+    const transactionParams = {
+      traceId,
+      chain: this.toChain(domain),
+      txRequests: [] as TransactionParams[],
+      network: this.mappedNetwork(),
+      ...(signer ? { walletQuery: { address: signer } } : {}),
+    };
+
+    transactionParams.txRequests = this.buildTxRequests(to, domain, txDetails);
+
+    this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
+    try {
+      const response = await this.client.signTransaction(transactionParams);
+
+      return response.signatures;
+    } catch (error) {
+      this.logger.error("Failed to send transaction:", error);
+      throw error;
+    }
+  }
+
+  private buildTxRequests(
+    to: EvmAddress | SolanaAddress,
+    domain: LoadedDomain,
+    txDetails: ContractTx | Base64EncodedBytes,
+  ): TransactionParams[] {
+    return domain === "Solana"
+      ? [
+          {
+            type: "legacy",
+            serializedTx: Buffer.from(txDetails as Base64EncodedBytes, 'base64'),
+          },
+        ] as TransactionParams[]
+      : [
+          {
+            to: to.toString(),
+            value: (txDetails as ContractTx).value?.toUnit("atomic") ?? 0n,
+            data: encoding.hex.encode((txDetails as ContractTx).data, true),
+          },
+        ] as TransactionParams[];
+  }
+
   /**
    * TEMPORARY WORKAROUND: Extracts a valid hex string from malformed API responses.
    * This method should be REMOVED after the transaction-landing team fixes their serialization issue.
@@ -150,7 +199,7 @@ export class TxLandingService {
     return match ? (match[0].toLowerCase() as `0x${string}`) : undefined;
   }
 
-  private toChain(domain: keyof EvmDomains): string {
+  private toChain(domain: LoadedDomain): string {
     const chain =
       this.cctpSdkDomainsToChains[this.configService.network][domain];
     if (!chain) {

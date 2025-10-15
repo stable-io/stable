@@ -1,5 +1,6 @@
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { networks } from "@stable-io/cctp-sdk-definitions";
+import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
 import { plainToInstance } from "class-transformer";
 import {
   IsIn,
@@ -29,6 +30,12 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   @IsString()
   public TX_LANDING_URL!: string;
+
+  @IsString()
+  public SOLANA_RELAYER_ADDRESS!: SolanaAddress;
+
+  @IsString()
+  public NONCE_ACCOUNT!: SolanaAddress;
 }
 
 export const validate = (

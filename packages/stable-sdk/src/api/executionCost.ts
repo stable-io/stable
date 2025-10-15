@@ -2,6 +2,7 @@ import { HTTPCode, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { deserializeBigints, SerializedBigint } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { apiRequest, apiEndpoint, APIResponse } from "./base.js";
+import { SolanaCostEstimation } from "src/methods/findRoutes/steps.js";
 
 export type GetExecutionCostsParams = {
   platform: "Evm" | "Solana";
@@ -21,10 +22,10 @@ type SerializedEvmExecutionCosts = {
 };
 
 export type SolanaExecutionCosts = {
-  v1: bigint;
-  v2: bigint;
-  v1Gasless: bigint;
-  v2Gasless: bigint;
+  v1: SolanaCostEstimation;
+  v2: SolanaCostEstimation;
+  v1Gasless: SolanaCostEstimation;
+  v2Gasless: SolanaCostEstimation;
 };
 
 type SerializedSolanaExecutionCosts = {

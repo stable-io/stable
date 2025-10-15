@@ -20,15 +20,11 @@ import { getNetwork } from "./src/env.js";
 async function transfer(
   network: Network,
   cctprProgramId: SolanaAddress,
-  oracleProgramId: SolanaAddress,
   user: KeyPairSigner,
   dest: EvmAddress,
 ) {
   const client = SolanaKitClient.fromNetworkAndDomain(network, "Solana");
-  const cctpr = new CctpR(network, client, {
-    cctpr: cctprProgramId,
-    oracle: oracleProgramId,
-  });
+  const cctpr = new CctpR(network, client, { cctpr: cctprProgramId });
 
   const mode = "usdc" as string;
   const amount = usdc("0.1");
@@ -80,14 +76,12 @@ async function main() {
   const network = getNetwork();
   const config = getDeploymentConfig(network);
   const cctprProgramId = new SolanaAddress(config.cctpr_program);
-  const oracleProgramId = new SolanaAddress("xpo8sHWHkfS6NpVsYwE2t5pTvvdTHSdWUdxh2RtsT1H");
   const deployer = await loadDeployerKeyPair(network);
   const dest = new EvmAddress("0x6862bE596a57E92c9FEB36f95582F6409d9B6cf9");
 
   await transfer(
     network,
     cctprProgramId,
-    oracleProgramId,
     deployer,
     dest,
   );

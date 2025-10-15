@@ -4,12 +4,13 @@ import { fileURLToPath } from "node:url";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService as NestConfigService } from "@nestjs/config";
 import { plainToInstance } from "class-transformer";
-import type { EvmDomains } from "@stable-io/cctp-sdk-definitions";
+import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
 import type { EnvironmentVariables } from "./env.config";
 import type { SecretsVariables } from "./secrets.config";
 import type { RpcUrlConfig } from "./rpc";
 import { RpcConfigDto, validateRpcConfig } from "./rpc";
+import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 type ConfigVariables = EnvironmentVariables & SecretsVariables;
 
@@ -54,7 +55,15 @@ export class ConfigService {
     return this.env.getOrThrow("TX_LANDING_URL");
   }
 
-  public getRpcUrl<D extends keyof EvmDomains>(domain: D): string | undefined {
+  public get solanaRelayerAddress(): EnvironmentVariables["SOLANA_RELAYER_ADDRESS"] {
+    return this.env.getOrThrow("SOLANA_RELAYER_ADDRESS");
+  }
+
+  public get nonceAccount(): EnvironmentVariables["NONCE_ACCOUNT"] {
+    return this.env.getOrThrow("NONCE_ACCOUNT");
+  }
+
+  public getRpcUrl<D extends SupportedDomain<Network>>(domain: D): string | undefined {
     return this.rpcUrlConfig[this.network][domain];
   }
 
@@ -90,13 +99,13 @@ export class ConfigService {
   }
 
   private getDefaultRpcConfig(): RpcUrlConfig {
-    const evmDomains = domainsOf("Evm");
+    const domains = ["Solana"].concat(domainsOf("Evm"));
     return {
       Mainnet: Object.fromEntries(
-        evmDomains.map((domain) => [domain, undefined]),
+        domains.map((domain) => [domain, undefined]),
       ),
       Testnet: Object.fromEntries(
-        evmDomains.map((domain) => [domain, undefined]),
+        domains.map((domain) => [domain, undefined]),
       ),
     };
   }

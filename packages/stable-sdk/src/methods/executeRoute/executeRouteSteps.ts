@@ -11,11 +11,13 @@ import { evmGasToken, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding, TODO } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { TxHash, Hex, SupportedRoute, ViemWalletClient, SolanaKeyPairSigner } from "../../types/index.js";
-import { getStepType, PRE_APPROVE, EVM_TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER } from "../findRoutes/steps.js";
+import { getStepType, PRE_APPROVE, EVM_TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER, SOLANA_SIGN_TX } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { addLifetimeAndSendTx, TxMsgWithFeePayer } from "@stable-io/cctp-sdk-solana";
+import { addLifetimeAndSendTx, SignableTx, TxMsgWithFeePayer } from "@stable-io/cctp-sdk-solana";
+import { compileTransaction, decompileTransactionMessage, getCompiledTransactionMessageDecoder, signTransaction } from "@solana/kit";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
 
@@ -36,7 +38,6 @@ export async function executeRouteSteps<
     while (true) {
       const { value: stepData, done } = await route.workflow.next(permit);
       permit = undefined;
-
       const stepType = getStepType(stepData);
 
       switch (stepType) {
@@ -119,14 +120,26 @@ export async function executeRouteSteps<
       if (done) break;
     }
   } else {
+    let signedTx: SignableTx | undefined = undefined;
     while (true) {
       const solanaSigner = signer as SolanaKeyPairSigner;
-      const { value: stepData, done } = await route.workflow.next();
+      const { value: stepData, done } = await route.workflow.next(signedTx);
+      signedTx = undefined;
       const stepType = getStepType(stepData);
       if (stepType === SOLANA_TRANSFER) {
         const transferData = { ...stepData, version: "legacy" } as TxMsgWithFeePayer;
         const tx = await addLifetimeAndSendTx(client, transferData, [solanaSigner]);
         txHashes.push(tx);
+      }
+      else if (stepType === SOLANA_SIGN_TX) {
+        const msgBytes = Buffer.from((stepData as SignableEncodedBase64Message).solanaMessage, "base64");
+        const compiledMsg = getCompiledTransactionMessageDecoder().decode(msgBytes);
+        const txMessage = decompileTransactionMessage(compiledMsg);
+        const compiledTx = compileTransaction(txMessage);
+        signedTx = await signTransaction(
+          [(signer as SolanaKeyPairSigner).keyPair],
+          compiledTx,
+        );
       }
       if (done) break;
     }

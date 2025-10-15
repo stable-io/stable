@@ -1,9 +1,15 @@
 import { Module } from "@nestjs/common";
-import { BlockchainClientModule } from "../blockchainClient/blockchainClient.module";
 import { CctpRService } from "./cctpr.service";
+import { BlockchainClientModule } from "../blockchainClient/blockchainClient.module";
+import { TxLandingModule } from "../txLanding/txLanding.module";
+import { ConfigModule } from "../config/config.module";
 
 @Module({
-  imports: [BlockchainClientModule],
+  imports: [
+    BlockchainClientModule,
+    TxLandingModule,
+    ConfigModule
+  ],
   providers: [CctpRService],
   exports: [CctpRService],
 })

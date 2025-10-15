@@ -27,7 +27,7 @@ export const supportedEvmDomains = [
 
 export const supportedDomains = [...supportedEvmDomains, "Solana"] as const;
 
-export type SupportedEvmDomain = (typeof supportedEvmDomains)[number];
+export type SupportedBackendEvmDomain = (typeof supportedEvmDomains)[number];
 
 export type Domain = (typeof supportedDomains)[number];
 
