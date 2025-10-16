@@ -73,6 +73,9 @@ export async function getTransferQuote<
 
   if (apiResponse.status >= 400) {
     console.error(`GET Quote failed with status ${apiResponse.status}`);
+    for (const msg of apiResponse.value["message"] ?? []) {
+      console.error(msg);
+    }
     return undefined;
   }
 
@@ -139,9 +142,9 @@ function deserializeQuoteRequest<
       responseQuoteParams.sourceDomain as S,
       responseQuoteParams.sender as string,
     ),
-    recipient: new UniversalAddress(
+    recipient: platformAddress(
+      responseQuoteParams.targetDomain as D,
       responseQuoteParams.recipient as string,
-      destinationPlatform,
     ),
     gasDropoff: genericGasToken(responseQuoteParams.gasDropoff as string, "human"),
     corridor: responseQuoteParams.corridor as Corridor,

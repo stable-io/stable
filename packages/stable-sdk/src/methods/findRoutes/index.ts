@@ -114,10 +114,7 @@ function parseIntent<N extends Network, S extends LoadedDomain, D extends Suppor
     sourceChain: userIntent.sourceChain,
     targetChain: userIntent.targetChain,
     sender: platformAddress(userIntent.sourceChain, userIntent.sender),
-    recipient: new UniversalAddress(
-      userIntent.recipient.toString(),
-      platformOf(userIntent.targetChain),
-    ),
+    recipient: platformAddress(userIntent.targetChain, userIntent.recipient),
     amount: parseAmount(userIntent.amount),
     usePermit: userIntent.usePermit ?? true,
     gasDropoffDesired: parseGasDropoff(userIntent),

@@ -190,9 +190,10 @@ export class GaslessTransferService {
   private async getPricesForRequest(
     request: QuoteRequestDto,
   ): Promise<PriceResult> {
+    const { network } = this.configService;
     const prices = await this.oracleService.getPrices(
       [request.sourceDomain],
-      request.sourceDomainNetwork,
+      network,
     );
     return prices[0]!;
   }

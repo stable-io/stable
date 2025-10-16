@@ -48,18 +48,6 @@ export class QuoteRequestDto<
   sourceDomain!: SourceDomain;
 
   /**
-   * The blockchain network for the source domain
-   * @example "Mainnet"
-   */
-  @ApiProperty({
-    enum: networks,
-    description: "The blockchain network to get price information for",
-    default: "Mainnet",
-  })
-  @IsIn(networks)
-  sourceDomainNetwork!: Network;
-
-  /**
    * The target blockchain for the transfer
    * @example "Arbitrum"
    */
