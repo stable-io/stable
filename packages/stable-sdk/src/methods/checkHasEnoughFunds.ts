@@ -14,7 +14,7 @@ import { getUsdcBalance as getUsdcBalanceSolana } from "@stable-io/cctp-sdk-cctp
 import { getUsdcBalance as getUsdcBalanceEvm } from "@stable-io/cctp-sdk-cctpr-evm";
 import { EvmCostEstimation, SOLANA_TRANSFER, SolanaCostEstimation } from "./findRoutes/steps.js";
 import { getDomainPrices, SolanaDomainPrices } from "src/api/oracle.js";
-import { getTotalLamportCost } from "./findRoutes/fees.js";
+import { getTotalSoltCost } from "./findRoutes/fees.js";
 import { LoadedCctprDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 export type CheckHasEnoughFundsDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
@@ -41,10 +41,10 @@ export const $checkHasEnoughFunds =
         network,
         { domain: sourceChain as LoadedDomain, network },
       );
-      totalGasCost = getTotalLamportCost(
+      totalGasCost = getTotalSoltCost(
         domainPrices as SolanaDomainPrices,
         requiredResources as SolanaCostEstimation,
-      );
+      ).toUnit("atomic");
     }
     else
       totalGasCost = route.steps.reduce((acc, step) =>

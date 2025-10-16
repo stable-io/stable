@@ -50,11 +50,12 @@ export class OracleController {
         data: serializeBigints({
           gasTokenPriceAtomicUsdc: priceData.gasTokenPrice.toUnit("atomic"),
           pricePerAccountByteAtomicLamports:
-            priceData.pricePerAccountByte.toUnit("lamports"),
+            priceData.pricePerAccountByte.toUnit("atomic"),
           signaturePriceAtomicLamports:
-            priceData.signaturePrice.toUnit("lamports"),
+            priceData.signaturePrice.toUnit("atomic"),
           computationPriceAtomicMicroLamports:
-            priceData.computationPrice.toUnit("µlamports"),
+            // WARNING: We are essentially truncating the value here.
+            BigInt(priceData.computationPrice.toUnit("µlamports").toFixed(0)),
         }) as PriceDto,
       };
     }

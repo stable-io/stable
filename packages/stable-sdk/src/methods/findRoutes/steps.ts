@@ -222,9 +222,9 @@ export async function buildTransferStep(
     case "v1":
       return {
         ...sharedTxData,
-        costEstimation: {
-          sourceChain: { gasCostEstimation: v1 as bigint + (usesPermit ? permit : 0n) },
-        },
+        costEstimation: platform === "Evm" ?
+          { sourceChain: { gasCostEstimation: v1 as bigint + (usesPermit ? permit : 0n) } } :
+          { sourceChain: v1 as SolanaCostEstimation },
       };
 
     case "v2Direct":
@@ -232,7 +232,7 @@ export async function buildTransferStep(
         ...sharedTxData,
         costEstimation: platform === "Evm" ?
           { sourceChain: { gasCostEstimation: v2 as bigint + (usesPermit ? permit : 0n) } } :
-          { sourceChain: { ...v2 as SolanaCostEstimation } },
+          { sourceChain: v2 as SolanaCostEstimation },
       };
 
     case "avaxHop":
@@ -241,7 +241,7 @@ export async function buildTransferStep(
         costEstimation: {
           sourceChain: platform === "Evm" ?
             { gasCostEstimation: v2 as bigint + (usesPermit ? permit : 0n) } :
-            { ...v2 as SolanaCostEstimation },
+            v2 as SolanaCostEstimation,
           hopChain: { gasCostEstimation: v1 as bigint },
         },
       };
