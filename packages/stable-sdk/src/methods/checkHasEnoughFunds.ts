@@ -15,6 +15,7 @@ import { getUsdcBalance as getUsdcBalanceEvm } from "@stable-io/cctp-sdk-cctpr-e
 import { EvmCostEstimation, SOLANA_TRANSFER, SolanaCostEstimation } from "./findRoutes/steps.js";
 import { getDomainPrices, SolanaDomainPrices } from "src/api/oracle.js";
 import { getTotalLamportCost } from "./findRoutes/fees.js";
+import { LoadedCctprDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
 export type CheckHasEnoughFundsDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
@@ -22,7 +23,7 @@ export const $checkHasEnoughFunds =
   <N extends "Mainnet" | "Testnet">(
     { getNetwork, getRpcUrl }: CheckHasEnoughFundsDeps<N>,
   ): SDK<N>["checkHasEnoughFunds"] =>
-  async (route: SupportedRoute<N>) => {
+  async <S extends LoadedCctprDomain<N>>(route: SupportedRoute<N, S>) => {
     const { intent: { sourceChain, sender, amount }, fees } = route;
     const network = getNetwork();
     const rpcUrl = getRpcUrl(sourceChain);
@@ -51,12 +52,12 @@ export const $checkHasEnoughFunds =
         BigInt(0),
       );
 
-    const totalGasCostInGasToken = gasTokenOf(sourceChain)(totalGasCost);
+    const totalGasCostInGasToken = gasTokenOf(sourceChain)(totalGasCost, "atomic");
     const requiredBalance = fees.reduce(
       (acc, fee) => isUsdc(fee)
         ? acc // usdc fees are discounted from the amount sent.
         : { ...acc, gasToken: acc.gasToken.add(fee as TODO) },
-        { gasToken: totalGasCostInGasToken, usdc: amount },
+        { gasToken: totalGasCostInGasToken as TODO, usdc: amount },
     );
 
     const [gasTokenBalance, usdcBalance] = client.platform === "Solana"
@@ -71,7 +72,12 @@ export const $checkHasEnoughFunds =
           getUsdcBalanceEvm(client, sourceChain, new EvmAddress(sender as EvmAddressish)),
         ]);
 
+    const availableBalance = { gasToken: gasTokenBalance as TODO, usdc: usdcBalance };
     const hasEnoughUsdc = usdcBalance.ge(requiredBalance.usdc);
     const hasEnoughGas = gasTokenBalance.ge(requiredBalance.gasToken as TODO);
-    return hasEnoughUsdc && hasEnoughGas;
+    return {
+      hasEnoughBalance: hasEnoughUsdc && hasEnoughGas,
+      requiredBalance,
+      availableBalance,
+    };
 };

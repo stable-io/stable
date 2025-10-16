@@ -73,7 +73,9 @@ export async function getTransferQuote<
 
   if (apiResponse.status >= 400) {
     console.error(`GET Quote failed with status ${apiResponse.status}`);
-    for (const msg of apiResponse.value["message"] ?? []) {
+    const message = apiResponse.value["message"] ?? [];
+    const messages = typeof message === "string" ? [message] : message;
+    for (const msg of messages) {
       console.error(msg);
     }
     return undefined;

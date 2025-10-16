@@ -59,9 +59,11 @@ const routes = await sdk.findRoutes(intent);
 const selectedRoutes = [routes.cheapest];
 
 for (const route of selectedRoutes) {
-  const hasBalance = await sdk.checkHasEnoughFunds(route);
-  if (!hasBalance) {
+  const balance = await sdk.checkHasEnoughFunds(route);
+  if (!balance.hasEnoughBalance) {
     console.info(`${route.intent.sender} doesn't have enough balance to pay for the transfer`);
+    console.info(`Required balance: ${stringify(balance.requiredBalance)}`);
+    console.info(`Available balance: ${stringify(balance.availableBalance)}`);
     continue;
   }
 
@@ -121,7 +123,7 @@ function logRouteInfo(route: Route<any, any, any>) {
 }
 
 function stringify(obj: any) {
-  return JSON.stringify(obj, bigintReplacer);
+  return JSON.stringify(obj, bigintReplacer, 2);
 }
 
 function getTestnetScannerTxUrl(

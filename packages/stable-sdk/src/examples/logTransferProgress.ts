@@ -45,8 +45,8 @@ console.info(`Recipient: ${recipient}`);
 const selectedRoutes = [routes.all[3]];
 
 for (const route of selectedRoutes) {
-  const hasBalance = await sdk.checkHasEnoughFunds(route);
-  if (!hasBalance) {
+  const balance = await sdk.checkHasEnoughFunds(route);
+  if (!balance.hasEnoughBalance) {
     console.info(`${route.intent.sender} doesn't have enough balance to pay for the transfer`);
     continue;
   }
