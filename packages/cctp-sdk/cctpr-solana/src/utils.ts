@@ -34,8 +34,8 @@ export async function getUsdcAtaFromUser(
     const solanaAddress = new SolanaAddress(userAddress);
     const accountInfo = await client.getAccountInfo(solanaAddress);
     if (!accountInfo)
-        throw new Error("Invalid destination address")
+        throw new Error("Failed to get account info")
     if (!accountInfo.owner.equals(systemProgramId))
-      throw new Error("Solana address should be a normal address, not an ATA")
+      throw new Error("Tried to get an ATA of a non system owned account")
     return findUsdcAta(client.network, solanaAddress);
 }
