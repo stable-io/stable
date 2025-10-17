@@ -24,12 +24,12 @@ const SOLANA_KNOWN_EXECUTION_COSTS = {
     accountBytes: 0n,
   },
   v1Gasless: {    
-    computationUnits: 99_484n, // Using same as v1 for now
+    computationUnits: 99_955n,
     signatures: 2,
     accountBytes: 0n,
   },
   v2Gasless: {
-    computationUnits: 85_471n, // Using same as v2 for now
+    computationUnits: 87_442n,
     signatures: 2,
     accountBytes: 0n,
   },
