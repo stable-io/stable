@@ -13,10 +13,26 @@ const EVM_KNOWN_EXECUTION_COSTS = {
 export type EvmExecutionCosts = typeof EVM_KNOWN_EXECUTION_COSTS;
 
 const SOLANA_KNOWN_EXECUTION_COSTS = {
-  v1: { computationUnits: 160_505n, signatures: 0n, accountBytes: 0n },
-  v2: { computationUnits: 170_148n, signatures: 0n, accountBytes: 0n },
-  v1Gasless: { computationUnits: 179257n, signatures: 0n, accountBytes: 0n },
-  v2Gasless: { computationUnits: 188439n, signatures: 0n, accountBytes: 0n },
+  v1: {    
+    computationUnits: 99_484n,
+    signatures: 1,
+    accountBytes: 0n,
+  },
+  v2: {
+    computationUnits: 85_471n,
+    signatures: 1,
+    accountBytes: 0n,
+  },
+  v1Gasless: {    
+    computationUnits: 99_484n, // Using same as v1 for now
+    signatures: 2,
+    accountBytes: 0n,
+  },
+  v2Gasless: {
+    computationUnits: 85_471n, // Using same as v2 for now
+    signatures: 2,
+    accountBytes: 0n,
+  },
 } as const;
 
 export type SolanaExecutionCosts = typeof SOLANA_KNOWN_EXECUTION_COSTS;
