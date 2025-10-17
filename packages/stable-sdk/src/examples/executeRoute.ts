@@ -5,7 +5,7 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { Domain, Network } from "@stable-io/cctp-sdk-definitions";
+import { Domain } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../index.js";
@@ -132,9 +132,13 @@ function getTestnetScannerTxUrl(
 ): string {
   const scanners: Partial<Record<Domain, string>> = {
     ["Ethereum"]: "https://sepolia.etherscan.io/tx/{tx}",
+    ["Avalanche"]: "https://subnets-test.avax.network/c-chain/tx/{tx}",
     ["Arbitrum"]: "https://sepolia.arbiscan.io/tx/{tx}",
     ["Optimism"]: "https://sepolia-optimism.etherscan.io/tx/{tx}",
     ["Solana"]: "https://explorer.solana.com/tx/{tx}?cluster=devnet",
+    ["Polygon"]: "https://amoy.polygonscan.com/tx/{tx}",
+    ["Base"]: "https://sepolia.basescan.org/tx/{tx}",
+    ["Unichain"]: "https://unichain-sepolia.blockscout.com/tx/{tx}",
   };
   const baseUrl = scanners[domain];
   if (!baseUrl)
