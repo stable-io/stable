@@ -75,7 +75,7 @@ export async function calculateTotalCost(
     gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
     const stepsCost = steps.reduce((subtotal, step) => {
       const costEstimation = step.costEstimation.sourceChain as SolanaCostEstimation;
-      const totalSolCost = getTotalSoltCost(domainPrices, costEstimation);
+      const totalSolCost = getTotalSolCost(domainPrices, costEstimation);
       const gasTokenPrice = Conversion.from<
         Usd["kind"],
         GasTokenKindOf<typeof domain>
@@ -152,7 +152,7 @@ function getUsdCostEvm(
   return gasTokenCost.convert(gasTokenPrice);
 };
 
-export function getTotalSoltCost(
+export function getTotalSolCost(
   domainPrices: SolanaDomainPrices,
   costEstimation: SolanaCostEstimation,
 ): Sol {
