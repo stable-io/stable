@@ -152,8 +152,8 @@ export class CctpRService {
         // deadline is expressed in unix timestamp (Seconds).
         new Date(Number((opts as SolanaGaslessOpts).deadline.toString()) * 1000),
         gaslessFee,
-        relayer,
-        nonceAccount        
+        new SolanaAddress(relayer),
+        new SolanaAddress(nonceAccount)        
       );
     } else {
       if (!("permit2GaslessData" in (opts as EvmGaslessOpts))) throw new Error("Permit2GaslessData is required for Evm");
