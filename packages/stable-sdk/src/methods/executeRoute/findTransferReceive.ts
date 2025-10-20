@@ -100,7 +100,7 @@ async function getReceiveCpiEvent<
   layout: typeof v1LayoutMessageReceived | typeof v2LayoutMessageReceived,
 ): Promise<{ found?: Signature, latestSignature: Signature }> {
   const signatures = await client.getSignaturesForAddress(messageTransmitter, { until });
-  const latestSignature = signatures[signatures.length - 1] ?? until;
+  const latestSignature = signatures[0] ?? until;
   for (const signature of signatures) {
     const tx = await pollUntil(async () => {
       try {
@@ -116,10 +116,8 @@ async function getReceiveCpiEvent<
     ).map(
       event => deserialize(layout, event)
     ).filter(
-      event => {
-        return event.sourceDomain === domainIdOf(sourceDomain) &&
-          encoding.bytes.equals(nonce, event.nonce);
-      }
+      event => event.sourceDomain === domainIdOf(sourceDomain) &&
+        encoding.bytes.equals(nonce, event.nonce)
     )
     if (filteredEvents.length > 0) {
       return { found: signature, latestSignature };
@@ -131,7 +129,7 @@ async function getReceiveCpiEvent<
 
 const v1LayoutMessageReceived = [
   { name: "caller", binary: "bytes", size: 32 },
-  { name: "sourceDomain", binary: "uint", size: 4 },
+  { name: "sourceDomain", binary: "uint", size: 4, endianness: "little" },
   { name: "nonce", binary: "bytes", size: 8 },
   { name: "sender", binary: "bytes", size: 32 },
   { name: "messageBody", binary: "bytes" },
@@ -148,6 +146,7 @@ async function getV1ReceiveCpiEvent<
   const messageTransmitter = new SolanaAddress(
     v1.contractAddressOf(client.network, "Solana" as TODO, "messageTransmitter" as TODO)
   );
+  // The nonce value is stored in little endian on chain
   const nonceBytes = encoding.bignum.toBytes(nonce, 8 as Size).reverse();
   return await getReceiveCpiEvent(
     client, sourceDomain, nonceBytes, before, messageTransmitter, v1LayoutMessageReceived
@@ -156,10 +155,10 @@ async function getV1ReceiveCpiEvent<
 
 const v2LayoutMessageReceived = [
   { name: "caller", binary: "bytes", size: 32 },
-  { name: "sourceDomain", binary: "uint", size: 4 },
+  { name: "sourceDomain", binary: "uint", size: 4, endianness: "little" },
   { name: "nonce", binary: "bytes", size: 32 },
   { name: "sender", binary: "bytes", size: 32 },
-  { name: "finalityThresholdExecuted", binary: "uint", size: 4 },
+  { name: "finalityThresholdExecuted", binary: "uint", size: 4, endianness: "little" },
   { name: "messageBody", binary: "bytes" },
 ] as const satisfies Layout;
 
