@@ -3,9 +3,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { type Base64EncodedDataResponse, type Lamports, type Address, createSolanaRpc, Base64EncodedWireTransaction } from "@solana/kit";
+import {
+  type Base64EncodedDataResponse,
+  type Lamports,
+  type Address,
+  createSolanaRpc,
+  type Base64EncodedWireTransaction,
+  type Signature,
+  type Slot,
+} from "@solana/kit";
 import { Network, sol } from "@stable-io/cctp-sdk-definitions";
-import { BlockHashInfo, SolanaAddress, type AccountInfo, type SolanaClient } from "@stable-io/cctp-sdk-solana";
+import {
+  BlockHashInfo,
+  SolanaAddress,
+  type AccountInfo,
+  type SolanaClient,
+  type GetSignaturesConfig,
+  ConfirmedTx,
+} from "@stable-io/cctp-sdk-solana";
 import { RoArray } from "@stable-io/map-utils";
 import { encoding, Url } from "@stable-io/utils";
 
@@ -74,7 +89,21 @@ export class SolanaKitClient<N extends Network = Network> implements SolanaClien
   }
 
   async getLatestBlockhash(): Promise<BlockHashInfo> {
-    return this.client.getLatestBlockhash().send().then(res => res.value);
+    return this.client.getLatestBlockhash().send().then(res => ({
+      slot: res.context.slot, ...res.value
+    }));
+  }
+
+  async getSignaturesForAddress(
+    address: SolanaAddress, config?: GetSignaturesConfig
+  ): Promise<Signature[]> {
+    return this.client.getSignaturesForAddress(address.unwrap(), config).send().then(
+      res => res.map(tx => tx.signature)
+    );
+  }
+
+  async getTransaction(signature: Signature): Promise<ConfirmedTx | null> {
+    return this.client.getTransaction(signature, { encoding: "json", maxSupportedTransactionVersion: 0 }).send();
   }
 
   async sendTransaction(wireTx: Base64EncodedWireTransaction): Promise<string> {

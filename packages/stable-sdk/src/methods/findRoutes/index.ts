@@ -21,7 +21,7 @@ import {
   platformClient,
 } from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import type { TODO } from "@stable-io/utils";
+import type { TODO, Url } from "@stable-io/utils";
 import type {
   SDK,
   Route,
@@ -77,6 +77,7 @@ export const $findRoutes = <
       network,
       cctpr,
       intent,
+      rpcUrl
     );
 
     const routes: SupportedRoute<N, S, D>[] = [];
@@ -84,7 +85,7 @@ export const $findRoutes = <
     for (const corridor of corridors) {
       const userTransferRoute = await buildUserTransferRoute(
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        network as Network, intent, corridor,
+        network as Network, intent, corridor, rpcUrl
       );
 
       if (userTransferRoute !== undefined) {
@@ -119,12 +120,14 @@ async function getCorridors<N extends Network>(
   network: N,
   cctpr: ReturnType<typeof initCctpr<N>>,
   intent: Intent<N, LoadedCctprDomain<N>, SupportedDomain<N>>,
+  rpcUrl?: Url,
 ): Promise<CorridorStats<N, LoadedCctprDomain<N>, Corridor>[]> {
   const { stats: corridorStats, fastBurnAllowance } = await cctpr.getCorridors(
     network,
     intent.sourceChain,
     intent.targetChain,
     intent.gasDropoffDesired,
+    rpcUrl,
   );
 
   return corridorStats.filter((c) => {
