@@ -5,7 +5,7 @@
 
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
-import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
+import { Permit, ContractTx, Eip2612Data, EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Network, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding, TODO } from "@stable-io/utils";
@@ -34,6 +34,7 @@ export async function executeRouteSteps<
   const txHashes = [] as string[];
   if (platformOf(route.intent.sourceChain) === "Evm") {
     const evmSigner = signer as ViemWalletClient;
+    const evmClient = client as EvmClient;
     let permit: Permit | undefined = undefined;
     while (true) {
       const { value: stepData, done } = await route.workflow.next(permit);
@@ -55,7 +56,7 @@ export async function executeRouteSteps<
 
         route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
 
-        const receipt = await (client as TODO).waitForTransactionReceipt({ hash: tx });
+        const receipt = await evmClient.waitForTransactionReceipt(tx as `0x${string}`);
         txHashes.push(tx);
 
         route.transactionListener.emit("transaction-included", receipt);

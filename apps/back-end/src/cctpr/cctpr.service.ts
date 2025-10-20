@@ -32,6 +32,7 @@ import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
 import { ForeignDomain } from "../../../../packages/cctp-sdk/cctpr-solana/dist/contractSdk/constants";
 import { PublicClient } from "viem";
 import type {
+  Address,
   Base64EncodedBytes,
   SignatureBytes,
   TransactionMessage,
@@ -121,13 +122,8 @@ export class CctpRService {
       relayer.toString()
     );
 
-    const serializedTx = getTransactionEncoder().encode({ 
-      ...compiledTransaction, 
-      signatures: {
-        // TODO: We need to check if this is correct
-        [relayer.toString()]: Buffer.from(signatures[0]!, "base64") as unknown as SignatureBytes,
-      }
-    }) as Uint8Array;
+    compiledTransaction.signatures[relayer.toString() as Address] = encoding.base64.decode(signatures[0]!) as SignatureBytes;
+    const serializedTx = getTransactionEncoder().encode(compiledTransaction) as Uint8Array;
     const solanaMessage = encoding.base64.encode(serializedTx) as Base64EncodedBytes;
 
     return { solanaMessage };

@@ -190,9 +190,10 @@ export class GaslessTransferService {
   private async getPricesForRequest(
     request: QuoteRequestDto,
   ): Promise<PriceResult> {
+    const { network } = this.configService;
     const prices = await this.oracleService.getPrices(
       [request.sourceDomain],
-      request.sourceDomainNetwork,
+      network,
     );
     return prices[0]!;
   }
@@ -241,12 +242,20 @@ export class GaslessTransferService {
       this.executionCostService.getKnownEstimates("Solana");
     const costs = Object.entries(solanaGasCostEstimations).reduce(
       (acc, [key, value]) => {
-        const gasCostInNative = prices.computationPrice.mul(value);
+        // TODO: Maybe make a generic function in solana utils
+        const gasCostInNative = prices.computationPrice.mul(value.computationUnits);
+        const signatureCostInNative = prices.signaturePrice.mul(value.signatures);
+        const accountCostInNative = prices.pricePerAccountByte.mul(value.accountBytes);
+        const totalCostInNative = gasCostInNative.add(
+          signatureCostInNative
+        ).add(
+          accountCostInNative
+        );
         const gasTokenPriceInUsdc = Conversion.from(
           prices.gasTokenPrice,
           Sol,
         );
-        const usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc);
+        const usdcCost = totalCostInNative.convert(gasTokenPriceInUsdc);
         acc[key as keyof typeof solanaGasCostEstimations] = usdcCost;
         return acc;
       },

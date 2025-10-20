@@ -21,6 +21,8 @@ import {
   percentage,
   RegisteredPlatform,
   usdc,
+  type Sol,
+  sol,
 } from "@stable-io/cctp-sdk-definitions";
 
 import type { Fee, Network, Intent } from "../../types/index.js";
@@ -73,12 +75,12 @@ export async function calculateTotalCost(
     gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
     const stepsCost = steps.reduce((subtotal, step) => {
       const costEstimation = step.costEstimation.sourceChain as SolanaCostEstimation;
-      const totalLamportsCost = getTotalLamportCost(domainPrices, costEstimation);
+      const totalSolCost = getTotalSolCost(domainPrices, costEstimation);
       const gasTokenPrice = Conversion.from<
         Usd["kind"],
         GasTokenKindOf<typeof domain>
       >(usd(gasTokenPriceUsdc.toUnit("human")), gasTokenKind);
-      const usdCost = totalLamportsCost.convert(gasTokenPrice);
+      const usdCost = totalSolCost.convert(gasTokenPrice);
 
       if (step.costEstimation.hopChain !== undefined)
         usdCost.add(getUsdCostEvm(
@@ -150,20 +152,19 @@ function getUsdCostEvm(
   return gasTokenCost.convert(gasTokenPrice);
 };
 
-export function getTotalLamportCost(
+export function getTotalSolCost(
   domainPrices: SolanaDomainPrices,
   costEstimation: SolanaCostEstimation,
-): Amount<GasTokenKindOf<"Solana">> {
-  const gasTokenKind = gasTokenKindOf("Solana");
-  const computationCost: Amount<typeof gasTokenKind> = gasTokenOf("Solana")(
+): Sol {
+  const computationCost = sol(
     domainPrices.computationPriceAtomicMicroLamports,
     "atomic",
   ).div(1_000_000n).mul(costEstimation.computationUnits);
-  const signatureCost: Amount<typeof gasTokenKind> = gasTokenOf("Solana")(
+  const signatureCost = sol(
     domainPrices.signaturePriceAtomicLamports,
     "atomic",
   ).mul(BigInt(costEstimation.signatures));
-  const accountCost: Amount<typeof gasTokenKind> = gasTokenOf("Solana")(
+  const accountCost = sol(
     domainPrices.pricePerAccountByteAtomicLamports,
     "atomic",
   ).mul(costEstimation.accountBytes);

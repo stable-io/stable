@@ -125,14 +125,6 @@
   ],
   "CctpR": [
     {
-      "address": "0x00caba778ceb384e81fcb4914f958247caad9ef5",
-      "chainId": 10004
-    },
-    {
-      "address": "0x00caba778ceb384e81fcb4914f958247caad9ef5",
-      "chainId": 10005
-    },
-    {
       "address": "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0",
       "txId": "0x1d9bb20e1abba78bcd00f8d79fc080d8d6bd9938f75f9064f2427a04e937a872",
       "chainId": 6
@@ -156,6 +148,16 @@
       "address": "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0",
       "txId": "0xf395ceda92162f3fc10a0b789373660a194b15ac8c79d66a6d936bbdc4e6447e",
       "chainId": 44
+    },
+    {
+      "address": "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0",
+      "txId": "0xdb2df7496920a7e96dd627c4261180803e087f7ccc668723b6a6288074cdc3f4",
+      "chainId": 10004
+    },
+    {
+      "address": "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0",
+      "txId": "0x73057894efc5073cb164c16ea8ddd8c23fc2c7334bdb8d53a47fc619a51e72c1",
+      "chainId": 10005
     }
   ]
 }

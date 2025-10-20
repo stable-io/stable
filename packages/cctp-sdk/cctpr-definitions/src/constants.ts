@@ -34,9 +34,9 @@ export const contractAddressEntries = [[
   "Testnet", [
     ["Ethereum",   "0x482850b81552a6be8c64c91cb4bb347836441712"],
     ["Avalanche",  "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
-    ["Optimism",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Optimism",   "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
     ["Arbitrum",   "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
-    ["Base",       "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Base",       "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
     ["Solana",     "CCTPRRdPEWfVWc6drxFzkf4pbstJNvvPcRq49dQJ1rRc"],
     ["Polygon",    "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
     // ["Sui",        undefined],

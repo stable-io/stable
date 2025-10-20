@@ -14,8 +14,8 @@ import { bigintReplacer } from "../utils.js";
 dotenv.config();
 const privateKey = process.env.EVM_PRIVATE_KEY as Address;
 const account = privateKeyToAccount(privateKey);
-const someone = "0x0000000000000000000000000000000000000000";
-const someoneElse = "0x0000000000000000000000000000000000000001";
+const someone = "0x504328390Af8bf1Fd52E9281d1325Fa5cc5a54F4";
+const someoneElse = "0x31537D1DBB3dBA2F34e0913Dd157F74A4fCb9595";
 
 const stringify = (value: unknown) => JSON.stringify(value, bigintReplacer, 2);
 

@@ -102,9 +102,9 @@ async function executeRouteWithTiming(
 
     const executionResult = new ExecutionTracker(selectedRoute);
 
-    const hasBalance = await sdk.checkHasEnoughFunds(selectedRoute);
+    const balance = await sdk.checkHasEnoughFunds(selectedRoute);
 
-    if (hasBalance) {
+    if (balance.hasEnoughBalance) {
       try {
         await sdk.executeRoute(selectedRoute);
         console.info(
