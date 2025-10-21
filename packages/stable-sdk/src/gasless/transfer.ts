@@ -5,12 +5,11 @@ import { Network } from "src/types/general.js";
 import type { PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { usdc, usdcContracts } from "@stable-io/cctp-sdk-definitions";
 import type { LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 import { Intent } from "../types/index.js";
 import { postTransferRequest } from "../api/gasless.js";
 import { GaslessTransferData } from "src/methods/findRoutes/steps.js";
-import { getTransactionEncoder } from "@solana/kit";
+import { Base64EncodedBytes, getTransactionEncoder } from "@solana/kit";
 
 export async function* transferWithGaslessRelay<
   N extends Network,
@@ -25,13 +24,13 @@ export async function* transferWithGaslessRelay<
   permit2RequiresAllowance: boolean,
   opts: {
     permit2GaslessData?: Permit2GaslessData;
-    solanaMessage?: SignableEncodedBase64Message;
+    encodedSolanaTx?: Base64EncodedBytes;
   },
 ): AsyncGenerator<
   Eip2612Data |
   GaslessTransferData |
   Permit2GaslessData |
-  SignableEncodedBase64Message,
+  Base64EncodedBytes,
   any,
   any
 > {
@@ -48,9 +47,9 @@ export async function* transferWithGaslessRelay<
   }
 
   if (intent.sourceChain === "Solana") {
-    const signedMsg = yield opts.solanaMessage!;
+    const signedMsg = yield opts.encodedSolanaTx!;
     const encodedMsg = getTransactionEncoder().encode(signedMsg) as Uint8Array;
-    args.solanaMessage = encoding.base64.encode(encodedMsg);
+    args.encodedSolanaTx = encoding.base64.encode(encodedMsg);
   }
   else
     args.permit2Signature = (yield opts.permit2GaslessData!).signature;
@@ -60,7 +59,7 @@ export async function* transferWithGaslessRelay<
   return {
     txHash,
     ...(intent.sourceChain === "Solana" ?
-      { solanaMessage: args.solanaMessage } :
+      { encodedSolanaTx: args.encodedSolanaTx } :
       { permit2GaslessData: opts.permit2GaslessData,
         permit2Signature: encoding.hex.encode(args.permit2Signature, true),
         ...args.permit }

@@ -27,7 +27,7 @@ import type {
   SupportedDomain,
   QuoteBase,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { TODO } from "@stable-io/utils";
+import { TODO, Url } from "@stable-io/utils";
 
 import { TransferProgressEmitter } from "../../../progressEmitter.js";
 import { TransactionEmitter } from "../../../transactionEmitter.js";
@@ -51,6 +51,7 @@ export async function buildUserTransferRoute<
   network: N,
   intent: Intent<N, S, D>,
   corridor: CorridorStats<N, SupportedDomain<N>, Corridor>,
+  rpcUrl?: Url,
 ): Promise<Route<N, S, D> | undefined> {
   const platform = platformOf(intent.sourceChain);
   const cctprImpl = platformCctpr(platform);
@@ -81,6 +82,7 @@ export async function buildUserTransferRoute<
     intent.sourceChain,
     intent.sender,
     totalUsdcValue,
+    rpcUrl,
   );
 
   const tokenAllowanceSteps = allowanceRequired
@@ -135,6 +137,7 @@ export async function buildUserTransferRoute<
       quote,
       intent.gasDropoffDesired as TODO,
       { usePermit: intent.usePermit },
+      rpcUrl,
     ),
   };
 }
@@ -148,12 +151,13 @@ async function cctprRequiresAllowance<
   sourceChain: S,
   sender: PlatformAddress<P>,
   totalUsdcValue: Usdc,
+  rpcUrl?: Url,
 ): Promise<boolean> {
   const platform = platformOf(sourceChain);
   if (platform === "Solana") {
     return false;
   }
-  const client = platformClient(network, sourceChain);
+  const client = platformClient(network, sourceChain, rpcUrl);
   // TODO: This probably should also be dependency injected?
   const definitions = initDefinitions(network);
   const cctpr = initCctpr(network);

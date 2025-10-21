@@ -4,8 +4,8 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { ViemEvmClient } from "@stable-io/cctp-sdk-viem";
-import { domainIdOf, v1, v2, EvmDomains } from "@stable-io/cctp-sdk-definitions";
-import { TODO, Url } from "@stable-io/utils";
+import { domainIdOf, v1, v2, EvmDomains, LoadedDomain } from "@stable-io/cctp-sdk-definitions";
+import { encoding, Size, TODO, Url } from "@stable-io/utils";
 import type { Network } from "../../types/index.js";
 import type { CctpAttestation } from "./findTransferAttestation.js";
 import { parseAbiItem } from "viem/utils";
@@ -13,9 +13,14 @@ import type { Hex } from "viem";
 import type { Receive } from "src/types/receive.js";
 import { pollUntil, type PollingConfig } from "@stable-io/utils";
 import { SupportedEvmDomain } from "@stable-io/cctp-sdk-cctpr-evm";
+import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
+import { filterCPIEvents, getCpiEvents, SolanaAddress, SolanaClient } from "@stable-io/cctp-sdk-solana";
+import { Signature } from "@solana/kit";
+import { deserialize, Layout } from "binary-layout";
 
-const receiveScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
+const receiveScanBufferPerChain: Record<SupportedEvmDomain<Network> | "Solana", bigint> = {
   // Around 40s for each chain, depending on their block time
+  Solana: 100n,
   Ethereum: 4n,
   Avalanche: 20n,
   Optimism: 20n,
@@ -24,7 +29,7 @@ const receiveScanBufferPerChain: Record<SupportedEvmDomain<Network>, bigint> = {
   Polygon: 20n,
   Unichain: 20n,
   Linea: 20n,
-  Codex: 20n, // couldn't find blocktime data. just guessing for this one.
+  Codex: 20n,
   Sonic: 40n,
   Worldchain: 20n,
   Sei: 20n,
@@ -45,19 +50,149 @@ export async function findTransferReceive<N extends Network>(
     baseDelayMs: 300,
     maxDelayMs: 1200,
   };
-  const { cctpVersion, nonce, sourceDomain, targetDomain } = attestation;
-
-  if (targetDomain === "Solana") {
-    return {
-      destinationDomain: targetDomain,
-      transactionHash: "",
-    } as Receive;
+  const setConfig = { ...defaultConfig, ...config };
+  if (attestation.targetDomain === "Solana") {
+    return await findTransferReceiveSolana(network, rpcUrl, attestation, setConfig);
   }
+  return await findTransferReceiveEvm(network, rpcUrl, attestation, setConfig);
+}
+
+export async function findTransferReceiveSolana<N extends Network>(
+  network: N,
+  rpcUrl: Url,
+  attestation: CctpAttestation,
+  config: PollingConfig,
+): Promise<Receive> {
+  const { cctpVersion, nonce, sourceDomain } = attestation;
+  const client = SolanaKitClient.fromNetworkAndDomain(
+    network,
+    "Solana",
+    rpcUrl,
+  );
+  const latestBlockhash = await client.getLatestBlockhash();
+  const fromSlot = latestBlockhash.slot - receiveScanBufferPerChain["Solana"];
+  const block = await client.client.getBlock(fromSlot, { maxSupportedTransactionVersion: 0 }).send();
+  let until = block?.transactions[0]?.transaction.signatures[0] as unknown as Signature;
+  const signature = await pollUntil(async () => {
+    const searchResult = await (cctpVersion === 1 ?
+      getV1ReceiveCpiEvent(client, sourceDomain, nonce, until) :
+      getV2ReceiveCpiEvent(client, sourceDomain, nonce, until)
+    );
+    until = searchResult.latestSignature;
+    return searchResult.found;
+  }, result => result !== undefined, config);
+  return {
+    destinationDomain: "Solana",
+    transactionHash: signature,
+  } as Receive;
+}
+
+const messageReceivedEventName = "MessageReceived";
+
+async function getReceiveCpiEvent<
+  N extends Network,
+>(
+  client: SolanaClient<N>,
+  sourceDomain: LoadedDomain,
+  nonce: Uint8Array,
+  until: Signature,
+  messageTransmitter: SolanaAddress,
+  layout: typeof v1LayoutMessageReceived | typeof v2LayoutMessageReceived,
+): Promise<{ found?: Signature, latestSignature: Signature }> {
+  const signatures = await client.getSignaturesForAddress(messageTransmitter, { until });
+  const latestSignature = signatures[0] ?? until;
+  for (const signature of signatures) {
+    const tx = await pollUntil(async () => {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return await client.getTransaction(signature);
+      } catch (error) {
+        return null;
+      }
+    }, result => result !== null, { baseDelayMs: 1000, maxDelayMs: 2500 });
+    const events = getCpiEvents(tx);
+    const filteredEvents = filterCPIEvents(
+      events, messageReceivedEventName, messageTransmitter
+    ).map(
+      event => deserialize(layout, event)
+    ).filter(
+      event => event.sourceDomain === domainIdOf(sourceDomain) &&
+        encoding.bytes.equals(nonce, event.nonce)
+    )
+    if (filteredEvents.length > 0) {
+      return { found: signature, latestSignature };
+    }
+  }
+  return { latestSignature };
+
+}
+
+const v1LayoutMessageReceived = [
+  { name: "caller", binary: "bytes", size: 32 },
+  { name: "sourceDomain", binary: "uint", size: 4, endianness: "little" },
+  { name: "nonce", binary: "bytes", size: 8 },
+  { name: "sender", binary: "bytes", size: 32 },
+  { name: "messageBody", binary: "bytes" },
+] as const satisfies Layout;
+
+async function getV1ReceiveCpiEvent<
+  N extends Network,
+>(
+  client: SolanaClient<N>,
+  sourceDomain: LoadedDomain,
+  nonce: bigint,
+  before: Signature,
+): Promise<{ found?: Signature, latestSignature: Signature }> {
+  const messageTransmitter = new SolanaAddress(
+    v1.contractAddressOf(client.network, "Solana" as TODO, "messageTransmitter" as TODO)
+  );
+  // The nonce value is stored in little endian on chain
+  const nonceBytes = encoding.bignum.toBytes(nonce, 8 as Size).reverse();
+  return await getReceiveCpiEvent(
+    client, sourceDomain, nonceBytes, before, messageTransmitter, v1LayoutMessageReceived
+  );
+};
+
+const v2LayoutMessageReceived = [
+  { name: "caller", binary: "bytes", size: 32 },
+  { name: "sourceDomain", binary: "uint", size: 4, endianness: "little" },
+  { name: "nonce", binary: "bytes", size: 32 },
+  { name: "sender", binary: "bytes", size: 32 },
+  { name: "finalityThresholdExecuted", binary: "uint", size: 4, endianness: "little" },
+  { name: "messageBody", binary: "bytes" },
+] as const satisfies Layout;
+
+async function getV2ReceiveCpiEvent<
+  N extends Network,
+>(
+  client: SolanaClient<N>,
+  sourceDomain: LoadedDomain,
+  nonce: Hex,
+  before: Signature,
+): Promise<{ found?: Signature, latestSignature: Signature }> {
+  const messageTransmitter = new SolanaAddress(
+    v2.contractAddressOf(client.network, "Solana" as TODO, "messageTransmitter" as TODO)
+  );
+  const nonceBytes = encoding.hex.decode(nonce);
+  return await getReceiveCpiEvent(
+    client, sourceDomain, nonceBytes, before, messageTransmitter, v2LayoutMessageReceived
+  );
+};
+
+
+export async function findTransferReceiveEvm<N extends Network>(
+  network: N,
+  rpcUrl: Url,
+  attestation: CctpAttestation,
+  config: PollingConfig,
+): Promise<Receive> {
+  const { cctpVersion, nonce, sourceDomain, targetDomain } = attestation;
+  const searchDomain = targetDomain as keyof EvmDomains;
 
   // EVM chains
   const viemEvmClient = ViemEvmClient.fromNetworkAndDomain(
     network,
-    targetDomain,
+    searchDomain,
     rpcUrl,
   );
 
@@ -66,8 +201,8 @@ export async function findTransferReceive<N extends Network>(
     const [latestBlock, logs] = await Promise.all([
       viemEvmClient.getLatestBlock(),
       cctpVersion === 1 ?
-        getV1ReceiveLogs(network, viemEvmClient, nonce, targetDomain, fromBlock) :
-        await getV2ReceiveLogs(network, viemEvmClient, nonce, targetDomain, fromBlock),
+        getV1ReceiveLogs(network, viemEvmClient, nonce, searchDomain, fromBlock) :
+        getV2ReceiveLogs(network, viemEvmClient, nonce, searchDomain, fromBlock),
     ]);
 
     const filteredLogs = logs.filter(log => log.args.sourceDomain === domainIdOf(sourceDomain));
@@ -78,14 +213,11 @@ export async function findTransferReceive<N extends Network>(
     fromBlock = latestBlock;
     return filteredLogs.length > 0
       ? {
-        destinationDomain: targetDomain,
+        destinationDomain: searchDomain,
         transactionHash: filteredLogs[0].transactionHash,
       }
       : undefined;
-  }, result => result !== undefined, {
-    ...defaultConfig,
-    ...config,
-  });
+  }, result => result !== undefined, config);
 };
 
 const v1MessageReceivedEvent = parseAbiItem(

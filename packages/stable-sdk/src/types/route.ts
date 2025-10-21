@@ -19,7 +19,7 @@ import type { TransferProgressEventEmitter } from "../progressEmitter.js";
 import type { TransactionEventEmitter } from "../transactionEmitter.js";
 import type { RouteExecutionStep, GaslessTransferData } from "../methods/findRoutes/steps.js";
 import { TxMsg, SignableTx } from "@stable-io/cctp-sdk-solana";
-import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
+import { Base64EncodedBytes } from "@solana/kit";
 
 export type Fee = Usdc | GasTokenOf<LoadedDomain>;
 
@@ -72,7 +72,7 @@ export interface Route<
     Eip2612Data |
     Permit2GaslessData |
     GaslessTransferData |
-    SignableEncodedBase64Message,
+    Base64EncodedBytes,
     ContractTx | TxMsg,
     Permit | SignableTx | undefined
   >;

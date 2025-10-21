@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-duplicate-type-constituents */
 import type { RoArray } from "@stable-io/map-utils";
-import type { BaseObject, TODO } from "@stable-io/utils";
+import type { BaseObject, TODO, Url } from "@stable-io/utils";
 import type {
   DomainsOf,
   PlatformOf,
@@ -66,6 +66,7 @@ export interface PlatformCctpr<
     destination: D,
     corridors: RoArray<SensibleCorridor<N, S, D>>,
     gasDropoff?: GasTokenOf<D>,
+    rpcUrl?: Url,
   ) => Promise<RoArray<RelayCost<N, S>>>;
 
   transfer: <
@@ -83,6 +84,7 @@ export interface PlatformCctpr<
     quote: QuoteBase<N, PlatformOf<S>, S>,
     gasDropoff: GasTokenOf<D>,
     options: PlatformImplsOf[P]["TransferOptions"],
+    rpcUrl?: Url,
   ) => AsyncGenerator<PlatformImplsOf[P]["TransferGeneratorT"], PlatformImplsOf[P]["TransferGeneratorTReturn"]>;
 }
 
