@@ -274,6 +274,9 @@ export function gaslessTransferStep(sourceChain: LoadedDomain): GaslessTransferS
     platform: sourceChain === "Solana" ? "Solana" : "Evm",
     chain: sourceChain,
     type: "gasless-transfer",
-    costEstimation: { sourceChain: { gasCostEstimation: 0n } },
+    costEstimation: { sourceChain: sourceChain === "Solana"
+      ? { computationUnits: 0n, signatures: 0, accountBytes: 0n }
+      : { gasCostEstimation: 0n },
+    },
   };
 }
