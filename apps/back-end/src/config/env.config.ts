@@ -35,6 +35,9 @@ export class EnvironmentVariables {
 
   @IsString()
   public NONCE_ACCOUNT!: string;
+
+  @IsString()
+  public GASLESS_PRIVATE_KEY!: string;
 }
 
 export const validate = (

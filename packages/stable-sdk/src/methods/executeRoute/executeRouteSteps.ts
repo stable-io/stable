@@ -16,8 +16,7 @@ import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmit
 import { TxSentEventData } from "../../transactionEmitter.js";
 import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { addLifetimeAndSendTx, SignableTx, TxMsgWithFeePayer } from "@stable-io/cctp-sdk-solana";
-import { compileTransaction, decompileTransactionMessage, getCompiledTransactionMessageDecoder, signTransaction } from "@solana/kit";
-import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
+import { Base64EncodedBytes, compileTransaction, decompileTransactionMessage, getCompiledTransactionMessageDecoder, signTransaction } from "@solana/kit";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
 
@@ -56,7 +55,7 @@ export async function executeRouteSteps<
 
         route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
 
-        const receipt = await evmClient.waitForTransactionReceipt(tx as `0x${string}`);
+        const receipt = await evmClient.waitForTransactionReceipt(tx);
         txHashes.push(tx);
 
         route.transactionListener.emit("transaction-included", receipt);
@@ -128,12 +127,12 @@ export async function executeRouteSteps<
       signedTx = undefined;
       const stepType = getStepType(stepData);
       if (stepType === SOLANA_TRANSFER) {
-        const transferData = { ...stepData, version: "legacy" } as TxMsgWithFeePayer;
+        const transferData = { ...(stepData as TxMsgWithFeePayer), version: "legacy" } as TxMsgWithFeePayer;
         const tx = await addLifetimeAndSendTx(client, transferData, [solanaSigner]);
         txHashes.push(tx);
       }
       else if (stepType === SOLANA_SIGN_TX) {
-        const msgBytes = Buffer.from((stepData as SignableEncodedBase64Message).solanaMessage, "base64");
+        const msgBytes = Buffer.from(stepData as Base64EncodedBytes, "base64");
         const compiledMsg = getCompiledTransactionMessageDecoder().decode(msgBytes);
         const txMessage = decompileTransactionMessage(compiledMsg);
         const compiledTx = compileTransaction(txMessage);

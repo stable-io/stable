@@ -23,7 +23,7 @@ import {
 import type { Permit } from "@stable-io/cctp-sdk-evm";
 import type { Network } from "../types/index.js";
 import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./base.js";
-import type { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
+import { Base64EncodedBytes } from "@solana/kit";
 
 export type GetQuoteParams<
   N extends Network,
@@ -54,7 +54,7 @@ export type GetQuoteResponse<
   gaslessFee: Usdc;
   jwt: string;
   permit2GaslessData?: Permit2GaslessData;
-  solanaMessage?: SignableEncodedBase64Message;
+  encodedSolanaTx?: Base64EncodedBytes;
 } | undefined;
 
 export async function getTransferQuote<
@@ -98,7 +98,7 @@ export async function getTransferQuote<
     quoteRequest,
     gaslessFee,
     jwt,
-    solanaMessage: quoteParams.sourceChain === "Solana" ? payload.solanaMessage as SignableEncodedBase64Message : undefined,
+    encodedSolanaTx: quoteParams.sourceChain === "Solana" ? payload.encodedTx as Base64EncodedBytes : undefined,
     permit2GaslessData: quoteParams.sourceChain === "Solana" ? undefined : payload.permit2GaslessData as Permit2GaslessData,
   };
 }
@@ -210,8 +210,9 @@ export type PostTransferResponse = {
 
 export type PostTransferParams = {
   jwt: string;
-  permit2Signature: Uint8Array;
+  permit2Signature?: Uint8Array;
   permit?: Permit;
+  encodedSolanaTx?: Base64EncodedBytes;
 };
 
 export async function postTransferRequest(
@@ -219,17 +220,19 @@ export async function postTransferRequest(
   params: PostTransferParams,
 ): Promise<PostTransferResponse> {
   const endpoint = apiEndpoint(network)("gasless-transfer/relay");
-  const { jwt, permit2Signature, permit } = params;
+  const { jwt, permit2Signature, permit, encodedSolanaTx } = params;
   const requestBody = {
     jwt,
-    permit2Signature: encoding.hex.encode(permit2Signature, true),
-    ...(permit
-? { permit: {
-      signature: encoding.hex.encode(permit.signature, true),
-      value: permit.value.toString(),
-      deadline: permit.deadline.toString(),
-    } }
-: {}),
+    ...(permit2Signature ? { permit2Signature: encoding.hex.encode(permit2Signature, true) } : {}),
+    ...(permit ?
+      { permit: {
+          signature: encoding.hex.encode(permit.signature, true),
+          value: permit.value.toString(),
+          deadline: permit.deadline.toString(),
+        },
+      }
+    : {}),
+    ...(encodedSolanaTx ? { encodedTx: encodedSolanaTx } : {}),
   };
 
   const apiResponse = await apiRequest<APIResponse<HTTPCode, { data: { hash: string } } >>(

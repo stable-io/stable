@@ -1,6 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
-import type { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 import {
   usdcContracts,
   evmGasToken,
@@ -36,7 +35,17 @@ import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 import { Conversion } from "@stable-io/amount";
 import { SupportedBackendEvmDomain } from "../common/types";
-import { Base64EncodedBytes, decompileTransactionMessage, getCompiledTransactionMessageDecoder } from "@solana/kit";
+import { 
+  Base64EncodedBytes, 
+  compileTransaction, 
+  createKeyPairFromPrivateKeyBytes, 
+  decompileTransactionMessage, 
+  getCompiledTransactionMessageDecoder,
+  SignatureBytes,
+  signBytes,
+  verifySignature
+} from "@solana/kit";
+import { encoding } from "@stable-io/utils";
 
 @Injectable()
 export class GaslessTransferService {
@@ -91,20 +100,24 @@ export class GaslessTransferService {
     request: QuoteRequestDto<"Solana">,
   ): Promise<QuoteDto> {
     const gaslessFee = await this.calculateSolanaGaslessFee(request);
-
-    let solanaMessage: SignableEncodedBase64Message | undefined;
+    let encodedTx: Base64EncodedBytes | undefined;
+    let compiledTransaction: ReturnType<typeof compileTransaction> | undefined;
+    let signedMessage;
 
     try {
-      solanaMessage =
+      ({ compiledTransaction, encodedTx } =
         await this.cctpRService.composeSolanaGaslessTransferMessage(
           request,
           gaslessFee,
-        );
+        ));
+      
+      const signer = await createKeyPairFromPrivateKeyBytes(new Uint8Array(Buffer.from(this.configService.gaslessPrivateKey, 'hex')));
+      signedMessage = encoding.base64.encode(await signBytes(signer.privateKey, compiledTransaction.messageBytes)) as Base64EncodedBytes;
     } catch (error: unknown) {
       if (!(error instanceof Error)) throw error;
 
       if (error.message === "Transfer Amount Less or Equal to 0 After Fees") {
-        solanaMessage = undefined;
+        encodedTx = undefined;
         this.logger.log(
           `Transfer Amount Less or Equal to 0 After Fees. Amount: ${
             request.amount
@@ -114,8 +127,9 @@ export class GaslessTransferService {
     }
 
     const jwtPayload: JwtPayload = {
-      willRelay: solanaMessage !== undefined,
-      solanaMessage,
+      willRelay: encodedTx !== undefined,
+      encodedTx,
+      signedMessage,
       quoteRequest: instanceToPlain(request),
       gaslessFee: gaslessFee.toUnit("human").toString(),
     };
@@ -164,24 +178,31 @@ export class GaslessTransferService {
     request: RelayRequestDto<"Solana">,
   ): Promise<RelayTx> {
     const {
-      jwt: { quoteRequest },
-      solanaMsg,
+      jwt: { quoteRequest, signedMessage },
+      encodedTx,
     } = request;
 
-    const msgBytes = Buffer.from((solanaMsg as unknown as SignableEncodedBase64Message).solanaMessage, "base64");
-    const compiledMsg = getCompiledTransactionMessageDecoder().decode(msgBytes);
-    const txMessage = decompileTransactionMessage(compiledMsg);
+    const txBytes = Buffer.from(encodedTx as Base64EncodedBytes, "base64");
+    const decodedTx = getCompiledTransactionMessageDecoder().decode(txBytes);
+    const txMessage = decompileTransactionMessage(decodedTx);
     const feePayer = this.configService.solanaRelayerAddress;
-    if (txMessage.feePayer.address !== feePayer.toString())
+    if (txMessage.feePayer.address !== feePayer)
       throw new Error("FeePayer mismatch");
 
-    // TODO: more verifications?
+    const signer = await createKeyPairFromPrivateKeyBytes(new Uint8Array(Buffer.from(this.configService.gaslessPrivateKey, 'hex')));
+    const compiledTx = compileTransaction(txMessage);
+    const verified = await verifySignature(
+      signer.publicKey, 
+      signedMessage as unknown as SignatureBytes, 
+      compiledTx.messageBytes
+    );
+    if (!verified) throw new Error("Invalid signed message signature");
 
     const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
     const txHash = await this.txLandingService.sendTransaction(
       toAddress,
       quoteRequest.sourceDomain,
-      solanaMsg! as Base64EncodedBytes,
+      encodedTx! as Base64EncodedBytes,
     );
 
     return { hash: txHash };

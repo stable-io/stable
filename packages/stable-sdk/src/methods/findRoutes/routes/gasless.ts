@@ -116,7 +116,7 @@ export async function buildGaslessRoute<
       permit2PermitRequired,
       {
         permit2GaslessData: intent.sourceChain === "Solana" ? undefined : quote.permit2GaslessData,
-        solanaMessage: intent.sourceChain === "Solana" ? quote.solanaMessage : undefined,
+        encodedSolanaTx: intent.sourceChain === "Solana" ? quote.encodedSolanaTx : undefined,
       },
     ),
   };

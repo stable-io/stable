@@ -63,6 +63,10 @@ export class ConfigService {
     return this.env.getOrThrow("NONCE_ACCOUNT");
   }
 
+  public get gaslessPrivateKey(): EnvironmentVariables["GASLESS_PRIVATE_KEY"] {
+    return this.env.getOrThrow("GASLESS_PRIVATE_KEY");
+  }
+
   public getRpcUrl<D extends SupportedDomain<Network>>(domain: D): string | undefined {
     return this.rpcUrlConfig[this.network][domain];
   }
