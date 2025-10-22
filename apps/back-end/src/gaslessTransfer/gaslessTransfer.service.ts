@@ -50,7 +50,11 @@ import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 @Injectable()
 export class GaslessTransferService {
+
+  public static readonly minimumGaslessFee = usdc("0.000001");
+
   private readonly logger = new Logger(GaslessTransferService.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
@@ -234,7 +238,9 @@ export class GaslessTransferService {
           prices.gasTokenPrice,
           EvmGasToken,
         );
-        const usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc);
+        let usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc);
+        if (usdcCost.lt(GaslessTransferService.minimumGaslessFee)) 
+          usdcCost = GaslessTransferService.minimumGaslessFee;
         acc[key as keyof typeof evmGasCostEstimations] = usdcCost;
         return acc;
       },
