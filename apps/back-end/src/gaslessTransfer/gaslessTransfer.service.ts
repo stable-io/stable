@@ -46,6 +46,7 @@ import {
   verifySignature
 } from "@solana/kit";
 import { encoding } from "@stable-io/utils";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 @Injectable()
 export class GaslessTransferService {
@@ -100,7 +101,7 @@ export class GaslessTransferService {
     request: QuoteRequestDto<"Solana">,
   ): Promise<QuoteDto> {
     const gaslessFee = await this.calculateSolanaGaslessFee(request);
-    let encodedTx: Base64EncodedBytes | undefined;
+    let encodedTx: SignableEncodedBase64Message | undefined;
     let compiledTransaction: ReturnType<typeof compileTransaction> | undefined;
     let signedMessage;
 
@@ -182,7 +183,8 @@ export class GaslessTransferService {
       encodedTx,
     } = request;
 
-    const txBytes = Buffer.from(encodedTx as Base64EncodedBytes, "base64");
+    const encodedSolanaTx = (encodedTx as unknown as SignableEncodedBase64Message).encodedSolanaTx;
+    const txBytes = Buffer.from(encodedSolanaTx, "base64");
     const decodedTx = getCompiledTransactionMessageDecoder().decode(txBytes);
     const txMessage = decompileTransactionMessage(decodedTx);
     const feePayer = this.configService.solanaRelayerAddress;
@@ -202,7 +204,7 @@ export class GaslessTransferService {
     const txHash = await this.txLandingService.sendTransaction(
       toAddress,
       quoteRequest.sourceDomain,
-      encodedTx! as Base64EncodedBytes,
+      encodedSolanaTx,
     );
 
     return { hash: txHash };

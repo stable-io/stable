@@ -12,7 +12,7 @@ import { encoding } from "@stable-io/utils";
 import { Network } from "../../types/general.js";
 import { EvmExecutionCosts, getPlatformExecutionCosts } from "../../api/executionCost.js";
 import { TxMsg } from "@stable-io/cctp-sdk-solana";
-import { Base64EncodedBytes } from "@solana/kit";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer" | "solana-sign-tx";
 
 interface BaseRouteExecutionStep {
@@ -88,7 +88,7 @@ export interface SolanaSignTxStep extends BaseRouteExecutionStep {
  *                or an eip2612 message to sign and return to it.
  */
 export function getStepType(
-  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg | Base64EncodedBytes,
+  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg | SignableEncodedBase64Message,
 ): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
@@ -196,8 +196,8 @@ export function isTxMsg(subject: unknown): subject is TxMsg {
   return isObjectWithKeys(subject, ["instructions"]);
 }
 
-export function isSignableSolanaTx(subject: unknown): subject is Base64EncodedBytes {
-  return isObjectWithKeys(subject, ["solanaMessage"]);
+export function isSignableSolanaTx(subject: unknown): subject is SignableEncodedBase64Message {
+  return isObjectWithKeys(subject, ["endcodedSolanaTx"]);
 }
 
 export async function buildTransferStep(
