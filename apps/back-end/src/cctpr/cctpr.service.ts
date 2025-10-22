@@ -16,7 +16,7 @@ import type {
   SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
 import { CctpR as EvmCctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
-import { CctpR as SolanaCctpR } from "@stable-io/cctp-sdk-cctpr-solana";
+import { SignableEncodedBase64Message, CctpR as SolanaCctpR } from "@stable-io/cctp-sdk-cctpr-solana";
 import { ContractTx, EvmAddress, EvmClient } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
@@ -89,7 +89,7 @@ export class CctpRService {
   public async composeSolanaGaslessTransferMessage(
     quoteRequest: QuoteRequestDto<"Solana">,
     gaslessFee: Usdc,
-  ): Promise<{ compiledTransaction: ReturnType<typeof compileTransaction>, encodedTx: Base64EncodedBytes }> {
+  ): Promise<{ compiledTransaction: ReturnType<typeof compileTransaction>, encodedTx: SignableEncodedBase64Message }> {
     const sender = quoteRequest.sender as SolanaAddress;
     const cctpr = this.contractInterface(quoteRequest.sourceDomain) as SolanaCctpR<Network>;
     const targetDomain = quoteRequest.targetDomain as Exclude<SupportedDomain<Network>, "Solana">;
@@ -112,9 +112,9 @@ export class CctpRService {
     );
     const compiledTransaction = compileTransaction(tx);
     const serializedTx = getTransactionEncoder().encode(compiledTransaction) as Uint8Array;
-    const encodedTx = encoding.base64.encode(serializedTx) as Base64EncodedBytes;
+    const encodedSolanaTx = encoding.base64.encode(serializedTx) as Base64EncodedBytes;
 
-    return { compiledTransaction, encodedTx };
+    return { compiledTransaction, encodedTx: { encodedSolanaTx } };
   }
 
   public async gaslessTransferTx<N extends Network>(

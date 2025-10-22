@@ -9,7 +9,8 @@ import type { LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp
 import { Intent } from "../types/index.js";
 import { postTransferRequest } from "../api/gasless.js";
 import { GaslessTransferData } from "src/methods/findRoutes/steps.js";
-import { Base64EncodedBytes, getTransactionEncoder } from "@solana/kit";
+import { getTransactionEncoder } from "@solana/kit";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 export async function* transferWithGaslessRelay<
   N extends Network,
@@ -24,13 +25,13 @@ export async function* transferWithGaslessRelay<
   permit2RequiresAllowance: boolean,
   opts: {
     permit2GaslessData?: Permit2GaslessData;
-    encodedSolanaTx?: Base64EncodedBytes;
+    encodedSolanaTx?: SignableEncodedBase64Message;
   },
 ): AsyncGenerator<
   Eip2612Data |
   GaslessTransferData |
   Permit2GaslessData |
-  Base64EncodedBytes,
+  SignableEncodedBase64Message,
   any,
   any
 > {

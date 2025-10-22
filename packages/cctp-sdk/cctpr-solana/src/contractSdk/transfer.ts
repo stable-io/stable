@@ -95,7 +95,7 @@ export type TransferMessage = TransactionMessage & TransactionMessageWithFeePaye
 export type TransferGaslessMessage = TransferMessage & TransactionMessageWithDurableNonceLifetime;
 
 export type SignableEncodedBase64Message = {
-  solanaMessage: Base64EncodedBytes;
+  encodedSolanaTx: Base64EncodedBytes;
 };
 
 //TODO: remove this and all its mentions once Sui is actually a legitimate foreign domain

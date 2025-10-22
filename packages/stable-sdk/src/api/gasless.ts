@@ -16,14 +16,13 @@ import {
   percentage,
   PlatformAddress,
   PlatformOf,
-  UniversalAddress,
   platformAddress,
   platformOf,
 } from "@stable-io/cctp-sdk-definitions";
 import type { Permit } from "@stable-io/cctp-sdk-evm";
 import type { Network } from "../types/index.js";
 import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./base.js";
-import { Base64EncodedBytes } from "@solana/kit";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 export type GetQuoteParams<
   N extends Network,
@@ -54,7 +53,7 @@ export type GetQuoteResponse<
   gaslessFee: Usdc;
   jwt: string;
   permit2GaslessData?: Permit2GaslessData;
-  encodedSolanaTx?: Base64EncodedBytes;
+  encodedSolanaTx?: SignableEncodedBase64Message;
 } | undefined;
 
 export async function getTransferQuote<
@@ -98,7 +97,7 @@ export async function getTransferQuote<
     quoteRequest,
     gaslessFee,
     jwt,
-    encodedSolanaTx: quoteParams.sourceChain === "Solana" ? payload.encodedTx as Base64EncodedBytes : undefined,
+    encodedSolanaTx: quoteParams.sourceChain === "Solana" ? payload.encodedTx as SignableEncodedBase64Message : undefined,
     permit2GaslessData: quoteParams.sourceChain === "Solana" ? undefined : payload.permit2GaslessData as Permit2GaslessData,
   };
 }
@@ -212,7 +211,7 @@ export type PostTransferParams = {
   jwt: string;
   permit2Signature?: Uint8Array;
   permit?: Permit;
-  encodedSolanaTx?: Base64EncodedBytes;
+  encodedSolanaTx?: SignableEncodedBase64Message;
 };
 
 export async function postTransferRequest(

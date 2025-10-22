@@ -48,6 +48,17 @@ export class PermitDto {
   deadline!: bigint;
 }
 
+export class SignableEncodedBase64MessageDto {
+  @ApiProperty({
+    type: String,
+    format: "base64",
+    required: false,
+    description: 'Base64-encoded signed serialized transaction for Solana gasless transfers',
+  })
+  @IsOptional()
+  encodedSolanaTx?: string;
+}
+
 export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   /**
    * Server-signed JWT containing the permit2 permit data for the user to sign as well as the quote data
@@ -106,11 +117,11 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   deadline?: bigint;
 
   @ApiProperty({
-    type: String,
-    format: "base64",
+    type: SignableEncodedBase64MessageDto,
     required: false,
-    description: 'Base64-encoded signed serialized transaction for Solana gasless transfers',
   })
   @IsOptional()
-  encodedTx?: string;
+  @ValidateNested()
+  @Type(() => SignableEncodedBase64MessageDto)
+  encodedTx?: SignableEncodedBase64MessageDto;
 }
