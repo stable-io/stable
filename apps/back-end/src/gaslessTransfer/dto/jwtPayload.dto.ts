@@ -4,6 +4,7 @@ import { IsNotEmpty, IsObject, IsString, ValidateNested } from "class-validator"
 import { QuoteRequestDto } from "./quoteRequest.dto";
 import { IsUsdcAmount } from "../../common/validators";
 import { Domain } from "../../common/types";
+import { GaslessTransferService } from "../gaslessTransfer.service";
 
 export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   /**
@@ -21,7 +22,7 @@ export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   @ValidateNested()
   readonly quoteRequest!: QuoteRequestDto<SourceDomain>;
 
-  @IsUsdcAmount({ min: "0.000001" })
+  @IsUsdcAmount({ min: GaslessTransferService.minimumGaslessFee.toUnit("human").toFixed() })
   readonly gaslessFee!: Usdc;
 
   /**
