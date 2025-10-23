@@ -83,6 +83,7 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
     pattern: "^0x[a-fA-F0-9]{130}$",
     required: false,
   })
+  @IsOptional()
   @IsSignature()
   permit2Signature?: ParsedSignature;
 
@@ -100,21 +101,6 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   permit?: PermitDto;
 
   /// ------------------- Solana specific fields -------------------
-
-  /**
-   * Deadline as string representation of bigint, used for Solana gasless transfers
-   * @example "1704067200"
-   */
-  @ApiProperty({
-    type: String,
-    description: "Deadline as string representation of bigint",
-    required: false,
-  })
-  @IsOptional()
-  @Transform(({ value }) => {
-    return BigInt(value);
-  })
-  deadline?: bigint;
 
   @ApiProperty({
     type: SignableEncodedBase64MessageDto,

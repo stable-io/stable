@@ -231,7 +231,7 @@ export async function postTransferRequest(
         },
       }
     : {}),
-    ...(encodedSolanaTx ? { encodedTx: encodedSolanaTx } : {}),
+    ...(encodedSolanaTx ? { encodedTx: { encodedSolanaTx } } : {}),
   };
 
   const apiResponse = await apiRequest<APIResponse<HTTPCode, { data: { hash: string } } >>(

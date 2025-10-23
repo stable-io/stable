@@ -197,7 +197,7 @@ export function isTxMsg(subject: unknown): subject is TxMsg {
 }
 
 export function isSignableSolanaTx(subject: unknown): subject is SignableEncodedBase64Message {
-  return isObjectWithKeys(subject, ["endcodedSolanaTx"]);
+  return isObjectWithKeys(subject, ["encodedSolanaTx"]);
 }
 
 export async function buildTransferStep(

@@ -41,6 +41,7 @@ import {
   createKeyPairFromPrivateKeyBytes, 
   decompileTransactionMessage, 
   getCompiledTransactionMessageDecoder,
+  getTransactionDecoder,
   SignatureBytes,
   signBytes,
   verifySignature
@@ -115,7 +116,6 @@ export class GaslessTransferService {
           request,
           gaslessFee,
         ));
-      
       const signer = await createKeyPairFromPrivateKeyBytes(new Uint8Array(Buffer.from(this.configService.gaslessPrivateKey, 'hex')));
       signedMessage = encoding.base64.encode(await signBytes(signer.privateKey, compiledTransaction.messageBytes)) as Base64EncodedBytes;
     } catch (error: unknown) {
@@ -151,6 +151,10 @@ export class GaslessTransferService {
       permit2Signature,
       permit,
     } = request;
+
+    if (permit2GaslessData === undefined)
+      throw new Error("No permit2 gasless data in relay request");
+
     const gaslessTxDetails = await this.cctpRService.gaslessTransferTx(
       quoteRequest,
       gaslessFee,
@@ -187,19 +191,18 @@ export class GaslessTransferService {
       encodedTx,
     } = request;
 
+    const sender = this.configService.solanaRelayerAddress;
     const encodedSolanaTx = (encodedTx as unknown as SignableEncodedBase64Message).encodedSolanaTx;
     const txBytes = Buffer.from(encodedSolanaTx, "base64");
-    const decodedTx = getCompiledTransactionMessageDecoder().decode(txBytes);
+    const transaction = getTransactionDecoder().decode(txBytes);
+    const decodedTx = getCompiledTransactionMessageDecoder().decode(transaction.messageBytes);
     const txMessage = decompileTransactionMessage(decodedTx);
-    const feePayer = this.configService.solanaRelayerAddress;
-    if (txMessage.feePayer.address !== feePayer)
-      throw new Error("FeePayer mismatch");
 
     const signer = await createKeyPairFromPrivateKeyBytes(new Uint8Array(Buffer.from(this.configService.gaslessPrivateKey, 'hex')));
     const compiledTx = compileTransaction(txMessage);
     const verified = await verifySignature(
       signer.publicKey, 
-      signedMessage as unknown as SignatureBytes, 
+      encoding.base64.decode(signedMessage!) as unknown as SignatureBytes, 
       compiledTx.messageBytes
     );
     if (!verified) throw new Error("Invalid signed message signature");
@@ -209,6 +212,7 @@ export class GaslessTransferService {
       toAddress,
       quoteRequest.sourceDomain,
       encodedSolanaTx,
+      sender,
     );
 
     return { hash: txHash };

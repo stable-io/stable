@@ -83,6 +83,7 @@ export class TxLandingService {
     to: EvmAddress | SolanaAddress,
     domain: LoadedDomain,
     txDetails: ContractTx | Base64EncodedBytes,
+    sender?: string,
   ): Promise<`0x${string}`> {
     const traceId = uuid();
     const transactionParams = {
@@ -90,12 +91,12 @@ export class TxLandingService {
       chain: this.toChain(domain),
       txRequests: [] as TransactionParams[],
       network: this.mappedNetwork(),
+      ...(sender ? { walletQuery: { address: sender } } : {}),
     };
 
     transactionParams.txRequests = this.buildTxRequests(to, domain, txDetails);
 
     this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
-
     try {
       const r = await this.client.signAndLandTransaction(transactionParams);
 
