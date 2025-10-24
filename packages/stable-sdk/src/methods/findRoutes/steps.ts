@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains, LoadedDomain, platformOf } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, LoadedDomain, platformOf, Usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Eip2612Message, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
 import { type Permit2GaslessData, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -13,7 +13,7 @@ import { Network } from "../../types/general.js";
 import { EvmExecutionCosts, getPlatformExecutionCosts } from "../../api/executionCost.js";
 import { TxMsg } from "@stable-io/cctp-sdk-solana";
 import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
-export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer" | "solana-sign-tx";
+export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer" | "solana-sign-tx" | "solana-gasless-transfer";
 
 interface BaseRouteExecutionStep {
   type: StepType;
@@ -83,12 +83,18 @@ export interface SolanaSignTxStep extends BaseRouteExecutionStep {
   type: typeof SOLANA_SIGN_TX;
 }
 
+export const SOLANA_GASLESS_TRANSFER = "solana-gasless-transfer" as const;
+export interface SolanaGaslessTransferStep extends BaseRouteExecutionStep {
+  type: typeof SOLANA_GASLESS_TRANSFER;
+}
+
 /**
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
 export function getStepType(
-  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg | SignableEncodedBase64Message,
+  // eslint-disable-next-line @stylistic/max-len
+  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg | SignableEncodedBase64Message | SolanaGaslessTransfer,
 ): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
@@ -97,6 +103,7 @@ export function getStepType(
   if (isApprovalTx(txOrSig)) return PRE_APPROVE;
   if (isTxMsg(txOrSig)) return SOLANA_TRANSFER;
   if (isSignableSolanaTx(txOrSig)) return SOLANA_SIGN_TX;
+  if (isSolanaGaslessTransfer(txOrSig)) return SOLANA_GASLESS_TRANSFER;
   throw new Error("Unknown Step Type");
 }
 
@@ -198,6 +205,17 @@ export function isTxMsg(subject: unknown): subject is TxMsg {
 
 export function isSignableSolanaTx(subject: unknown): subject is SignableEncodedBase64Message {
   return isObjectWithKeys(subject, ["encodedSolanaTx"]);
+}
+
+export type SolanaGaslessTransfer = {
+  solanaTxHash: string;
+  gasDropOff: bigint;
+  amount: Usdc;
+  recipient: string;
+};
+
+export function isSolanaGaslessTransfer(subject: unknown): subject is SolanaGaslessTransfer {
+  return isObjectWithKeys(subject, ["solanaTxHash"]);
 }
 
 export async function buildTransferStep(

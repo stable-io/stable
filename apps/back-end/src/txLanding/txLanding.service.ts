@@ -84,7 +84,7 @@ export class TxLandingService {
     domain: LoadedDomain,
     txDetails: ContractTx | Base64EncodedBytes,
     sender?: string,
-  ): Promise<`0x${string}`> {
+  ): Promise<string> {
     const traceId = uuid();
     const transactionParams = {
       traceId,
@@ -100,13 +100,13 @@ export class TxLandingService {
     try {
       const r = await this.client.signAndLandTransaction(transactionParams);
 
-      const rawTxHash = r.txResults[0]!.txHash;
-      const cleanTxHash = this.extractHexFromMalformedResponse(rawTxHash);
-
-      if (!cleanTxHash) {
-        throw new Error(
-          `Failed to extract valid transaction hash from API response: ${rawTxHash}`,
-        );
+      if (domain !== "Solana") {
+        const rawTxHash = r.txResults[0]!.txHash;
+        const cleanTxHash = this.extractHexFromMalformedResponse(rawTxHash);
+        if (!cleanTxHash)
+          throw new Error(
+            `Failed to extract valid transaction hash from API response: ${rawTxHash}`,
+          );
       }
 
       const isConfirmedTransactionResponse = (
@@ -126,7 +126,7 @@ export class TxLandingService {
       );
 
       const finalTxHash = confirmationResult.statuses.at(-1)!
-        .txHash as `0x${string}`; // we polled until this property had a specific value.
+        .txHash as string; // we polled until this property had a specific value.
 
       return finalTxHash;
     } catch (error) {

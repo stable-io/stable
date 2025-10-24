@@ -17,7 +17,7 @@ import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
 import type { Intent } from "./intent.js";
 import type { TransferProgressEventEmitter } from "../progressEmitter.js";
 import type { TransactionEventEmitter } from "../transactionEmitter.js";
-import type { RouteExecutionStep, GaslessTransferData } from "../methods/findRoutes/steps.js";
+import type { RouteExecutionStep, GaslessTransferData, SolanaGaslessTransfer } from "../methods/findRoutes/steps.js";
 import { TxMsg, SignableTx } from "@stable-io/cctp-sdk-solana";
 import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
@@ -72,7 +72,8 @@ export interface Route<
     Eip2612Data |
     Permit2GaslessData |
     GaslessTransferData |
-    SignableEncodedBase64Message,
+    SignableEncodedBase64Message |
+    SolanaGaslessTransfer,
     ContractTx | TxMsg,
     Permit | SignableTx | undefined
   >;

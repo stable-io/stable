@@ -8,10 +8,10 @@ import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctio
 import { Permit, ContractTx, Eip2612Data, EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Network, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
-import { encoding, TODO } from "@stable-io/utils";
+import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { TxHash, Hex, SupportedRoute, ViemWalletClient, SolanaKeyPairSigner } from "../../types/index.js";
-import { getStepType, PRE_APPROVE, EVM_TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER, SOLANA_SIGN_TX } from "../findRoutes/steps.js";
+import { getStepType, PRE_APPROVE, EVM_TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER, SOLANA_SIGN_TX, SOLANA_GASLESS_TRANSFER, SolanaGaslessTransfer } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
@@ -127,12 +127,14 @@ export async function executeRouteSteps<
       const { value: stepData, done } = await route.workflow.next(signedTx);
       signedTx = undefined;
       const stepType = getStepType(stepData);
-      if (stepType === SOLANA_TRANSFER) {
+      switch (stepType) {
+      case SOLANA_TRANSFER: {
         const transferData = { ...(stepData as TxMsgWithFeePayer), version: "legacy" } as TxMsgWithFeePayer;
         const tx = await addLifetimeAndSendTx(client, transferData, [solanaSigner]);
         txHashes.push(tx);
+      break;
       }
-      else if (stepType === SOLANA_SIGN_TX) {
+      case SOLANA_SIGN_TX: {
         const txBytes = Buffer.from((stepData as SignableEncodedBase64Message).encodedSolanaTx, "base64");
         const transaction = getTransactionDecoder().decode(txBytes);
         const compiledMsg = getCompiledTransactionMessageDecoder().decode(transaction.messageBytes);
@@ -142,6 +144,23 @@ export async function executeRouteSteps<
           [(signer as SolanaKeyPairSigner).keyPair],
           compiledTx,
         );
+      break;
+      }
+      case SOLANA_GASLESS_TRANSFER: {
+        const transferData = stepData as SolanaGaslessTransfer;
+        route.progress.emit("transfer-sent", {
+          transactionHash: transferData.solanaTxHash,
+          approvalType: "Gasless",
+          gasDropOff: transferData.gasDropOff,
+          usdcAmount: transferData.amount,
+          recipient: transferData.recipient as Hex,
+          quoted: "onChainUsdc",
+        });
+
+        txHashes.push(transferData.solanaTxHash);
+      break;
+      }
+      // No default
       }
       if (done) break;
     }

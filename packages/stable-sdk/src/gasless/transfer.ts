@@ -8,7 +8,7 @@ import type { LoadedCctprPlatformDomain, SupportedDomain } from "@stable-io/cctp
 
 import { Intent } from "../types/index.js";
 import { postTransferRequest } from "../api/gasless.js";
-import { GaslessTransferData } from "src/methods/findRoutes/steps.js";
+import { GaslessTransferData, SolanaGaslessTransfer } from "src/methods/findRoutes/steps.js";
 import { getTransactionEncoder } from "@solana/kit";
 import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
@@ -31,7 +31,8 @@ export async function* transferWithGaslessRelay<
   Eip2612Data |
   GaslessTransferData |
   Permit2GaslessData |
-  SignableEncodedBase64Message,
+  SignableEncodedBase64Message |
+  SolanaGaslessTransfer,
   any,
   any
 > {
@@ -56,6 +57,15 @@ export async function* transferWithGaslessRelay<
     args.permit2Signature = (yield opts.permit2GaslessData!).signature;
 
   const { txHash } = await postTransferRequest(network, { jwt, ...args });
+
+  if (intent.sourceChain === "Solana") {
+    yield {
+      solanaTxHash: txHash,
+      gasDropOff: intent.gasDropoffDesired.toUnit("atomic"),
+      amount: intent.amount,
+      recipient: intent.recipient.toString(),
+    } as SolanaGaslessTransfer;
+  }
 
   return {
     txHash,

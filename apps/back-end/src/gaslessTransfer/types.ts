@@ -6,7 +6,7 @@ import { Base64EncodedBytes } from "@solana/kit";
 import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 export type RelayTx = {
-  hash: `0x${string}`;
+  hash: string;
 };
 
 export interface JwtPayload extends Record<string, unknown> {
