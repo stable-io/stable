@@ -217,6 +217,8 @@ export type Zip<A extends RoArray2D> =
   ? TupleZip<A>
   : A extends infer T extends RoTuple
   ? [...{ [K in keyof T]: T[K] extends RoArray ? T[K][number] : never }][]
+  : A extends RoArray<infer T extends RoTuple>
+  ? [...{ [K in keyof T]: T[K][] }]
   : Flatten<A>[number][][];
 
 export const zip = <const Args extends RoArray2D>(arr: Args) =>
