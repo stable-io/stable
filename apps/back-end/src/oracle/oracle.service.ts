@@ -264,9 +264,9 @@ export class OracleService {
 
   public async getPrices(
     domains: (SupportedDomain<Network> | "Sui")[],
-    network: Network,
   ): Promise<PriceResult[]> {
     // TODO: RPC Urls? Create clients at startup?
+    const network = this.configService.network;
     const client = ViemEvmClient.fromNetworkAndDomain(
       network,
       "Avalanche",

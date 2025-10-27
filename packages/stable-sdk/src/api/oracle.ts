@@ -5,7 +5,6 @@ import { apiEndpointWithQuery, apiRequest, APIResponse, HTTPCode } from "./base.
 
 export type GetDomainPricesParams<D extends LoadedDomain> = {
   domain: D;
-  network: Network;
 };
 
 export type EvmDomainPrices = {

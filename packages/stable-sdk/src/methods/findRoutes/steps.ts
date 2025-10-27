@@ -22,7 +22,6 @@ interface BaseRouteExecutionStep {
   // This is the estimated cost of executing this step on-chain.
   // value=0 might be cero if the step is not executed onchain directly
   // eg: gasless relaying and permit signature.
-  // Expressed in gas token units
   costEstimation: CostEstimation;
 };
 

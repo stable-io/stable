@@ -40,10 +40,7 @@ export class OracleController {
   public async getPrice(
     @Query() request: PriceRequestDto,
   ): Promise<PriceResponseDto> {
-    const prices = await this.oracleService.getPrices(
-      [request.domain],
-      request.network,
-    );
+    const prices = await this.oracleService.getPrices([request.domain]);
     if (request.domain === "Solana") {
       const priceData = prices[0]! as SolanaPriceResult;
       return {
