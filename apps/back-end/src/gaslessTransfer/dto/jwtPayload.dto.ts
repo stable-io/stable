@@ -5,7 +5,7 @@ import { QuoteRequestDto } from "./quoteRequest.dto";
 import { IsUsdcAmount } from "../../common/validators";
 import { Domain } from "../../common/types";
 import { GaslessTransferService } from "../gaslessTransfer.service";
-import { SignableEncodedBase64MessageDto } from "./relayRequest.dto";
+import { SignableEncodedBase64MessageDto } from "./signableEncodedBase64Message.dto";
 
 export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   /**

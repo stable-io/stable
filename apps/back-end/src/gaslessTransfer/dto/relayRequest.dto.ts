@@ -7,6 +7,7 @@ import { IsSignature } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
 import { ValidatePermitSignature } from "../validators";
+import { SignableEncodedBase64MessageDto } from "./signableEncodedBase64Message.dto";
 
 export class PermitDto {
   /**
@@ -46,17 +47,6 @@ export class PermitDto {
     return BigInt(value);
   })
   deadline!: bigint;
-}
-
-export class SignableEncodedBase64MessageDto {
-  @ApiProperty({
-    type: String,
-    format: "base64",
-    required: false,
-    description: 'Base64-encoded signed serialized transaction for Solana gasless transfers',
-  })
-  @IsOptional()
-  encodedSolanaTx?: string;
 }
 
 export class RelayRequestDto<SourceDomain extends Domain = Domain> {
