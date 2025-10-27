@@ -89,7 +89,7 @@ export class CctpRService {
   public async composeSolanaGaslessTransferMessage(
     quoteRequest: QuoteRequestDto<"Solana">,
     gaslessFee: Usdc,
-  ): Promise<{ compiledTransaction: ReturnType<typeof compileTransaction>, encodedTx: SignableEncodedBase64Message }> {
+  ): Promise<SignableEncodedBase64Message> {
     const sender = quoteRequest.sender as SolanaAddress;
     const cctpr = this.contractInterface(quoteRequest.sourceDomain) as SolanaCctpR<Network>;
     const targetDomain = quoteRequest.targetDomain as Exclude<SupportedDomain<Network>, "Solana">;
@@ -114,7 +114,7 @@ export class CctpRService {
     const serializedTx = getTransactionEncoder().encode(compiledTransaction) as Uint8Array;
     const encodedSolanaTx = encoding.base64.encode(serializedTx) as Base64EncodedBytes;
 
-    return { compiledTransaction, encodedTx: { encodedSolanaTx } };
+    return { encodedSolanaTx };
   }
 
   public async gaslessTransferTx<N extends Network>(

@@ -1,10 +1,11 @@
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
-import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsNotEmpty, IsObject, IsOptional, ValidateNested } from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";
 import { IsUsdcAmount } from "../../common/validators";
 import { Domain } from "../../common/types";
 import { GaslessTransferService } from "../gaslessTransfer.service";
+import { SignableEncodedBase64MessageDto } from "./relayRequest.dto";
 
 export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   /**
@@ -27,8 +28,12 @@ export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   readonly gaslessFee!: Usdc;
 
   /**
-   * Base64-encoded signature of the compiled solana transaction message
+   * Encoded Solana transaction for gasless transfer
    */
-  @IsString()
-  readonly signedMessage?: string;
+  // @note: We don't use ValidateNested here because the structure is guaranteed by the JWT
+  // signature and we won't be manipulating it
+  @IsOptional()
+  @IsObject()
+  @IsNotEmpty()
+  readonly encodedTx?: SignableEncodedBase64MessageDto;
 }

@@ -36,17 +36,9 @@ import type { JwtPayload, RelayTx } from "./types";
 import { Conversion } from "@stable-io/amount";
 import { SupportedBackendEvmDomain } from "../common/types";
 import { 
-  Base64EncodedBytes, 
-  compileTransaction, 
-  createKeyPairFromPrivateKeyBytes, 
-  decompileTransactionMessage, 
-  getCompiledTransactionMessageDecoder,
+  Base64EncodedBytes,
   getTransactionDecoder,
-  SignatureBytes,
-  signBytes,
-  verifySignature
 } from "@solana/kit";
-import { encoding } from "@stable-io/utils";
 import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 @Injectable()
@@ -107,17 +99,12 @@ export class GaslessTransferService {
   ): Promise<QuoteDto> {
     const gaslessFee = await this.calculateSolanaGaslessFee(request);
     let encodedTx: SignableEncodedBase64Message | undefined;
-    let compiledTransaction: ReturnType<typeof compileTransaction> | undefined;
-    let signedMessage;
 
     try {
-      ({ compiledTransaction, encodedTx } =
-        await this.cctpRService.composeSolanaGaslessTransferMessage(
+      encodedTx = await this.cctpRService.composeSolanaGaslessTransferMessage(
           request,
           gaslessFee,
-        ));
-      const signer = await createKeyPairFromPrivateKeyBytes(new Uint8Array(Buffer.from(this.configService.gaslessPrivateKey, 'hex')));
-      signedMessage = encoding.base64.encode(await signBytes(signer.privateKey, compiledTransaction.messageBytes)) as Base64EncodedBytes;
+        );
     } catch (error: unknown) {
       if (!(error instanceof Error)) throw error;
 
@@ -134,7 +121,6 @@ export class GaslessTransferService {
     const jwtPayload: JwtPayload = {
       willRelay: encodedTx !== undefined,
       encodedTx,
-      signedMessage,
       quoteRequest: instanceToPlain(request),
       gaslessFee: gaslessFee.toUnit("human").toString(),
     };
@@ -187,31 +173,20 @@ export class GaslessTransferService {
     request: RelayRequestDto<"Solana">,
   ): Promise<RelayTx> {
     const {
-      jwt: { quoteRequest, signedMessage },
-      encodedTx,
+      jwt: { quoteRequest, encodedTx },
+      encodedTx: signedTx,
     } = request;
-
     const sender = this.configService.solanaRelayerAddress;
-    const encodedSolanaTx = (encodedTx as unknown as SignableEncodedBase64Message).encodedSolanaTx;
-    const txBytes = Buffer.from(encodedSolanaTx, "base64");
-    const transaction = getTransactionDecoder().decode(txBytes);
-    const decodedTx = getCompiledTransactionMessageDecoder().decode(transaction.messageBytes);
-    const txMessage = decompileTransactionMessage(decodedTx);
 
-    const signer = await createKeyPairFromPrivateKeyBytes(new Uint8Array(Buffer.from(this.configService.gaslessPrivateKey, 'hex')));
-    const compiledTx = compileTransaction(txMessage);
-    const verified = await verifySignature(
-      signer.publicKey, 
-      encoding.base64.decode(signedMessage!) as unknown as SignatureBytes, 
-      compiledTx.messageBytes
-    );
-    if (!verified) throw new Error("Invalid signed message signature");
+    const decodedBaseTx = getTransactionDecoder().decode(Buffer.from((encodedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64"));
+    const decodedSignedtx = getTransactionDecoder().decode(Buffer.from((signedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64"));
+    if (decodedBaseTx.messageBytes !== decodedSignedtx.messageBytes) throw new Error("Signed transaction does not match the original transaction");
 
     const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
     const txHash = await this.txLandingService.sendTransaction(
       toAddress,
       quoteRequest.sourceDomain,
-      encodedSolanaTx,
+      signedTx?.encodedSolanaTx as Base64EncodedBytes,
       sender,
     );
 
