@@ -180,7 +180,10 @@ export class GaslessTransferService {
 
     const decodedBaseTx = getTransactionDecoder().decode(Buffer.from((encodedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64"));
     const decodedSignedtx = getTransactionDecoder().decode(Buffer.from((signedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64"));
-    if (decodedBaseTx.messageBytes !== decodedSignedtx.messageBytes) throw new Error("Signed transaction does not match the original transaction");
+
+    const baseMessageBytes = Buffer.from(decodedBaseTx.messageBytes).toString("hex");
+    const signedMessageBytes = Buffer.from(decodedSignedtx.messageBytes).toString("hex");
+    if (baseMessageBytes !== signedMessageBytes) throw new Error("Signed transaction does not match the original transaction");
 
     const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
     const txHash = await this.txLandingService.sendTransaction(
