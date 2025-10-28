@@ -80,9 +80,8 @@ export class TxLandingService {
   }
 
   public async sendTransaction(
-    to: EvmAddress | SolanaAddress,
     domain: LoadedDomain,
-    txDetails: ContractTx | Base64EncodedBytes,
+    txDetails: { to: EvmAddress, tx: ContractTx } | Base64EncodedBytes,
     sender?: string,
   ): Promise<string> {
     const traceId = uuid();
@@ -94,7 +93,7 @@ export class TxLandingService {
       ...(sender ? { walletQuery: { address: sender } } : {}),
     };
 
-    transactionParams.txRequests = this.buildTxRequests(to, domain, txDetails);
+    transactionParams.txRequests = this.buildTxRequests(domain, txDetails);
 
     this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
     try {
@@ -136,9 +135,8 @@ export class TxLandingService {
   }
 
   public async signTransaction(    
-    to: EvmAddress | SolanaAddress,
     domain: LoadedDomain,
-    txDetails: ContractTx | Base64EncodedBytes,
+    txDetails: { to: EvmAddress, tx: ContractTx } | Base64EncodedBytes,
     signer?: string,
   ): Promise<string[]> {
     const traceId = uuid();
@@ -150,7 +148,7 @@ export class TxLandingService {
       ...(signer ? { walletQuery: { address: signer } } : {}),
     };
 
-    transactionParams.txRequests = this.buildTxRequests(to, domain, txDetails);
+    transactionParams.txRequests = this.buildTxRequests(domain, txDetails);
 
     this.logger.log(`Sending TX to landing service with trace-id ${traceId}`);
     try {
@@ -164,24 +162,25 @@ export class TxLandingService {
   }
 
   private buildTxRequests(
-    to: EvmAddress | SolanaAddress,
     domain: LoadedDomain,
-    txDetails: ContractTx | Base64EncodedBytes,
+    txDetails: { to: EvmAddress, tx: ContractTx } | Base64EncodedBytes,
   ): TransactionParams[] {
-    return domain === "Solana"
-      ? [
-          {
-            type: "legacy",
-            serializedTx: Buffer.from(txDetails as Base64EncodedBytes, 'base64'),
-          },
-        ] as TransactionParams[]
-      : [
-          {
-            to: to.toString(),
-            value: (txDetails as ContractTx).value?.toUnit("atomic") ?? 0n,
-            data: encoding.hex.encode((txDetails as ContractTx).data, true),
-          },
-        ] as TransactionParams[];
+    if (domain === "Solana") {
+      return [
+        {
+          type: "legacy",
+          serializedTx: Buffer.from(txDetails as Base64EncodedBytes, 'base64'),
+        },
+      ] as TransactionParams[];
+    }
+    const { to, tx } = txDetails as { to: EvmAddress, tx: ContractTx };
+    return [
+      {
+        to: to.toString(),
+        value: tx.value?.toUnit("atomic") ?? 0n,
+        data: encoding.hex.encode(tx.data, true),
+      },
+    ] as TransactionParams[];
   }
 
   /**

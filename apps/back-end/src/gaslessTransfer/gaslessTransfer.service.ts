@@ -147,7 +147,7 @@ export class GaslessTransferService {
       { permit2GaslessData, permit2Signature: permit2Signature! }
     );
 
-    const txDetails = quoteRequest.permit2PermitRequired
+    const contractTx = quoteRequest.permit2PermitRequired
       ? this.multiCallWithPermit(
           gaslessTxDetails as ContractTx,
           // @note: permitSignature is guaranteed to be present in this case by validation
@@ -158,12 +158,11 @@ export class GaslessTransferService {
 
     const toAddress = quoteRequest.permit2PermitRequired
       ? new EvmAddress(multicall3Address)
-      : this.cctpRService.contractAddress(quoteRequest.sourceDomain);
+      : this.cctpRService.contractAddress(quoteRequest.sourceDomain) as EvmAddress;
 
     const txHash = await this.txLandingService.sendTransaction(
-      toAddress,
       quoteRequest.sourceDomain,
-      txDetails,
+      { to: toAddress, tx: contractTx },
     );
 
     return { hash: txHash };
@@ -185,9 +184,7 @@ export class GaslessTransferService {
     const signedMessageBytes = Buffer.from(decodedSignedtx.messageBytes).toString("hex");
     if (baseMessageBytes !== signedMessageBytes) throw new Error("Signed transaction does not match the original transaction");
 
-    const toAddress = this.cctpRService.contractAddress(quoteRequest.sourceDomain);
     const txHash = await this.txLandingService.sendTransaction(
-      toAddress,
       quoteRequest.sourceDomain,
       signedTx?.encodedSolanaTx as Base64EncodedBytes,
       sender,
