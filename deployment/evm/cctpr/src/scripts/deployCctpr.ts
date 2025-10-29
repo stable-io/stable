@@ -3,7 +3,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import chalk from "chalk";
 import {
   cctpGasDropoffName,
   CctpRChainConfig,
@@ -46,15 +45,15 @@ async function run() {
   for (const task of cctprTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
-      console.info(chalk.red(
+      console.info(
         `Deployment of CCTPR failed in chain ${toReadable(task.chainId)}. Error: ${error}`,
-      ));
+      );
       // There's no need to cancel the rest of the deployment here since this is a leaf deployment.
       failed = true;
     } else {
-      console.info(chalk.blue(
+      console.info(
         `Deployed CCTPR to chain ${toReadable(task.chainId)} on address: ${task.address}`,
-      ));
+      );
       cctprDeployments[cctprName].push(task);
     }
   }
@@ -76,17 +75,17 @@ async function run() {
   for (const task of dropoffTasks) {
     if ("error" in task) {
       const error = (task.error as any)?.stack || task.error;
-      console.info(chalk.red(
+      console.info(
         `Deployment of CCTPR Gas Dropoff failed in chain ${toReadable(task.chainId)}.`,
-      ));
+      );
       console.info(`Error: ${error}`);
       // There's no need to cancel the rest of the deployment here since this is a leaf deployment.
       failed = true;
     } else {
-      console.info(chalk.blue(
+      console.info(
         `Deployed CCTPR Gas Dropoff to chain ${
           toReadable(task.chainId)} on address: ${task.address}`,
-      ));
+      );
       cctpGasDropoffDeployments[cctpGasDropoffName].push(task);
     }
   }
@@ -96,11 +95,11 @@ async function run() {
   }
 
   if (failed) {
-    console.error(chalk.red(`Some deployments failed, check logs above.`));
+    console.error(`Some deployments failed, check logs above.`);
   }
 }
 
 // --------------------------------------------------------------------------------
 
 await run();
-console.info(chalk.yellow("⚠️ Please add the addresses of the new CCTPR instances to the CCTPR Definitions package. ⚠️"));
+console.info("⚠️ Please add the addresses of the new CCTPR instances to the CCTPR Definitions package. ⚠️");
