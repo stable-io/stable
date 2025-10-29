@@ -38,8 +38,12 @@ import { SupportedBackendEvmDomain } from "../common/types";
 import { 
   Base64EncodedBytes,
   getTransactionDecoder,
+  getCompiledTransactionMessageDecoder,
+  decompileTransactionMessage,
 } from "@solana/kit";
 import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
+import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
+import { NonceAccountService } from "../cctpr/nonceAccount.service";
 
 @Injectable()
 export class GaslessTransferService {
@@ -55,6 +59,7 @@ export class GaslessTransferService {
     private readonly cctpRService: CctpRService,
     private readonly oracleService: OracleService,
     private readonly executionCostService: ExecutionCostService,
+    private readonly nonceAccountService: NonceAccountService,
   ) {}
 
   public async quoteEvmGaslessTransfer(
@@ -141,7 +146,7 @@ export class GaslessTransferService {
     if (permit2GaslessData === undefined)
       throw new Error("No permit2 gasless data in relay request");
 
-    const gaslessTxDetails = await this.cctpRService.gaslessTransferTx(
+    const gaslessTxDetails = await this.cctpRService.evmGaslessTransferTx(
       quoteRequest,
       gaslessFee,
       { permit2GaslessData, permit2Signature: permit2Signature! }
@@ -172,25 +177,39 @@ export class GaslessTransferService {
     request: RelayRequestDto<"Solana">,
   ): Promise<RelayTx> {
     const {
-      jwt: { quoteRequest, encodedTx },
+      jwt: { quoteRequest, encodedTx: quoteTx },
       encodedTx: signedTx,
     } = request;
-    const sender = this.configService.solanaRelayerAddress;
 
-    const decodedBaseTx = getTransactionDecoder().decode(Buffer.from((encodedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64"));
-    const decodedSignedtx = getTransactionDecoder().decode(Buffer.from((signedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64"));
-
-    const baseMessageBytes = Buffer.from(decodedBaseTx.messageBytes).toString("hex");
-    const signedMessageBytes = Buffer.from(decodedSignedtx.messageBytes).toString("hex");
-    if (baseMessageBytes !== signedMessageBytes) throw new Error("Signed transaction does not match the original transaction");
-
-    const txHash = await this.txLandingService.sendTransaction(
-      quoteRequest.sourceDomain,
-      signedTx?.encodedSolanaTx as Base64EncodedBytes,
-      sender,
+    const decodedQuoteTx = getTransactionDecoder().decode(
+      Buffer.from((quoteTx as SignableEncodedBase64Message).encodedSolanaTx, "base64")
+    );
+    const decodedSignedtx = getTransactionDecoder().decode(
+      Buffer.from((signedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64")
     );
 
-    return { hash: txHash };
+    const quoteMessageBytes = Buffer.from(decodedQuoteTx.messageBytes).toString("hex");
+    const signedMessageBytes = Buffer.from(decodedSignedtx.messageBytes).toString("hex");
+    // TODO: We should remove this check and just send the user signature and add it to the transaction message
+    if (quoteMessageBytes !== signedMessageBytes) 
+      throw new Error("Signed transaction does not match the original transaction");
+
+    const compiledMessage = getCompiledTransactionMessageDecoder().decode(decodedQuoteTx.messageBytes);
+    const decodedMessage = decompileTransactionMessage(compiledMessage);
+    const nonceAccount = new SolanaAddress(decodedMessage.instructions[0].accounts![0].address);
+    // WARNING: This is essentially a race between users that got a quote around the same time
+    this.nonceAccountService.blockNonceAccount(nonceAccount);
+
+    try {
+      const hash = await this.txLandingService.sendTransaction(
+      quoteRequest.sourceDomain,
+      signedTx?.encodedSolanaTx as Base64EncodedBytes,
+        this.configService.solanaRelayerAddress.toString(),
+      );
+      return { hash };
+    } finally {
+      this.nonceAccountService.unblockNonceAccount(nonceAccount);
+    }
   }
 
   private async getPricesForRequest(

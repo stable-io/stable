@@ -33,7 +33,7 @@ const intent = {
   amount: "0.01",
   sender,
   recipient,
-  gasDropoffDesired: 0n,
+  gasDropoffDesired: "0",
 };
 
 const routes = await sdk.findRoutes(intent);

@@ -117,7 +117,7 @@ function serializeQuoteRequest<
     amount: params.amount.toUnit("human").toString(),
     sender: params.sender.toString(),
     recipient: params.recipient.toString(),
-    gasDropoff: params.gasDropoff.toUnit("human").toString(),
+    gasDropoff: params.gasDropoff.toUnit("human").toFixed(6),
     takeFeesFromInput: params.takeFeesFromInput.toString(),
     maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6),
     fastFeeRate: params.corridor === "v2Direct"

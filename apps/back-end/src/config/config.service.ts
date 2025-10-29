@@ -59,8 +59,8 @@ export class ConfigService {
     return this.env.getOrThrow("SOLANA_RELAYER_ADDRESS");
   }
 
-  public get nonceAccount(): EnvironmentVariables["NONCE_ACCOUNT"] {
-    return this.env.getOrThrow("NONCE_ACCOUNT");
+  public get nonceAccounts(): EnvironmentVariables["NONCE_ACCOUNTS"] {
+    return this.env.getOrThrow("NONCE_ACCOUNTS");
   }
 
   public getRpcUrl<D extends SupportedDomain<Network>>(domain: D): string | undefined {

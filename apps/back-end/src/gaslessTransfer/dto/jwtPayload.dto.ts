@@ -24,7 +24,7 @@ export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   @ValidateNested()
   readonly quoteRequest!: QuoteRequestDto<SourceDomain>;
 
-  @IsUsdcAmount({ min: GaslessTransferService.minimumGaslessFee.toUnit("human").toFixed() })
+  @IsUsdcAmount({ min: GaslessTransferService.minimumGaslessFee.toUnit("human").toFixed(6) })
   readonly gaslessFee!: Usdc;
 
   /**

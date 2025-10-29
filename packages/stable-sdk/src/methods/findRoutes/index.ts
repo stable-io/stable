@@ -172,7 +172,7 @@ function parseGasDropoff<
   if (intent.gasDropoffDesired instanceof Amount) return intent.gasDropoffDesired;
   return Amount.ofKind(gasTokenKindOf(intent.targetChain))(
     intent.gasDropoffDesired ?? 0,
-    "atomic",
+    "human",
   );
 }
 

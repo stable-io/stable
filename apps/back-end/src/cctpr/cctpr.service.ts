@@ -36,7 +36,7 @@ import type {
   TransactionMessage,
 } from "@solana/kit";
 import { compileTransaction, getTransactionEncoder } from "@solana/kit";
-import { TxLandingService } from "../txLanding/txLanding.service";
+import { NonceAccountService } from "./nonceAccount.service";
 
 export type OnchainGaslessQuote = layouts.GaslessQuoteVariant & {
   type: "onChainUsdc";
@@ -54,7 +54,7 @@ export class CctpRService {
   constructor(
     private readonly configService: ConfigService,
     private readonly blockchainClientService: BlockchainClientService,
-    private readonly txLandingService: TxLandingService,
+    private readonly nonceAccountService: NonceAccountService,
   ) {}
 
   public contractAddress<D extends LoadedDomain>(domain: D): EvmAddress | SolanaAddress {
@@ -93,7 +93,6 @@ export class CctpRService {
     const sender = quoteRequest.sender as SolanaAddress;
     const cctpr = this.contractInterface(quoteRequest.sourceDomain) as SolanaCctpR<Network>;
     const targetDomain = quoteRequest.targetDomain as Exclude<SupportedDomain<Network>, "Solana">;
-    const nonceAccount = new SolanaAddress(this.configService.nonceAccount);
     const relayer = new SolanaAddress(this.configService.solanaRelayerAddress);
     const tx = await cctpr.transferGasless(
       targetDomain,
@@ -108,7 +107,7 @@ export class CctpRService {
       this.getDeadline(),
       gaslessFee,
       relayer,
-      nonceAccount,
+      this.nonceAccountService.getAvailableNonceAccount(),
     );
     const compiledTransaction = compileTransaction(tx);
     const serializedTx = getTransactionEncoder().encode(compiledTransaction) as Uint8Array;
@@ -117,54 +116,28 @@ export class CctpRService {
     return { encodedSolanaTx };
   }
 
-  public async gaslessTransferTx<N extends Network>(
+  public async evmGaslessTransferTx<N extends Network>(
     quoteRequest: QuoteRequestDto<QuoteSupportedDomain<N>>,
     gaslessFee: Usdc,
-    opts: EvmGaslessOpts | SolanaGaslessOpts, 
-  ): Promise<ContractTx | TransactionMessage> {
-    if (quoteRequest.sourceDomain === "Solana") {
-      if (!("deadline" in (opts as SolanaGaslessOpts))) throw new Error("Deadline is required for Solana");
-
-      const sender = quoteRequest.sender as SolanaAddress;
-      const cctpr = this.contractInterface(quoteRequest.sourceDomain) as SolanaCctpR<Network>;
-      const relayer = this.configService.solanaRelayerAddress;
-      const nonceAccount = this.configService.nonceAccount;
-      return await cctpr.transferGasless(
-        quoteRequest.targetDomain as ForeignDomain<Network>,
-        { amount: quoteRequest.amount, type: "in" },
-        quoteRequest.recipient.toUniversalAddress(),
-        quoteRequest.gasDropoff as TODO,
-        this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
-        { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
-        sender,
-        // deadline is expressed in unix timestamp (Seconds).
-        new Date(Number((opts as SolanaGaslessOpts).deadline.toString()) * 1000),
-        gaslessFee,
-        new SolanaAddress(relayer),
-        new SolanaAddress(nonceAccount)        
-      );
-    } else {
-      if (!("permit2GaslessData" in (opts as EvmGaslessOpts))) throw new Error("Permit2GaslessData is required for Evm");
-      if (!("permit2Signature" in (opts as EvmGaslessOpts))) throw new Error("Permit2Signature is required for Evm");
-      
-      const { permit2GaslessData, permit2Signature } = opts as EvmGaslessOpts;
-      const sender = quoteRequest.sender as EvmAddress;
-      const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;
-      return cctpr.transferGasless(
-        quoteRequest.targetDomain,
-        { amount: quoteRequest.amount, type: "in" },
-        quoteRequest.recipient.toUniversalAddress(),
-        quoteRequest.gasDropoff as TODO,
-        this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
-        { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
-        encoding.bignum.toBytes(permit2GaslessData.message.nonce, 32 as Size),
-        // deadline is expressed in unix timestamp (Seconds).
-        new Date(Number(permit2GaslessData.message.deadline.toString()) * 1000),
-        gaslessFee,
-        sender,
-        serializeSignature(permit2Signature),
-      );
-    }
+    opts: EvmGaslessOpts, 
+  ): Promise<ContractTx> {
+    const { permit2GaslessData, permit2Signature } = opts;
+    const sender = quoteRequest.sender as EvmAddress;
+    const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;
+    return cctpr.transferGasless(
+      quoteRequest.targetDomain,
+      { amount: quoteRequest.amount, type: "in" },
+      quoteRequest.recipient.toUniversalAddress(),
+      quoteRequest.gasDropoff as TODO,
+      this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
+      { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
+      encoding.bignum.toBytes(permit2GaslessData.message.nonce, 32 as Size),
+      // deadline is expressed in unix timestamp (Seconds).
+      new Date(Number(permit2GaslessData.message.deadline.toString()) * 1000),
+      gaslessFee,
+      sender,
+      serializeSignature(permit2Signature),
+    );
   }
 
   private contractInterface<D extends SupportedDomain<Network>>(

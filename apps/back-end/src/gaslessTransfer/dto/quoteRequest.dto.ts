@@ -15,7 +15,6 @@ import { corridors } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Transform } from "class-transformer";
 import { AMOUNT_PATTERNS } from "../../common/utils";
 import {
-  networks,
   supportedDomains,
   type Domain,
   type SupportedAddress,
@@ -103,7 +102,7 @@ export class QuoteRequestDto<
   /**
    * Amount of native gas token desired on target chain for gas dropoff
    * Specified in native token units (e.g., ETH, MATIC, AVAX, SOL)
-   * Supports up to 9 decimal places, use "0" if no gas dropoff is desired
+   * Supports up to 6 decimal places, use "0" if no gas dropoff is desired
    * @example "0.01"
    */
   @ApiProperty({
@@ -116,7 +115,7 @@ export class QuoteRequestDto<
   )
   @IsPlatformAmount("targetDomain", { min: 0 })
   @Transform(
-    ({ value }: { value: EvmGasToken | Sol }) => value.toUnit("human").toFixed(9),
+    ({ value }: { value: EvmGasToken | Sol }) => value.toUnit("human").toFixed(6),
     {
       toPlainOnly: true,
     },
