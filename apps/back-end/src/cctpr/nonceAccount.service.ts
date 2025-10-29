@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "../config/config.service";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
 
-const BLOCKED_DURATION = 10000; // 10 seconds in milliseconds
+const BLOCKED_DURATION = 120000; // 2 minutes in milliseconds
 
 export type NonceAccount = {
   address: SolanaAddress;
@@ -54,9 +54,13 @@ export class NonceAccountService {
     return nonceAccount.address;
   }
 
-  public blockNonceAccount(address: SolanaAddress): void {
+  public blockNonceAccount(address: SolanaAddress, duration = BLOCKED_DURATION): void {
     const nonceAccount = this.getNonceAccount(address);
-    nonceAccount.blockedUntil = Date.now() + BLOCKED_DURATION;
+    if (Date.now() < nonceAccount.blockedUntil) {
+      this.logger.error("Nonce account is already blocked");
+      throw new Error("Nonce account is already blocked");
+    }
+    nonceAccount.blockedUntil = Date.now() + duration;
   }
 
   public unblockNonceAccount(address: SolanaAddress): void {
