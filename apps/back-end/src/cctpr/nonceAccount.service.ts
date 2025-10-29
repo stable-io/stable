@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "../config/config.service";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";

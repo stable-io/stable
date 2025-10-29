@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 //copied from here https://github.com/LiteSVM/litesvm/blob/master/crates/node-litesvm/litesvm/index.ts
 //modified by @r8zon on 2025-08-06
 //License: Apache-2.0, see here https://github.com/LiteSVM/litesvm/blob/master/LICENSE
