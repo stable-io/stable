@@ -1,7 +1,13 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { HTTPCode, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { deserializeBigints, SerializedBigint } from "@stable-io/utils";
 import { Network } from "../types/index.js";
 import { apiRequest, apiEndpoint, APIResponse } from "./base.js";
+import { SolanaCostEstimation } from "src/methods/findRoutes/steps.js";
 
 export type GetExecutionCostsParams = {
   platform: "Evm" | "Solana";
@@ -21,10 +27,10 @@ type SerializedEvmExecutionCosts = {
 };
 
 export type SolanaExecutionCosts = {
-  v1: bigint;
-  v2: bigint;
-  v1Gasless: bigint;
-  v2Gasless: bigint;
+  v1: SolanaCostEstimation;
+  v2: SolanaCostEstimation;
+  v1Gasless: SolanaCostEstimation;
+  v2Gasless: SolanaCostEstimation;
 };
 
 type SerializedSolanaExecutionCosts = {

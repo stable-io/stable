@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional, ValidateNested, IsNotEmpty } from "class-validator";
 import { Transform, Type } from "class-transformer";
@@ -7,6 +12,7 @@ import { IsSignature } from "../../common/validators";
 import { IsSignedJwt } from "../../auth";
 import type { JwtPayloadDto } from "./jwtPayload.dto";
 import { ValidatePermitSignature } from "../validators";
+import { SignableEncodedBase64MessageDto } from "./signableEncodedBase64Message.dto";
 
 export class PermitDto {
   /**
@@ -60,6 +66,8 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   @IsSignedJwt()
   jwt!: JwtPayloadDto<SourceDomain>;
 
+  /// ------------------- Evm specific fields -------------------
+
   /**
    * User's signature of the permit2 message
    * @example "0x1234567890abcdef..."
@@ -68,9 +76,11 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
     type: String,
     format: "hex",
     pattern: "^0x[a-fA-F0-9]{130}$",
+    required: false,
   })
+  @IsOptional()
   @IsSignature()
-  permit2Signature!: ParsedSignature;
+  permit2Signature?: ParsedSignature;
 
   /**
    * User's permit data including signature, value, and deadline
@@ -84,4 +94,15 @@ export class RelayRequestDto<SourceDomain extends Domain = Domain> {
   @Type(() => PermitDto)
   @ValidatePermitSignature()
   permit?: PermitDto;
+
+  /// ------------------- Solana specific fields -------------------
+
+  @ApiProperty({
+    type: SignableEncodedBase64MessageDto,
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SignableEncodedBase64MessageDto)
+  encodedTx?: SignableEncodedBase64MessageDto;
 }

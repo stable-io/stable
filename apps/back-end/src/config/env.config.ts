@@ -1,6 +1,11 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import type { Network } from "@stable-io/cctp-sdk-definitions";
 import { networks } from "@stable-io/cctp-sdk-definitions";
-import { plainToInstance } from "class-transformer";
+import { plainToInstance, Transform } from "class-transformer";
 import {
   IsIn,
   IsNotEmpty,
@@ -11,6 +16,8 @@ import {
   validateSync,
   IsString,
 } from "class-validator";
+import { IsSolanaAddress } from "../common/validators";
+import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
 
 export class EnvironmentVariables {
   @IsPort()
@@ -29,6 +36,14 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   @IsString()
   public TX_LANDING_URL!: string;
+
+  @IsSolanaAddress()
+  public SOLANA_RELAYER_ADDRESS!: SolanaAddress;
+
+  @Transform(({ value }: { value: string }) => 
+    value.split(",").map((addr) => new SolanaAddress(addr))
+  )
+  public NONCE_ACCOUNTS!: SolanaAddress[];
 }
 
 export const validate = (

@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { Injectable } from "@nestjs/common";
 import { Size, TODO, encoding } from "@stable-io/utils";
 import type {
@@ -5,17 +10,19 @@ import type {
   Percentage,
   Usdc,
   EvmDomains,
+  LoadedDomain,
 } from "@stable-io/cctp-sdk-definitions";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
-import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
+import type { Corridor, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { contractAddressOf as cctprContractAddressOf } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type {
   CorridorParams,
   Permit2GaslessData,
   SupportedEvmDomain,
 } from "@stable-io/cctp-sdk-cctpr-evm";
-import { CctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
-import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
+import { CctpR as EvmCctpR, layouts } from "@stable-io/cctp-sdk-cctpr-evm";
+import { SignableEncodedBase64Message, CctpR as SolanaCctpR } from "@stable-io/cctp-sdk-cctpr-solana";
+import { ContractTx, EvmAddress, EvmClient } from "@stable-io/cctp-sdk-evm";
 import { ConfigService } from "../config/config.service";
 import { BlockchainClientService } from "../blockchainClient/blockchainClient.service";
 import {
@@ -23,13 +30,25 @@ import {
   QuoteSupportedDomain,
 } from "../gaslessTransfer/dto/quoteRequest.dto";
 import { Network } from "../common/types";
-import type { ParsedSignature } from "../common/types";
+import type { ParsedSignature, SupportedBackendEvmDomain } from "../common/types";
 import type { Permit2Nonce } from "../common/utils";
 import { fetchNextPermit2Nonce, serializeSignature } from "../common/utils";
+import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
+import { ForeignDomain } from "../../../../packages/cctp-sdk/cctpr-solana/dist/contractSdk/constants";
+import { PublicClient } from "viem";
+import type {
+  Base64EncodedBytes,
+  TransactionMessage,
+} from "@solana/kit";
+import { compileTransaction, getTransactionEncoder } from "@solana/kit";
+import { NonceAccountService } from "./nonceAccount.service";
 
 export type OnchainGaslessQuote = layouts.GaslessQuoteVariant & {
   type: "onChainUsdc";
 };
+
+export type EvmGaslessOpts = { permit2GaslessData: Permit2GaslessData, permit2Signature: ParsedSignature };
+export type SolanaGaslessOpts = { deadline: bigint };
 
 @Injectable()
 export class CctpRService {
@@ -40,26 +59,24 @@ export class CctpRService {
   constructor(
     private readonly configService: ConfigService,
     private readonly blockchainClientService: BlockchainClientService,
+    private readonly nonceAccountService: NonceAccountService,
   ) {}
 
-  public contractAddress<D extends keyof EvmDomains>(domain: D): EvmAddress {
+  public contractAddress<D extends LoadedDomain>(domain: D): EvmAddress | SolanaAddress {
     const addr = cctprContractAddressOf(this.configService.network, domain);
     if (!addr) throw new Error("CCTPR Address Not Found");
-    return new EvmAddress(addr);
+    return domain === 'Solana' ? new SolanaAddress(addr) : new EvmAddress(addr);
   }
 
-  public async composeGaslessTransferMessage(
-    quoteRequest: QuoteRequestDto,
+  public async composeEvmGaslessTransferMessage(
+    quoteRequest: QuoteRequestDto<SupportedBackendEvmDomain>,
     gaslessFee: Usdc,
   ): Promise<Permit2GaslessData> {
-    if (quoteRequest.sourceDomain === "Solana") {
-      throw new Error("Solana is not supported");
-    } else {
       const sender = quoteRequest.sender as EvmAddress;
-      const cctpr = this.contractInterface(quoteRequest.sourceDomain);
+      const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;
       return cctpr.composeGaslessTransferMessage(
         quoteRequest.targetDomain,
-        this.contractAddress(quoteRequest.sourceDomain),
+        this.contractAddress(quoteRequest.sourceDomain) as EvmAddress,
         { amount: quoteRequest.amount, type: "in" },
         quoteRequest.recipient.toUniversalAddress(),
         quoteRequest.gasDropoff as TODO,
@@ -72,42 +89,71 @@ export class CctpRService {
         this.getDeadline(),
         gaslessFee,
       );
-    }
   }
 
-  public gaslessTransferTx<N extends Network>(
-    quoteRequest: QuoteRequestDto<QuoteSupportedDomain<N>>,
-    permit2GaslessData: Permit2GaslessData,
-    permit2Signature: ParsedSignature,
+  public async composeSolanaGaslessTransferMessage(
+    quoteRequest: QuoteRequestDto<"Solana">,
     gaslessFee: Usdc,
-  ): ContractTx {
-    if (quoteRequest.sourceDomain === "Solana") {
-      throw new Error("Solana is not supported");
-    } else {
-      const sender = quoteRequest.sender as EvmAddress;
-      const cctpr = this.contractInterface(quoteRequest.sourceDomain);
-      return cctpr.transferGasless(
-        quoteRequest.targetDomain,
-        { amount: quoteRequest.amount, type: "in" },
-        quoteRequest.recipient.toUniversalAddress(),
-        quoteRequest.gasDropoff as TODO,
-        this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
-        { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
-        encoding.bignum.toBytes(permit2GaslessData.message.nonce, 32 as Size),
-        // deadline is expressed in unix timestamp (Seconds).
-        new Date(Number(permit2GaslessData.message.deadline.toString()) * 1000),
-        gaslessFee,
-        sender,
-        serializeSignature(permit2Signature),
-      );
-    }
+  ): Promise<SignableEncodedBase64Message> {
+    const sender = quoteRequest.sender as SolanaAddress;
+    const cctpr = this.contractInterface(quoteRequest.sourceDomain) as SolanaCctpR<Network>;
+    const targetDomain = quoteRequest.targetDomain as Exclude<SupportedDomain<Network>, "Solana">;
+    const relayer = new SolanaAddress(this.configService.solanaRelayerAddress);
+    const tx = await cctpr.transferGasless(
+      targetDomain,
+      { amount: quoteRequest.amount, type: "in" },
+      quoteRequest.recipient.toUniversalAddress(),
+      // TODO: Check this gasDropoff
+      quoteRequest.gasDropoff as TODO,
+      this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
+      { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
+      sender,
+      // TODO: Check this deadline
+      this.getDeadline(),
+      gaslessFee,
+      relayer,
+      this.nonceAccountService.getAvailableNonceAccount(),
+    );
+    const compiledTransaction = compileTransaction(tx);
+    const serializedTx = getTransactionEncoder().encode(compiledTransaction) as Uint8Array;
+    const encodedSolanaTx = encoding.base64.encode(serializedTx) as Base64EncodedBytes;
+
+    return { encodedSolanaTx };
   }
 
-  private contractInterface<D extends keyof EvmDomains>(
+  public async evmGaslessTransferTx<N extends Network>(
+    quoteRequest: QuoteRequestDto<QuoteSupportedDomain<N>>,
+    gaslessFee: Usdc,
+    opts: EvmGaslessOpts, 
+  ): Promise<ContractTx> {
+    const { permit2GaslessData, permit2Signature } = opts;
+    const sender = quoteRequest.sender as EvmAddress;
+    const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;
+    return cctpr.transferGasless(
+      quoteRequest.targetDomain,
+      { amount: quoteRequest.amount, type: "in" },
+      quoteRequest.recipient.toUniversalAddress(),
+      quoteRequest.gasDropoff as TODO,
+      this.getCorridorParams(quoteRequest.corridor, quoteRequest.fastFeeRate),
+      { type: "onChain", maxRelayFee: quoteRequest.maxRelayFee },
+      encoding.bignum.toBytes(permit2GaslessData.message.nonce, 32 as Size),
+      // deadline is expressed in unix timestamp (Seconds).
+      new Date(Number(permit2GaslessData.message.deadline.toString()) * 1000),
+      gaslessFee,
+      sender,
+      serializeSignature(permit2Signature),
+    );
+  }
+
+  private contractInterface<D extends SupportedDomain<Network>>(
     domain: D,
-  ): CctpR<Network, D> {
+  ): EvmCctpR<Network, Exclude<D, "Solana">> | SolanaCctpR<Network> {
     const client = this.blockchainClientService.getClient(domain);
-    return new CctpR(client);
+
+    if (domain === "Solana")
+      return new SolanaCctpR(client.network, client as TODO, {});
+
+    return new EvmCctpR(client as EvmClient) as EvmCctpR<Network, Exclude<D, "Solana">>;
   }
 
   private getDeadline(): Date {
@@ -122,7 +168,7 @@ export class CctpRService {
     const { client } = this.blockchainClientService.getClient(domain);
 
     const nonce = await fetchNextPermit2Nonce(
-      client,
+      client as PublicClient,
       sender,
       domainNonceCache[sender.toString()],
     );

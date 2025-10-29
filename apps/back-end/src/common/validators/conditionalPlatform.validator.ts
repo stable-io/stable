@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import {
   ValidationArguments,
   ValidatorConstraint,
@@ -74,9 +79,12 @@ export class ConditionalPlatformValidationConstraint<T, U>
     if (!validator) {
       return `Platform ${platform} not supported`;
     }
-    return validator.validator.defaultMessage
-      ? validator.validator.defaultMessage(args)
-      : `Invalid value for platform ${platform}`;
+    return validator.validator.defaultMessage?.({
+      ...args,
+      constraints: [
+        { ...options.generalConstraints, ...validator.constraints },
+      ],
+    }) ?? `Invalid value for platform ${platform}`;
   }
 }
 

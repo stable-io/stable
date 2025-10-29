@@ -10,13 +10,22 @@ import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../index.js";
 import { writeFileSync, appendFileSync, existsSync } from "node:fs";
 import { ExecutionTracker, ExecutionResult, formatTimeDiff } from "./utils.js";
+import { SolanaKitSigner } from "src/signer/solanaKitSigner.js";
 
 dotenv.config();
-const privateKey = process.env.EVM_PRIVATE_KEY as Address;
-const account = privateKeyToAccount(privateKey);
+const evmPrivateKey = process.env.EVM_PRIVATE_KEY as Address | undefined;
+if (!evmPrivateKey) {
+  throw new Error("EVM_PRIVATE_KEY is not set");
+}
+const evmAccount = privateKeyToAccount(evmPrivateKey);
 
-const sender = account.address;
-const recipient = account.address;
+const solanaPrivateKeyFile = process.env.SOLANA_PRIVATE_KEY_FILE;
+if (!solanaPrivateKeyFile) {
+  throw new Error("SOLANA_PRIVATE_KEY_FILE is not set");
+}
+const solanaAccount = await SolanaKitSigner.loadKeyPairSigner(solanaPrivateKeyFile);
+
+const getAddress = (chain) => chain === "Solana" ? solanaAccount.address : evmAccount.address;
 
 const rpcUrls = {
   Ethereum: "https://dimensional-solemn-scion.quiknode.pro/585eb5fde76eda6d2b9e4f6a150ec7bf4df12af1",
@@ -30,18 +39,22 @@ const rpcUrls = {
 const sdk = new StableSDK({
   network: "Mainnet",
   signer: {
-    Evm: new ViemSigner(account),
+    Evm: new ViemSigner(evmAccount),
+    Solana: new SolanaKitSigner(solanaAccount),
   },
   rpcUrls,
 });
 
+const sourceChain = "Solana" as const;
+const targetChain = "Optimism" as const;
+
 const intent = {
-  sourceChain: "Arbitrum" as const,
-  targetChain: "Optimism" as const,
-  amount: "0.01",
-  sender,
-  recipient,
-  // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
+  sourceChain,
+  targetChain,
+  amount: "0.1",
+  sender: getAddress(sourceChain),
+  recipient: getAddress(targetChain),
+  gasDropoffDesired: "0.001",
   paymentToken: "native" as const,
 };
 
@@ -102,9 +115,9 @@ async function executeRouteWithTiming(
 
     const executionResult = new ExecutionTracker(selectedRoute);
 
-    const hasBalance = await sdk.checkHasEnoughFunds(selectedRoute);
+    const balance = await sdk.checkHasEnoughFunds(selectedRoute);
 
-    if (hasBalance) {
+    if (balance.hasEnoughBalance) {
       try {
         await sdk.executeRoute(selectedRoute);
         console.info(
@@ -192,7 +205,8 @@ function logScriptConfiguration() {
   console.info(`🚀 Starting ${scriptConfig.numExecutions} sequential route executions`);
   console.info(`Transferring from ${intent.sourceChain} to ${intent.targetChain}`);
   console.info(`Amount: ${intent.amount} USDC`);
-  console.info(`Sender/Recipient: ${sender}`);
+  console.info(`Sender: ${intent.sender}`);
+  console.info(`Recipient: ${intent.recipient}`);
   console.info(`Results will be saved to: ${scriptConfig.outputFile}`);
   console.info(`⏱️  Step timings show duration between consecutive steps`);
 }

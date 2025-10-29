@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-duplicate-type-constituents */
 import type { RoArray } from "@stable-io/map-utils";
-import type { BaseObject, TODO } from "@stable-io/utils";
+import type { BaseObject, TODO, Url } from "@stable-io/utils";
 import type {
   DomainsOf,
   PlatformOf,
@@ -14,7 +14,6 @@ import type {
   LoadedDomain,
   PlatformAddress,
   RegisteredPlatform,
-  UniversalAddress,
 } from "@stable-io/cctp-sdk-definitions";
 import type { SupportedDomain } from "./constants.js";
 import type { InOrOut, QuoteBase, CorridorParamsBase } from "./common.js";
@@ -49,8 +48,10 @@ export type LoadedCctprPlatformDomain<N extends Network, P extends RegisteredCct
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   LoadedCctprDomain<N> & DomainsOf<P>;
 
-export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N>> =
-  UniversalAddress | (D extends LoadedDomain ? PlatformAddress<PlatformOf<D>> : never);
+// FIXME TODO: For some reason CctprRecipientAddress is not working
+// LoadedDomain doesn't work on cctpr-definitions package
+export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N>> = TODO
+//  UniversalAddress | (D extends LoadedDomain ? PlatformAddress<PlatformOf<D>> : never);
 
 export interface PlatformCctpr<
   P extends RegisteredPlatform,
@@ -65,6 +66,7 @@ export interface PlatformCctpr<
     destination: D,
     corridors: RoArray<SensibleCorridor<N, S, D>>,
     gasDropoff?: GasTokenOf<D>,
+    rpcUrl?: Url,
   ) => Promise<RoArray<RelayCost<N, S>>>;
 
   transfer: <
@@ -82,6 +84,7 @@ export interface PlatformCctpr<
     quote: QuoteBase<N, PlatformOf<S>, S>,
     gasDropoff: GasTokenOf<D>,
     options: PlatformImplsOf[P]["TransferOptions"],
+    rpcUrl?: Url,
   ) => AsyncGenerator<PlatformImplsOf[P]["TransferGeneratorT"], PlatformImplsOf[P]["TransferGeneratorTReturn"]>;
 }
 

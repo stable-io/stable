@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { Injectable } from "@nestjs/common";
 import { EvmAddress, selectorOf } from "@stable-io/cctp-sdk-evm";
 import { encoding, TODO } from "@stable-io/utils";
@@ -264,9 +269,9 @@ export class OracleService {
 
   public async getPrices(
     domains: (SupportedDomain<Network> | "Sui")[],
-    network: Network,
   ): Promise<PriceResult[]> {
     // TODO: RPC Urls? Create clients at startup?
+    const network = this.configService.network;
     const client = ViemEvmClient.fromNetworkAndDomain(
       network,
       "Avalanche",

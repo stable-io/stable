@@ -40,7 +40,9 @@ export async function createAndSendTx(
   );
 }
 
-export const assertSuccess = async (txResult: Promise<TransactionMetadata>) => {
+export async function assertSuccess(
+  txResult: Promise<TransactionMetadata>,
+): Promise<TransactionMetadata> {
   try {
     return await txResult;
   }
@@ -61,4 +63,14 @@ export async function loadKeypairFromFile(
     JSON.parse(fs.readFileSync(resolvedPath, "utf8")),
   );
   return createKeyPairSignerFromBytes(loadedKeyBytes);
+}
+
+export async function waitForInput(): Promise<string> {
+  return new Promise((resolve) => {
+      process.stdin.resume();
+      process.stdin.once("data", (data) => {
+          process.stdin.pause();
+          resolve(data.toString().trim());
+      });
+  });
 }

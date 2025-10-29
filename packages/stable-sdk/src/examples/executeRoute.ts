@@ -5,7 +5,7 @@
 
 import dotenv from "dotenv";
 import { Address } from "viem";
-import { Domain, Network } from "@stable-io/cctp-sdk-definitions";
+import { Domain } from "@stable-io/cctp-sdk-definitions";
 import { ViemSigner } from "../signer/viemSigner.js";
 import { privateKeyToAccount } from "viem/accounts";
 import StableSDK, { Route } from "../index.js";
@@ -25,10 +25,8 @@ if (!solanaPrivateKeyFile) {
 }
 const solanaAccount = await SolanaKitSigner.loadKeyPairSigner(solanaPrivateKeyFile);
 
-const sender = solanaAccount.address;
-const recipient = evmAccount.address;
-
 const rpcUrls = {
+  Polygon: "https://rpc-amoy.polygon.technology",
   Ethereum: "https://dimensional-solemn-scion.ethereum-sepolia.quiknode.pro/585eb5fde76eda6d2b9e4f6a150ec7bf4df12af1/",
   Solana: "https://api.devnet.solana.com",
 };
@@ -42,26 +40,30 @@ const sdk = new StableSDK({
   rpcUrls,
 });
 
-const intent = {
-  sourceChain: "Solana" as const,
-  targetChain: "Optimism" as const,
-  amount: "0.1",
-  sender,
-  recipient,
-  // To receive gas tokens on the target. Increases the cost of the transfer.
-  // gasDropoffDesired: eth("0.0015").toUnit("atomic"),
+const getAddress = (domain: Domain) => domain === "Solana" ? solanaAccount.address : evmAccount.address;
+const sourceChain = "Solana" as const;
+const targetChain = "Ethereum" as const; 
 
-  paymentToken: "usdc" as const, // defaults to usdc
+const intent = {
+  sourceChain,
+  targetChain,
+  amount: "0.3",
+  sender: getAddress(sourceChain),
+  recipient: getAddress(targetChain),
+  // To receive gas tokens on the target. Increases the cost of the transfer.
+  gasDropoffDesired: "0.0000001",
+  paymentToken: "usdc" as const,
 };
 
 const routes = await sdk.findRoutes(intent);
-
 const selectedRoutes = [routes.cheapest];
 
 for (const route of selectedRoutes) {
-  const hasBalance = await sdk.checkHasEnoughFunds(route);
-  if (!hasBalance) {
+  const balance = await sdk.checkHasEnoughFunds(route);
+  if (!balance.hasEnoughBalance) {
     console.info(`${route.intent.sender} doesn't have enough balance to pay for the transfer`);
+    console.info(`Required balance: ${stringify(balance.requiredBalance)}`);
+    console.info(`Available balance: ${stringify(balance.availableBalance)}`);
     continue;
   }
 
@@ -97,8 +99,8 @@ for (const route of selectedRoutes) {
 function logRouteInfo(route: Route<any, any, any>) {
   console.info("");
   console.info(`Transferring from ${intent.sourceChain} to ${intent.targetChain}.`);
-  console.info(`Sender: ${sender}`);
-  console.info(`Recipient: ${recipient}`);
+  console.info(`Sender: ${intent.sender}`);
+  console.info(`Recipient: ${intent.recipient}`);
   console.info(`Routing through corridor: ${route.corridor}`);
   console.info(
     "Token Authorization To use:",
@@ -121,7 +123,7 @@ function logRouteInfo(route: Route<any, any, any>) {
 }
 
 function stringify(obj: any) {
-  return JSON.stringify(obj, bigintReplacer);
+  return JSON.stringify(obj, bigintReplacer, 2);
 }
 
 function getTestnetScannerTxUrl(
@@ -130,9 +132,13 @@ function getTestnetScannerTxUrl(
 ): string {
   const scanners: Partial<Record<Domain, string>> = {
     ["Ethereum"]: "https://sepolia.etherscan.io/tx/{tx}",
+    ["Avalanche"]: "https://subnets-test.avax.network/c-chain/tx/{tx}",
     ["Arbitrum"]: "https://sepolia.arbiscan.io/tx/{tx}",
     ["Optimism"]: "https://sepolia-optimism.etherscan.io/tx/{tx}",
     ["Solana"]: "https://explorer.solana.com/tx/{tx}?cluster=devnet",
+    ["Polygon"]: "https://amoy.polygonscan.com/tx/{tx}",
+    ["Base"]: "https://sepolia.basescan.org/tx/{tx}",
+    ["Unichain"]: "https://unichain-sepolia.blockscout.com/tx/{tx}",
   };
   const baseUrl = scanners[domain];
   if (!baseUrl)

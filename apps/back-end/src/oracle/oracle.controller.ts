@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import { Controller, Get, Query } from "@nestjs/common";
 import { ApiResponse } from "@nestjs/swagger";
 import {
@@ -40,21 +45,19 @@ export class OracleController {
   public async getPrice(
     @Query() request: PriceRequestDto,
   ): Promise<PriceResponseDto> {
-    const prices = await this.oracleService.getPrices(
-      [request.domain],
-      request.network,
-    );
+    const prices = await this.oracleService.getPrices([request.domain]);
     if (request.domain === "Solana") {
       const priceData = prices[0]! as SolanaPriceResult;
       return {
         data: serializeBigints({
           gasTokenPriceAtomicUsdc: priceData.gasTokenPrice.toUnit("atomic"),
           pricePerAccountByteAtomicLamports:
-            priceData.pricePerAccountByte.toUnit("lamports"),
+            priceData.pricePerAccountByte.toUnit("atomic"),
           signaturePriceAtomicLamports:
-            priceData.signaturePrice.toUnit("lamports"),
+            priceData.signaturePrice.toUnit("atomic"),
           computationPriceAtomicMicroLamports:
-            priceData.computationPrice.toUnit("µlamports"),
+            // WARNING: We are essentially truncating the value here.
+            BigInt(priceData.computationPrice.toUnit("µlamports").toFixed(0)),
         }) as PriceDto,
       };
     }

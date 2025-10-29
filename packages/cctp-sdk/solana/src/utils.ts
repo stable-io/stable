@@ -18,6 +18,7 @@ import {
   signTransaction,
   getBase64EncodedWireTransaction,
   compileTransaction,
+  Signature,
 } from "@solana/kit";
 import { type Layout, type DeriveType, deserialize, serialize } from "binary-layout";
 import { isArray, mapTo } from "@stable-io/map-utils";
@@ -33,7 +34,7 @@ import {
   systemProgramId,
 } from "./constants.js";
 import { SolanaAddress } from "./address.js";
-import type { SolanaClient, AccountInfo, TxMsgWithFeePayer, TxWithLifetime } from "./platform.js";
+import type { SolanaClient, AccountInfo, TxMsgWithFeePayer, TxWithLifetime, ConfirmedTx } from "./platform.js";
 import { tokenAccountLayout } from "./layoutItems.js";
 
 const discriminatorTypeConverter = {
@@ -214,9 +215,59 @@ export async function addLifetimeAndSendTx(
   return sendTx(client, txWithLifetime, signers);
 }
 
-async function sendTx(client: SolanaClient, tx: TxWithLifetime, signers: readonly KeyPairSigner[]) {
+export async function sendTx(client: SolanaClient, tx: TxWithLifetime, signers: readonly KeyPairSigner[]) {
   const compiledTx = compileTransaction(tx);
   const signedTx = await signTransaction(signers.map(kp => kp.keyPair), compiledTx);
   const wireTx: Base64EncodedWireTransaction = getBase64EncodedWireTransaction(signedTx);
   return client.sendTransaction(wireTx);
+}
+
+export type CpiEvent = {
+  data: Uint8Array;
+  programId: SolanaAddress;
+}
+
+export function getCpiEvents(transaction: ConfirmedTx): CpiEvent[] {
+  const { meta } = transaction;
+  if (!meta?.innerInstructions) {
+    return [];
+  }
+  const accountKeys = transaction.transaction.message.accountKeys;
+  return meta.innerInstructions.flatMap((outerIx) =>
+    outerIx.instructions.map(innerIx => {
+      const data = encoding.base58.decode(innerIx.data);
+      const programIdIndex = innerIx.programIdIndex;
+      return { data, programIdIndex };
+    }).filter(innerIx =>
+      encoding.bytes.equals(
+        innerIx.data.subarray(0, anchorEmitCpiDiscriminator.length),
+        anchorEmitCpiDiscriminator,
+      )
+    ).map(innerIx => {
+      const idOnKeys = innerIx.programIdIndex;
+      const idOnWritable = idOnKeys - accountKeys.length;
+      const idOnReadonly = idOnWritable - meta.loadedAddresses.writable.length;
+      const programId = accountKeys[idOnKeys] ??
+        meta.loadedAddresses.writable[idOnWritable] ??
+        meta.loadedAddresses.readonly[idOnReadonly];
+      return {
+        data: innerIx.data.slice(anchorEmitCpiDiscriminator.length),
+        programId: new SolanaAddress(programId!),
+      };
+    }),
+  );
+}
+
+export function filterCPIEvents(
+  events: CpiEvent[],
+  eventName: string,
+  programId?: SolanaAddress,
+): Uint8Array[] {
+  const discriminator = discriminatorOf("event", eventName);
+  return events.filter(event =>
+    encoding.bytes.equals(
+      event.data.subarray(0, discriminator.length),
+      discriminator,
+    ) && (!programId || event.programId.equals(programId))
+  ).map(event => event.data.slice(discriminator.length));
 }

@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { EvmDomains, LoadedDomain, platformOf } from "@stable-io/cctp-sdk-definitions";
+import { EvmDomains, LoadedDomain, platformOf, Usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Corridor } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Permit, ContractTx, Eip2612Data, Eip712Data, selectorOf, Eip2612Message, Permit2TransferFromMessage } from "@stable-io/cctp-sdk-evm";
 import { type Permit2GaslessData, execSelector } from "@stable-io/cctp-sdk-cctpr-evm";
@@ -12,7 +12,8 @@ import { encoding } from "@stable-io/utils";
 import { Network } from "../../types/general.js";
 import { EvmExecutionCosts, getPlatformExecutionCosts } from "../../api/executionCost.js";
 import { TxMsg } from "@stable-io/cctp-sdk-solana";
-export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
+export type StepType = "sign-permit" | "sign-permit-2" | "pre-approve" | "evm-transfer" | "gasless-transfer" | "solana-transfer" | "solana-sign-tx" | "solana-gasless-transfer";
 
 interface BaseRouteExecutionStep {
   type: StepType;
@@ -21,15 +22,30 @@ interface BaseRouteExecutionStep {
   // This is the estimated cost of executing this step on-chain.
   // value=0 might be cero if the step is not executed onchain directly
   // eg: gasless relaying and permit signature.
-  // Expressed in gas token units
-  gasCostEstimation: bigint;
+  costEstimation: CostEstimation;
 };
+
+export interface CostEstimation {
+  sourceChain: EvmCostEstimation | SolanaCostEstimation;
+  hopChain?: EvmCostEstimation;
+}
+
+export interface EvmCostEstimation {
+  gasCostEstimation: bigint;
+}
+
+export interface SolanaCostEstimation {
+  computationUnits: bigint;
+  signatures: number;
+  accountBytes: bigint;
+}
 
 export type RouteExecutionStep = SignPermitStep
   | PreApproveStep
   | EvmTransferStep
   | GaslessTransferStep
-  | SolanaTransferStep;
+  | SolanaTransferStep
+  | SolanaSignTxStep;
 
 export const SIGN_PERMIT = "sign-permit" as const;
 export interface SignPermitStep extends BaseRouteExecutionStep {
@@ -61,12 +77,23 @@ export interface SolanaTransferStep extends BaseRouteExecutionStep {
   type: typeof SOLANA_TRANSFER;
 };
 
+export const SOLANA_SIGN_TX = "solana-sign-tx" as const;
+export interface SolanaSignTxStep extends BaseRouteExecutionStep {
+  type: typeof SOLANA_SIGN_TX;
+}
+
+export const SOLANA_GASLESS_TRANSFER = "solana-gasless-transfer" as const;
+export interface SolanaGaslessTransferStep extends BaseRouteExecutionStep {
+  type: typeof SOLANA_GASLESS_TRANSFER;
+}
+
 /**
  * @param txOrSig at the moment cctp-sdk returns either a contract transaction to sign and send
  *                or an eip2612 message to sign and return to it.
  */
 export function getStepType(
-  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg,
+  // eslint-disable-next-line @stylistic/max-len
+  txOrSig: ContractTx | Eip712Data | GaslessTransferData | TxMsg | SignableEncodedBase64Message | SolanaGaslessTransfer,
 ): StepType {
   if (isGaslessTransferData(txOrSig)) return GASLESS_TRANSFER;
   if (isPermit2GaslessData(txOrSig)) return SIGN_PERMIT_2;
@@ -74,6 +101,8 @@ export function getStepType(
   if (isTransferTx(txOrSig)) return EVM_TRANSFER;
   if (isApprovalTx(txOrSig)) return PRE_APPROVE;
   if (isTxMsg(txOrSig)) return SOLANA_TRANSFER;
+  if (isSignableSolanaTx(txOrSig)) return SOLANA_SIGN_TX;
+  if (isSolanaGaslessTransfer(txOrSig)) return SOLANA_GASLESS_TRANSFER;
   throw new Error("Unknown Step Type");
 }
 
@@ -173,6 +202,21 @@ export function isTxMsg(subject: unknown): subject is TxMsg {
   return isObjectWithKeys(subject, ["instructions"]);
 }
 
+export function isSignableSolanaTx(subject: unknown): subject is SignableEncodedBase64Message {
+  return isObjectWithKeys(subject, ["encodedSolanaTx"]);
+}
+
+export type SolanaGaslessTransfer = {
+  solanaTxHash: string;
+  gasDropOff: bigint;
+  amount: Usdc;
+  recipient: string;
+};
+
+export function isSolanaGaslessTransfer(subject: unknown): subject is SolanaGaslessTransfer {
+  return isObjectWithKeys(subject, ["solanaTxHash"]);
+}
+
 export async function buildTransferStep(
   network: Network,
   corridor: Corridor,
@@ -195,19 +239,28 @@ export async function buildTransferStep(
     case "v1":
       return {
         ...sharedTxData,
-        gasCostEstimation: v1 + (usesPermit ? permit : 0n),
+        costEstimation: platform === "Evm" ?
+          { sourceChain: { gasCostEstimation: v1 as bigint + (usesPermit ? permit : 0n) } } :
+          { sourceChain: v1 as SolanaCostEstimation },
       };
 
     case "v2Direct":
       return {
         ...sharedTxData,
-        gasCostEstimation: v2 + (usesPermit ? permit : 0n),
+        costEstimation: platform === "Evm" ?
+          { sourceChain: { gasCostEstimation: v2 as bigint + (usesPermit ? permit : 0n) } } :
+          { sourceChain: v2 as SolanaCostEstimation },
       };
 
     case "avaxHop":
       return {
         ...sharedTxData,
-        gasCostEstimation: v1 + v2 + (usesPermit ? permit : 0n),
+        costEstimation: {
+          sourceChain: platform === "Evm" ?
+            { gasCostEstimation: v2 as bigint + (usesPermit ? permit : 0n) } :
+            v2 as SolanaCostEstimation,
+          hopChain: { gasCostEstimation: v1 as bigint },
+        },
       };
 
     default:
@@ -220,7 +273,7 @@ export function signPermitStep(sourceChain: keyof EvmDomains): SignPermitStep {
     platform: "Evm",
     type: "sign-permit",
     chain: sourceChain,
-    gasCostEstimation: 0n,
+    costEstimation: { sourceChain: { gasCostEstimation: 0n } },
   };
 }
 const EVM_APPROVAL_TX_GAS_COST_APROXIMATE = 55425n;
@@ -229,7 +282,7 @@ export function preApprovalStep(sourceChain: keyof EvmDomains): PreApproveStep {
     platform: "Evm",
     chain: sourceChain,
     type: "pre-approve",
-    gasCostEstimation: EVM_APPROVAL_TX_GAS_COST_APROXIMATE,
+    costEstimation: { sourceChain: { gasCostEstimation: EVM_APPROVAL_TX_GAS_COST_APROXIMATE } },
   };
 }
 
@@ -238,6 +291,9 @@ export function gaslessTransferStep(sourceChain: LoadedDomain): GaslessTransferS
     platform: sourceChain === "Solana" ? "Solana" : "Evm",
     chain: sourceChain,
     type: "gasless-transfer",
-    gasCostEstimation: 0n,
+    costEstimation: { sourceChain: sourceChain === "Solana"
+      ? { computationUnits: 0n, signatures: 0, accountBytes: 0n }
+      : { gasCostEstimation: 0n },
+    },
   };
 }

@@ -1,3 +1,8 @@
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import type {
   Address,
   EvmGasToken,
@@ -27,7 +32,7 @@ export const supportedEvmDomains = [
 
 export const supportedDomains = [...supportedEvmDomains, "Solana"] as const;
 
-export type SupportedEvmDomain = (typeof supportedEvmDomains)[number];
+export type SupportedBackendEvmDomain = (typeof supportedEvmDomains)[number];
 
 export type Domain = (typeof supportedDomains)[number];
 

@@ -1,4 +1,9 @@
-import { type TODO, assertDistinct } from "@stable-io/utils";
+// Copyright (c) 2025 Stable Technologies Inc
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+import { type TODO, Url, assertDistinct } from "@stable-io/utils";
 import type { RoArray } from "@stable-io/map-utils";
 import type {
   GasTokenOf,
@@ -159,6 +164,7 @@ export const getCorridors = async <
   source: S,
   destination: D,
   gasDropoff?: GasTokenOf<D>,
+  rpcUrl?: Url,
 ): Promise<Corridors<N, S, SensibleCorridor<N, S, D>>> => {
   assertDistinct<SupportedDomain<N>>(source, destination);
   const platform = platformOf(source);
@@ -182,7 +188,7 @@ export const getCorridors = async <
   const [{ allowance: fastBurnAllowance }, fastCosts, relayCosts] = await Promise.all([
     v2.fetchFastBurnAllowanceFactory(network)(),
     fastCostsPromise,
-    cctprImpl.getRelayCosts(network, source, destination, corridors, gasDropoff),
+    cctprImpl.getRelayCosts(network, source, destination, corridors, gasDropoff, rpcUrl),
   ]);
   const stats = corridors.map((corridor, i) => ({
     corridor,
