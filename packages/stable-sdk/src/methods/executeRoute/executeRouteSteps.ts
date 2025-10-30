@@ -11,7 +11,7 @@ import { evmGasToken, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
 import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { TxHash, Hex, SupportedRoute, ViemWalletClient, SolanaKeyPairSigner } from "../../types/index.js";
-import { getStepType, PRE_APPROVE, EVM_TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER, SOLANA_SIGN_TX, SOLANA_GASLESS_TRANSFER, SolanaGaslessTransfer } from "../findRoutes/steps.js";
+import { getStepType, EVM_PRE_APPROVE, EVM_TRANSFER, EVM_SIGN_PERMIT, EVM_SIGN_PERMIT_2, EVM_GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER, SOLANA_SIGN_TX, SOLANA_GASLESS_TRANSFER, SolanaGaslessTransfer } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
@@ -42,7 +42,7 @@ export async function executeRouteSteps<
       const stepType = getStepType(stepData);
 
       switch (stepType) {
-      case PRE_APPROVE:
+      case EVM_PRE_APPROVE:
       case EVM_TRANSFER: {
         const contractTx = stepData as ContractTx;
 
@@ -71,8 +71,8 @@ export async function executeRouteSteps<
 
       break;
       }
-      case SIGN_PERMIT:
-      case SIGN_PERMIT_2: {
+      case EVM_SIGN_PERMIT:
+      case EVM_SIGN_PERMIT_2: {
         const typedMessage = stepData as Eip2612Data;
 
         const signature = await evmSigner.signTypedData({
@@ -99,7 +99,7 @@ export async function executeRouteSteps<
 
       break;
       }
-      case GASLESS_TRANSFER: {
+      case EVM_GASLESS_TRANSFER: {
         const transferData = stepData as GaslessTransferData;
         const transferParameters = transferData.permit2GaslessData.message.parameters;
         route.progress.emit("transfer-sent", {
@@ -209,7 +209,7 @@ function buildEvmTxParameters(
 
 function buildTransactionEventData(
   network: Network,
-  stepType: "pre-approve" | "evm-transfer",
+  stepType: "evm-pre-approve" | "evm-transfer",
   contractTx: ContractTx,
   txHash: Hex,
 ): {
@@ -219,7 +219,7 @@ function buildTransactionEventData(
   eventName: "transfer-sent";
   eventData: TransferSentEventData;
 } {
-  return stepType === "pre-approve"
+  return stepType === "evm-pre-approve"
 ? {
       eventName: "approval-sent",
       eventData: parseApprovalTransactionEventData(contractTx, txHash),
