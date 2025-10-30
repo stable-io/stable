@@ -36,8 +36,8 @@ export const $checkHasEnoughFunds =
       { domain: sourceChain as LoadedDomain },
     );
     const totalGasCost = route.steps.reduce((acc, { costEstimation }) =>
-      acc + getGasTokenCost(sourceChain, costEstimation.sourceChain, domainPrices).toUnit("atomic")
-    , 0n);
+      acc + getGasTokenCost(sourceChain, costEstimation.sourceChain, domainPrices).toUnit("atomic"),
+     0n);
     const totalGasCostInGasToken = gasTokenOf(sourceChain)(totalGasCost, "atomic");
     const requiredBalance = fees.reduce(
       (acc, fee) => isUsdc(fee)
@@ -60,7 +60,7 @@ export const $checkHasEnoughFunds =
 
     const availableBalance = { gasToken: gasTokenBalance as TODO, usdc: usdcBalance };
     const hasEnoughUsdc = usdcBalance.ge(requiredBalance.usdc);
-    const hasEnoughGas = gasTokenBalance.ge(requiredBalance.gasToken as TODO);
+    const hasEnoughGas = gasTokenBalance.ge(requiredBalance.gasToken);
     return {
       hasEnoughBalance: hasEnoughUsdc && hasEnoughGas,
       requiredBalance,

@@ -6,7 +6,6 @@ import { ConfigService } from "../config/config.service.js";
 import { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
 import { Network } from "../common/types.js";
 import { ContractTx, EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
 import { Base64EncodedBytes } from "@solana/kit";
 
 type GetTransactionStatusResponse = Awaited<

@@ -50,7 +50,7 @@ export type LoadedCctprPlatformDomain<N extends Network, P extends RegisteredCct
 
 // FIXME TODO: For some reason CctprRecipientAddress is not working
 // LoadedDomain doesn't work on cctpr-definitions package
-export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N>> = TODO
+export type CctprRecipientAddress<N extends Network, D extends SupportedDomain<N>> = TODO;
 //  UniversalAddress | (D extends LoadedDomain ? PlatformAddress<PlatformOf<D>> : never);
 
 export interface PlatformCctpr<

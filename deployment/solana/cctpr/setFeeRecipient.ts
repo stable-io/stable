@@ -36,7 +36,7 @@ async function main() {
   const deployer = await loadDeployerKeyPair(network);
   if (config.cctpr_fee_recipient === undefined) {
     console.error("ERROR: cctpr_fee_recipient is not set in the config");
-    process.exit(1);
+    return;
   }
   const feeRecipient = new SolanaAddress(config.cctpr_fee_recipient);
   await setFeeRecipient(
@@ -45,7 +45,7 @@ async function main() {
     deployer,
     feeRecipient,
   );
+  console.info("Done!");
 }
 
 await main();
-console.info("Done!");

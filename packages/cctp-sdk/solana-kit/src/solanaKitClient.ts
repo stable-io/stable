@@ -90,20 +90,22 @@ export class SolanaKitClient<N extends Network = Network> implements SolanaClien
 
   async getLatestBlockhash(): Promise<BlockHashInfo> {
     return this.client.getLatestBlockhash().send().then(res => ({
-      slot: res.context.slot, ...res.value
+      slot: res.context.slot, ...res.value,
     }));
   }
 
   async getSignaturesForAddress(
-    address: SolanaAddress, config?: GetSignaturesConfig
+    address: SolanaAddress, config?: GetSignaturesConfig,
   ): Promise<Signature[]> {
     return this.client.getSignaturesForAddress(address.unwrap(), config).send().then(
-      res => res.map(tx => tx.signature)
+      res => res.map(tx => tx.signature),
     );
   }
 
-  async getTransaction(signature: Signature): Promise<ConfirmedTx | null> {
-    return this.client.getTransaction(signature, { encoding: "json", maxSupportedTransactionVersion: 0 }).send();
+  async getTransaction(signature: Signature): Promise<ConfirmedTx | undefined> {
+    return this.client.getTransaction(
+      signature, { encoding: "json", maxSupportedTransactionVersion: 0 },
+    ).send().then(res => res ?? undefined);
   }
 
   async sendTransaction(wireTx: Base64EncodedWireTransaction): Promise<string> {

@@ -24,7 +24,7 @@ export type SignableTx = ReturnType<typeof compileTransaction>;
 export type TxWithLifetime = Parameters<typeof compileTransaction>[0] & TransactionWithLifetime;
 export type ConfirmedTx = NonNullable<ReturnType<
   Extract<
-    GetTransactionApi["getTransaction"], 
+    GetTransactionApi["getTransaction"],
     (signature: Signature, config: { encoding: "json" }) => any
   >
 >>;
@@ -48,7 +48,7 @@ export type GetSignaturesConfig = (Readonly<{
   commitment?: "confirmed" | "finalized";
   limit?: number;
   minContextSlot?: Slot;
-}>)
+}>);
 
 export interface SolanaClient<
   N extends Network = Network,
@@ -57,6 +57,9 @@ export interface SolanaClient<
   getMultipleAccounts: (addresses: RoArray<SolanaAddress>) => Promise<(AccountInfo | undefined)[]>;
   getLatestBlockhash: () => Promise<BlockHashInfo>;
   sendTransaction: (wireTx: Base64EncodedWireTransaction) => Promise<string>;
-  getSignaturesForAddress: (address: SolanaAddress, config?: GetSignaturesConfig) => Promise<Signature[]>;
-  getTransaction: (signature: Signature) => Promise<ConfirmedTx | null>;
+  getSignaturesForAddress: (
+    address: SolanaAddress,
+    config?: GetSignaturesConfig,
+  ) => Promise<Signature[]>;
+  getTransaction: (signature: Signature) => Promise<ConfirmedTx | undefined>;
 }

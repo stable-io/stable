@@ -4,17 +4,17 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { usdc, Usdc, usdcContracts, Network } from "@stable-io/cctp-sdk-definitions";
-import { 
+import {
   findAta,
   getTokenBalance,
   SolanaAddress,
   SolanaClient,
-  systemProgramId
+  systemProgramId,
 } from "@stable-io/cctp-sdk-solana";
 
 export function findUsdcAta(
   network: Network,
-  address: SolanaAddress
+  address: SolanaAddress,
 ): SolanaAddress {
   return findAta(address, new SolanaAddress(usdcContracts.contractAddressOf[network]["Solana"]));
 }
@@ -29,13 +29,13 @@ export async function getUsdcBalance(
 
 export async function getUsdcAtaFromUser(
   client: SolanaClient,
-  userAddress: string | SolanaAddress
+  userAddress: string | SolanaAddress,
 ): Promise<SolanaAddress> {
     const solanaAddress = new SolanaAddress(userAddress);
     const accountInfo = await client.getAccountInfo(solanaAddress);
     if (!accountInfo)
-        throw new Error("Failed to get account info")
+        throw new Error("Failed to get account info");
     if (!accountInfo.owner.equals(systemProgramId))
-      throw new Error("Tried to get an ATA of a non system owned account")
+      throw new Error("Tried to get an ATA of a non system owned account");
     return findUsdcAta(client.network, solanaAddress);
 }

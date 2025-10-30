@@ -4,15 +4,15 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Amount } from "@stable-io/amount";
-import { 
-  init as initCctpr, 
-  type Corridor, 
-  type CorridorStats, 
-  type LoadedCctprDomain, 
-  type SupportedDomain 
+import {
+  init as initCctpr,
+  type Corridor,
+  type CorridorStats,
+  type LoadedCctprDomain,
+  type SupportedDomain,
 } from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { LoadedDomain, Usdc, Percentage } from "@stable-io/cctp-sdk-definitions";
-import { 
+import {
   gasTokenKindOf,
   isUsdc,
   platformAddress,
@@ -77,7 +77,7 @@ export const $findRoutes = <
       network,
       cctpr,
       intent,
-      rpcUrl
+      rpcUrl,
     );
 
     const routes: SupportedRoute<N, S, D>[] = [];
@@ -85,7 +85,7 @@ export const $findRoutes = <
     for (const corridor of corridors) {
       const userTransferRoute = await buildUserTransferRoute(
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        network as Network, intent, corridor, rpcUrl
+        network as Network, intent, corridor, rpcUrl,
       );
 
       if (userTransferRoute !== undefined) {

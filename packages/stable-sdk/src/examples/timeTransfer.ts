@@ -25,7 +25,7 @@ if (!solanaPrivateKeyFile) {
 }
 const solanaAccount = await SolanaKitSigner.loadKeyPairSigner(solanaPrivateKeyFile);
 
-const getAddress = (chain) => chain === "Solana" ? solanaAccount.address : evmAccount.address;
+const getAddress = chain => chain === "Solana" ? solanaAccount.address : evmAccount.address;
 
 const rpcUrls = {
   Ethereum: "https://dimensional-solemn-scion.quiknode.pro/585eb5fde76eda6d2b9e4f6a150ec7bf4df12af1",

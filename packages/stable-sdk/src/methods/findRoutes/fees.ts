@@ -115,9 +115,16 @@ export function getGasTokenCost(
   domainPrices: EvmDomainPrices | SolanaDomainPrices,
 ): Amount<GasTokenKindOf<typeof domain>> {
   if (domain === "Solana") {
-    return getTotalSolCost(domainPrices as SolanaDomainPrices, costEstimation as SolanaCostEstimation);
+    return getTotalSolCost(
+      domainPrices as SolanaDomainPrices,
+      costEstimation as SolanaCostEstimation,
+    );
   }
-  return getTotalEvmGasTokenCost(domain, costEstimation as EvmCostEstimation, domainPrices as EvmDomainPrices);
+  return getTotalEvmGasTokenCost(
+    domain,
+    costEstimation as EvmCostEstimation,
+    domainPrices as EvmDomainPrices,
+  );
 }
 
 export function getTotalEvmGasTokenCost(

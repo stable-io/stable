@@ -29,11 +29,9 @@ import type { ParsedSignature, SupportedBackendEvmDomain } from "../common/types
 import type { Permit2Nonce } from "../common/utils";
 import { fetchNextPermit2Nonce, serializeSignature } from "../common/utils";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
-import { ForeignDomain } from "../../../../packages/cctp-sdk/cctpr-solana/dist/contractSdk/constants";
 import { PublicClient } from "viem";
 import type {
   Base64EncodedBytes,
-  TransactionMessage,
 } from "@solana/kit";
 import { compileTransaction, getTransactionEncoder } from "@solana/kit";
 import { NonceAccountService } from "./nonceAccount.service";
@@ -116,11 +114,11 @@ export class CctpRService {
     return { encodedSolanaTx };
   }
 
-  public async evmGaslessTransferTx<N extends Network>(
+  public evmGaslessTransferTx<N extends Network>(
     quoteRequest: QuoteRequestDto<QuoteSupportedDomain<N>>,
     gaslessFee: Usdc,
     opts: EvmGaslessOpts, 
-  ): Promise<ContractTx> {
+  ): ContractTx {
     const { permit2GaslessData, permit2Signature } = opts;
     const sender = quoteRequest.sender as EvmAddress;
     const cctpr = this.contractInterface(quoteRequest.sourceDomain) as EvmCctpR<Network, keyof EvmDomains>;

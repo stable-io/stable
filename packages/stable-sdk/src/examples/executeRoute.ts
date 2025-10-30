@@ -42,7 +42,7 @@ const sdk = new StableSDK({
 
 const getAddress = (domain: Domain) => domain === "Solana" ? solanaAccount.address : evmAccount.address;
 const sourceChain = "Solana" as const;
-const targetChain = "Ethereum" as const; 
+const targetChain = "Ethereum" as const;
 
 const intent = {
   sourceChain,

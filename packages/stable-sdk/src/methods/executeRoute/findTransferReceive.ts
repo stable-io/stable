@@ -71,7 +71,9 @@ export async function findTransferReceiveSolana<N extends Network>(
   );
   const latestBlockhash = await client.getLatestBlockhash();
   const fromSlot = latestBlockhash.slot - receiveScanBufferPerChain["Solana"];
-  const block = await client.client.getBlock(fromSlot, { maxSupportedTransactionVersion: 0 }).send();
+  const block = await client.client.getBlock(
+    fromSlot, { maxSupportedTransactionVersion: 0 },
+  ).send();
   let until = block?.transactions[0]?.transaction.signatures[0] as unknown as Signature;
   const signature = await pollUntil(async () => {
     const searchResult = await (cctpVersion === 1 ?
@@ -98,7 +100,7 @@ async function getReceiveCpiEvent<
   until: Signature,
   messageTransmitter: SolanaAddress,
   layout: typeof v1LayoutMessageReceived | typeof v2LayoutMessageReceived,
-): Promise<{ found?: Signature, latestSignature: Signature }> {
+): Promise<{ found?: Signature; latestSignature: Signature }> {
   const signatures = await client.getSignaturesForAddress(messageTransmitter, { until });
   const latestSignature = signatures[0] ?? until;
   for (const signature of signatures) {
@@ -106,25 +108,24 @@ async function getReceiveCpiEvent<
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         return await client.getTransaction(signature);
-      } catch (error) {
-        return null;
+      } catch {
+        return;
       }
-    }, result => result !== null, { baseDelayMs: 1000, maxDelayMs: 2500 });
+    }, result => result !== undefined, { baseDelayMs: 1000, maxDelayMs: 2500 });
     const events = getCpiEvents(tx);
     const filteredEvents = filterCPIEvents(
-      events, messageReceivedEventName, messageTransmitter
+      events, messageReceivedEventName, messageTransmitter,
     ).map(
-      event => deserialize(layout, event)
+      event => deserialize(layout, event),
     ).filter(
       event => event.sourceDomain === domainIdOf(sourceDomain) &&
-        encoding.bytes.equals(nonce, event.nonce)
-    )
+        encoding.bytes.equals(nonce, event.nonce),
+    );
     if (filteredEvents.length > 0) {
       return { found: signature, latestSignature };
     }
   }
   return { latestSignature };
-
 }
 
 const v1LayoutMessageReceived = [
@@ -142,14 +143,14 @@ async function getV1ReceiveCpiEvent<
   sourceDomain: LoadedDomain,
   nonce: bigint,
   before: Signature,
-): Promise<{ found?: Signature, latestSignature: Signature }> {
+): Promise<{ found?: Signature; latestSignature: Signature }> {
   const messageTransmitter = new SolanaAddress(
-    v1.contractAddressOf(client.network, "Solana" as TODO, "messageTransmitter" as TODO)
+    v1.contractAddressOf(client.network, "Solana" as TODO, "messageTransmitter" as TODO),
   );
   // The nonce value is stored in little endian on chain
   const nonceBytes = encoding.bignum.toBytes(nonce, 8 as Size).reverse();
   return await getReceiveCpiEvent(
-    client, sourceDomain, nonceBytes, before, messageTransmitter, v1LayoutMessageReceived
+    client, sourceDomain, nonceBytes, before, messageTransmitter, v1LayoutMessageReceived,
   );
 };
 
@@ -169,16 +170,15 @@ async function getV2ReceiveCpiEvent<
   sourceDomain: LoadedDomain,
   nonce: Hex,
   before: Signature,
-): Promise<{ found?: Signature, latestSignature: Signature }> {
+): Promise<{ found?: Signature; latestSignature: Signature }> {
   const messageTransmitter = new SolanaAddress(
-    v2.contractAddressOf(client.network, "Solana" as TODO, "messageTransmitter" as TODO)
+    v2.contractAddressOf(client.network, "Solana" as TODO, "messageTransmitter" as TODO),
   );
   const nonceBytes = encoding.hex.decode(nonce);
   return await getReceiveCpiEvent(
-    client, sourceDomain, nonceBytes, before, messageTransmitter, v2LayoutMessageReceived
+    client, sourceDomain, nonceBytes, before, messageTransmitter, v2LayoutMessageReceived,
   );
 };
-
 
 export async function findTransferReceiveEvm<N extends Network>(
   network: N,
@@ -234,7 +234,6 @@ async function getV1ReceiveLogs<
   targetChain: keyof EvmDomains,
   fromBlock: bigint,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   const destContract = (v1.contractAddressOf as TODO)(network, targetChain, 0, 1);
 
   return await viemEvmClient.client.getLogs({
@@ -261,7 +260,6 @@ async function getV2ReceiveLogs<
   targetChain: keyof EvmDomains,
   fromBlock: bigint,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   const destContract = (v2.contractAddressOf as TODO)(network, targetChain, 0, 1);
 
   return await viemEvmClient.client.getLogs({

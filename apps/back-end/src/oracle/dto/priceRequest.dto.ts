@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsIn } from "class-validator";
 import { domainsOf } from "@stable-io/cctp-sdk-definitions";
-import type { Domain, Network } from "../../common/types";
+import type { Domain } from "../../common/types";
 
 const domains = ["Solana", "Sui"].concat(
   domainsOf("Evm").filter((domain) => domain !== "Codex"),

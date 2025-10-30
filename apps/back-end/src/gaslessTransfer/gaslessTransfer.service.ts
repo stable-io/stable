@@ -146,7 +146,7 @@ export class GaslessTransferService {
     if (permit2GaslessData === undefined)
       throw new Error("No permit2 gasless data in relay request");
 
-    const gaslessTxDetails = await this.cctpRService.evmGaslessTransferTx(
+    const gaslessTxDetails = this.cctpRService.evmGaslessTransferTx(
       quoteRequest,
       gaslessFee,
       { permit2GaslessData, permit2Signature: permit2Signature! }
@@ -154,12 +154,12 @@ export class GaslessTransferService {
 
     const contractTx = quoteRequest.permit2PermitRequired
       ? this.multiCallWithPermit(
-          gaslessTxDetails as ContractTx,
+          gaslessTxDetails,
           // @note: permitSignature is guaranteed to be present in this case by validation
           permit!,
           quoteRequest,
         )
-      : gaslessTxDetails as ContractTx;
+      : gaslessTxDetails;
 
     const toAddress = quoteRequest.permit2PermitRequired
       ? new EvmAddress(multicall3Address)
