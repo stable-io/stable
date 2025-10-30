@@ -47,7 +47,7 @@ async function initializeCctpr(
   const initTx = await assertSuccess(createAndSendTx(client, [initIx], owner, [owner]));
   console.info("Initialize transaction sent:", initTx);
 
-  const domains = domainsOf("Evm").filter(domain => wormholeChainIdOf(network, domain) !== 0);
+  const domains = domainsOf("Evm");
   const registerIxs = await Promise.all(
     domains.map(domain => cctprGovernance.composeRegisterChainIx(domain)),
   );

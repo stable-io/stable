@@ -253,16 +253,6 @@ export const gasTokenNameEntries = [
   ["Codex",      "Eth"  ],
   ["Sonic",      "Sonic"],
   ["Worldchain", "Eth"  ],
-  // TODO: Fix these domains once we know what they are
-  ["Domain15",   "Eth"  ],
-  ["Sei",        "Eth"  ],
-  ["BNB",        "Eth"  ],
-  ["XDC",        "Eth"  ],
-  ["HyperEVM",   "Eth"  ],
-  // TODO: Fix these domains once we know what they are
-  ["Domain20",   "Eth"  ],
-  ["Ink",        "Eth"  ],
-  ["Plume",      "Eth"  ],
 ] as const satisfies MapLevel<Domain, NamedKind>;
 export const gasTokenNameOf = constMap(gasTokenNameEntries);
 export type GasTokenNameOf<D extends Domain> = ReturnType<typeof gasTokenNameOf<D>>;

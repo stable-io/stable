@@ -32,12 +32,6 @@ const receiveScanBufferPerChain: Record<SupportedEvmDomain<Network> | "Solana", 
   Codex: 20n,
   Sonic: 40n,
   Worldchain: 20n,
-  Sei: 20n,
-  BNB: 20n,
-  XDC: 20n,
-  HyperEVM: 20n,
-  Ink: 20n,
-  Plume: 20n,
 };
 
 export async function findTransferReceive<N extends Network>(

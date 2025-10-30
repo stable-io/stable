@@ -75,12 +75,6 @@ export const viemChainOf = {
     Codex:      codexMainnet,
     Sonic:      sonicMainnet,
     Worldchain: worldchainMainnet,
-    Sei:        seiMainnet,
-    BNB:        bnbMainnet,
-    XDC:        xdcMainnet,
-    HyperEVM:   hyperEvmMainnet,
-    Ink:        inkMainnet,
-    Plume:      plumeMainnet,
   },
   Testnet: {
     Ethereum:   ethereumTestnet,
@@ -94,12 +88,6 @@ export const viemChainOf = {
     Codex:      codexTestnet,
     Sonic:      sonicTestnet,
     Worldchain: worldchainTestnet,
-    Sei:        seiTestnet,
-    BNB:        bnbTestnet,
-    XDC:        xdcTestnet,
-    HyperEVM:   hyperEvmTestnet,
-    Ink:        inkTestnet,
-    Plume:      plumeTestnet,
   },
 } as const satisfies Record<Network, Record<DomainsOf<"Evm">, ViemChain>>;
 
