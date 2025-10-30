@@ -35,8 +35,8 @@ export class EnvironmentVariables {
   @IsSolanaAddress()
   public SOLANA_RELAYER_ADDRESS!: SolanaAddress;
 
-  @Transform(({ value }: { value: string }) => 
-    value.split(",").map((addr) => new SolanaAddress(addr))
+  @Transform(({ value }: { value: string }) =>
+    value.split(",").map((addr) => new SolanaAddress(addr)),
   )
   public NONCE_ACCOUNTS!: SolanaAddress[];
 }

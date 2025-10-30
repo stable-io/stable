@@ -115,7 +115,8 @@ export class QuoteRequestDto<
   )
   @IsPlatformAmount("targetDomain", { min: 0 })
   @Transform(
-    ({ value }: { value: EvmGasToken | Sol }) => value.toUnit("human").toFixed(6),
+    ({ value }: { value: EvmGasToken | Sol }) =>
+      value.toUnit("human").toFixed(6),
     {
       toPlainOnly: true,
     },

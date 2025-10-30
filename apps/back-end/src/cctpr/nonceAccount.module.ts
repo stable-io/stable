@@ -3,9 +3,7 @@ import { ConfigModule } from "../config/config.module";
 import { NonceAccountService } from "./nonceAccount.service";
 
 @Module({
-  imports: [
-    ConfigModule,
-  ],
+  imports: [ConfigModule],
   providers: [NonceAccountService],
   exports: [NonceAccountService],
 })

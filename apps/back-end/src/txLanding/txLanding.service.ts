@@ -1,6 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { v4 as uuid } from "uuid";
-import { TxLandingClient, TxStatus, TransactionParams } from "@stable-io/tx-landing-client";
+import {
+  TxLandingClient,
+  TxStatus,
+  TransactionParams,
+} from "@stable-io/tx-landing-client";
 import { encoding, pollUntil } from "@stable-io/utils";
 import { ConfigService } from "../config/config.service.js";
 import { LoadedDomain } from "@stable-io/cctp-sdk-definitions";
@@ -80,7 +84,7 @@ export class TxLandingService {
 
   public async sendTransaction(
     domain: LoadedDomain,
-    txDetails: { to: EvmAddress, tx: ContractTx } | Base64EncodedBytes,
+    txDetails: { to: EvmAddress; tx: ContractTx } | Base64EncodedBytes,
     sender?: string,
   ): Promise<string> {
     const traceId = uuid();
@@ -123,8 +127,7 @@ export class TxLandingService {
         { baseDelayMs: 100, maxDelayMs: 350 },
       );
 
-      const finalTxHash = confirmationResult.statuses.at(-1)!
-        .txHash as string; // we polled until this property had a specific value.
+      const finalTxHash = confirmationResult.statuses.at(-1)!.txHash as string; // we polled until this property had a specific value.
 
       return finalTxHash;
     } catch (error) {
@@ -133,9 +136,9 @@ export class TxLandingService {
     }
   }
 
-  public async signTransaction(    
+  public async signTransaction(
     domain: LoadedDomain,
-    txDetails: { to: EvmAddress, tx: ContractTx } | Base64EncodedBytes,
+    txDetails: { to: EvmAddress; tx: ContractTx } | Base64EncodedBytes,
     signer?: string,
   ): Promise<string[]> {
     const traceId = uuid();
@@ -162,17 +165,17 @@ export class TxLandingService {
 
   private buildTxRequests(
     domain: LoadedDomain,
-    txDetails: { to: EvmAddress, tx: ContractTx } | Base64EncodedBytes,
+    txDetails: { to: EvmAddress; tx: ContractTx } | Base64EncodedBytes,
   ): TransactionParams[] {
     if (domain === "Solana") {
       return [
         {
           type: "legacy",
-          serializedTx: Buffer.from(txDetails as Base64EncodedBytes, 'base64'),
+          serializedTx: Buffer.from(txDetails as Base64EncodedBytes, "base64"),
         },
       ] as TransactionParams[];
     }
-    const { to, tx } = txDetails as { to: EvmAddress, tx: ContractTx };
+    const { to, tx } = txDetails as { to: EvmAddress; tx: ContractTx };
     return [
       {
         to: to.toString(),

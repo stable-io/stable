@@ -63,7 +63,9 @@ export class ConfigService {
     return this.env.getOrThrow("NONCE_ACCOUNTS");
   }
 
-  public getRpcUrl<D extends SupportedDomain<Network>>(domain: D): string | undefined {
+  public getRpcUrl<D extends SupportedDomain<Network>>(
+    domain: D,
+  ): string | undefined {
     return this.rpcUrlConfig[this.network][domain];
   }
 
@@ -101,12 +103,8 @@ export class ConfigService {
   private getDefaultRpcConfig(): RpcUrlConfig {
     const domains = ["Solana"].concat(domainsOf("Evm"));
     return {
-      Mainnet: Object.fromEntries(
-        domains.map((domain) => [domain, undefined]),
-      ),
-      Testnet: Object.fromEntries(
-        domains.map((domain) => [domain, undefined]),
-      ),
+      Mainnet: Object.fromEntries(domains.map((domain) => [domain, undefined])),
+      Testnet: Object.fromEntries(domains.map((domain) => [domain, undefined])),
     };
   }
 }

@@ -6,7 +6,8 @@ export class SignableEncodedBase64MessageDto {
     type: String,
     format: "base64",
     required: false,
-    description: 'Base64-encoded signed serialized transaction for Solana gasless transfers',
+    description:
+      "Base64-encoded signed serialized transaction for Solana gasless transfers",
   })
   @IsNotEmpty()
   encodedSolanaTx!: string;

@@ -6,10 +6,9 @@ import { ConfigService } from "../config/config.service";
 import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
 import { SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
 
-export type BlockchainClient<
-  N extends Network,
-  D extends SupportedDomain<N>,
-> = ViemEvmClient<N, Exclude<D, "Solana">> | SolanaKitClient<N>;
+export type BlockchainClient<N extends Network, D extends SupportedDomain<N>> =
+  | ViemEvmClient<N, Exclude<D, "Solana">>
+  | SolanaKitClient<N>;
 
 @Injectable()
 export class BlockchainClientService {
@@ -50,13 +49,11 @@ export class BlockchainClientService {
         rpcUrl as Url | undefined,
       );
       this.clients.set(domain, client);
-    }
-    else {
-      client = ViemEvmClient.fromNetworkAndDomain<typeof network, Exclude<D, "Solana">>(
-        network,
-        domain as Exclude<D, "Solana">,
-        rpcUrl as Url | undefined,
-      );
+    } else {
+      client = ViemEvmClient.fromNetworkAndDomain<
+        typeof network,
+        Exclude<D, "Solana">
+      >(network, domain as Exclude<D, "Solana">, rpcUrl as Url | undefined);
       this.clients.set(
         domain,
         client as ViemEvmClient<typeof network, keyof EvmDomains>,

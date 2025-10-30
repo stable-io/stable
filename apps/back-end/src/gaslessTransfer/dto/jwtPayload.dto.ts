@@ -1,6 +1,11 @@
 import type { Usdc } from "@stable-io/cctp-sdk-definitions";
 import type { Permit2GaslessData } from "@stable-io/cctp-sdk-cctpr-evm";
-import { IsNotEmpty, IsObject, IsOptional, ValidateNested } from "class-validator";
+import {
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  ValidateNested,
+} from "class-validator";
 import { QuoteRequestDto } from "./quoteRequest.dto";
 import { IsUsdcAmount } from "../../common/validators";
 import { Domain } from "../../common/types";
@@ -24,7 +29,9 @@ export class JwtPayloadDto<SourceDomain extends Domain = Domain> {
   @ValidateNested()
   readonly quoteRequest!: QuoteRequestDto<SourceDomain>;
 
-  @IsUsdcAmount({ min: GaslessTransferService.minimumGaslessFee.toUnit("human").toFixed(6) })
+  @IsUsdcAmount({
+    min: GaslessTransferService.minimumGaslessFee.toUnit("human").toFixed(6),
+  })
   readonly gaslessFee!: Usdc;
 
   /**

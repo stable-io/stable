@@ -35,7 +35,7 @@ import { QuoteDto, QuoteRequestDto, RelayRequestDto, PermitDto } from "./dto";
 import type { JwtPayload, RelayTx } from "./types";
 import { Conversion } from "@stable-io/amount";
 import { SupportedBackendEvmDomain } from "../common/types";
-import { 
+import {
   Base64EncodedBytes,
   getTransactionDecoder,
   getCompiledTransactionMessageDecoder,
@@ -47,7 +47,6 @@ import { NonceAccountService } from "../cctpr/nonceAccount.service";
 
 @Injectable()
 export class GaslessTransferService {
-
   public static readonly minimumGaslessFee = usdc("0.000001");
 
   private readonly logger = new Logger(GaslessTransferService.name);
@@ -107,9 +106,9 @@ export class GaslessTransferService {
 
     try {
       encodedTx = await this.cctpRService.composeSolanaGaslessTransferMessage(
-          request,
-          gaslessFee,
-        );
+        request,
+        gaslessFee,
+      );
     } catch (error: unknown) {
       if (!(error instanceof Error)) throw error;
 
@@ -149,7 +148,7 @@ export class GaslessTransferService {
     const gaslessTxDetails = this.cctpRService.evmGaslessTransferTx(
       quoteRequest,
       gaslessFee,
-      { permit2GaslessData, permit2Signature: permit2Signature! }
+      { permit2GaslessData, permit2Signature: permit2Signature! },
     );
 
     const contractTx = quoteRequest.permit2PermitRequired
@@ -163,7 +162,9 @@ export class GaslessTransferService {
 
     const toAddress = quoteRequest.permit2PermitRequired
       ? new EvmAddress(multicall3Address)
-      : this.cctpRService.contractAddress(quoteRequest.sourceDomain) as EvmAddress;
+      : (this.cctpRService.contractAddress(
+          quoteRequest.sourceDomain,
+        ) as EvmAddress);
 
     const txHash = await this.txLandingService.sendTransaction(
       quoteRequest.sourceDomain,
@@ -182,28 +183,44 @@ export class GaslessTransferService {
     } = request;
 
     const decodedQuoteTx = getTransactionDecoder().decode(
-      Buffer.from((quoteTx as SignableEncodedBase64Message).encodedSolanaTx, "base64")
+      Buffer.from(
+        (quoteTx as SignableEncodedBase64Message).encodedSolanaTx,
+        "base64",
+      ),
     );
     const decodedSignedtx = getTransactionDecoder().decode(
-      Buffer.from((signedTx as SignableEncodedBase64Message).encodedSolanaTx, "base64")
+      Buffer.from(
+        (signedTx as SignableEncodedBase64Message).encodedSolanaTx,
+        "base64",
+      ),
     );
 
-    const quoteMessageBytes = Buffer.from(decodedQuoteTx.messageBytes).toString("hex");
-    const signedMessageBytes = Buffer.from(decodedSignedtx.messageBytes).toString("hex");
+    const quoteMessageBytes = Buffer.from(decodedQuoteTx.messageBytes).toString(
+      "hex",
+    );
+    const signedMessageBytes = Buffer.from(
+      decodedSignedtx.messageBytes,
+    ).toString("hex");
     // TODO: We should remove this check and just send the user signature and add it to the transaction message
-    if (quoteMessageBytes !== signedMessageBytes) 
-      throw new Error("Signed transaction does not match the original transaction");
+    if (quoteMessageBytes !== signedMessageBytes)
+      throw new Error(
+        "Signed transaction does not match the original transaction",
+      );
 
-    const compiledMessage = getCompiledTransactionMessageDecoder().decode(decodedQuoteTx.messageBytes);
+    const compiledMessage = getCompiledTransactionMessageDecoder().decode(
+      decodedQuoteTx.messageBytes,
+    );
     const decodedMessage = decompileTransactionMessage(compiledMessage);
-    const nonceAccount = new SolanaAddress(decodedMessage.instructions[0].accounts![0].address);
+    const nonceAccount = new SolanaAddress(
+      decodedMessage.instructions[0].accounts![0].address,
+    );
     // WARNING: This is essentially a race between users that got a quote around the same time
     this.nonceAccountService.blockNonceAccount(nonceAccount);
 
     try {
       const hash = await this.txLandingService.sendTransaction(
-      quoteRequest.sourceDomain,
-      signedTx?.encodedSolanaTx as Base64EncodedBytes,
+        quoteRequest.sourceDomain,
+        signedTx?.encodedSolanaTx as Base64EncodedBytes,
         this.configService.solanaRelayerAddress.toString(),
       );
       return { hash };
@@ -214,7 +231,7 @@ export class GaslessTransferService {
 
   private async getPricesForRequest(
     request: QuoteRequestDto,
-  ): Promise<PriceResult> { 
+  ): Promise<PriceResult> {
     const prices = await this.oracleService.getPrices([request.sourceDomain]);
     return prices[0]!;
   }
@@ -233,7 +250,7 @@ export class GaslessTransferService {
           EvmGasToken,
         );
         let usdcCost = gasCostInNative.convert(gasTokenPriceInUsdc);
-        if (usdcCost.lt(GaslessTransferService.minimumGaslessFee)) 
+        if (usdcCost.lt(GaslessTransferService.minimumGaslessFee))
           usdcCost = GaslessTransferService.minimumGaslessFee;
         acc[key as keyof typeof evmGasCostEstimations] = usdcCost;
         return acc;
@@ -260,24 +277,27 @@ export class GaslessTransferService {
   private async calculateSolanaGaslessFee(
     request: QuoteRequestDto<"Solana">,
   ): Promise<Usdc> {
-    const prices = (await this.getPricesForRequest(request)) as SolanaPriceResult;
+    const prices = (await this.getPricesForRequest(
+      request,
+    )) as SolanaPriceResult;
     const solanaGasCostEstimations =
       this.executionCostService.getKnownEstimates("Solana");
     const costs = Object.entries(solanaGasCostEstimations).reduce(
       (acc, [key, value]) => {
         // TODO: Maybe make a generic function in solana utils
-        const gasCostInNative = prices.computationPrice.mul(value.computationUnits);
-        const signatureCostInNative = prices.signaturePrice.mul(value.signatures);
-        const accountCostInNative = prices.pricePerAccountByte.mul(value.accountBytes);
-        const totalCostInNative = gasCostInNative.add(
-          signatureCostInNative
-        ).add(
-          accountCostInNative
+        const gasCostInNative = prices.computationPrice.mul(
+          value.computationUnits,
         );
-        const gasTokenPriceInUsdc = Conversion.from(
-          prices.gasTokenPrice,
-          Sol,
+        const signatureCostInNative = prices.signaturePrice.mul(
+          value.signatures,
         );
+        const accountCostInNative = prices.pricePerAccountByte.mul(
+          value.accountBytes,
+        );
+        const totalCostInNative = gasCostInNative
+          .add(signatureCostInNative)
+          .add(accountCostInNative);
+        const gasTokenPriceInUsdc = Conversion.from(prices.gasTokenPrice, Sol);
         const usdcCost = totalCostInNative.convert(gasTokenPriceInUsdc);
         acc[key as keyof typeof solanaGasCostEstimations] = usdcCost;
         return acc;

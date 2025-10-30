@@ -13,7 +13,7 @@ export interface JwtPayload extends Record<string, unknown> {
   readonly willRelay: boolean;
   readonly encodedTx?: SignableEncodedBase64Message;
   readonly signedMessage?: Base64EncodedBytes;
-  readonly permit2GaslessData?: Permit2GaslessData ;
+  readonly permit2GaslessData?: Permit2GaslessData;
   readonly quoteRequest: PlainDto<QuoteRequestDto>;
   readonly gaslessFee: string; // Usdc =(
 }

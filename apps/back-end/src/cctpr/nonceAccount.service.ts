@@ -11,21 +11,21 @@ export type NonceAccount = {
 
 @Injectable()
 export class NonceAccountService {
-
   private readonly logger = new Logger(NonceAccountService.name);
   private readonly nonceAccounts: NonceAccount[] = [];
   private lastAvailableIndex = 0;
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
-    this.nonceAccounts = this.configService.nonceAccounts.map(
-      address => ({ address, blockedUntil: 0 })
-    );
+  constructor(private readonly configService: ConfigService) {
+    this.nonceAccounts = this.configService.nonceAccounts.map((address) => ({
+      address,
+      blockedUntil: 0,
+    }));
   }
 
   private getNonceAccount(address: SolanaAddress): NonceAccount {
-    const nonceAccount = this.nonceAccounts.find(nonce => nonce.address.equals(address));
+    const nonceAccount = this.nonceAccounts.find((nonce) =>
+      nonce.address.equals(address),
+    );
     if (!nonceAccount) {
       this.logger.error("Nonce account not found");
       throw new Error("Nonce account not found");
@@ -54,7 +54,10 @@ export class NonceAccountService {
     return nonceAccount.address;
   }
 
-  public blockNonceAccount(address: SolanaAddress, duration = BLOCKED_DURATION): void {
+  public blockNonceAccount(
+    address: SolanaAddress,
+    duration = BLOCKED_DURATION,
+  ): void {
     const nonceAccount = this.getNonceAccount(address);
     if (Date.now() < nonceAccount.blockedUntil) {
       this.logger.error("Nonce account is already blocked");

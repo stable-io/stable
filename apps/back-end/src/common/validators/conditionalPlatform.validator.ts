@@ -74,12 +74,14 @@ export class ConditionalPlatformValidationConstraint<T, U>
     if (!validator) {
       return `Platform ${platform} not supported`;
     }
-    return validator.validator.defaultMessage?.({
-      ...args,
-      constraints: [
-        { ...options.generalConstraints, ...validator.constraints },
-      ],
-    }) ?? `Invalid value for platform ${platform}`;
+    return (
+      validator.validator.defaultMessage?.({
+        ...args,
+        constraints: [
+          { ...options.generalConstraints, ...validator.constraints },
+        ],
+      }) ?? `Invalid value for platform ${platform}`
+    );
   }
 }
 
