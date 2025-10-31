@@ -2,10 +2,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
-import chalk from "chalk";
 import {
   avaxRouterName,
-  cctprName,
   deployAvaxRouter,
 } from "../helpers/cctpr.js";
 import {
@@ -30,11 +28,11 @@ async function run() {
     throw new Error(`Deployment of Avax Router failed. Error: ${error}`);
   }
   avaxRouterDeployments[avaxRouterName].push(deployment);
-  console.info(chalk.blue(`Avax Router deployed at ${deployment.address}`));
+  console.info(`Avax Router deployed at ${deployment.address}`);
   saveDeployments(avaxRouterDeployments, processName);
 }
 
 // --------------------------------------------------------------------------------
 
 await run();
-console.info(chalk.yellow("⚠️ Please add the address of the Avax Router to the CCTPR Definitions package. ⚠️"));
+console.info("⚠️ Please add the address of the Avax Router to the CCTPR Definitions package. ⚠️");

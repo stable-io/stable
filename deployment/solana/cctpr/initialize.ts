@@ -4,14 +4,16 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { CctpRGovernance } from "@stable-io/cctp-sdk-cctpr-solana";
-import { domainsOf, Network, percentage, usdc } from "@stable-io/cctp-sdk-definitions";
+import { domainsOf, Network, percentage, usdc, wormholeChainIdOf } from "@stable-io/cctp-sdk-definitions";
 import { SolanaAddress } from "@stable-io/cctp-sdk-solana";
 import { KeyPairSigner } from "@solana/kit";
 import { feeAdjustmentTypes } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { assertSuccess, createAndSendTx } from "./src/utils.js";
+import { assertSuccess, createAndSendTx, waitForInput } from "./src/utils.js";
 import { chunk } from "@stable-io/map-utils";
 import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
-import { loadOwnerKeypair } from "./src/env.js";
+import { getNetwork } from "./src/env.js";
+import { getDeploymentConfig, loadDeployerKeyPair } from "./src/deployConfig.js";
+import { EvmAddress } from "@stable-io/cctp-sdk-evm";
 
 const feeAdjustments = {
   v1:         { absolute: usdc(0), relative: percentage(100) },
@@ -61,26 +63,49 @@ async function initializeCctpr(
         ),
       ),
   );
-  // The instructions are too heavy so we'll do them in chunks of 24
-  const txs = await Promise.all(chunk(updateFeeAdjustmentIxs, 24).map(instructions =>
+  // The instructions are too heavy so we'll do them in chunks of 20
+  const feeTxs = await Promise.all(chunk(updateFeeAdjustmentIxs, 20).map(instructions =>
     assertSuccess(createAndSendTx(client, instructions, owner, [owner])),
   ));
-  console.info("Update fee adjustments transactions sent:", txs);
+  console.info("Update fee adjustments transactions sent:", feeTxs);
 }
 
 async function main() {
-  const cctprProgramId = new SolanaAddress("CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM");
-  const cctprOwner = new SolanaAddress("tMPpewA8FGoqDh8RqvVH1rZERCjBD7V7BSCmDn7bkxs");
-  const feeAdjuster = new SolanaAddress("tMPpewA8FGoqDh8RqvVH1rZERCjBD7V7BSCmDn7bkxs");
-  const feeRecipient = new SolanaAddress("CvsvkFX4xpr92uJbCiez91Keqpp9UNpAfY7nD3TChVg");
+  const network = getNetwork();
+  const config = getDeploymentConfig(network);
+  const cctprProgramId = new SolanaAddress(config.cctpr_program);
+  const deployer = await loadDeployerKeyPair(network);
+  const feeAdjuster = new SolanaAddress(config.cctpr_deployer);
+  if (config.cctpr_fee_recipient === undefined) {
+    console.error("WARNING: cctpr_fee_recipient is not set in the config, defaulting to cctpr_deployer");
+  }
+  const feeRecipient = new SolanaAddress(config.cctpr_fee_recipient ?? config.cctpr_deployer);
   const offChainQuoter = new Uint8Array(20);
-  const owner = await loadOwnerKeypair();
+  if (config.cctpr_new_owner === undefined) {
+    console.error("WARNING: cctpr_new_owner is not set in the config, defaulting to cctpr_deployer");
+  }
+  const newOwner = new SolanaAddress(config.cctpr_new_owner ?? config.cctpr_deployer);
+
+  console.info("Network:", network);
+  console.info("CCTPR program:", cctprProgramId.toString());
+  console.info("Deployer:", deployer.address);
+  console.info("New owner:", newOwner.toString());
+  console.info("Fee adjuster:", feeAdjuster.toString());
+  console.info("Fee recipient:", feeRecipient.toString());
+  console.info("Off chain quoter:", new EvmAddress(offChainQuoter).toString());
+
+  console.info("Type yes to continue");
+  const answer = await waitForInput();
+  if (answer !== "yes") {
+    console.error("Aborting...");
+    return;
+  }
 
   await initializeCctpr(
-    "Testnet",
+    network,
     cctprProgramId,
-    owner,
-    cctprOwner,
+    deployer,
+    newOwner,
     feeAdjuster,
     feeRecipient,
     offChainQuoter,

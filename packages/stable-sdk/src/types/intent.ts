@@ -24,7 +24,7 @@ export type UserIntent<N extends Network, S extends LoadedDomain, D extends Supp
   sender: string | PlatformAddress<PlatformOf<S>>;
   recipient: string | PlatformAddress<RegisteredPlatform & PlatformOf<D>>;
   usePermit?: boolean;
-  gasDropoffDesired?: bigint | GasTokenOf<D>;
+  gasDropoffDesired?: string | GasTokenOf<D>;
   paymentToken?: PaymentTokenOptions;
   relayFeeMaxChangeMargin?: number |  Percentage;
 };

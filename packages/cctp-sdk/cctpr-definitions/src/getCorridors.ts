@@ -1,4 +1,4 @@
-import { type TODO, assertDistinct } from "@stable-io/utils";
+import { type TODO, Url, assertDistinct } from "@stable-io/utils";
 import type { RoArray } from "@stable-io/map-utils";
 import type {
   GasTokenOf,
@@ -159,6 +159,7 @@ export const getCorridors = async <
   source: S,
   destination: D,
   gasDropoff?: GasTokenOf<D>,
+  rpcUrl?: Url,
 ): Promise<Corridors<N, S, SensibleCorridor<N, S, D>>> => {
   assertDistinct<SupportedDomain<N>>(source, destination);
   const platform = platformOf(source);
@@ -182,7 +183,7 @@ export const getCorridors = async <
   const [{ allowance: fastBurnAllowance }, fastCosts, relayCosts] = await Promise.all([
     v2.fetchFastBurnAllowanceFactory(network)(),
     fastCostsPromise,
-    cctprImpl.getRelayCosts(network, source, destination, corridors, gasDropoff),
+    cctprImpl.getRelayCosts(network, source, destination, corridors, gasDropoff, rpcUrl),
   ]);
   const stats = corridors.map((corridor, i) => ({
     corridor,

@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { TODO } from "@stable-io/utils";
+import type { TODO, Url } from "@stable-io/utils";
 import { Amount } from "@stable-io/amount";
 import type {
   Network,
@@ -44,6 +44,7 @@ export const transfer = <
   quote: QuoteBase<N, PlatformOf<S>, S>,
   gasDropoff: GasTokenOf<D>,
   options: PlatformImplsOf[P]["TransferOptions"],
+  rpcUrl?: Url,
 ): AsyncGen<P> => {
   const platform = platformOf(source);
   const gasDropoffLimit = Amount.ofKind(gasTokenKindOf(destination))(
@@ -64,5 +65,6 @@ export const transfer = <
     quote,
     gasDropoff,
     options,
+    rpcUrl,
   );
 };

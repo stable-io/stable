@@ -23,7 +23,7 @@ import type { SolanaClient, TxMsg } from "@stable-io/cctp-sdk-solana";
 import { SolanaAddress, findAta, getSolBalance, getTokenBalance } from "@stable-io/cctp-sdk-solana";
 import { CctpR } from "./contractSdk/index.js";
 import { ForeignDomain } from "./contractSdk/constants.js";
-import { TODO } from "@stable-io/utils";
+import { TODO, Url } from "@stable-io/utils";
 import { getUsdcBalance } from "./utils.js";
 
 export type TransferOptions = Parameters<typeof CctpR.prototype.transferWithRelay>[7];
@@ -47,8 +47,9 @@ export async function* transfer<
   quote: QuoteBase<N, "Solana", S>,
   gasDropoff: GasTokenOf<D>,
   opts?: TransferOptions,
+  rpcUrl?: Url,
 ): AsyncGenerator<never, TransferGeneratorTReturn> {
-  const client = platformClient(network, source) as SolanaClient;
+  const client = platformClient(network, source, rpcUrl) as SolanaClient;
   const cctprSdk = new CctpR(network, client);
   const [solBalance, usdcBalance] = await Promise.all([
     getSolBalance(client, sender).then(balance => balance ?? sol(0)),

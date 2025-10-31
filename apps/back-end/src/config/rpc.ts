@@ -71,6 +71,11 @@ class NetworkRpcConfig {
   @NullToUndefined()
   @IsUrl()
   Worldchain?: string;
+
+  @IsOptional()
+  @NullToUndefined()
+  @IsUrl()
+  Solana?: string;
 }
 
 export class RpcConfigDto {

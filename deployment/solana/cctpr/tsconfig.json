@@ -6,6 +6,7 @@
     "rootDir": "."
   },
   "include": [
+    "getDeploymentCommands.ts",
     "setFeeRecipient.ts",
     "avaxRouterAddress.ts",
     "transferTest.ts",

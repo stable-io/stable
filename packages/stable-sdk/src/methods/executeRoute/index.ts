@@ -71,8 +71,8 @@ export const $executeRoute =
      */
     const receive = await findTransferReceive(
       network,
-      attestation.targetDomain,
-      transferTx,
+      getRpcUrl(attestation.targetDomain),
+      attestation,
       { timeoutMs: 180000 },
     ).catch((error: unknown) => {
       route.progress.emit("error", { type: "receive-failed", details: { txHash: transferTx } });
@@ -114,8 +114,8 @@ export const $executeRoute =
 
       const secondHopReceive = await findTransferReceive(
         network,
-        secondHopAttestation.targetDomain,
-        receive.transactionHash,
+        getRpcUrl(secondHopAttestation.targetDomain),
+        secondHopAttestation,
         { timeoutMs: 180000 },
       ).catch((error: unknown) => {
         route.progress.emit("error", { type: "receive-failed", details: { txHash: receive.transactionHash } });

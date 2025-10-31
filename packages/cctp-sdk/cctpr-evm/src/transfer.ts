@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { TODO } from "@stable-io/utils";
+import type { TODO, Url } from "@stable-io/utils";
 import type { GasTokenOf, Network } from "@stable-io/cctp-sdk-definitions";
 import {
   Usdc,
@@ -55,10 +55,11 @@ export async function* transfer<
   quote: QuoteBase<N, "Evm", S>,
   gasDropoff: GasTokenOf<D>,
   { usePermit = true }: TransferOptions = {},
+  rpcUrl?: Url,
 ): AsyncGenerator<TransferGeneratorT, TransferGeneratorTReturn> {
   const usdcAddr = new EvmAddress(usdcContracts.contractAddressOf[network][source]);
   const cctprAddress = new EvmAddress(contractAddressOf(network, source as TODO));
-  const client = platformClient(network, source) as TODO as EvmClient<N, S>;
+  const client = platformClient(network, source, rpcUrl) as TODO as EvmClient<N, S>;
   const cctprSdk = new CctpR(client);
   const [gasTokenBalance, usdcBalance, usdcAllowance] = await Promise.all([
     client.getBalance(sender),

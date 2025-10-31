@@ -16,13 +16,13 @@ import {
   percentage,
   PlatformAddress,
   PlatformOf,
-  UniversalAddress,
   platformAddress,
   platformOf,
 } from "@stable-io/cctp-sdk-definitions";
 import type { Permit } from "@stable-io/cctp-sdk-evm";
 import type { Network } from "../types/index.js";
 import { apiEndpointWithQuery, apiRequest, apiEndpoint, HTTPCode, APIResponse } from "./base.js";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 export type GetQuoteParams<
   N extends Network,
@@ -50,9 +50,10 @@ export type GetQuoteResponse<
   iat: number;
   exp: number;
   quoteRequest: GetQuoteParams<N, S, D>;
-  permit2GaslessData: Permit2GaslessData;
   gaslessFee: Usdc;
   jwt: string;
+  permit2GaslessData?: Permit2GaslessData;
+  encodedSolanaTx?: SignableEncodedBase64Message;
 } | undefined;
 
 export async function getTransferQuote<
@@ -71,6 +72,11 @@ export async function getTransferQuote<
 
   if (apiResponse.status >= 400) {
     console.error(`GET Quote failed with status ${apiResponse.status}`);
+    const message = apiResponse.value["message"] ?? [];
+    const messages = typeof message === "string" ? [message] : message;
+    for (const msg of messages) {
+      console.error(msg);
+    }
     return undefined;
   }
 
@@ -88,10 +94,11 @@ export async function getTransferQuote<
   return {
     iat: payload.iat as number,
     exp: payload.exp as number,
-    permit2GaslessData: payload.permit2GaslessData as Permit2GaslessData,
     quoteRequest,
     gaslessFee,
     jwt,
+    encodedSolanaTx: quoteParams.sourceChain === "Solana" ? payload.encodedTx as SignableEncodedBase64Message : undefined,
+    permit2GaslessData: quoteParams.sourceChain === "Solana" ? undefined : payload.permit2GaslessData as Permit2GaslessData,
   };
 }
 
@@ -110,7 +117,7 @@ function serializeQuoteRequest<
     amount: params.amount.toUnit("human").toString(),
     sender: params.sender.toString(),
     recipient: params.recipient.toString(),
-    gasDropoff: params.gasDropoff.toUnit("human").toString(),
+    gasDropoff: params.gasDropoff.toUnit("human").toFixed(6),
     takeFeesFromInput: params.takeFeesFromInput.toString(),
     maxRelayFee: params.maxRelayFee.toUnit("human").toFixed(6),
     fastFeeRate: params.corridor === "v2Direct"
@@ -136,9 +143,9 @@ function deserializeQuoteRequest<
       responseQuoteParams.sourceDomain as S,
       responseQuoteParams.sender as string,
     ),
-    recipient: new UniversalAddress(
+    recipient: platformAddress(
+      responseQuoteParams.targetDomain as D,
       responseQuoteParams.recipient as string,
-      destinationPlatform,
     ),
     gasDropoff: genericGasToken(responseQuoteParams.gasDropoff as string, "human"),
     corridor: responseQuoteParams.corridor as Corridor,
@@ -202,8 +209,9 @@ export type PostTransferResponse = {
 
 export type PostTransferParams = {
   jwt: string;
-  permit2Signature: Uint8Array;
+  permit2Signature?: Uint8Array;
   permit?: Permit;
+  encodedSolanaTx?: SignableEncodedBase64Message;
 };
 
 export async function postTransferRequest(
@@ -211,17 +219,19 @@ export async function postTransferRequest(
   params: PostTransferParams,
 ): Promise<PostTransferResponse> {
   const endpoint = apiEndpoint(network)("gasless-transfer/relay");
-  const { jwt, permit2Signature, permit } = params;
+  const { jwt, permit2Signature, permit, encodedSolanaTx } = params;
   const requestBody = {
-    jwt: jwt,
-    permit2Signature: encoding.hex.encode(permit2Signature, true),
-    ...(permit
-? { permit: {
-      signature: encoding.hex.encode(permit.signature, true),
-      value: permit.value.toString(),
-      deadline: permit.deadline.toString(),
-    } }
-: {}),
+    jwt,
+    ...(permit2Signature ? { permit2Signature: encoding.hex.encode(permit2Signature, true) } : {}),
+    ...(permit ?
+      { permit: {
+          signature: encoding.hex.encode(permit.signature, true),
+          value: permit.value.toString(),
+          deadline: permit.deadline.toString(),
+        },
+      }
+    : {}),
+    ...(encodedSolanaTx ? { encodedTx: { encodedSolanaTx } } : {}),
   };
 
   const apiResponse = await apiRequest<APIResponse<HTTPCode, { data: { hash: string } } >>(

@@ -141,7 +141,7 @@ export function formatTimeDiff(timeMs: number): string {
 
 function getRouteType(r: Route<any, any, any>) {
   return r.steps.some(
-    s => s.type === "gasless-transfer",
+    s => s.type === "evm-gasless-transfer",
   )
     ? "gasless"
     : "normal";

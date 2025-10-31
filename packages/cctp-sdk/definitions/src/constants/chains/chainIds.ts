@@ -60,6 +60,11 @@ const domainWormholeChainIdEntries = [[
     ["Codex",         54],
     ["Sonic",         52],
     ["Worldchain",    45],
+    // ["Sei",           32],
+    // ["BNB",            4],
+    // ["HyperEVM",      47],
+    // ["Ink",           46],
+    // ["Plume",         55],
   ]], [
   "Testnet", [
     ["Ethereum",   10002],
@@ -77,6 +82,11 @@ const domainWormholeChainIdEntries = [[
     ["Codex",         54],
     ["Sonic",         52],
     ["Worldchain",    45],
+    // ["Sei",           32],
+    // ["BNB",            4],
+    // ["HyperEVM",      47],
+    // ["Ink",           46],
+    // ["Plume",         55],
   ]],
 ] as const satisfies MapLevels<[Network, Domain, number]>;
 
