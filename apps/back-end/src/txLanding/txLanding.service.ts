@@ -92,11 +92,13 @@ export class TxLandingService {
 
       if (domain !== "Solana") {
         const rawTxHash = r.txResults[0]!.txHash;
-        const cleanTxHash = this.extractHexFromMalformedResponse(rawTxHash);
-        if (!cleanTxHash)
+        try {
+          this.extractHexFromMalformedResponse(rawTxHash);
+        } catch {
           throw new Error(
             `Failed to extract valid transaction hash from API response: ${rawTxHash}`,
           );
+        }
       }
 
       const isConfirmedTransactionResponse = (
@@ -119,7 +121,7 @@ export class TxLandingService {
 
       return finalTxHash;
     } catch (error) {
-      this.logger.error("Failed to send transaction:", error);
+      this.logger.error(`Failed to land transaction with trace-id ${traceId}:`, error);
       throw error;
     }
   }
@@ -180,13 +182,21 @@ export class TxLandingService {
    * @param input - The malformed string containing a hex transaction hash
    * @returns The extracted hex string with 0x prefix, or undefined if not found
    */
-  private extractHexFromMalformedResponse(
-    input: string,
-  ): `0x${string}` | undefined {
+  private extractHexFromMalformedResponse(input: string): `0x${string}` {
     // Match 0x followed by 64 hex characters (standard transaction hash length)
     const hexPattern = /0x[0-9a-f]{64}/i;
     const match = input.match(hexPattern);
-    return match ? (match[0].toLowerCase() as `0x${string}`) : undefined;
+    const parsed = match
+      ? (match[0].toLowerCase() as `0x${string}`)
+      : undefined;
+
+    if (!parsed) {
+      throw new Error(
+        `Failed to extract valid transaction hash from API response: ${input}`,
+      );
+    }
+
+    return parsed;
   }
 
   private toChain(domain: LoadedDomain): string {
