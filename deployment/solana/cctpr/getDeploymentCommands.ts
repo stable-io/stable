@@ -9,7 +9,7 @@ import { getNetwork, getRpcUrl } from "./src/env.js";
 
 function generateCommands(network: Network, config: DeploymentConfig): string[] {
   const rpcUrl = getRpcUrl(network);
-  const programPath = `../../../contracts/cctpr/solana/target/deploy/cctpr.so`;
+  const programPath = `./build-program/${network}/cctpr.so`;
   const deployerKeyfile = getPrivateKeyFilename(network, "cctpr_deployer");
   const bufferKeyfile = getPrivateKeyFilename(network, "cctpr_buffer");
   const programKeyfile = getPrivateKeyFilename(network, "cctpr_program");
