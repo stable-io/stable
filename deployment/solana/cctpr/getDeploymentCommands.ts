@@ -4,8 +4,13 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Network } from "@stable-io/cctp-sdk-definitions";
-import { DeploymentConfig, getDeploymentConfig, getPrivateKeyFilename } from "./src/deployConfig.js";
 import { getNetwork, getRpcUrl } from "./src/env.js";
+import {
+  DeploymentConfig,
+  getDeploymentConfig,
+  getPrivateKeyFilename,
+  getProgramIdConfig,
+} from "./src/deployConfig.js";
 
 function generateCommands(network: Network, config: DeploymentConfig): string[] {
   const rpcUrl = getRpcUrl(network);
@@ -16,6 +21,10 @@ function generateCommands(network: Network, config: DeploymentConfig): string[] 
   const prioritizationFee = config.prioritization_fee;
   if (prioritizationFee === undefined) {
     throw new Error("Prioritization fee is not set, run analyzeFees.ts first");
+  }
+  const programId = getProgramIdConfig()[network];
+  if (programId !== config.cctpr_program) {
+    throw new Error(`Program ID mismatch: ${programId} !== ${config.cctpr_program}`);
   }
   const write_buffer_command = `solana program write-buffer ${programPath}`
     .concat(` -k "${deployerKeyfile}"`)

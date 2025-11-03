@@ -19,7 +19,7 @@ export interface DeploymentConfig {
   prioritization_fee?: number;
 }
 
-export function readJsonFile(filePath: string): DeploymentConfig {
+export function readJsonFile(filePath: string): object {
   try {
     const fileContent = readFileSync(filePath, "utf8");
     return JSON.parse(fileContent);
@@ -29,7 +29,20 @@ export function readJsonFile(filePath: string): DeploymentConfig {
   }
 }
 
-export function getDeploymentFilename(environment: Network) {
+export type ProgramIdConfig = { [key in Network]: string };
+export const programIdConfigPath = "../../../contracts/cctpr/solana/programs/cctpr/network.json";
+
+export function getProgramIdConfig(): ProgramIdConfig {
+  const config = readJsonFile(programIdConfigPath) as { mainnet: string; testnet: string };
+  return { Mainnet: config.mainnet, Testnet: config.testnet };
+}
+
+export function setProgramIdConfig(network: Network, programId: string) {
+  const config = { ...getProgramIdConfig(), [network]: programId };
+  saveJsonFile(programIdConfigPath, { mainnet: config.Mainnet, testnet: config.Testnet });
+}
+
+export function getDeploymentFilename(environment: Network): string {
   return `config/${environment}.json`;
 }
 
@@ -38,12 +51,12 @@ export function getPrivateKeyFilename(environment: Network, account: DeployAccou
   return `privatekeys/${environment}/${config[account]}.json`;
 }
 
-export function saveJsonFile(filePath: string, data: DeploymentConfig) {
+export function saveJsonFile(filePath: string, data: object) {
   writeFileSync(filePath, JSON.stringify(data, undefined, 2));
 }
 
-export function getDeploymentConfig(network: Network) {
-  return readJsonFile(getDeploymentFilename(network));
+export function getDeploymentConfig(network: Network): DeploymentConfig {
+  return readJsonFile(getDeploymentFilename(network)) as DeploymentConfig;
 }
 
 export function setDeploymentConfig(network: Network, config: Partial<DeploymentConfig>) {

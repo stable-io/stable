@@ -38,6 +38,7 @@ build/
 dist/
 out/
 build-contracts/
+build-program/
 privatekeys/
 cache/
 

@@ -12,6 +12,7 @@
     "transferTest.ts",
     "analyzeFees.ts",
     "initialize.ts",
+    "setProgramId.ts",
     "src/**/*"
   ]
 }
