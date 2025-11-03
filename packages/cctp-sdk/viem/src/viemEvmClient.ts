@@ -44,11 +44,23 @@ import {
   sonicTestnet      as sonicTestnet,
   worldchain        as worldchainMainnet,
   worldchainSepolia as worldchainTestnet,
+  sei               as seiMainnet,
+  seiTestnet        as seiTestnet,
+  xdc               as xdcMainnet,
+  xdcTestnet        as xdcTestnet,
+  ink               as inkMainnet,
+  inkSepolia        as inkTestnet,
+  plume             as plumeMainnet,
+  plumeTestnet      as plumeTestnet,
 } from "viem/chains";
 
-// TODO: Wait for viem to support the codex blockchain
+// TODO: Wait for viem to support these blockhains
 const codexMainnet = {} as ViemChain;
 const codexTestnet = {} as ViemChain;
+const bnbMainnet = {} as ViemChain;
+const bnbTestnet = {} as ViemChain;
+const hyperEvmMainnet = {} as ViemChain;
+const hyperEvmTestnet = {} as ViemChain;
 
 export const viemChainOf = {
   Mainnet: {

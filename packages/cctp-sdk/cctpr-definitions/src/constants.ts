@@ -26,16 +26,16 @@ export const contractAddressEntries = [[
     ["Worldchain", "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
   ]], [
   "Testnet", [
-    ["Ethereum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    ["Avalanche",  "0xc56ec809bb285cd69ddc9e99e6a46975d04527c7"],
-    ["Optimism",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    ["Arbitrum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    ["Base",       "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
-    ["Solana",     "CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM"],
-    ["Polygon",    "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Ethereum",   "0x482850b81552a6be8c64c91cb4bb347836441712"],
+    ["Avalanche",  "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
+    ["Optimism",   "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
+    ["Arbitrum",   "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
+    ["Base",       "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
+    ["Solana",     "CCTPRRdPEWfVWc6drxFzkf4pbstJNvvPcRq49dQJ1rRc"],
+    ["Polygon",    "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
     // ["Sui",        undefined],
     // ["Aptos",      undefined],
-    ["Unichain",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
+    ["Unichain",   "0xeb73dfac4a7643c9dc90c7fee3c6175e778ceec0"],
     ["Linea",      undefined],
     ["Codex",      undefined],
     ["Sonic",      undefined],
@@ -90,17 +90,17 @@ export const relayOverheadOf = {
     Worldchain: 6.59,
   },
   Testnet: {
-    Ethereum:  13.2,
-    Avalanche: 5.27,
-    Optimism:  3.05,
-    Arbitrum:  2.78,
-    Base:      3.11,
-    Solana:    6, // TODO: Adjust
-    Polygon:   3.49,
-    Sui:       6, // TODO: Adjust
-    Aptos:     6, // TODO: Adjust
-    Unichain:  7.73,
-    Linea:     6.06,
+    Ethereum:   13.2,
+    Avalanche:  5.27,
+    Optimism:   3.05,
+    Arbitrum:   2.78,
+    Base:       3.11,
+    Solana:     6, // TODO: Adjust
+    Polygon:    3.49,
+    Sui:        6, // TODO: Adjust
+    Aptos:      6, // TODO: Adjust
+    Unichain:   7.73,
+    Linea:      6.06,
     Codex:      6, // TODO: Adjust
     Sonic:      6.95,
     Worldchain: 6.59,

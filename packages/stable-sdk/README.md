@@ -82,7 +82,7 @@ const routes = await stable.findRoutes({
 
 // Gasless routes handle all gas payments with USDC
 const gaslessRoute = routes.all.find(route => 
-  route.steps.some(step => step.type === "gasless-transfer")
+  route.steps.some(step => step.type === "evm-gasless-transfer")
 );
 ```
 

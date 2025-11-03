@@ -46,7 +46,7 @@ const intent = {
   sender,
   recipient,
 
-  gasDropoffDesired: 0n,
+  gasDropoffDesired: "0",
 };
 
 const routes = await sdk.findRoutes(intent);

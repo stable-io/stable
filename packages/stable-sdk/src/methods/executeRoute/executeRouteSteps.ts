@@ -5,17 +5,19 @@
 
 import { Chain as ViemChain, Account as ViemAccount, parseAbiItem, decodeFunctionData } from "viem";
 
-import { Permit, ContractTx, Eip2612Data } from "@stable-io/cctp-sdk-evm";
+import { Permit, ContractTx, Eip2612Data, EvmClient } from "@stable-io/cctp-sdk-evm";
 import type { Network, EvmDomains, PlatformClient, RegisteredPlatform } from "@stable-io/cctp-sdk-definitions";
 import { evmGasToken, platformOf, usdc } from "@stable-io/cctp-sdk-definitions";
-import { encoding, TODO } from "@stable-io/utils";
+import { encoding } from "@stable-io/utils";
 import { parseTransferTxCalldata } from "@stable-io/cctp-sdk-cctpr-evm";
 import { TxHash, Hex, SupportedRoute, ViemWalletClient, SolanaKeyPairSigner } from "../../types/index.js";
-import { getStepType, PRE_APPROVE, EVM_TRANSFER, SIGN_PERMIT, SIGN_PERMIT_2, GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER } from "../findRoutes/steps.js";
+import { getStepType, EVM_PRE_APPROVE, EVM_TRANSFER, EVM_SIGN_PERMIT, EVM_SIGN_PERMIT_2, EVM_GASLESS_TRANSFER, GaslessTransferData, SOLANA_TRANSFER, SOLANA_SIGN_TX, SOLANA_GASLESS_TRANSFER, SolanaGaslessTransfer } from "../findRoutes/steps.js";
 import { ApprovalSentEventData, TransferSentEventData } from "../../progressEmitter.js";
 import { TxSentEventData } from "../../transactionEmitter.js";
 import { LoadedCctprPlatformDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
-import { addLifetimeAndSendTx, TxMsgWithFeePayer } from "@stable-io/cctp-sdk-solana";
+import { addLifetimeAndSendTx, SignableTx, TxMsgWithFeePayer } from "@stable-io/cctp-sdk-solana";
+import { compileTransaction, decompileTransactionMessage, getCompiledTransactionMessageDecoder, getTransactionDecoder, partiallySignTransaction } from "@solana/kit";
+import { SignableEncodedBase64Message } from "@stable-io/cctp-sdk-cctpr-solana";
 
 const fromGwei = (gwei: number) => evmGasToken(gwei, "nEvmGasToken").toUnit("atomic");
 
@@ -32,15 +34,15 @@ export async function executeRouteSteps<
   const txHashes = [] as string[];
   if (platformOf(route.intent.sourceChain) === "Evm") {
     const evmSigner = signer as ViemWalletClient;
+    const evmClient = client as EvmClient;
     let permit: Permit | undefined = undefined;
     while (true) {
       const { value: stepData, done } = await route.workflow.next(permit);
       permit = undefined;
-
       const stepType = getStepType(stepData);
 
       switch (stepType) {
-      case PRE_APPROVE:
+      case EVM_PRE_APPROVE:
       case EVM_TRANSFER: {
         const contractTx = stepData as ContractTx;
 
@@ -54,7 +56,7 @@ export async function executeRouteSteps<
 
         route.transactionListener.emit("transaction-sent", parseTxSentEventData(tx, txParameters));
 
-        const receipt = await (client as TODO).waitForTransactionReceipt({ hash: tx });
+        const receipt = await evmClient.waitForTransactionReceipt(tx);
         txHashes.push(tx);
 
         route.transactionListener.emit("transaction-included", receipt);
@@ -69,8 +71,8 @@ export async function executeRouteSteps<
 
       break;
       }
-      case SIGN_PERMIT:
-      case SIGN_PERMIT_2: {
+      case EVM_SIGN_PERMIT:
+      case EVM_SIGN_PERMIT_2: {
         const typedMessage = stepData as Eip2612Data;
 
         const signature = await evmSigner.signTypedData({
@@ -97,7 +99,7 @@ export async function executeRouteSteps<
 
       break;
       }
-      case GASLESS_TRANSFER: {
+      case EVM_GASLESS_TRANSFER: {
         const transferData = stepData as GaslessTransferData;
         const transferParameters = transferData.permit2GaslessData.message.parameters;
         route.progress.emit("transfer-sent", {
@@ -119,14 +121,46 @@ export async function executeRouteSteps<
       if (done) break;
     }
   } else {
+    let signedTx: SignableTx | undefined = undefined;
     while (true) {
       const solanaSigner = signer as SolanaKeyPairSigner;
-      const { value: stepData, done } = await route.workflow.next();
+      const { value: stepData, done } = await route.workflow.next(signedTx);
+      signedTx = undefined;
       const stepType = getStepType(stepData);
-      if (stepType === SOLANA_TRANSFER) {
-        const transferData = { ...stepData, version: "legacy" } as TxMsgWithFeePayer;
+      switch (stepType) {
+      case SOLANA_TRANSFER: {
+        const transferData = { ...(stepData as TxMsgWithFeePayer), version: "legacy" } as TxMsgWithFeePayer;
         const tx = await addLifetimeAndSendTx(client, transferData, [solanaSigner]);
         txHashes.push(tx);
+      break;
+      }
+      case SOLANA_SIGN_TX: {
+        const txBytes = Buffer.from((stepData as SignableEncodedBase64Message).encodedSolanaTx, "base64");
+        const transaction = getTransactionDecoder().decode(txBytes);
+        const compiledMsg = getCompiledTransactionMessageDecoder().decode(transaction.messageBytes);
+        const txMessage = decompileTransactionMessage(compiledMsg);
+        const compiledTx = compileTransaction(txMessage);
+        signedTx = await partiallySignTransaction(
+          [(signer as SolanaKeyPairSigner).keyPair],
+          compiledTx,
+        );
+      break;
+      }
+      case SOLANA_GASLESS_TRANSFER: {
+        const transferData = stepData as SolanaGaslessTransfer;
+        route.progress.emit("transfer-sent", {
+          transactionHash: transferData.solanaTxHash,
+          approvalType: "Gasless",
+          gasDropOff: transferData.gasDropOff,
+          usdcAmount: transferData.amount,
+          recipient: transferData.recipient as Hex,
+          quoted: "onChainUsdc",
+        });
+
+        txHashes.push(transferData.solanaTxHash);
+      break;
+      }
+      // No default
       }
       if (done) break;
     }
@@ -175,7 +209,7 @@ function buildEvmTxParameters(
 
 function buildTransactionEventData(
   network: Network,
-  stepType: "pre-approve" | "evm-transfer",
+  stepType: "evm-pre-approve" | "evm-transfer",
   contractTx: ContractTx,
   txHash: Hex,
 ): {
@@ -185,7 +219,7 @@ function buildTransactionEventData(
   eventName: "transfer-sent";
   eventData: TransferSentEventData;
 } {
-  return stepType === "pre-approve"
+  return stepType === "evm-pre-approve"
 ? {
       eventName: "approval-sent",
       eventData: parseApprovalTransactionEventData(contractTx, txHash),

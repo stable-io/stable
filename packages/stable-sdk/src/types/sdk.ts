@@ -13,6 +13,7 @@ import type { UserIntent } from "./intent.js";
 import type { Route, SupportedRoute } from "./route.js";
 import type { PlatformSigner, SupportedPlatform } from "./signer.js";
 import type { Receive } from "./receive.js";
+import type { GasTokenOf, Usdc } from "@stable-io/cctp-sdk-definitions";
 export type { WalletClient as ViemWalletClient } from "viem";
 export type { KeyPairSigner as SolanaKeyPairSigner } from "@solana/kit";
 
@@ -31,7 +32,19 @@ export abstract class SDK<N extends Network> {
     intent: UserIntent<N, S, D>,
   ): Promise<RoutesResult<N, LoadedCctprDomain<N>, D>>;
 
-  public abstract checkHasEnoughFunds(route: SupportedRoute<N>): Promise<boolean>;
+  public abstract checkHasEnoughFunds<S extends LoadedCctprDomain<N>>(
+    route: SupportedRoute<N, S>
+  ): Promise<{
+    hasEnoughBalance: boolean;
+    requiredBalance: {
+      gasToken: GasTokenOf<S>;
+      usdc: Usdc;
+    };
+    availableBalance: {
+      gasToken: GasTokenOf<S>;
+      usdc: Usdc;
+    };
+  }>;
 
   public abstract executeRoute(route: SupportedRoute<N>): Promise<{
     transactions: TxHash[];

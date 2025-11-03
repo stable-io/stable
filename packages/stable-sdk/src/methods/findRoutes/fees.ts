@@ -21,11 +21,13 @@ import {
   percentage,
   RegisteredPlatform,
   usdc,
+  type Sol,
+  sol,
 } from "@stable-io/cctp-sdk-definitions";
 
 import type { Fee, Network, Intent } from "../../types/index.js";
-import { RouteExecutionStep } from "./steps.js";
-import { getDomainPrices } from "../../api/oracle.js";
+import { EvmCostEstimation, RouteExecutionStep, SolanaCostEstimation } from "./steps.js";
+import { EvmDomainPrices, getDomainPrices, SolanaDomainPrices } from "../../api/oracle.js";
 
 export function getCorridorFees<
   N extends Network,
@@ -63,45 +65,94 @@ export async function calculateTotalCost(
   // @todo: get the USDC price from the oracle
   const usdPerUsdc = 1;
   const usdcPrice = Conversion.from(usd(usdPerUsdc), Usdc);
-  const totalCost = usd(0);
-  let gasTokenPriceUsdc: Usdc;
-
-  if (domain === "Solana") {
-    const domainPrices = await getDomainPrices(network, { domain, network });
-    gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
-    // TODO: Add the step cost for solana
-    totalCost.add(usd(0));
-  } else {
-    const domainPrices = await getDomainPrices(network, { domain, network });
-    const gasTokenKind = gasTokenKindOf(domain);
-    gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
-    const stepsCost = steps.reduce((subtotal, step) => {
-      const gasTokenCost: Amount<typeof gasTokenKind> = gasTokenOf(domain)(
-        domainPrices.gasPriceAtomic,
-        "atomic",
-      ).mul(step.gasCostEstimation);
-
-      const gasTokenPrice = Conversion.from<
-        Usd["kind"],
-        GasTokenKindOf<typeof domain>
-      >(usd(gasTokenPriceUsdc.toUnit("human")), gasTokenKind);
-      const usdCost = gasTokenCost.convert(gasTokenPrice);
-      return subtotal.add(usdCost);
-    }, usd(0));
-    totalCost.add(stepsCost);
-  }
+  const avaxPrices = await getDomainPrices(network, { domain: "Avalanche" });
+  const domainPrices = await getDomainPrices(network, { domain });
+  const stepsCost = steps.reduce((subtotal, step) => {
+    const costEstimation = step.costEstimation.sourceChain;
+    const usdCost = getUsdCost(domain, costEstimation, domainPrices);
+    if (step.costEstimation.hopChain !== undefined)
+      usdCost.add(getUsdCost(
+        "Avalanche",
+        step.costEstimation.hopChain,
+        avaxPrices,
+      ));
+    return subtotal.add(usdCost);
+  }, usd(0));
 
   const feesCost = fees.reduce((subtotal, fee) => {
     const conversion: Conversion<Usd["kind"], typeof fee.kind> =
       fee.kind.name === "Usdc"
         ? usdcPrice
         : Conversion.from<Usd["kind"], typeof fee.kind>(
-            usd(gasTokenPriceUsdc.toUnit("human")),
+            usd(usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic").toUnit("human")),
             fee.kind,
           );
     const usdCost: Usd = (fee as Amount<typeof fee.kind>).convert(conversion);
     return subtotal.add(usdCost);
   }, usd(0));
 
-  return totalCost.add(feesCost);
+  return stepsCost.add(feesCost);
+}
+
+export function getUsdCost(
+  domain: SupportedDomain<Network>,
+  costEstimation: EvmCostEstimation | SolanaCostEstimation,
+  domainPrices: EvmDomainPrices | SolanaDomainPrices,
+): Usd {
+  const gasTokenKind = gasTokenKindOf(domain);
+  const gasTokenPriceUsdc = usdc(domainPrices.gasTokenPriceAtomicUsdc, "atomic");
+  const gasTokenCost = getGasTokenCost(domain, costEstimation, domainPrices);
+  const gasTokenPrice = Conversion.from<
+    Usd["kind"],
+    GasTokenKindOf<typeof domain>
+  >(usd(gasTokenPriceUsdc.toUnit("human")), gasTokenKind);
+  return gasTokenCost.convert(gasTokenPrice);
+}
+
+export function getGasTokenCost(
+  domain: SupportedDomain<Network>,
+  costEstimation: EvmCostEstimation | SolanaCostEstimation,
+  domainPrices: EvmDomainPrices | SolanaDomainPrices,
+): Amount<GasTokenKindOf<typeof domain>> {
+  if (domain === "Solana") {
+    return getTotalSolCost(
+      domainPrices as SolanaDomainPrices,
+      costEstimation as SolanaCostEstimation,
+    );
+  }
+  return getTotalEvmGasTokenCost(
+    domain,
+    costEstimation as EvmCostEstimation,
+    domainPrices as EvmDomainPrices,
+  );
+}
+
+export function getTotalEvmGasTokenCost(
+  domain: SupportedDomain<Network>,
+  costEstimation: EvmCostEstimation,
+  domainPrices: EvmDomainPrices,
+): Amount<GasTokenKindOf<typeof domain>> {
+  return gasTokenOf(domain)(
+    domainPrices.gasPriceAtomic,
+    "atomic",
+  ).mul(costEstimation.gasCostEstimation);
+};
+
+export function getTotalSolCost(
+  domainPrices: SolanaDomainPrices,
+  costEstimation: SolanaCostEstimation,
+): Sol {
+  const computationCost = sol(
+    domainPrices.computationPriceAtomicMicroLamports,
+    "atomic",
+  ).div(1_000_000n).mul(costEstimation.computationUnits);
+  const signatureCost = sol(
+    domainPrices.signaturePriceAtomicLamports,
+    "atomic",
+  ).mul(BigInt(costEstimation.signatures));
+  const accountCost = sol(
+    domainPrices.pricePerAccountByteAtomicLamports,
+    "atomic",
+  ).mul(costEstimation.accountBytes);
+  return computationCost.add(signatureCost).add(accountCost);
 }

@@ -3,7 +3,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import type { TODO } from "@stable-io/utils";
+import type { TODO, Url } from "@stable-io/utils";
 import type { RoArray } from "@stable-io/map-utils";
 import type { Network, GasTokenOf } from "@stable-io/cctp-sdk-definitions";
 import { genericGasToken, platformClient } from "@stable-io/cctp-sdk-definitions";
@@ -27,8 +27,9 @@ export async function getRelayCosts<
   destination: D,
   corridors: RoArray<SensibleCorridor<N, S, D>>,
   gasDropoff?: GasTokenOf<D, SupportedDomain<N>>,
+  rpcUrl?: Url,
 ): Promise<RoArray<RelayCost<N, S>>> {
-  const client = platformClient(network, source) as TODO as SolanaClient;
+  const client = platformClient(network, source, rpcUrl) as TODO as SolanaClient;
   const cctpr = new CctpR(network, client);
   const gasDropoffRequest = genericGasToken(gasDropoff ? gasDropoff.toUnit("human") : 0);
 

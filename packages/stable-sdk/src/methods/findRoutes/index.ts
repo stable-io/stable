@@ -4,11 +4,24 @@
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import { Amount } from "@stable-io/amount";
-import { init as initCctpr, Corridor, CorridorStats, LoadedCctprDomain, SupportedDomain } from "@stable-io/cctp-sdk-cctpr-definitions";
+import {
+  init as initCctpr,
+  type Corridor,
+  type CorridorStats,
+  type LoadedCctprDomain,
+  type SupportedDomain,
+} from "@stable-io/cctp-sdk-cctpr-definitions";
 import type { LoadedDomain, Usdc, Percentage } from "@stable-io/cctp-sdk-definitions";
-import { UniversalAddress, gasTokenKindOf, isUsdc, platformAddress, platformOf, usdc, percentage, platformClient } from "@stable-io/cctp-sdk-definitions";
+import {
+  gasTokenKindOf,
+  isUsdc,
+  platformAddress,
+  usdc,
+  percentage,
+  platformClient,
+} from "@stable-io/cctp-sdk-definitions";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import type { TODO } from "@stable-io/utils";
+import type { TODO, Url } from "@stable-io/utils";
 import type {
   SDK,
   Route,
@@ -18,6 +31,8 @@ import type {
   SupportedRoute,
 } from "../../types/index.js";
 import { buildGaslessRoute, buildUserTransferRoute } from "./routes/index.js";
+import { getUsdcAtaFromUser } from "@stable-io/cctp-sdk-cctpr-solana";
+import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
 
 export type FindRoutesDeps<N extends Network> = Pick<SDK<N>, "getNetwork" | "getRpcUrl">;
 
@@ -36,21 +51,33 @@ export const $findRoutes = <
   async <S extends LoadedCctprDomain<N>, D extends SupportedDomain<N>>(
     userIntent: UserIntent<N, S, D>,
   ) => {
-    const intent = parseIntent(userIntent);
     const network = getNetwork();
-    const rpcUrl = getRpcUrl(intent.sourceChain);
+    const intent = parseIntent(userIntent);
 
+    // We need to convert the recipient to an ATA address if it's a Solana address
+    if (intent.targetChain === "Solana") {
+      const solanaClient = SolanaKitClient.fromNetworkAndDomain(
+        network,
+        "Solana",
+        getRpcUrl("Solana"),
+      );
+      intent.recipient = await getUsdcAtaFromUser(solanaClient, intent.recipient);
+    }
+
+    const rpcUrl = getRpcUrl(intent.sourceChain);
     const client = platformClient(
       network,
       intent.sourceChain,
       rpcUrl,
     );
+
     const cctpr = initCctpr(network);
 
     const corridors  = await getCorridors(
       network,
       cctpr,
       intent,
+      rpcUrl,
     );
 
     const routes: SupportedRoute<N, S, D>[] = [];
@@ -58,7 +85,7 @@ export const $findRoutes = <
     for (const corridor of corridors) {
       const userTransferRoute = await buildUserTransferRoute(
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        network as Network, intent, corridor,
+        network as Network, intent, corridor, rpcUrl,
       );
 
       if (userTransferRoute !== undefined) {
@@ -93,12 +120,14 @@ async function getCorridors<N extends Network>(
   network: N,
   cctpr: ReturnType<typeof initCctpr<N>>,
   intent: Intent<N, LoadedCctprDomain<N>, SupportedDomain<N>>,
+  rpcUrl?: Url,
 ): Promise<CorridorStats<N, LoadedCctprDomain<N>, Corridor>[]> {
   const { stats: corridorStats, fastBurnAllowance } = await cctpr.getCorridors(
     network,
     intent.sourceChain,
     intent.targetChain,
     intent.gasDropoffDesired,
+    rpcUrl,
   );
 
   return corridorStats.filter((c) => {
@@ -114,10 +143,7 @@ function parseIntent<N extends Network, S extends LoadedDomain, D extends Suppor
     sourceChain: userIntent.sourceChain,
     targetChain: userIntent.targetChain,
     sender: platformAddress(userIntent.sourceChain, userIntent.sender),
-    recipient: new UniversalAddress(
-      userIntent.recipient.toString(),
-      platformOf(userIntent.targetChain),
-    ),
+    recipient: platformAddress(userIntent.targetChain, userIntent.recipient),
     amount: parseAmount(userIntent.amount),
     usePermit: userIntent.usePermit ?? true,
     gasDropoffDesired: parseGasDropoff(userIntent),
@@ -146,7 +172,7 @@ function parseGasDropoff<
   if (intent.gasDropoffDesired instanceof Amount) return intent.gasDropoffDesired;
   return Amount.ofKind(gasTokenKindOf(intent.targetChain))(
     intent.gasDropoffDesired ?? 0,
-    "atomic",
+    "human",
   );
 }
 

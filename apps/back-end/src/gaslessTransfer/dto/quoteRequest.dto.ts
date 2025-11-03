@@ -5,6 +5,7 @@ import type {
   Usdc,
   EvmGasToken,
   Network,
+  Sol,
 } from "@stable-io/cctp-sdk-definitions";
 import type {
   Corridor,
@@ -14,7 +15,6 @@ import { corridors } from "@stable-io/cctp-sdk-cctpr-definitions";
 import { Transform } from "class-transformer";
 import { AMOUNT_PATTERNS } from "../../common/utils";
 import {
-  networks,
   supportedDomains,
   type Domain,
   type SupportedAddress,
@@ -31,7 +31,7 @@ import {
 
 export type QuoteSupportedDomain<N extends Network> = Exclude<
   SupportedDomain<N>,
-  "Codex"
+  "Codex" | "Sei" | "BNB" | "XDC" | "HyperEVM" | "Ink" | "Plume"
 >;
 
 export class QuoteRequestDto<
@@ -45,18 +45,6 @@ export class QuoteRequestDto<
   @ApiProperty({ enum: supportedDomains })
   @IsIn(supportedDomains)
   sourceDomain!: SourceDomain;
-
-  /**
-   * The blockchain network for the source domain
-   * @example "Mainnet"
-   */
-  @ApiProperty({
-    enum: networks,
-    description: "The blockchain network to get price information for",
-    default: "Mainnet",
-  })
-  @IsIn(networks)
-  sourceDomainNetwork!: Network;
 
   /**
    * The target blockchain for the transfer
@@ -113,21 +101,22 @@ export class QuoteRequestDto<
 
   /**
    * Amount of native gas token desired on target chain for gas dropoff
-   * Specified in native token units (e.g., ETH, MATIC, AVAX)
-   * Supports up to 18 decimal places, use "0" if no gas dropoff is desired
+   * Specified in native token units (e.g., ETH, MATIC, AVAX, SOL)
+   * Supports up to 6 decimal places, use "0" if no gas dropoff is desired
    * @example "0.01"
    */
   @ApiProperty({
     type: String,
     format: "amount",
-    pattern: AMOUNT_PATTERNS.EVM_GAS_TOKEN,
+    pattern: AMOUNT_PATTERNS.EVM_GAS_TOKEN_OR_SOL,
   })
   @ValidateIf(({ targetDomain }: { targetDomain?: any }) =>
     supportedDomains.includes(targetDomain),
   )
   @IsPlatformAmount("targetDomain", { min: 0 })
   @Transform(
-    ({ value }: { value: EvmGasToken }) => value.toUnit("human").toFixed(18),
+    ({ value }: { value: EvmGasToken | Sol }) =>
+      value.toUnit("human").toFixed(6),
     {
       toPlainOnly: true,
     },

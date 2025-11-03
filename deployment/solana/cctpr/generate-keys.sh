@@ -1,6 +1,12 @@
 #!/usr/bin/bash
 
 set -euo pipefail
+cd "$(dirname "$0")"
+
+if [ "${ENV:-}" != "Testnet" ] && [ "${ENV:-}" != "Mainnet" ]; then
+  echo "ENV must be Testnet or Mainnet"
+  exit 1
+fi
 
 export att_buffer_address=$(solana-keygen grind --ignore-case --starts-with cctpb:1 | grep 'Wrote keypair' | awk '{ sub(/\.json$/, "", $4); print $4 }')
 export att_program_address=$(solana-keygen grind --ignore-case --starts-with cctpr:1 | grep 'Wrote keypair' | awk '{ sub(/\.json$/, "", $4); print $4 }')
@@ -18,10 +24,15 @@ echo att_program_address=$att_program_address
 echo att_deployer_address=$att_deployer_address
 echo ---------------------------------------------------------------------
 
-export att_buffer_account_keyfile=$(pwd)/$att_buffer_address.json
-export att_program_account_keyfile=$(pwd)/$att_program_address.json
-export att_deployer_account_keyfile=$(pwd)/$att_deployer_address.json
+export att_buffer_account_keyfile=./$att_buffer_address.json
+export att_program_account_keyfile=./$att_program_address.json
+export att_deployer_account_keyfile=./$att_deployer_address.json
 
-mkdir -p $(pwd)/privatekeys
-mv $att_buffer_account_keyfile $att_program_account_keyfile $att_deployer_account_keyfile $(pwd)/privatekeys
-
+mkdir -p ./privatekeys/${ENV}
+mkdir -p ./config
+mv $att_buffer_account_keyfile $att_program_account_keyfile $att_deployer_account_keyfile ./privatekeys/${ENV}
+echo "{
+  \"cctpr_buffer\": \"$att_buffer_address\",
+  \"cctpr_program\": \"$att_program_address\",
+  \"cctpr_deployer\": \"$att_deployer_address\"
+}" > ./config/${ENV}.json

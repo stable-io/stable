@@ -5,6 +5,7 @@ import { ConfigModule } from "../config/config.module";
 import { AuthModule } from "../auth/auth.module";
 import { OracleModule } from "../oracle/oracle.module";
 import { ExecutionCostModule } from "../executionCost/executionCost.module";
+import { NonceAccountModule } from "../cctpr/nonceAccount.module";
 import { GaslessTransferController } from "./gaslessTransfer.controller";
 import { GaslessTransferService } from "./gaslessTransfer.service";
 import { ValidatePermitSignatureConstraint } from "./validators";
@@ -17,6 +18,7 @@ import { ValidatePermitSignatureConstraint } from "./validators";
     AuthModule,
     OracleModule,
     ExecutionCostModule,
+    NonceAccountModule,
   ],
   controllers: [GaslessTransferController],
   providers: [GaslessTransferService, ValidatePermitSignatureConstraint],

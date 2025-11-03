@@ -22,6 +22,10 @@ export const contractAddressOf = {
     Codex:      "0xd996633a415985DBd7D6D12f4A4343E31f5037cf",
     Sonic:      "0x29219dd400f2Bf60E5a23d13Be72B486D4038894",
     Worldchain: "0x79A02482A880bCe3F13E09da970dC34dB4cD24D1",
+    // XDC:        "0xfA2958CB79b0491CC627c1557F441eF849Ca8eb1",
+    // HyperEVM:   "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+    // Ink:        "0x2D270e6886d130D724215A266106e6832161EAEd",
+    // Plume:      "0x222365EF19F7947e5484218551B56bb3965Aa7aF",
   },
   Testnet: {
     Ethereum:   "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
@@ -39,6 +43,11 @@ export const contractAddressOf = {
     Codex:      "0x6d7f141b6819C2c9CC2f818e6ad549E7Ca090F8f",
     Sonic:      "0xA4879Fed32Ecbef99399e5cbC247E533421C4eC6",
     Worldchain: "0x66145f38cBAC35Ca6F1Dfb4914dF98F1614aeA88",
+    // Sei:        "0x4fCF1784B31630811181f670Aea7A7bEF803eaED",
+    // XDC:        "0xb5AB69F7bBada22B28e79C8FFAECe55eF1c771D4",
+    // HyperEVM:   "0x2B3370eE501B4a559b57D449569354196457D8Ab",
+    // Ink:        "0xFabab97dCE620294D2B0b0e46C68964e326300Ac",
+    // Plume:      "0xcB5f30e335672893c7eb944B374c196392C19D18",
   },
 } as const satisfies Record<Network, Record<Domain, string>>;
 

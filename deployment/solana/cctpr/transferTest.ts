@@ -7,28 +7,21 @@ import { CctpR } from "@stable-io/cctp-sdk-cctpr-solana";
 import { avax, genericGasToken, Network, percentage, Sol, sol, usdc } from "@stable-io/cctp-sdk-definitions";
 import { addLifetimeAndSendTx, SolanaAddress } from "@stable-io/cctp-sdk-solana";
 import { EvmAddress } from "@stable-io/cctp-sdk-evm";
-import { createKeyPairSignerFromBytes, KeyPairSigner } from "@solana/kit";
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
-import process from "node:process";
+import { KeyPairSigner } from "@solana/kit";
 import { Conversion } from "@stable-io/amount";
-import { assertSuccess } from "./src/utils.js";
+import { assertSuccess, loadKeypairFromFile } from "./src/utils.js";
 import { SolanaKitClient } from "@stable-io/cctp-sdk-solana-kit";
+import { getDeploymentConfig } from "./src/deployConfig.js";
+import { getEnv, getNetwork } from "./src/env.js";
 
 async function transfer(
   network: Network,
-  rpcUrl: string,
   cctprProgramId: SolanaAddress,
-  oracleProgramId: SolanaAddress,
   user: KeyPairSigner,
   dest: EvmAddress,
 ) {
   const client = SolanaKitClient.fromNetworkAndDomain(network, "Solana");
-  const cctpr = new CctpR(network, client, {
-    cctpr: cctprProgramId,
-    oracle: oracleProgramId,
-  });
+  const cctpr = new CctpR(network, client, { cctpr: cctprProgramId });
 
   const mode = "usdc" as string;
   const amount = usdc("0.1");
@@ -64,35 +57,18 @@ async function transfer(
   console.info("Transfer transaction sent:", tx);
 }
 
-export async function loadKeypairFromFile(
-  filePath: string,
-): Promise<KeyPairSigner<string>> {
-  const resolvedPath = path.resolve(
-    filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath,
-  );
-  const loadedKeyBytes = Uint8Array.from(
-    JSON.parse(fs.readFileSync(resolvedPath, "utf8")),
-  );
-  return createKeyPairSignerFromBytes(loadedKeyBytes);
-}
-
 async function main() {
-  const rpcUrl = "https://api.devnet.solana.com";
-  const cctprProgramId = new SolanaAddress("CcTPR7jH6T3T5nWmi6bPfoUqd77sWakbTczBzvaLrksM");
-  const oracleProgramId = new SolanaAddress("xpo8sHWHkfS6NpVsYwE2t5pTvvdTHSdWUdxh2RtsT1H");
+  const network = getNetwork();
+  const config = getDeploymentConfig(network);
+  const cctprProgramId = new SolanaAddress(config.cctpr_program);
+  const senderKeyFilename = getEnv("SOLANA_PRIVATE_KEY_FILE");
+  const deployer = await loadKeypairFromFile(senderKeyFilename);
   const dest = new EvmAddress("0x6862bE596a57E92c9FEB36f95582F6409d9B6cf9");
-  const ownerKeyFile = process.env["OWNER_WALLET_FILE"];
-  if (ownerKeyFile === undefined) {
-    throw new Error("ENV variable OWNER_WALLET_FILE not set");
-  }
-  const user = await loadKeypairFromFile(ownerKeyFile);
 
   await transfer(
-    "Testnet",
-    rpcUrl,
+    network,
     cctprProgramId,
-    oracleProgramId,
-    user,
+    deployer,
     dest,
   );
 }

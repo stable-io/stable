@@ -8,6 +8,7 @@ import type {
   Nonce,
   TransactionMessageWithFeePayer,
   TransactionMessageWithDurableNonceLifetime,
+  Base64EncodedBytes,
 } from "@solana/kit";
 import { AccountRole, setTransactionMessageLifetimeUsingDurableNonce } from "@solana/kit";
 import { serialize, deserialize } from "binary-layout";
@@ -90,6 +91,13 @@ export type CorridorParams<N extends Network, DD extends ForeignDomain<N>> =
 
 export type OnChainRelayQueryResult = RoPair<RoArray<Usdc>, Conversion<typeof Usdc, typeof Sol>>;
 
+export type TransferMessage = TransactionMessage & TransactionMessageWithFeePayer;
+export type TransferGaslessMessage = TransferMessage & TransactionMessageWithDurableNonceLifetime;
+
+export type SignableEncodedBase64Message = {
+  encodedSolanaTx: Base64EncodedBytes;
+};
+
 //TODO: remove this and all its mentions once Sui is actually a legitimate foreign domain
 //  (The code here already supports Sui, but Sui is not yet part of the supported domains of CctpR
 //   and hence ForeignDomain doesn't include Sui yet and so neither does platformOf(foreignDomain))
@@ -111,7 +119,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     quote: Quote<N>,
     user: SolanaAddress,
     opts?: { userUsdc?: SolanaAddress; eventDataSeed?: EventDataSeed },
-  ): Promise<TransactionMessage & TransactionMessageWithFeePayer> {
+  ): Promise<TransferMessage> {
     checkIsSensibleCorridor(this.network, "Solana", destination, corridor.type);
 
     const userQuote = (
@@ -161,9 +169,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     relayer: SolanaAddress,
     nonceAccount: SolanaAddress,
     opts?: { userUsdc?: SolanaAddress; eventDataSeed?: EventDataSeed },
-  ): Promise<TransactionMessage &
-             TransactionMessageWithFeePayer &
-             TransactionMessageWithDurableNonceLifetime> {
+  ): Promise<TransferGaslessMessage> {
     checkIsSensibleCorridor(this.network, "Solana", destination, corridor.type);
 
     const { blockhash } = definedOrThrow(
@@ -222,7 +228,7 @@ export class CctpR<N extends Network> extends CctpRBase<N> {
     user: SolanaAddress,
     gaslessParams: GaslessParams | undefined,
     opts?: { userUsdc?: SolanaAddress; eventDataSeed?: EventDataSeed },
-  ): Promise<TransactionMessage & TransactionMessageWithFeePayer> {
+  ): Promise<TransferMessage> {
     const usdcMint = new SolanaAddress(usdcContracts.contractAddressOf[this.network]["Solana"]);
     const userUsdc = opts?.userUsdc ?? findAta(user, usdcMint);
     const eventDataSeed = opts?.eventDataSeed ?? serialize(timestampItem, new Date());
