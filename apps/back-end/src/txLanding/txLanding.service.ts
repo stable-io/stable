@@ -121,7 +121,10 @@ export class TxLandingService {
 
       return finalTxHash;
     } catch (error) {
-      this.logger.error(`Failed to land transaction with trace-id ${traceId}:`, error);
+      this.logger.error(
+        `Failed to land transaction with trace-id ${traceId}:`,
+        error,
+      );
       throw error;
     }
   }
