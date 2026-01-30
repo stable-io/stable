@@ -70,6 +70,14 @@
       "evmNetworkId": 4801,
       "chainId": 45,
       "rpc": "https://worldchain-sepolia.g.alchemy.com/public"
+    },
+    {
+      "domain": "Arc",
+      "description": "Arc Testnet",
+      "evmNetworkId": 5042002,
+      "chainId": 6000,
+      "rpc": "https://rpc.testnet.arc.network"
     }
+
   ]
 }

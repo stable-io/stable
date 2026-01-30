@@ -24,6 +24,7 @@ const domainChainIdEntries = [[
     ["Linea",      59144n],
     ["Sonic",      146n],
     ["Worldchain", 480n],
+    ["Arc",        0n], // TODO: Replace with actual Arc mainnet chain ID
   ]], [
   "Testnet", [
     ["Ethereum",   11155111n],
@@ -40,6 +41,7 @@ const domainChainIdEntries = [[
     ["Linea",      59141n],
     ["Sonic",      57054n],
     ["Worldchain", 4801n],
+    ["Arc",        5042002n],
   ]],
 ] as const satisfies MapLevels<[Network, Domain, bigint | string]>;
 
@@ -60,6 +62,12 @@ const domainWormholeChainIdEntries = [[
     ["Codex",         54],
     ["Sonic",         52],
     ["Worldchain",    45],
+    ["XDC",         6000], // No wormhole chain ID atm
+    ["HyperEvm",      47],
+    ["Ink",           46],
+    ["Plume",         55],
+    ["Starknet",    6001], // No wormhole chain id atm
+    ["Arc",         6002]  // No wormhole chain id atm
   ]], [
   "Testnet", [
     ["Ethereum",   10002],
@@ -77,6 +85,15 @@ const domainWormholeChainIdEntries = [[
     ["Codex",         54],
     ["Sonic",         52],
     ["Worldchain",    45],
+    ["Monad",         48],
+    ["Sei",           40],
+    ["BNB",            4],
+    ["XDC",         6000], // No wormhole chain ID atm
+    ["HyperEvm",      47],
+    ["Ink",           46],
+    ["Plume",         55],
+    ["Starknet",    6001], // No wormhole chain id atm
+    ["Arc",         6002]  // No wormhole chain id atm
   ]],
 ] as const satisfies MapLevels<[Network, Domain, number]>;
 

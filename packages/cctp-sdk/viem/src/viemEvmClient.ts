@@ -44,11 +44,31 @@ import {
   sonicTestnet      as sonicTestnet,
   worldchain        as worldchainMainnet,
   worldchainSepolia as worldchainTestnet,
+  codex             as codexMainnet,
+  codexTestnet      as codexTestnet,
+  // arc as arcMainnet
+  arcTestnet        as arcTestnet,
+  monad as monadMainnet,
+  monadTestnet as monadTestnet,
+  sei as seiMainnet,
+  seiTestnet as seiTestnet,
+  bsc as bscMainnet,
+  bscTestnet as bscTestnet,
+  xdc as xdcMainnet,
+  xdcTestnet as xdcTestnet,
+  hyperEvm as hyperEvmMainnet,
+  hyperliquidEvmTestnet as hyperEvmTestnet,
+  ink as inkMainnet,
+  inkSepolia as inkTestnet,
+  plume as plumeMainnet,
+  plumeSepolia as plumeTestnet,
+  hyperEvm,
 } from "viem/chains";
 
-// TODO: Wait for viem to support the codex blockchain
-const codexMainnet = {} as ViemChain;
-const codexTestnet = {} as ViemChain;
+// TODO: Get chain from viem once it's supported by them.
+const arcMainnet = {} as ViemChain;
+const starknetTestnet = {} as ViemChain;
+const startnetMainnet = {} as ViemChain;
 
 export const viemChainOf = {
   Mainnet: {
@@ -63,6 +83,15 @@ export const viemChainOf = {
     Codex:      codexMainnet,
     Sonic:      sonicMainnet,
     Worldchain: worldchainMainnet,
+    Monad:      monadMainnet,
+    Sei:        seiMainnet,
+    BNB:        bscMainnet,
+    XDC:        xdcMainnet,
+    HyperEvm:   hyperEvmMainnet,
+    Ink:        inkMainnet,
+    Plume:      plumeMainnet,
+    Starknet:   startnetMainnet,
+    Arc:        arcMainnet,
   },
   Testnet: {
     Ethereum:   ethereumTestnet,
@@ -76,6 +105,15 @@ export const viemChainOf = {
     Codex:      codexTestnet,
     Sonic:      sonicTestnet,
     Worldchain: worldchainTestnet,
+    Monad:      monadTestnet,
+    Sei:        seiTestnet,
+    BNB:        bscTestnet,
+    XDC:        xdcTestnet,
+    HyperEvm:   hyperEvmTestnet,
+    Ink:        inkTestnet,
+    Plume:      plumeTestnet,
+    Starknet:   starknetTestnet,
+    Arc:        arcTestnet,
   },
 } as const satisfies Record<Network, Record<DomainsOf<"Evm">, ViemChain>>;
 

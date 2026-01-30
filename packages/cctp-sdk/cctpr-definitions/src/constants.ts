@@ -24,6 +24,15 @@ export const contractAddressEntries = [[
     ["Codex",      undefined],
     ["Sonic",      "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
     ["Worldchain", "0xc8974200fadb96be23cea557dac23f1b25b21c7a"],
+    ["Monad",      undefined],
+    ["Sei",        undefined],
+    ["BNB",        undefined],
+    ["XDC",        undefined],
+    ["HyperEvm",   undefined],
+    ["Ink",        undefined],
+    ["Plume",      undefined],
+    ["Starknet",   undefined],
+    ["Arc",        undefined], // TODO: Add CCTPR contract address when deployed
   ]], [
   "Testnet", [
     ["Ethereum",   "0x00caba778ceb384e81fcb4914f958247caad9ef5"],
@@ -40,6 +49,15 @@ export const contractAddressEntries = [[
     ["Codex",      undefined],
     ["Sonic",      undefined],
     ["Worldchain", undefined],
+    ["Monad",      undefined],
+    ["Sei",        undefined],
+    ["BNB",        undefined],
+    ["XDC",        undefined],
+    ["HyperEvm",   undefined],
+    ["Ink",        undefined],
+    ["Plume",      undefined],
+    ["Starknet",   undefined],
+    ["Arc",        undefined], // TODO: Add CCTPR contract address when deployed
   ]],
 ] as const satisfies MapLevels<[Network, Domain, string | undefined]>;
 
@@ -88,6 +106,15 @@ export const relayOverheadOf = {
     Codex:      6, // TODO: Adjust
     Sonic:      6.95,
     Worldchain: 6.59,
+    Monad:      0,
+    Sei:        0,
+    BNB:        0,
+    XDC:        0,
+    HyperEvm:   0,
+    Ink:        0,
+    Plume:      0,
+    Starknet:   0,
+    Arc:        6, // TODO: Adjust based on actual relay costs
   },
   Testnet: {
     Ethereum:  13.2,
@@ -104,6 +131,15 @@ export const relayOverheadOf = {
     Codex:      6, // TODO: Adjust
     Sonic:      6.95,
     Worldchain: 6.59,
+    Monad:      0,
+    Sei:        0,
+    BNB:        0,
+    XDC:        0,
+    HyperEvm:   0,
+    Ink:        0,
+    Plume:      0,
+    Starknet:   0,
+    Arc:        6, // TODO: Adjust based on actual relay costs
   },
 } as const satisfies Record<Network, Record<string, number>>;
 
@@ -123,6 +159,15 @@ export const gasDropoffLimitOf = {
     Codex:      0.00151,
     Sonic:      0.00151,
     Worldchain: 0.00151,
+    Monad:            0,
+    Sei:              0,
+    BNB:              0,
+    XDC:              0,
+    HyperEvm:         0,
+    Ink:              0,
+    Plume:            0,
+    Starknet:         0,
+    Arc:             10, // TODO: This needs to be coordinated with relayers team so that they set the same limit
   },
   Testnet: {
     Ethereum:   0.00151,
@@ -139,6 +184,15 @@ export const gasDropoffLimitOf = {
     Codex:      0.00151,
     Sonic:      0.00151,
     Worldchain: 0.00151,
+    Monad:            0,
+    Sei:              0,
+    BNB:              0,
+    XDC:              0,
+    HyperEvm:         0,
+    Ink:              0,
+    Plume:            0,
+    Starknet:         0,
+    Arc:             10, // TODO: This needs to be coordinated with relayers team so that they set the same limit
   },
 } as const satisfies Record<Network, Record<SupportedDomain<Network>, number>>;
 
