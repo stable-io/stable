@@ -206,6 +206,69 @@ export const Apt = {
 export type Apt = Amount<typeof Apt>;
 export const apt = Amount.ofKind(Apt);
 
+export const Mon = {
+  name: "Mon",
+  units: [unit("Mon", 1n), unit("Gwei", oom(-9)), unit("wei", oom(-18))],
+  human: "MON",
+  atomic: "wei",
+} as const satisfies Kind;
+export type Mon = Amount<typeof Mon>;
+export const mon = Amount.ofKind(Mon);
+
+export const Sei = {
+  name: "Sei",
+  units: [unit("Sei", 1n), unit("Gwei", oom(-9)), unit("wei", oom(-18))],
+  human: "SEI",
+  atomic: "wei",
+} as const satisfies Kind;
+export type Sei = Amount<typeof Sei>;
+export const sei = Amount.ofKind(Sei);
+
+export const Bnb = {
+  name: "Bnb",
+  units: [unit("Bnb", 1n), unit("Gwei", oom(-9)), unit("wei", oom(-18))],
+  human: "BNB",
+  atomic: "wei",
+} as const satisfies Kind;
+export type Bnb = Amount<typeof Bnb>;
+export const bnb = Amount.ofKind(Bnb);
+
+export const Xdc = {
+  name: "Xdc",
+  units: [unit("Xdc", 1n), unit("Gwei", oom(-9)), unit("wei", oom(-18))],
+  human: "XDC",
+  atomic: "wei",
+} as const satisfies Kind;
+export type Xdc = Amount<typeof Xdc>;
+export const xdc = Amount.ofKind(Xdc);
+
+export const Hype = {
+  name: "Hype",
+  units: [unit("Hype", 1n), unit("Gwei", oom(-9)), unit("wei", oom(-18))],
+  human: "HYPE",
+  atomic: "wei",
+} as const satisfies Kind;
+export type Hype = Amount<typeof Hype>;
+export const hype = Amount.ofKind(Hype);
+
+export const Plume = {
+  name: "Plume",
+  units: [unit("Plume", 1n), unit("Gwei", oom(-9)), unit("wei", oom(-18))],
+  human: "PLUME",
+  atomic: "wei",
+} as const satisfies Kind;
+export type Plume = Amount<typeof Plume>;
+export const plume = Amount.ofKind(Plume);
+
+export const Strk = {
+  name: "Strk",
+  units: [unit("Strk", 1n), unit("Gfri", oom(-9)), unit("fri", oom(-18))],
+  human: "STRK",
+  atomic: "fri",
+} as const satisfies Kind;
+export type Strk = Amount<typeof Strk>;
+export const strk = Amount.ofKind(Strk);
+
 //TODO introduce type aliasing like for domains to deal with large, ugly kind types
 
 export const nameKindAmountEntries = [
@@ -225,6 +288,14 @@ export const nameKindAmountEntries = [
   ["Sol",             [Sol,             sol            ]],
   ["Sui",             [Sui,             sui            ]],
   ["Apt",             [Apt,             apt            ]],
+  ["Mon",             [Mon,             mon            ]],
+  ["Sei",             [Sei,             sei            ]],
+  ["Bnb",             [Bnb,             apt            ]],
+  ["Xdc",             [Xdc,             xdc            ]],
+  ["Hype",            [Hype,            hype           ]],
+  ["Ink",             [Eth,             eth            ]],
+  ["Plume",           [Plume,           plume          ]],
+  ["Strk",            [Strk,            strk           ]],
 ] as const satisfies MapLevel<string, readonly [Kind, unknown]>;
 export type NamedKind = Column<typeof nameKindAmountEntries, 0>[number];
 const kindAmountOf = constMap(nameKindAmountEntries);
@@ -253,6 +324,15 @@ export const gasTokenNameEntries = [
   ["Codex",      "Eth"  ],
   ["Sonic",      "Sonic"],
   ["Worldchain", "Eth"  ],
+  ["Monad",      "Mon"  ],
+  ["Sei",        "Sei"  ],
+  ["BNB",        "Bnb"  ],
+  ["XDC",        "Xdc"  ],
+  ["HyperEvm",   "Hype" ],
+  ["Ink",        "Eth"  ],
+  ["Plume",      "Plume"],
+  ["Starknet",   "Strk" ],
+  ["Arc",        "Usdc" ],
 ] as const satisfies MapLevel<Domain, NamedKind>;
 export const gasTokenNameOf = constMap(gasTokenNameEntries);
 export type GasTokenNameOf<D extends Domain> = ReturnType<typeof gasTokenNameOf<D>>;

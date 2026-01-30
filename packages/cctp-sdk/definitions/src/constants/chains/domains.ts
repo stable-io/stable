@@ -23,6 +23,15 @@ export const domains = [
   "Codex",
   "Sonic",
   "Worldchain",
+  "Monad",
+  "Sei",
+  "BNB",
+  "XDC",
+  "HyperEvm",
+  "Ink",
+  "Plume",
+  "Starknet",
+  "Arc"
 ] as const;
 
 export type ExpandedDomain = typeof domains[number];
